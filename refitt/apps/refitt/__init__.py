@@ -119,7 +119,7 @@ class RefittMain(Application):
         except KeyError as error:
             cmd, = error.args
             if cmd in HELP_GROUPS:
-                raise ParserError(f'"{cmd}" is an command group. Use the --help flag to '
+                raise ParserError(f'"{cmd}" is a command group. Use the --help flag to '
                                   f'see available subcommands.')
             else:
                 raise ParserError(f'"{cmd}" is not an available command.')

@@ -9,14 +9,12 @@ curves to produce forecasts of new candidates.
 <!-- TODO: clean discription with link to paper. -->
 <!-- TODO: logo icon/graphic for refitt. -->
 
-[![GitHub License](http://img.shields.io/badge/license-Apache-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
+[![GitHub License](https://img.shields.io/badge/license-Apache-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 [![PyPI Version](https://img.shields.io/pypi/v/refitt.svg)](https://pypi.org/project/refitt/)
 [![Docs Latest](https://readthedocs.org/projects/refitt/badge/?version=latest)](https://refitt.readthedocs.io)
 
----
-
-
 <br>
+
 Documentation
 -------------
 
@@ -24,6 +22,7 @@ Installation instructions, an overview of the project, and help on getting start
 online at [refitt.readthedocs.io](https://refitt.readthedocs.io).
 
 <br>
+
 Contributing
 ------------
 
@@ -32,6 +31,7 @@ to report a bug, please create an _Issue_ at [github.com/refitt/refitt](https://
 Before opening a _Pull Request_, we ask that you read our [_Contributing_](CONTRIBUTING.md) guidelines.
 
 <br>
+
 Acknowledgements
 ----------------
 
