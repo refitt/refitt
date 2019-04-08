@@ -84,6 +84,7 @@ commands:
 {LOG_GROUP}
 
 options:
+
 -h, --help             Show this message and exit.
 -v, --version          Show the version and exit.
 
