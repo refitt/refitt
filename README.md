@@ -13,9 +13,6 @@ curves to produce forecasts of new candidates.
 [![PyPI Version](https://img.shields.io/pypi/v/refitt.svg)](https://pypi.org/project/refitt/)
 [![Docs Latest](https://readthedocs.org/projects/refitt/badge/?version=latest)](https://refitt.readthedocs.io)
 
----
-
-
 <br>
 
 Documentation
