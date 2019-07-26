@@ -348,18 +348,3 @@ class DatabaseConnection:
         self.tunnel = SSHTunnel(ssh=ssh, auth=auth_, remote=self.server, local=local)
         self.tunnel.forwarder.start()
         return self
-
-
-
-
-
-db_info = {'host': 'avogadro.physics.purdue.edu',
-           'port': 5432,
-           'user': 'glentner',
-           'password': '...',
-           'database': 'refitt'}
-
-ssh_info = {'host': 'brown.rcac.purdue.edu',
-            'port': 22,
-            'user': 'glentner',
-            'pkey': '/Users/geoffrey/.ssh/id_rsa'}
