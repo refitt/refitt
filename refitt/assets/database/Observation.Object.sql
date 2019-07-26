@@ -30,7 +30,7 @@ WITH (
 );
 
 COMMENT ON TABLE "Observation"."Object"
-    IS 'All unique objects (from "Data").';
+    IS 'All unique objects (from "Observation").';
 
 COMMENT ON CONSTRAINT "ObjectTypeID" ON "Observation"."Object"
     IS 'Associates with "ObjectType"."ObjectTypeID"';
