@@ -34,7 +34,7 @@ PROGRAM = f'{__appname__} {NAME}'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <broker> <stream-name>
+usage: {PROGRAM} <broker> <topic>
        {PADDING} [--debug | --logging LEVEL]
        {PADDING} [--help] [--version]
 
@@ -97,15 +97,23 @@ class StreamApp(Application):
     output_directory: str = os.getcwd()
     interface.add_argument('-o', '--output-directory', default=output_directory)
 
+    debug_mode: bool = False
+    interface.add_argument('-d', '--debug', dest='debug_mode', action='store_true')
+
     def run(self) -> None:
         """Run Refitt pipeline."""
 
+        if self.debug_mode is True:
+            log.handlers[0].level = log.levels[0]
+
         if self.broker not in client:
-            raise ValueError(f'"{self.broker}" is not an available broker."')
+            log.critical(f'"{self.broker}" is not an available broker.')
+            return
         
         if self.key is None:
             try:
                 self.key = config['stream'][self.broker]['key']
+                log.debug(f'loaded api key from configuration file')
             except KeyError:
                 log.critical(f'No `--key` given and "stream.{self.broker}.key" not found in config.')
                 return
@@ -113,6 +121,7 @@ class StreamApp(Application):
         if self.token is None:
             try:
                 self.token = config['stream'][self.broker]['token']
+                log.debug(f'loaded api token from configuration file')
             except KeyError:
                 log.critical(f'No `--token` given and "stream.{self.broker}.token" not found in config.')
                 return
@@ -124,17 +133,21 @@ class StreamApp(Application):
             return
 
         local_filter = getattr(Client, filter_name)
-        log.info(f'initiating stream (topic={self.topic} broker={self.broker} filter={self.filter_name})')
 
+        
+        log.info(f'connecting to {self.broker}')
         with Client(self.topic, (self.key, self.token)) as stream:
+            log.info(f'initiating stream (broker={self.broker} topic={self.topic} filter={self.filter_name})')
+
             for alert in stream:
+                log.info(f'received {self.broker}:{alert.alert_id}')
                 if local_filter(alert) is False:
-                    log.info(f'alert {alert.alert_id} rejected by filter')
+                    log.info(f'{self.broker}:{alert.alert_id} rejected by {filter_name}')
                 else:
-                    log.info(f'alert {alert.alert_id} accepted by filter')
+                    log.info(f'{self.broker}:{alert.alert_id} accepted by {filter_name}')
                     filepath = os.path.join(self.output_directory, f'{alert.alert_id}.json')
                     alert.to_file(filepath)
-                    log.info(f'alert {alert.alert_id} written to {filepath}')
+                    log.info(f'{self.broker}:{alert.alert_id} written to {filepath}')
 
 # inherit docstring from module
 StreamApp.__doc__ = __doc__

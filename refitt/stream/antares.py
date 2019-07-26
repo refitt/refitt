@@ -42,7 +42,7 @@ class AntaresClient(ClientInterface):
     def connect(self) -> None:
         """Connect to Antares."""
         key, token = self.credentials
-        self._client = _Antares_Client([self.topic], api_key=key, api_token=token)
+        self._client = _Antares_Client([self.topic], api_key=key, api_secret=token)
     
     def close(self) -> None:
         """Close connection to Antares."""

@@ -44,11 +44,10 @@ class ClientInterface(ABC):
 
     @abstractmethod
     def __iter__(self) -> Iterator[AlertInterface]:
-        """Should yield back "topic, alert" tuples."""
+        """Should yield back Alert objects."""
     
     def __enter__(self) -> 'Client':
         """Context manager setup."""
-        self.connect()
         return self
     
     def __exit__(self, exc_type, exc_value, exc_traceback) -> None:

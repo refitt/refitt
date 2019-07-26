@@ -50,6 +50,10 @@ class AlertInterface:
     def alert_id(self) -> int:
         """Unique identifier from this alert."""
 
+    def __getitem__(self, key: str) -> Any:
+        """Get item from Alert data."""
+        return self.data[key]
+
     @classmethod
     def from_dict(cls, data: AlertJSON) -> 'AlertInterface':
         """Create alert from raw `data` (JSON)."""
