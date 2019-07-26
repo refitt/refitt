@@ -12,12 +12,18 @@
 
 """The refitt daemon service."""
 
+# standard libs
+import sys
+
 # internal libs
-from ..core.apps import Application
-from ..core.parser import ArgumentParser
-from ..core.logging import get_logger
+from ..core.logging import logger
 from ..__meta__ import (__appname__, __version__, __copyright__,
                         __developer__, __contact__, __website__)
+
+# external libs
+from cmdkit.app import Application, exit_status
+from cmdkit.cli import Interface, ArgumentError, HelpOption
+
 
 
 PROGRAM = f'{__appname__}d'
@@ -46,13 +52,14 @@ options:
 """
 
 # initialize module level logger
-log = get_logger(PROGRAM)
+log = logger.with_name(PROGRAM)
 
 
 class RefittDaemon(Application):
     """Application class for the refitt service daemon, `refittd`."""
 
-    interface = ArgumentParser(PROGRAM, USAGE, HELP)
+    ALLOW_NOARGS: bool = True
+    interface = Interface(PROGRAM, USAGE, HELP)
     interface.add_argument('--version', version=__version__, action='version')
 
     def run(self) -> None:
@@ -62,4 +69,4 @@ class RefittDaemon(Application):
 
 def main() -> int:
     """Entry-point for `refittd` console application."""
-    return RefittDaemon.main()
+    return RefittDaemon.main(sys.argv[1:])
