@@ -17,9 +17,10 @@ CREATE TABLE "User"."Auth"
     "AuthKey" character(16) NOT NULL,
     "AuthToken" character(64) NOT NULL,
     "AuthValid" boolean NOT NULL,
+    "AuthTime" timestamp with time zone NOT NULL,
     "UserID" bigint NOT NULL,
     PRIMARY KEY ("AuthID"),
-    CONSTRAINT "UserID" FOREIGN KEY ("AuthID")
+    CONSTRAINT "UserID" FOREIGN KEY ("UserID")
         REFERENCES "User"."User" ("UserID") MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
@@ -30,10 +31,10 @@ WITH (
 );
 
 COMMENT ON TABLE "User"."Auth"
-    IS 'User (admin or observing agent) authorization.';
+    IS 'Cryptographic Key/Token pairs for User access via the Web-API.';
 
 COMMENT ON CONSTRAINT "UserID" ON "User"."Auth"
-    IS 'References unique user identification (from "User").';
+    IS 'References UserID.UserID.';
 
 CREATE INDEX "UserID"
     ON "User"."Auth" USING btree
