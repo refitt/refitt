@@ -16,18 +16,25 @@
 import sys
 
 # internal libs
-from ...core.apps import Application
-from ...core.parser import ArgumentParser, ParserError
-from ...core.logging import get_logger
+from ...core.logging import logger
 from ...__meta__ import (__appname__, __version__, __description__,
                          __copyright__, __developer__, __contact__,
                          __website__)
 
+# external libs
+from cmdkit.app import Application
+from cmdkit.cli import Interface, ArgumentError
+
 # subcommands
 from .app_pipeline import PipelineApp
+from .service_stream import StreamApp
 
-SUB_COMMANDS = {'app.pipeline': PipelineApp,
-                }
+SUB_COMMANDS = {
+    'app.pipeline': PipelineApp,
+    'service.stream': StreamApp,
+}
+
+PROGRAM = __appname__
 
 USAGE = f"""\
 usage: {__appname__} [<group>[.<command>]] [<args>]
@@ -53,10 +60,10 @@ APP_GROUP = f"""\
 
 SERVICE_GROUP = f"""\
     service
-        .start         Start a service.
-        .stop          Stop a running service.
-        .restart       Restart a running service.
-        .status        Check the status of a service.
+        .message       Message broker streaming service.
+        .cluster       HPC job scheduling.
+        .web-api       REST API for data queries.
+        .stream        Subscribe to remote message broker.
 """
 
 JOB_GROUP = f"""\
@@ -64,6 +71,18 @@ JOB_GROUP = f"""\
         .submit        Submit jobs to the cluster.
         .delete        Delete jobs from the cluster.
         .status        Check the status of existing jobs.
+"""
+
+DATABASE_GROUP = f"""\
+    database
+        .select        Query database.
+        .insert        Load records into database.
+"""
+
+TOOL_GROUP = f"""\
+    tool
+        .monitor       Monitor system resources.
+        .sendmail      Send emails.
 """
 
 LOG_GROUP = f"""\
@@ -81,7 +100,9 @@ commands:
 {APP_GROUP}
 {SERVICE_GROUP}
 {JOB_GROUP}
+{DATABASE_GROUP}
 {LOG_GROUP}
+{TOOL_GROUP}
 
 options:
 
@@ -94,35 +115,40 @@ learn more about their usage.
 {EPILOG}
 """
 
-HELP_GROUPS = {'app': APP_GROUP,
-               'service': SERVICE_GROUP,
-               'job': JOB_GROUP,
-               'log': LOG_GROUP}
+
+HELP_GROUPS = {
+    'app':      APP_GROUP,
+    'service':  SERVICE_GROUP,
+    'database': DATABASE_GROUP,
+    'job':      JOB_GROUP,
+    'log':      LOG_GROUP,
+    'tool':     TOOL_GROUP,
+}
 
 # initialize module level logger
-log = get_logger(__appname__)
+log = logger.with_name(__appname__)
 
 
 class RefittMain(Application):
     """Application class for primary Refitt console-app."""
 
-    interface = ArgumentParser(__appname__, USAGE, HELP)
-
-    command: str = None
-    interface.add_argument('command')
+    interface = Interface(PROGRAM, USAGE, HELP)
     interface.add_argument('--version', version=__version__, action='version')
+
+    subcommand: str = None
+    interface.add_argument('subcommand')
 
     def run(self) -> None:
         """Show usage/help/version or defer to subcommand."""
         try:
-            SUB_COMMANDS[self.command].main(sys.argv[2:])
+            SUB_COMMANDS[self.subcommand].main(sys.argv[2:])
         except KeyError as error:
             cmd, = error.args
             if cmd in HELP_GROUPS:
-                raise ParserError(f'"{cmd}" is a command group. Use the --help flag to '
-                                  f'see available subcommands.')
+                raise ArgumentError(f'"{cmd}" is a subcommand group. Use the --help flag to '
+                                    f'see available subcommands.')
             else:
-                raise ParserError(f'"{cmd}" is not an available command.')
+                raise ArgumentError(f'"{cmd}" is not an available subcommand.')
 
 
 def main() -> int:
