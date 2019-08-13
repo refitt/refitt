@@ -17,7 +17,7 @@ CREATE TABLE "User"."User"
     "UserProfile" json NOT NULL,
     "UserLatitude" double precision NOT NULL,
     "UserLongitude" double precision NOT NULL,
-    "UserAltitude" double precision NOT NULL,
+    "UserElevation" double precision NOT NULL,
     "UserLimitingMagnitude" double precision NOT NULL,
     PRIMARY KEY ("UserID")
 )
