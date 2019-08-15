@@ -28,10 +28,12 @@ from cmdkit.cli import Interface, ArgumentError
 # subcommands
 from .app_pipeline import PipelineApp
 from .service_stream import StreamApp
+from .service_webapi import WebAPIApp
 
 SUB_COMMANDS = {
     'app.pipeline': PipelineApp,
     'service.stream': StreamApp,
+    'service.webapi': WebAPIApp,
 }
 
 PROGRAM = __appname__
@@ -62,8 +64,8 @@ SERVICE_GROUP = f"""\
     service
         .message       Message broker streaming service.
         .cluster       HPC job scheduling.
-        .web-api       REST API for data queries.
-        .stream        Subscribe to remote message broker.
+        .webapi        {WebAPIApp.__doc__}
+        .stream        {StreamApp.__doc__}
 """
 
 JOB_GROUP = f"""\

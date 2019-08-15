@@ -17,11 +17,17 @@ import os
 from typing import Tuple
 
 # internal libs
+from ..__meta__ import __appname__
 from ..core.config import HOME
+from ..core.logging import logger
 
 # external libs
 from sshtunnel import SSHTunnelForwarder
 import psycopg2 as psql
+
+
+# initialize module level logger
+log = logger.with_name(f'{__appname__}.database.client')
 
 
 class ServerAddress:
@@ -227,7 +233,7 @@ class SSHTunnel:
         return str(self)
 
 
-class DatabaseConnection:
+class DatabaseClient:
     """Connect to a database (optionally via an SSH tunnel)."""
 
     # connection details
@@ -318,19 +324,24 @@ class DatabaseConnection:
 
     def connect(self) -> None:
         """Initiate the connection to the database."""
+        log.debug(f'connecting to "{self.database}" at {self.server.host}:{self.server.port}')
         self._connection = psql.connect(host=self.server.host, port=self.server.port,
                                         database=self.database, user=self.auth.username,
                                         password=self.auth.password)
+        log.debug(f'established connected to "{self.database}" at {self.server.host}:{self.server.port}')
 
     def close(self) -> None:
         """Close database connection and ssh-tunnel if necessary."""
         if self.connection is not None and not self.connection.closed:
             self.connection.close()
+            log.debug(f'disconnected from "{self.database}" at {self.server.host}:{self.server.port}')
         if self.tunnel is not None:
             if self.tunnel.forwarder.is_active:
                 self.tunnel.forwarder.stop()
+                log.debug(f'disconnected SSH tunnel')
             if self.tunnel.forwarder.is_alive:
                 self.tunnel.forwarder.close()
+                log.debug(f'disconnecting SSH')
 
     def __enter__(self) -> 'DatabaseConnection':
         """Context manager."""
