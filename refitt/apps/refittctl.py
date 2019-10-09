@@ -10,10 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""The refitt daemon service."""
-
-# standard libs
-import sys
+"""The refitt controller."""
 
 # internal libs
 from ..core.logging import logger
@@ -25,15 +22,15 @@ from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError, HelpOption
 
 
-
-PROGRAM = f'{__appname__}d'
+PROGRAM = f'{__appname__}ctl'
 USAGE = f"""\
-usage: {PROGRAM} ...
+usage: {PROGRAM} {{start | stop | status}}
        {PROGRAM} [--help] [--version]
 
 {__doc__}
 This program should not be called directly.\
 """
+
 EPILOG = f"""\
 Documentation and issue tracking at:
 {__website__}
@@ -41,6 +38,7 @@ Documentation and issue tracking at:
 Copyright {__copyright__}
 {__developer__} {__contact__}.\
 """
+
 HELP = f"""\
 {USAGE}
 
@@ -55,18 +53,29 @@ options:
 log = logger.with_name(PROGRAM)
 
 
-class RefittDaemon(Application):
+ACTIONS = {
+    'start': None,
+    'stop': None,
+    'status': None
+}
+
+class RefittController(Application):
     """Application class for the refitt service daemon, `refittd`."""
 
-    ALLOW_NOARGS: bool = True
     interface = Interface(PROGRAM, USAGE, HELP)
     interface.add_argument('--version', version=__version__, action='version')
 
+    action: str = None
+    interface.add_argument('action', choices=list(ACTIONS))
+
     def run(self) -> None:
         """Start the refitt service daemon."""
-        log.info('starting service')
+        if self.action == 'status':
+            log.info('checking status of refitt ...')
+        else:
+            log.info(f'{self.action}ing refitt ...')
 
 
 def main() -> int:
     """Entry-point for `refittd` console application."""
-    return RefittDaemon.main(sys.argv[1:])
+    return RefittController.main()

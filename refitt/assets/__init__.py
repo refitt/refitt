@@ -10,5 +10,17 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
+"""
+Assets/templates required by REFITT.
+"""
 
-"""Core systems within REFITT."""
+# standard libs
+import os
+
+
+def load(filename: str) -> str:
+    """Load an asset by its base `filename`."""
+    dirname = os.path.dirname(__file__)
+    filepath = os.path.join(dirname, filename)
+    with open(filepath, mode='r') as source:
+        return source.read()

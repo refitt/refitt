@@ -10,5 +10,13 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
+"""Unit tests for the database client (e.g., connecting)."""
 
-"""Core systems within REFITT."""
+from refitt import database
+
+
+def test_client() -> None:
+    """Connect to the refitt database."""
+    database.user.auth()
+
+    

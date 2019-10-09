@@ -1,0 +1,26 @@
+run:
+    conda:
+        default:
+            - keras
+            - tensorflow
+            - pyyaml
+            - yaml
+            - ipyparallel
+            - psycopg2
+            - paramiko
+            - sshtunnel
+        conda-forge:
+            - pyarrow
+    pip:
+        - logalpha
+        - cmdkit
+dev:
+    conda:
+        default:
+            - ipython
+            - pytest
+            - hypothesis
+            - pylint
+            - sphinx
+    pip:
+        - sphinx_rtd

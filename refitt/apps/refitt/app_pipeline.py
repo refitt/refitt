@@ -16,11 +16,14 @@
 import os
 
 # internal libs
-from ...core.apps import Application
-from ...core.parser import ArgumentParser
-from ...core.logging import get_logger
+from ...core.logging import logger
 from ...__meta__ import (__appname__, __copyright__, __developer__,
                          __contact__, __website__)
+
+# external libs
+from cmdkit.app import Application
+from cmdkit.cli import Interface
+
 
 # program name is constructed from module file name
 NAME = os.path.basename(__file__).strip('.py').replace('_', '.')
@@ -28,8 +31,8 @@ PROGRAM = f'{__appname__} {NAME}'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <input-file> [-o <output-file>]
-       {PADDING} [--debug | --logging LEVEL]
+usage: {PROGRAM} <source> [--output-directory PATH]
+       {PADDING} [--debug | --logging LEVEL] [--simple-logging]
        {PADDING} [--help] [--version]
 
 {__doc__}\
@@ -47,23 +50,26 @@ HELP = f"""\
 {USAGE}
 
 arguments:
-<input-file> PATH      Path to candidates file.
+<source>                       Path to candidates file.
 
 options:
--h, --help             Show this message and exit.
--o, --output PATH      Path for output file.
+-o, --output-directory  PATH   Directory for output files.
+-h, --help                     Show this message and exit.
 
 {EPILOG}
 """
 
 # initialize module level logger
-log = get_logger(NAME)
+log = logger.with_name(f'{__appname__}.{NAME}')
 
 
 class PipelineApp(Application):
 
-    interface = ArgumentParser(PROGRAM, USAGE, HELP)
-    ALLOW_NOARGS: bool = True
+    interface = Interface(PROGRAM, USAGE, HELP)
+
+    # input file containing list of candidates/alerts
+    source: str = '-'
+    interface.add_argument('source')
 
     def run(self) -> None:
         """Run Refitt pipeline."""

@@ -13,82 +13,91 @@
 """
 Logging configuration.
 
-REFITT uses the `logalpha` package for logging functionality. Console applications
-and routines provided by the package use the `get_logger` method to acquire a `BaseLogger`
-instance initialized as per the runtime configuration in use.
-
+REFITT uses the `logalpha` package for logging functionality. All messages
+are written to <stderr> and should be redirected by their parent processes.
 """
 
 # standard libraries
-import os
+import io
+import sys
 from datetime import datetime
+from dataclasses import dataclass
 
 # external libraries
-from logalpha import BaseLogger, ConsoleHandler, FileHandler
+from logalpha import levels, colors, messages, handlers, loggers
+from cmdkit import logging as _cmdkit_logging
 
 # internal library
 from ..__meta__ import __appname__
-from .config import get_config
+from ..core.config import HOSTNAME
+
+# NOTICE messages won't actually be formatted with color.
+LEVELS = levels.Level.from_names(['DEBUG', 'INFO', 'NOTICE', 'WARNING', 'ERROR', 'CRITICAL'])
+COLORS = colors.Color.from_names(['blue', 'green', 'white', 'yellow', 'red', 'magenta'])
+RESET = colors.Color.reset
 
 
-def get_logger(name: str = None, console: bool = True) -> BaseLogger:
-    """
-    Constructs a logger.
+@dataclass
+class Message(messages.Message):
+    """A `logalpha.messages.Message` with a timestamp:`datetime` and source:`str`."""
+    timestamp: datetime
+    source: str
 
-    Arguments
-    ---------
-    name: str = None
-        Message prefix to use.
 
-    console: bool = True
-        If False, suppress adding a ConsoleHandler.
+class Logger(loggers.Logger):
+    """Logger for refitt."""
 
-    Returns
-    -------
-    BaseLogger: `logalpha.BaseLogger`
-        An initialized logging manager.
+    Message: type = Message
+    callbacks: dict = {'timestamp': datetime.now,
+                       'source': (lambda: __appname__)}
 
-    Example
-    -------
-        >>> from refitt.core.logging import get_logger
-        >>> log = get_logger('example')
-        >>> log.info('some message')
-        info 12:34:56 example: some message
 
-    See Also
-    --------
-    `refitt.core.config`:
-        Parsing runtime configuration.
-    """
+    def with_name(self, name: str) -> 'Logger':
+        """Inject alternate `name` into callbacks."""
+        logger = self.__class__()
+        logger.callbacks = {**logger.callbacks, 'source': (lambda: name)}
+        logger.handlers = self.handlers[:]  # same handler instances
+        return logger
 
-    config    = get_config()
-    TIMESTAMP = datetime.now().strftime('%Y%m%d')
-    LOGFILE   = f'{config["logs"]}/{__appname__}-{TIMESTAMP}.log'
-    LOGSITE   = os.path.dirname(LOGFILE)
-    os.makedirs(LOGSITE, exist_ok=True)
 
-    handlers = []  # List[BaseHandler]
+    # FIXME: explicitly named aliases to satisfy pylint;
+    #        these levels are already available but pylint complains
 
-    if name is None:
-        handlers.append(FileHandler(level=config['loglevel'],
-                                    template='{LEVEL} {time} [' + config['host'] + '] {message}',
-                                    time=lambda: datetime.now().strftime('%Y%m%d-%H:%M:%S'),
-                                    file=LOGFILE))
-        if console is True:
-            handlers.append(ConsoleHandler(level=config['loglevel'],
-                                           template='{level} {time} {message}',
-                                           time=lambda: datetime.now().strftime('%H:%M:%S')))
-    else:
-        if config['host'] is not None:
-            template = '{LEVEL} {time} ' + f'[{config["host"]}] {name}: ' + '{message}'
-        else:
-            template = '{LEVEL} {time} ' + f'{name}: ' + '{message}'
-        handlers.append(FileHandler(level=config['loglevel'],
-                                    template=template, file=LOGFILE,
-                                    time=lambda: datetime.now().strftime('%Y%m%d-%H:%M:%S')))
-        if console is True:
-            handlers.append(ConsoleHandler(level=config['loglevel'],
-                                           template='{level} {time} ' + name + ': {message}',
-                                           time=lambda: datetime.now().strftime('%H:%M:%S')))
 
-    return BaseLogger(handlers)
+    def debug(self, *args, **kwargs) -> None:
+        return self.write(loggers.Logger.levels[0], *args, **kwargs)
+
+    def info(self, *args, **kwargs) -> None:
+        return self.write(loggers.Logger.levels[1], *args, **kwargs)
+
+    def warning(self, *args, **kwargs) -> None:
+        return self.write(loggers.Logger.levels[2], *args, **kwargs)
+
+    def error(self, *args, **kwargs) -> None:
+        return self.write(loggers.Logger.levels[3], *args, **kwargs)
+
+    def critical(self, *args, **kwargs) -> None:
+        return self.write(loggers.Logger.levels[4], *args, **kwargs)
+
+
+@dataclass
+class ConsoleHandler(handlers.Handler):
+    """Write messages to <stderr>."""
+
+    level: levels.Level
+    resource: io.TextIOWrapper = sys.stderr
+
+    def format(self, msg: Message) -> str:
+        """Syslog style with padded spaces."""
+        timestamp = msg.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        return f'{timestamp} {HOSTNAME:<30} {msg.source:<22} {msg.level.name:<8} {msg.content}'
+
+
+
+HANDLER = ConsoleHandler(LEVELS[1])
+
+logger = Logger()
+logger.handlers.append(HANDLER)
+
+# inject logger back into cmdkit library
+_cmdkit_logging.log = logger
