@@ -245,7 +245,7 @@ class DatabaseClient:
     _connection: psql.extensions.connection = None
 
     # tunnel instance
-    _tunnel: SSHTunnelForwarder = None
+    _tunnel: SSHTunnel = None
 
     def __init__(self, server: ServerAddress, auth: UserAuth,
                  database: str) -> None:
@@ -336,12 +336,15 @@ class DatabaseClient:
             self.connection.close()
             log.debug(f'disconnected from "{self.database}" at {self.server.host}:{self.server.port}')
         if self.tunnel is not None:
-            if self.tunnel.forwarder.is_active:
-                self.tunnel.forwarder.stop()
-                log.debug(f'disconnected SSH tunnel')
-            if self.tunnel.forwarder.is_alive:
-                self.tunnel.forwarder.close()
-                log.debug(f'disconnecting SSH')
+            self.tunnel.forwarder.__exit__()
+            self._tunnel = None
+            log.debug(f'disconnected SSH tunnel')
+            # if self.tunnel.forwarder.is_active:
+            #     self.tunnel.forwarder.stop()
+            #     log.debug(f'disconnected SSH tunnel')
+            # if self.tunnel.forwarder.is_alive:
+            #     self.tunnel.forwarder.close()
+            #     log.debug(f'disconnecting SSH')
 
     def __enter__(self) -> 'DatabaseConnection':
         """Context manager."""
