@@ -80,8 +80,25 @@ AUTH_WHERE_USER_ID = """\
 """
 
 OBJECT_TYPE = """\
-SELECT *
-FROM "Observation"."ObjectType"
+SELECT
+    "ObjectType"."ObjectTypeID"   AS "object_type_id",
+    "ObjectType"."ObjectTypeName" AS "object_type_name",
+    "ObjectType"."ObjectTypeDescription" AS "object_type_description"
+
+FROM 
+    "Observation"."ObjectType" as "ObjectType"
+"""
+
+OBJECT_TYPE_WHERE_OBJECT_TYPE_ID = """\
+    "ObjectType"."ObjectTypeID" = {object_type_id}
+"""
+
+OBJECT_TYPE_WHERE_OBJECT_TYPE_NAME = """\
+    "ObjectType"."ObjectTypeName" = '{object_type_name}'
+"""
+
+OBJECT_TYPE_WHERE_OBJECT_TYPE_DESCRIPTION = """\
+    "ObjectType"."ObjectTypeDescription" LIKE '{object_type_description}'
 """
 
 OBJECT = """\
