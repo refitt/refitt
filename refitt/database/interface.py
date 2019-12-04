@@ -172,7 +172,7 @@ def _make_select(columns: List[str], schema: str, table: str, where: List[str] =
         query += '\nWHERE\n    ' + '\n    AND '.join(where)
 
     if orderby is not None:
-        query += f'\nORDER BY "{orderby}"'
+        query += f'\nORDER BY "{table}"."{orderby}"'
         query += ' ASC' if ascending else ' DESC'
 
     if limit is not None:

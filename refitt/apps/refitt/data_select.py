@@ -41,8 +41,8 @@ PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 usage: {PROGRAM} <schema>.<table> [--columns NAME [NAME...]] [--where CONDITION [CONDITION...]]
        {PADDING} [--output PATH] [--format FORMAT | ...] [--tablefmt FORMAT]
-       {PADDING} [--limit COUNT | --no-limit] [--join] [--debug] [--dry-run]
-       {PADDING} [--help]
+       {PADDING} [--limit COUNT | --no-limit] [--join] [--order-by NAME] [--descending]
+       {PADDING} [--debug] [--dry-run] [--help]
 
 {__doc__}\
 """
@@ -75,7 +75,9 @@ options:
 -o, --output     PATH        File path for output.
 -w, --where      CONDITION   Quoted SQL conditional statements.
 -l, --limit      COUNT       Limit number of records to fetch. (default: 10)
--a, --no-limit               Disable limit on number of records.
+    --no-limit               Disable limit on number of records.
+    --order-by   NAME        Sort records by specific column.
+    --descending             Sort in descending order.
 -j, --join                   Swap in fkey _id fields for _name fields.
     --dry-run                Show SQL without executing.
 -d, --debug                  Show debugging messages.
@@ -93,7 +95,7 @@ formats:
     --tablefmt   FORMAT      Format scheme for ASCII output.
 
 
-{EPILOG}
+{EPILOG}\
 """
 
 # initialize module level logger
@@ -134,8 +136,14 @@ class DataSelectApp(Application):
     limit: int = 10
     no_limit: bool = False
     limit_group = interface.add_mutually_exclusive_group()
-    limit_group.add_argument('-l', '--limit', type=int)
-    limit_group.add_argument('-a', '--no-limit', action='store_true')
+    limit_group.add_argument('-l', '--limit', type=int, default=limit)
+    limit_group.add_argument('--no-limit', action='store_true')
+
+    order_by: str = None
+    interface.add_argument('--order-by', default=None)
+
+    descending: bool = False
+    interface.add_argument('--descending', action='store_true')
 
     join: bool = False
     interface.add_argument('-j', '--join', action='store_true')
@@ -196,8 +204,8 @@ class DataSelectApp(Application):
             self.output = sys.stdout
 
         # pre-construct parameters in case of dry-run
-        params = dict(columns=columns, schema=schema, table=table, limit=limit,
-                      where=self.where, orderby=None, ascending=True, join=self.join)
+        params = dict(columns=columns, schema=schema, table=table, limit=limit, where=self.where,
+                      orderby=self.order_by, ascending=(not self.descending), join=self.join)
 
         if self.dry_run:
             sys.stdout.write(database.interface._make_select(**params))

@@ -137,7 +137,7 @@ options:
 Use the -h/--help flag with the above groups/commands to
 learn more about their usage.
 
-{EPILOG}
+{EPILOG}\
 """
 
 
