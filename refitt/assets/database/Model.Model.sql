@@ -10,17 +10,22 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Model"."Model"
+CREATE TABLE IF NOT EXISTS "model"."model"
 (
-    "ModelID" bigserial NOT NULL,
-    "ModelName" text NOT NULL,
-    "ModelTime" timestamp with time zone NOT NULL,
-    "ModelData" bytea NOT NULL,
-    "ModelHash" character(64),
-    "ModelTypeID" bigint NOT NULL,
-    PRIMARY KEY ("ModelID"),
-    CONSTRAINT "ModelTypeID" FOREIGN KEY ("ModelTypeID")
-        REFERENCES "Model"."ModelType" ("ModelTypeID") MATCH SIMPLE
+    "model_id" BIGSERIAL NOT NULL,
+
+    "model_type_id" BIGINT NOT NULL,
+
+    "model_name" TEXT NOT NULL,
+    "model_time" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "model_hash" CHARACTER(64),
+    "model_data" BYTEA NOT NULL,
+    "model_accuracy" DOUBLE PRECISION,
+    
+    PRIMARY KEY ("model_id"),
+
+    CONSTRAINT "model_type_id" FOREIGN KEY ("model_type_id")
+        REFERENCES "model"."model_type" ("model_type_id") MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
@@ -29,10 +34,6 @@ WITH (
     OIDS = FALSE
 );
 
-COMMENT ON CONSTRAINT "ModelTypeID" ON "Model"."Model"
-    IS 'References "ModelType"."ModelTypeID"';
-
-CREATE INDEX "ModelTypeID"
-    ON "Model"."Model" USING btree
-    ("ModelTypeID" ASC NULLS LAST)
-    TABLESPACE pg_default;
+CREATE INDEX "model_type_id"
+    ON "model"."model" USING btree
+    ("model_type_id" ASC NULLS LAST);

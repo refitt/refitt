@@ -10,20 +10,18 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "User"."User"
+CREATE TABLE IF NOT EXISTS "user"."user"
 (
-    "UserID" bigserial NOT NULL,
-    "UserName" character varying(128) NOT NULL,
-    "UserProfile" json NOT NULL,
-    "UserLatitude" double precision NOT NULL,
-    "UserLongitude" double precision NOT NULL,
-    "UserElevation" double precision NOT NULL,
-    "UserLimitingMagnitude" double precision NOT NULL,
-    PRIMARY KEY ("UserID")
+    "user_id" BIGSERIAL NOT NULL,
+
+    "user_first_name" TEXT NOT NULL,
+    "user_last_name" TEXT NOT NULL,
+    "user_email" TEXT NOT NULL,
+    "user_alias" TEXT NOT NULL,
+    "user_profile" JSONB NOT NULL,
+
+    PRIMARY KEY ("user_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-COMMENT ON TABLE "User"."User"
-    IS 'User (observing agent) profiles.';

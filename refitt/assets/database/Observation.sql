@@ -10,6 +10,4 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE SCHEMA "Observation";
-COMMENT ON SCHEMA "Observation"
-    IS 'All observational data.';
+CREATE SCHEMA IF NOT EXISTS "observation";

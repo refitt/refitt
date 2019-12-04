@@ -10,20 +10,19 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "User"."Facility"
+CREATE TABLE IF NOT EXISTS "user"."facility"
 (
-    "FacilityID" bigserial NOT NULL,
-    "FacilityName" text NOT NULL,
-    "FacilityProfile" jsonb NOT NULL,
-    "FacilityLatitude" double precision NOT NULL,
-    "FacilityLongitude" double precision NOT NULL,
-    "FacilityAltitude" double precision NOT NULL,
-    "FacilityLimitingMagnitude" double precision NOT NULL,
-    PRIMARY KEY ("FacilityID")
+    "facility_id" BIGSERIAL NOT NULL,
+
+    "facility_name" TEXT NOT NULL,
+    "facility_latitude" DOUBLE PRECISION NOT NULL,
+    "facility_longitude" DOUBLE PRECISION NOT NULL,
+    "facility_altitude" DOUBLE PRECISION NOT NULL,
+    "facility_limiting_magnitude" DOUBLE PRECISION NOT NULL,
+    "facility_profile" JSONB NOT NULL,
+
+    PRIMARY KEY ("facility_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-COMMENT ON TABLE "User"."Facility"
-    IS 'Facility specifications used by observing agents';

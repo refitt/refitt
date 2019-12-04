@@ -10,15 +10,15 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Recommendation"."Recommendation"
+CREATE TABLE IF NOT EXISTS "observation"."source_type"
 (
-    "RecommendationGroupID" bigserial NOT NULL,
-    "RecommendationGroupTime" timestamp with time zone NOT NULL,
-    PRIMARY KEY ("RecommendationGroupID")
+    "source_type_id" BIGSERIAL NOT NULL,
+
+    "source_type_name" TEXT NOT NULL,
+    "source_type_description" TEXT,
+    
+    PRIMARY KEY ("source_type_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-COMMENT ON TABLE "Recommendation"."Recommendation"
-    IS 'Uniquely identifies a batch of recommendations.';

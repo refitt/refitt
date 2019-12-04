@@ -10,16 +10,12 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Observation"."ObjectType"
+CREATE TABLE "message"."message_level"
 (
-    "ObjectTypeID" serial NOT NULL,
-    "ObjectTypeName" character varying (80) NOT NULL,
-    "ObjectTypeDescription" text NOT NULL,
-    PRIMARY KEY ("ObjectTypeID")
+    "message_level_id" BIGSERIAL NOT NULL,
+    "message_level_name" TEXT NOT NULL,
+    PRIMARY KEY ("message_level_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-COMMENT ON TABLE "Observation"."ObjectType"
-    IS 'All unique types of objects (from "Object").';

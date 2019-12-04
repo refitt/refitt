@@ -10,16 +10,13 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Observation"."ObservationType"
+CREATE TABLE IF NOT EXISTS "observation"."object_type"
 (
-    "ObservationTypeID" bigserial NOT NULL,
-    "ObservationTypeName" text NOT NULL,
-    "ObservationTypeUnit" text NOT NULL,
-    PRIMARY KEY ("ObservationTypeID")
+    "object_type_id" BIGSERIAL NOT NULL,
+    "object_type_name" TEXT NOT NULL,
+    "object_type_description" TEXT NOT NULL,
+    PRIMARY KEY ("object_type_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-COMMENT ON TABLE "Observation"."ObservationType"
-    IS 'Observation type (e.g., "apparent g-band magnitude").';

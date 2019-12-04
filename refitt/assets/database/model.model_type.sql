@@ -10,15 +10,15 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Message"."MessageHost"
+CREATE TABLE IF NOT EXISTS "model"."model_type"
 (
-    "MessageHostID" bigserial NOT NULL,
-    "MessageHostName" text NOT NULL,
-    PRIMARY KEY ("MessageHostID")
+    "model_type_id" BIGSERIAL NOT NULL,
+    "model_type_name" TEXT NOT NULL,
+    "model_type_format" TEXT NOT NULL,
+    "model_type_description" TEXT,
+
+    PRIMARY KEY ("model_type_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-COMMENT ON TABLE "Message"."MessageHost"
-    IS 'The hostname of machines issuing messages.';

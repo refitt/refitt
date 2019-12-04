@@ -10,15 +10,12 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Message"."MessageLevel"
+CREATE TABLE "message"."message_host"
 (
-    "MessageLevelID" bigserial NOT NULL,
-    "MessageLevelName" text NOT NULL,
-    PRIMARY KEY ("MessageLevelID")
+    "message_host_id" BIGSERIAL NOT NULL,
+    "message_host_name" TEXT NOT NULL,
+    PRIMARY KEY ("message_host_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-COMMENT ON TABLE "Message"."MessageLevel"
-    IS 'Levels of severity.';

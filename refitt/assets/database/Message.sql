@@ -10,6 +10,4 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE SCHEMA "Message";
-COMMENT ON SCHEMA "Message"
-    IS 'Logging messages from REFITT systems, services, and pipelines.';
+CREATE SCHEMA IF NOT EXISTS "message";
