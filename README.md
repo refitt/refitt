@@ -6,7 +6,7 @@ strategies in real time to participating facilities, instruments, and astronomer
 It subscribes to LSST data streams and continuously trains models of supernova light 
 curves to produce forecasts of new candidates.
 
-<!-- TODO: clean discription with link to paper. -->
+<!-- TODO: clean description with link to paper. -->
 <!-- TODO: logo icon/graphic for refitt. -->
 
 [![GitHub License](https://img.shields.io/badge/license-Apache-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)

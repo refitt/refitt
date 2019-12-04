@@ -10,30 +10,12 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "user"."auth"
+CREATE TABLE "message"."message_topic"
 (
-    "auth_id" BIGSERIAL NOT NULL,
-
-    "user_id" BIGINT NOT NULL,
-
-    "auth_level" SMALLINT NOT NULL,
-    "auth_key" CHARACTER(16) NOT NULL,
-    "auth_token" CHARACTER(64) NOT NULL,
-    "auth_valid" BOOLEAN NOT NULL,
-    "auth_time" TIMESTAMP WITH TIME ZONE NOT NULL,
-    
-    PRIMARY KEY ("auth_id"),
-
-    CONSTRAINT "user_id" FOREIGN KEY ("user_id")
-        REFERENCES "user"."user" ("user_id") MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-        NOT VALID
+    "message_topic_id" BIGSERIAL NOT NULL,
+    "message_topic_name" TEXT NOT NULL,
+    PRIMARY KEY ("message_topic_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-CREATE INDEX IF NOT EXISTS "user_id"
-    ON "user"."auth" USING btree
-    ("user_id" ASC NULLS LAST);

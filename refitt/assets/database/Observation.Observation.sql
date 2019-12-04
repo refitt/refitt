@@ -10,29 +10,35 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Observation"."Observation"
+CREATE TABLE IF NOT EXISTS "observation"."observation"
 (
-    "ObservationID" bigserial NOT NULL,
-    "ObservationTime" timestamp with time zone NOT NULL,
-    "ObservationValue" double precision NOT NULL,
-    "ObservationUncertainty" double precision NOT NULL,
-    "ObservationReferenceTime" timestamp with time zone NOT NULL,
-    "ObservationTypeID" bigint NOT NULL,
-    "ObjectID" bigint NOT NULL,
-    "SourceID" bigint NOT NULL,
-    PRIMARY KEY ("ObservationID"),
-    CONSTRAINT "ObservationTypeID" FOREIGN KEY ("ObservationTypeID")
-        REFERENCES "Observation"."ObservationType" ("ObservationTypeID") MATCH SIMPLE
+    "observation_id" BIGSERIAL NOT NULL,
+
+    "object_id" BIGINT NOT NULL,
+    "observation_type_id" BIGINT NOT NULL,
+    "source_id" BIGINT NOT NULL,
+
+    "observation_time" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "observation_value" DOUBLE PRECISION,
+    "observation_uncertainty" DOUBLE PRECISION,
+    "observation_reference_time" TIMESTAMP WITH TIME ZONE NOT NULL,
+    
+    PRIMARY KEY ("observation_id"),
+
+    CONSTRAINT "object_id" FOREIGN KEY ("object_id")
+        REFERENCES "observation"."object" ("object_id") MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
-    CONSTRAINT "ObjectID" FOREIGN KEY ("ObjectID")
-        REFERENCES "Observation"."Object" ("ObjectID") MATCH SIMPLE
+
+    CONSTRAINT "observation_type_id" FOREIGN KEY ("observation_type_id")
+        REFERENCES "observation"."observation_type" ("observation_type_id") MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
-    CONSTRAINT "SourceID" FOREIGN KEY ("SourceID")
-        REFERENCES "Observation"."Source" ("SourceID") MATCH SIMPLE
+
+    CONSTRAINT "source_id" FOREIGN KEY ("source_id")
+        REFERENCES "observation"."source" ("source_id") MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
@@ -41,35 +47,18 @@ WITH (
     OIDS = FALSE
 );
 
-COMMENT ON TABLE "Observation"."Observation"
-    IS 'All observational data.';
-COMMENT ON CONSTRAINT "ObservationTypeID" ON "Observation"."Observation"
-    IS 'Reference to the unique observation type identifier (from "ObservationType").';
-COMMENT ON CONSTRAINT "ObjectID" ON "Observation"."Observation"
-    IS 'Reference to the unique object identifier (from "Object").';
-COMMENT ON CONSTRAINT "SourceID" ON "Observation"."Observation"
-    IS 'Reference to the unique source identifier (from "Source").';
+CREATE INDEX IF NOT EXISTS "object_id"
+    ON "observation"."observation" USING btree
+    ("object_id" ASC NULLS LAST);
 
-CREATE INDEX "ObservationTypeID"
-    ON "Observation"."Observation" USING btree
-    ("ObservationTypeID" ASC NULLS LAST)
-    TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS "observation_type_id"
+    ON "observation"."observation" USING btree
+    ("observation_type_id" ASC NULLS LAST);
 
-COMMENT ON INDEX "Observation"."ObservationTypeID"
-    IS 'Index on foreign key "ObservationTypeID".';
+CREATE INDEX IF NOT EXISTS "source_id"
+    ON "observation"."observation" USING btree
+    ("source_id" ASC NULLS LAST);
 
-CREATE INDEX "ObjectID"
-    ON "Observation"."Observation" USING btree
-    ("ObjectID" ASC NULLS LAST)
-    TABLESPACE pg_default;
-
-COMMENT ON INDEX "Observation"."ObjectID"
-    IS 'Index on foreign key "ObjectID".';
-
-CREATE INDEX "SourceID"
-    ON "Observation"."Observation" USING btree
-    ("SourceID" ASC NULLS LAST)
-    TABLESPACE pg_default;
-
-COMMENT ON INDEX "Observation"."SourceID"
-    IS 'Index on foreign key "SourceID".';
+CREATE INDEX IF NOT EXISTS "observation_reference_time"
+    ON "observation"."observation" USING btree
+    ("observation_reference_time" ASC NULLS LAST);

@@ -10,27 +10,23 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "observation"."source"
+CREATE TABLE IF NOT EXISTS "user"."facility_map"
 (
-    "source_id" BIGSERIAL NOT NULL,
+    "facility_map_id" BIGSERIAL NOT NULL,
 
-    "source_type_id" BIGINT NOT NULL,
-    "facility_id" BIGINT,
+    "facility_id" BIGINT NOT NULL,
+    "user_id" BIGINT NOT NULL,
 
-    "source_name" TEXT NOT NULL,
-    "source_description" TEXT,
-    "source_reference" TEXT,
+    PRIMARY KEY ("facility_map_id"),
 
-    PRIMARY KEY ("source_id"),
-
-    CONSTRAINT "source_type_id" FOREIGN KEY ("source_type_id")
-        REFERENCES "observation"."source_type" ("source_type_id") MATCH FULL
+    CONSTRAINT "facility_id" FOREIGN KEY ("facility_id")
+        REFERENCES "user"."facility" ("facility_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
 
-    CONSTRAINT "facility_id" FOREIGN KEY ("facility_id")
-        REFERENCES "user"."facility" ("facility_id") MATCH FULL
+    CONSTRAINT "user_id" FOREIGN KEY ("user_id")
+        REFERENCES "user"."user" ("user_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
@@ -39,10 +35,10 @@ WITH (
     OIDS = FALSE
 );
 
-CREATE INDEX IF NOT EXISTS "source_type_id"
-    ON "observation"."source" USING btree
-    ("source_type_id" ASC NULLS LAST);
-
 CREATE INDEX IF NOT EXISTS "facility_id"
-    ON "observation"."source" USING btree
+    ON "user"."facility_map" USING btree
     ("facility_id" ASC NULLS LAST);
+
+CREATE INDEX IF NOT EXISTS "user_id"
+    ON "user"."facility_map" USING btree
+    ("user_id" ASC NULLS LAST);

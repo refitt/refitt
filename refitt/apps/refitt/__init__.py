@@ -29,17 +29,24 @@ from cmdkit.cli import Interface, ArgumentError
 from .app_pipeline import PipelineApp
 from .service_stream import StreamApp
 from .service_webapi import WebAPIApp
+from .data_select import DataSelectApp
+from .data_insert import DataInsertApp
+from .data_initdb import DataInitDBApp
+
 
 SUB_COMMANDS = {
     'app.pipeline': PipelineApp,
     'service.stream': StreamApp,
     'service.webapi': WebAPIApp,
+    'data.select': DataSelectApp,
+    'data.insert': DataInsertApp,
+    'data.initdb': DataInitDBApp,
 }
 
 PROGRAM = __appname__
 
 USAGE = f"""\
-usage: {__appname__} [<group>[.<command>]] [<args>]
+usage: {__appname__} [<group>[.<command>]] [<args>...]
        {__appname__} [--help] [--version]
 
 {__description__}\
@@ -54,6 +61,9 @@ Copyright {__copyright__}
 """
 
 APP_GROUP = f"""\
+Applets defined within REFITT's framework.
+
+commands:
     app
         .forecast      Build forecast for single candidate.
         .recommend     Build recommendations from forecasts.
@@ -61,6 +71,9 @@ APP_GROUP = f"""\
 """
 
 SERVICE_GROUP = f"""\
+Services run by "refittd".
+
+commands:
     service
         .message       Message broker streaming service.
         .cluster       HPC job scheduling.
@@ -69,45 +82,55 @@ SERVICE_GROUP = f"""\
 """
 
 JOB_GROUP = f"""\
+Manually manage REFITT batch computing tasks.
+
+commands:
     job
         .submit        Submit jobs to the cluster.
         .delete        Delete jobs from the cluster.
         .status        Check the status of existing jobs.
 """
 
-DATABASE_GROUP = f"""\
-    database
-        .select        Query database.
-        .insert        Load records into database.
+DATA_GROUP = f"""\
+Interact with the REFITT database.
+
+commands:
+    data
+        .select        {DataSelectApp.__doc__}
+        .insert        {DataInsertApp.__doc__}
+        .delete        Delete records from database.
+        .initdb        {DataInitDBApp.__doc__}
 """
 
-TOOL_GROUP = f"""\
-    tool
-        .monitor       Monitor system resources.
-        .sendmail      Send emails.
+GROUPS = {
+    'app':      APP_GROUP,
+    'service':  SERVICE_GROUP,
+    'job':      JOB_GROUP,
+    'data':     DATA_GROUP,
+    
+}
+
+GROUP_HELP = """\
+usage: {name}.<command> [--help] [<args>...]
+
+{info}\
 """
 
-LOG_GROUP = f"""\
-    log
-        .show          Show current log files.
-        .gather        Collect all data.
-        .process       Extract information from logs.
-"""
+GROUP_DESC = {
+    name: text.strip().split('\n')[0]
+    for name, text in GROUPS.items()
+}
 
 HELP = f"""\
 {USAGE}
 
-commands:
-
-{APP_GROUP}
-{SERVICE_GROUP}
-{JOB_GROUP}
-{DATABASE_GROUP}
-{LOG_GROUP}
-{TOOL_GROUP}
+groups:
+    app               {GROUP_DESC['app']}
+    service           {GROUP_DESC['service']}
+    job               {GROUP_DESC['job']}
+    data              {GROUP_DESC['data']}
 
 options:
-
 -h, --help             Show this message and exit.
 -v, --version          Show the version and exit.
 
@@ -117,15 +140,6 @@ learn more about their usage.
 {EPILOG}
 """
 
-
-HELP_GROUPS = {
-    'app':      APP_GROUP,
-    'service':  SERVICE_GROUP,
-    'database': DATABASE_GROUP,
-    'job':      JOB_GROUP,
-    'log':      LOG_GROUP,
-    'tool':     TOOL_GROUP,
-}
 
 # initialize module level logger
 log = logger.with_name(__appname__)
@@ -143,14 +157,14 @@ class RefittMain(Application):
     def run(self) -> None:
         """Show usage/help/version or defer to subcommand."""
         try:
-            SUB_COMMANDS[self.subcommand].main(sys.argv[2:])
+            if self.subcommand in GROUPS.keys():
+                print(GROUP_HELP.format(name=f'{__appname__} {self.subcommand}', 
+                                        info=GROUPS[self.subcommand]))
+            else:
+                SUB_COMMANDS[self.subcommand].main(sys.argv[2:])
         except KeyError as error:
             cmd, = error.args
-            if cmd in HELP_GROUPS:
-                raise ArgumentError(f'"{cmd}" is a subcommand group. Use the --help flag to '
-                                    f'see available subcommands.')
-            else:
-                raise ArgumentError(f'"{cmd}" is not an available subcommand.')
+            raise ArgumentError(f'"{cmd}" is not an available subcommand.')
 
 
 def main() -> int:

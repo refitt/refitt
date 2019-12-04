@@ -18,9 +18,9 @@ Assets/templates required by REFITT.
 import os
 
 
-def load(filename: str) -> str:
+def load_asset(relative_path: str) -> str:
     """Load an asset by its base `filename`."""
     dirname = os.path.dirname(__file__)
-    filepath = os.path.join(dirname, filename)
+    filepath = os.path.join(dirname, relative_path)
     with open(filepath, mode='r') as source:
         return source.read()

@@ -14,7 +14,7 @@
 
 # standard libs
 import os
-from typing import Tuple
+from typing import Tuple, Iterable, NamedTuple
 
 # internal libs
 from ..__meta__ import __appname__
@@ -23,87 +23,32 @@ from ..core.logging import logger
 
 # external libs
 from sshtunnel import SSHTunnelForwarder
-import psycopg2 as psql
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 
 
 # initialize module level logger
 log = logger.with_name(f'{__appname__}.database.client')
 
 
-class ServerAddress:
+class ServerAddress(NamedTuple):
     """Combines a `host` and `port`."""
-
-    _host: str
-    _port: int
-
-    def __init__(self, host: str, port: int) -> None:
-        """Initialize address."""
-        self.host = host
-        self.port = port
-
-    @property
-    def host(self) -> str:
-        return self._host
-
-    @host.setter
-    def host(self, other: str) -> None:
-        self._host = str(other)
-
-    @property
-    def port(self) -> int:
-        return self._port
-
-    @port.setter
-    def port(self, other: int) -> None:
-        self._port = int(other)
-
-    def __str__(self) -> str:
-        """String representation."""
-        return f'{self.__class__.__name__}(host={self.host}, port={self.port})'
-
-    def __repr__(self) -> str:
-        """String representation."""
-        return str(self)
+    host: str
+    port: int
 
 
-class UserAuth:
+class UserAuth(NamedTuple):
     """A username and password pair."""
-
-    _username: str
-    _password: str = None
-
-    def __init__(self, username: str, password: str = None) -> None:
-        """Initialize address."""
-        self.username = username
-        self.password = password
-
-    @property
-    def username(self) -> str:
-        return self._username
-
-    @username.setter
-    def username(self, other: str) -> None:
-        self._username = str(other)
-
-    @property
-    def password(self) -> str:
-        return self._password
-
-    @password.setter
-    def password(self, other: str) -> None:
-        if other is None:
-            self._password = None
-        else:
-            self._password = str(other)
+    username: str
+    password: str = None
 
     def __str__(self) -> str:
         """String representation."""
-        return f'{self.__class__.__name__}(username={self.username}, password=...)'
+        return f'{self.__class__.__name__}(username="{self.username}", password="****")'
 
     def __repr__(self) -> str:
-        """String representation."""
-        return str(self)
-
+        """Interactive representation."""
+        return f'{self.__class__.__name__}(username="{self.username}", password="****")'
 
 
 class SSHTunnel:
@@ -136,6 +81,7 @@ class SSHTunnel:
 
         self.forwarder = SSHTunnelForwarder(
             (self.ssh.host, self.ssh.port),
+            ssh_username=self.auth.username,
             ssh_password=self.auth.password, ssh_pkey=self.pkey,
             remote_bind_address=(self.remote.host, self.remote.port),
             local_bind_address=(self.local.host, self.local.port))
@@ -241,8 +187,8 @@ class DatabaseClient:
     _auth: UserAuth = None
     _database: str = None
 
-    # connection instance
-    _connection: psql.extensions.connection = None
+    # SQLAlchemy database engine
+    _engine: Engine = None
 
     # tunnel instance
     _tunnel: SSHTunnel = None
@@ -295,17 +241,17 @@ class DatabaseClient:
             raise TypeError(f'{self.__class__.__name__}.database expects {str}')
 
     @property
-    def connection(self) -> psql.extensions.connection:
-        """Database connection instance."""
-        return self._connection
+    def engine(self) -> Engine:
+        """Database engine instance."""
+        return self._engine
 
-    @connection.setter
-    def connection(self, other: psql.extensions.connection) -> None:
-        """Set database connection instance."""
-        if isinstance(other, psql.extensions.connection):
-            self._connection = other
+    @engine.setter
+    def engine(self, other: Engine) -> None:
+        """Set database engine instance."""
+        if isinstance(other, Engine):
+            self._engine = other
         else:
-            raise TypeError(f'{self.__class__.__name__}.connection expects {psql.extensions.connection}')
+            raise TypeError(f'{self.__class__.__name__}.engine expects {Engine}')
 
     @property
     def tunnel(self) -> SSHTunnel:
@@ -317,34 +263,25 @@ class DatabaseClient:
         """Set SSHTunnel instance."""
         if isinstance(other, SSHTunnel):
             self._tunnel = other
-            self.server.host = other.local.host
-            self.server.port = other.local.port
+            self.server = other.local
         else:
             raise TypeError(f'{self.__class__.__name__}.tunnel expects {SSHTunnel}')
 
     def connect(self) -> None:
         """Initiate the connection to the database."""
         log.debug(f'connecting to "{self.database}" at {self.server.host}:{self.server.port}')
-        self._connection = psql.connect(host=self.server.host, port=self.server.port,
-                                        database=self.database, user=self.auth.username,
-                                        password=self.auth.password)
+        username, password = tuple(self.auth)
+        host, port = tuple(self.server)
+        self._engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{self.database}')
         log.debug(f'established connected to "{self.database}" at {self.server.host}:{self.server.port}')
 
     def close(self) -> None:
         """Close database connection and ssh-tunnel if necessary."""
-        if self.connection is not None and not self.connection.closed:
-            self.connection.close()
-            log.debug(f'disconnected from "{self.database}" at {self.server.host}:{self.server.port}')
+        self.engine.dispose()
+        log.debug(f'disconnected from "{self.database}" at {self.server.host}:{self.server.port}')
         if self.tunnel is not None:
             self.tunnel.forwarder.__exit__()
-            self._tunnel = None
             log.debug(f'disconnected SSH tunnel')
-            # if self.tunnel.forwarder.is_active:
-            #     self.tunnel.forwarder.stop()
-            #     log.debug(f'disconnected SSH tunnel')
-            # if self.tunnel.forwarder.is_alive:
-            #     self.tunnel.forwarder.close()
-            #     log.debug(f'disconnecting SSH')
 
     def __enter__(self) -> 'DatabaseConnection':
         """Context manager."""

@@ -10,15 +10,13 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Message"."MessageTopic"
+CREATE TABLE IF NOT EXISTS "observation"."object_type"
 (
-    "MessageTopicID" bigserial NOT NULL,
-    "MessageTopicName" text NOT NULL,
-    PRIMARY KEY ("MessageTopicID")
+    "object_type_id" BIGSERIAL NOT NULL,
+    "object_type_name" TEXT NOT NULL,
+    "object_type_description" TEXT NOT NULL,
+    PRIMARY KEY ("object_type_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-COMMENT ON TABLE "Message"."MessageTopic"
-    IS 'Types of messages.';

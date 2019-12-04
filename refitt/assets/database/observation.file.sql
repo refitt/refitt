@@ -10,17 +10,27 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Model"."ModelType"
+CREATE TABLE IF NOT EXISTS "observation"."file"
 (
-    "ModelTypeID" bigserial NOT NULL,
-    "ModelTypeName" text NOT NULL,
-    "ModelTypeFormat" text NOT NULL,
-    "ModelTypeNotes" text,
-    PRIMARY KEY ("ModelTypeID")
+    "file_id" BIGSERIAL NOT NULL,
+
+    "observation_id" BIGINT NOT NULL,
+
+    "file_data" BYTEA NOT NULL,
+    "file_type" TEXT NOT NULL,
+
+    PRIMARY KEY ("file_id"),
+
+    CONSTRAINT "observation_id" FOREIGN KEY ("observation_id")
+        REFERENCES "observation"."observation" ("observation_id") MATCH FULL
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
 )
 WITH (
     OIDS = FALSE
 );
 
-ALTER TABLE "Model"."ModelType"
-    OWNER to glentner;
+CREATE INDEX IF NOT EXISTS "observation_id"
+    ON "observation"."file" USING btree
+    ("observation_id" ASC NULLS LAST);

@@ -10,16 +10,19 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Observation"."ObservationType"
+CREATE TABLE IF NOT EXISTS "user"."facility"
 (
-    "ObservationTypeID" bigserial NOT NULL,
-    "ObservationTypeName" text NOT NULL,
-    "ObservationTypeUnit" text NOT NULL,
-    PRIMARY KEY ("ObservationTypeID")
+    "facility_id" BIGSERIAL NOT NULL,
+
+    "facility_name" TEXT NOT NULL,
+    "facility_latitude" DOUBLE PRECISION NOT NULL,
+    "facility_longitude" DOUBLE PRECISION NOT NULL,
+    "facility_altitude" DOUBLE PRECISION NOT NULL,
+    "facility_limiting_magnitude" DOUBLE PRECISION NOT NULL,
+    "facility_profile" JSONB NOT NULL,
+
+    PRIMARY KEY ("facility_id")
 )
 WITH (
     OIDS = FALSE
 );
-
-COMMENT ON TABLE "Observation"."ObservationType"
-    IS 'Observation type (e.g., "apparent g-band magnitude").';

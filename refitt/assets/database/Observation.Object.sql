@@ -10,17 +10,21 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "Observation"."Object"
+CREATE TABLE IF NOT EXISTS "observation"."object"
 (
-    "ObjectID" bigserial NOT NULL,
-    "ObjectTypeID" bigint NOT NULL,
-    "ObjectRA" double precision NOT NULL,
-    "ObjectDec" double precision NOT NULL,
-    "ObjectRedShift" double precision,
-    "ObjectName" character varying (80) NOT NULL,
-    PRIMARY KEY ("ObjectID"),
-    CONSTRAINT "ObjectTypeID" FOREIGN KEY ("ObjectTypeID")
-        REFERENCES "Observation"."ObjectType" ("ObjectTypeID") MATCH FULL
+    "object_id" BIGSERIAL NOT NULL,
+
+    "object_type_id" BIGINT NOT NULL,
+
+    "object_name" TEXT NOT NULL,
+    "object_ra" DOUBLE PRECISION NOT NULL,
+    "object_dec" DOUBLE PRECISION NOT NULL,
+    "object_redshift" DOUBLE PRECISION,
+
+    PRIMARY KEY ("object_id"),
+    
+    CONSTRAINT "object_type_id" FOREIGN KEY ("object_type_id")
+        REFERENCES "observation"."object_type" ("object_type_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
@@ -29,8 +33,6 @@ WITH (
     OIDS = FALSE
 );
 
-COMMENT ON TABLE "Observation"."Object"
-    IS 'All unique objects (from "Observation").';
-
-COMMENT ON CONSTRAINT "ObjectTypeID" ON "Observation"."Object"
-    IS 'Associates with "ObjectType"."ObjectTypeID"';
+CREATE INDEX IF NOT EXISTS "object_type_id"
+    ON "observation"."object" USING btree
+    ("object_type_id" ASC NULLS LAST);
