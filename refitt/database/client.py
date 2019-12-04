@@ -81,6 +81,7 @@ class SSHTunnel:
 
         self.forwarder = SSHTunnelForwarder(
             (self.ssh.host, self.ssh.port),
+            ssh_username=self.auth.username,
             ssh_password=self.auth.password, ssh_pkey=self.pkey,
             remote_bind_address=(self.remote.host, self.remote.port),
             local_bind_address=(self.local.host, self.local.port))
@@ -296,5 +297,5 @@ class DatabaseClient:
         """Establish an ssh-tunnel."""
         auth_ = auth if auth is not None else self.auth
         self.tunnel = SSHTunnel(ssh=ssh, auth=auth_, remote=self.server, local=local)
-        self.tunnel.forwarder.__enter__()
+        self.tunnel.forwarder.start()
         return self
