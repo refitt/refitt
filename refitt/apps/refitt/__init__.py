@@ -32,6 +32,7 @@ from .service_webapi import WebAPIApp
 from .data_select import DataSelectApp
 from .data_insert import DataInsertApp
 from .data_initdb import DataInitDBApp
+from .data_auth import DataAuthApp
 
 
 SUB_COMMANDS = {
@@ -41,6 +42,7 @@ SUB_COMMANDS = {
     'data.select': DataSelectApp,
     'data.insert': DataInsertApp,
     'data.initdb': DataInitDBApp,
+    'data.auth': DataAuthApp,
 }
 
 PROGRAM = __appname__
@@ -98,8 +100,8 @@ commands:
     data
         .select        {DataSelectApp.__doc__}
         .insert        {DataInsertApp.__doc__}
-        .delete        Delete records from database.
         .initdb        {DataInitDBApp.__doc__}
+        .auth          {DataAuthApp.__doc__}
 """
 
 GROUPS = {
@@ -107,7 +109,7 @@ GROUPS = {
     'service':  SERVICE_GROUP,
     'job':      JOB_GROUP,
     'data':     DATA_GROUP,
-    
+
 }
 
 GROUP_HELP = """\
@@ -137,7 +139,7 @@ options:
 Use the -h/--help flag with the above groups/commands to
 learn more about their usage.
 
-{EPILOG}
+{EPILOG}\
 """
 
 
@@ -158,7 +160,7 @@ class RefittMain(Application):
         """Show usage/help/version or defer to subcommand."""
         try:
             if self.subcommand in GROUPS.keys():
-                print(GROUP_HELP.format(name=f'{__appname__} {self.subcommand}', 
+                print(GROUP_HELP.format(name=f'{__appname__} {self.subcommand}',
                                         info=GROUPS[self.subcommand]))
             else:
                 SUB_COMMANDS[self.subcommand].main(sys.argv[2:])

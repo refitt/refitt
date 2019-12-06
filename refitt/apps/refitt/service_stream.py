@@ -109,7 +109,7 @@ class StreamApp(Application):
         if self.broker not in client:
             log.critical(f'"{self.broker}" is not an available broker.')
             return
-        
+
         if self.key is None:
             try:
                 self.key = config['stream'][self.broker]['key']
@@ -134,7 +134,7 @@ class StreamApp(Application):
 
         local_filter = getattr(Client, filter_name)
 
-        
+
         log.info(f'connecting to {self.broker}')
         with Client(self.topic, (self.key, self.token)) as stream:
             log.info(f'initiating stream (broker={self.broker} topic={self.topic} filter={self.filter_name})')

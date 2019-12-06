@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS "observation"."object_type"
     "object_type_id" BIGSERIAL NOT NULL,
     "object_type_name" TEXT NOT NULL,
     "object_type_description" TEXT NOT NULL,
-    PRIMARY KEY ("object_type_id")
+
+    PRIMARY KEY ("object_type_id"),
+	UNIQUE("object_type_name")
 )
 WITH (
     OIDS = FALSE

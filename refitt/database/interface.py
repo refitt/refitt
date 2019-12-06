@@ -13,16 +13,14 @@
 """Access and management to REFITT's database."""
 
 # standard libs
-import os
-import secrets
 import functools
 
 # type annotations
-from typing import Tuple, Dict, Any, List
+from typing import List
 
 # internal libs
 from ..core.logging import logger
-from .client import DatabaseClient, ServerAddress, UserAuth
+from .client import DatabaseClient
 from .config import connection_info
 
 # external libs
@@ -58,11 +56,11 @@ def insert(data: DataFrame, table: str, schema: str, if_exists: str = 'append',
     info = connection_info()
     if 'tunnel' not in info:
         with DatabaseClient(**info['server']) as client:
-            data.to_sql(table, client.engine, schema=schema, if_exists=if_exists, 
+            data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
                         index=False, chunksize=chunksize)
     else:
         with DatabaseClient(**info['server']).use_tunnel(**info['tunnel']) as client:
-            data.to_sql(table, client.engine, schema=schema, if_exists=if_exists, 
+            data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
                         index=index, chunksize=chunksize)
 
 
@@ -82,12 +80,14 @@ def _select(query: str) -> DataFrame:
             return read_sql(query, client.engine)
 
 
+@functools.lru_cache(maxsize=None)
 def get_columns(schema: str, name: str) -> List[str]:
     """List of column names."""
     return list(_select(f"select column_name from information_schema.columns where "
                         f"table_schema = '{schema}' and table_name = '{name}'")['column_name'])
 
 
+@functools.lru_cache(maxsize=None)
 def get_tables(schema: str) -> List[str]:
     """List of member tables."""
     return list(_select(f"select table_name from information_schema.tables where "
@@ -104,22 +104,22 @@ SELECT
     constraint_column_usage.table_name   AS foreign_table_name,
     constraint_column_usage.column_name  AS foreign_column_name
 
-FROM 
+FROM
     information_schema.table_constraints
-    
-JOIN 
+
+JOIN
     information_schema.key_column_usage
-    ON 
+    ON
         table_constraints.constraint_name = key_column_usage.constraint_name AND
         table_constraints.table_schema = key_column_usage.table_schema
 
-JOIN 
+JOIN
     information_schema.constraint_column_usage
-    ON 
+    ON
         constraint_column_usage.constraint_name = table_constraints.constraint_name AND
         constraint_column_usage.table_schema = table_constraints.table_schema
 
-WHERE 
+WHERE
     table_constraints.constraint_type = 'FOREIGN KEY' AND
     table_constraints.table_schema='{schema}' AND
     table_constraints.table_name='{table}';
@@ -147,7 +147,7 @@ def _make_select(columns: List[str], schema: str, table: str, where: List[str] =
                  limit: int = None, orderby: str = None, ascending: bool = True,
                  join: bool = False) -> str:
     """Build SQL query. See also: `select`."""
-    
+
     if not columns:
         columns = get_columns(schema, table)
 
@@ -172,7 +172,7 @@ def _make_select(columns: List[str], schema: str, table: str, where: List[str] =
         query += '\nWHERE\n    ' + '\n    AND '.join(where)
 
     if orderby is not None:
-        query += f'\nORDER BY "{orderby}"'
+        query += f'\nORDER BY "{table}"."{orderby}"'
         query += ' ASC' if ascending else ' DESC'
 
     if limit is not None:
@@ -182,7 +182,7 @@ def _make_select(columns: List[str], schema: str, table: str, where: List[str] =
 
 
 def select(columns: List[str], schema: str, table: str, where: List[str] = [],
-           limit: int = None, orderby: str = None, ascending: bool = True, 
+           limit: int = None, orderby: str = None, ascending: bool = True,
            join: bool = False, set_index: bool = True) -> DataFrame:
     """
     Construct an SQL query and execute.
@@ -196,7 +196,7 @@ def select(columns: List[str], schema: str, table: str, where: List[str] = [],
         The resulting table from the query.
     """
 
-    query = _make_select(columns, schema, table, where=where, limit=limit, 
+    query = _make_select(columns, schema, table, where=where, limit=limit,
                          orderby=orderby, ascending=ascending, join=join)
     result = _select(query)
     if set_index is True and f'{table}_id' in result.columns:
@@ -214,17 +214,17 @@ class Table:
         """Initialize with fully qualified name."""
         self.schema = schema
         self.name = name
-    
+
     @property
     @functools.lru_cache(maxsize=1)
     def columns(self) -> List[str]:
         """List of column names."""
         return get_columns(self.schema, self.name)
-    
+
     def select(self, columns: List[str] = [], **options) -> DataFrame:
         """Select records from the table."""
         return select(columns, self.schema, self.name, **options)
-    
+
     def insert(self, dataframe: DataFrame, **options) -> None:
         """Insert full `dataframe` into table."""
         insert(dataframe, self.name, self.schema, **options)
@@ -237,7 +237,7 @@ class Table:
     def __str__(self) -> str:
         """String view of table interface."""
         return f'<{self.__class__.__name__}({self.schema}.{self.name})>'
-    
+
     def __repr__(self) -> str:
         """Interactive representation of table interface."""
         return str(self)
@@ -250,13 +250,13 @@ class Schema:
 
     def __init__(self, name: str) -> None:
         self.name = name
-    
+
     @property
     @functools.lru_cache(maxsize=1)
     def tables(self) -> List[str]:
         """List of member tables."""
         return get_tables(self.name)
-    
+
     @functools.lru_cache(maxsize=None)
     def __getitem__(self, table: str) -> Table:
         """Get table interface."""
@@ -265,7 +265,7 @@ class Schema:
     def __str__(self) -> str:
         """String view of schema interface."""
         return f'<{self.__class__.__name__}({self.name})>'
-    
+
     def __repr__(self) -> str:
         """Interactive representation of schema interface."""
         return str(self)

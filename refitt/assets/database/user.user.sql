@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS "user"."user"
     "user_alias" TEXT NOT NULL,
     "user_profile" JSONB NOT NULL,
 
-    PRIMARY KEY ("user_id")
+    PRIMARY KEY ("user_id"),
+	UNIQUE("user_email"),
+	UNIQUE("user_alias")
 )
 WITH (
     OIDS = FALSE

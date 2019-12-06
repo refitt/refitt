@@ -41,8 +41,8 @@ PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 usage: {PROGRAM} <schema>.<table> [--columns NAME [NAME...]] [--where CONDITION [CONDITION...]]
        {PADDING} [--output PATH] [--format FORMAT | ...] [--tablefmt FORMAT]
-       {PADDING} [--limit COUNT | --no-limit] [--join] [--debug] [--dry-run]
-       {PADDING} [--help]
+       {PADDING} [--limit COUNT | --no-limit] [--join] [--order-by NAME] [--descending]
+       {PADDING} [--debug] [--dry-run] [--help]
 
 {__doc__}\
 """
@@ -64,7 +64,7 @@ is given the format should be specified and data will be written to standard
 output. The default format is ASCII. When writing to ASCII format, the --tablefmt
 option specifies how to format the data (e.g., "plain", "psql", "latex", etc.).
 
-Output is limited to 10 by default for safety. Use --no-limit to disable this 
+Output is limited to 10 by default for safety. Use --no-limit to disable this
 behavior.
 
 arguments:
@@ -75,7 +75,9 @@ options:
 -o, --output     PATH        File path for output.
 -w, --where      CONDITION   Quoted SQL conditional statements.
 -l, --limit      COUNT       Limit number of records to fetch. (default: 10)
--a, --no-limit               Disable limit on number of records.
+    --no-limit               Disable limit on number of records.
+    --order-by   NAME        Sort records by specific column.
+    --descending             Sort in descending order.
 -j, --join                   Swap in fkey _id fields for _name fields.
     --dry-run                Show SQL without executing.
 -d, --debug                  Show debugging messages.
@@ -93,7 +95,7 @@ formats:
     --tablefmt   FORMAT      Format scheme for ASCII output.
 
 
-{EPILOG}
+{EPILOG}\
 """
 
 # initialize module level logger
@@ -108,6 +110,7 @@ def to_ascii(self, output: Union[str, IO], tablefmt: str = 'plain') -> None:
             outfile.write(content)
     else:
         output.write(content)
+
 
 # attach to DataFrame for consistency of interface
 DataFrame.to_ascii = to_ascii
@@ -134,8 +137,14 @@ class DataSelectApp(Application):
     limit: int = 10
     no_limit: bool = False
     limit_group = interface.add_mutually_exclusive_group()
-    limit_group.add_argument('-l', '--limit', type=int)
-    limit_group.add_argument('-a', '--no-limit', action='store_true')
+    limit_group.add_argument('-l', '--limit', type=int, default=limit)
+    limit_group.add_argument('--no-limit', action='store_true')
+
+    order_by: str = None
+    interface.add_argument('--order-by', default=None)
+
+    descending: bool = False
+    interface.add_argument('--descending', action='store_true')
 
     join: bool = False
     interface.add_argument('-j', '--join', action='store_true')
@@ -148,8 +157,8 @@ class DataSelectApp(Application):
         format_group.add_argument(f'--{option}', dest=f'format_{option}', action='store_true')
 
     tablefmt: str = 'plain'
-    tablefmts: List[str] = ['plain', 'simple', 'github', 'grid', 'fancy_grid', 'pipe', 
-                            'orgtbl', 'jira', 'presto', 'psql', 'rst', 'mediawiki', 'moinmoin', 
+    tablefmts: List[str] = ['plain', 'simple', 'github', 'grid', 'fancy_grid', 'pipe',
+                            'orgtbl', 'jira', 'presto', 'psql', 'rst', 'mediawiki', 'moinmoin',
                             'youtrack', 'html', 'latex', 'latex_raw', 'latex_booktabs', 'textile']
     interface.add_argument('-t', '--tablefmt', choices=tablefmts, default=tablefmt)
 
@@ -196,8 +205,8 @@ class DataSelectApp(Application):
             self.output = sys.stdout
 
         # pre-construct parameters in case of dry-run
-        params = dict(columns=columns, schema=schema, table=table, limit=limit,
-                      where=self.where, orderby=None, ascending=True, join=self.join)
+        params = dict(columns=columns, schema=schema, table=table, limit=limit, where=self.where,
+                      orderby=self.order_by, ascending=(not self.descending), join=self.join)
 
         if self.dry_run:
             sys.stdout.write(database.interface._make_select(**params))

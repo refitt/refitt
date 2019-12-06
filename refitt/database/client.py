@@ -14,7 +14,7 @@
 
 # standard libs
 import os
-from typing import Tuple, Iterable, NamedTuple
+from typing import NamedTuple
 
 # internal libs
 from ..__meta__ import __appname__
@@ -273,7 +273,7 @@ class DatabaseClient:
         username, password = tuple(self.auth)
         host, port = tuple(self.server)
         self._engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{self.database}')
-        log.debug(f'established connected to "{self.database}" at {self.server.host}:{self.server.port}')
+        log.debug(f'connected to "{self.database}" at {self.server.host}:{self.server.port}')
 
     def close(self) -> None:
         """Close database connection and ssh-tunnel if necessary."""
@@ -283,7 +283,7 @@ class DatabaseClient:
             self.tunnel.forwarder.__exit__()
             log.debug(f'disconnected SSH tunnel')
 
-    def __enter__(self) -> 'DatabaseConnection':
+    def __enter__(self) -> 'DatabaseClient':
         """Context manager."""
         self.connect()
         return self
