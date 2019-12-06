@@ -64,7 +64,7 @@ is given the format should be specified and data will be written to standard
 output. The default format is ASCII. When writing to ASCII format, the --tablefmt
 option specifies how to format the data (e.g., "plain", "psql", "latex", etc.).
 
-Output is limited to 10 by default for safety. Use --no-limit to disable this 
+Output is limited to 10 by default for safety. Use --no-limit to disable this
 behavior.
 
 arguments:
@@ -111,6 +111,7 @@ def to_ascii(self, output: Union[str, IO], tablefmt: str = 'plain') -> None:
     else:
         output.write(content)
 
+
 # attach to DataFrame for consistency of interface
 DataFrame.to_ascii = to_ascii
 
@@ -156,8 +157,8 @@ class DataSelectApp(Application):
         format_group.add_argument(f'--{option}', dest=f'format_{option}', action='store_true')
 
     tablefmt: str = 'plain'
-    tablefmts: List[str] = ['plain', 'simple', 'github', 'grid', 'fancy_grid', 'pipe', 
-                            'orgtbl', 'jira', 'presto', 'psql', 'rst', 'mediawiki', 'moinmoin', 
+    tablefmts: List[str] = ['plain', 'simple', 'github', 'grid', 'fancy_grid', 'pipe',
+                            'orgtbl', 'jira', 'presto', 'psql', 'rst', 'mediawiki', 'moinmoin',
                             'youtrack', 'html', 'latex', 'latex_raw', 'latex_booktabs', 'textile']
     interface.add_argument('-t', '--tablefmt', choices=tablefmts, default=tablefmt)
 
