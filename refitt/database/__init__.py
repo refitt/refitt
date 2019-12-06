@@ -16,10 +16,9 @@
 from . import client, config, interface, user, auth
 from .interface import execute, select, insert
 
-from .interface import user as user_schema, observation as observation_schema, \
-    recommendation as recommendation_schema, model as model_schema, \
-    message as message_schema
-
-schema = {'user': user_schema, 'observation': observation_schema,
-          'recommendation': recommendation_schema, 'model': model_schema,
-          'message': message_schema}
+# group schema instances together
+data = {'user': interface.user,
+        'observation': interface.observation,
+        'recommendation': interface.recommendation,
+        'model': interface.model,
+        'message': interface.message}
