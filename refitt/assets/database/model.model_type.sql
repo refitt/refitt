@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS "model"."model_type"
     "model_type_format" TEXT NOT NULL,
     "model_type_description" TEXT,
 
-    PRIMARY KEY ("model_type_id")
+    PRIMARY KEY ("model_type_id"),
+	UNIQUE("model_type_name")
 )
 WITH (
     OIDS = FALSE

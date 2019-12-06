@@ -17,12 +17,14 @@ CREATE TABLE IF NOT EXISTS "observation"."object"
     "object_type_id" BIGINT NOT NULL,
 
     "object_name" TEXT NOT NULL,
+    "object_aliases" JSONB,
     "object_ra" DOUBLE PRECISION NOT NULL,
     "object_dec" DOUBLE PRECISION NOT NULL,
     "object_redshift" DOUBLE PRECISION,
 
     PRIMARY KEY ("object_id"),
-    
+	UNIQUE("object_name"),
+
     CONSTRAINT "object_type_id" FOREIGN KEY ("object_type_id")
         REFERENCES "observation"."object_type" ("object_type_id") MATCH FULL
         ON UPDATE NO ACTION
@@ -36,3 +38,7 @@ WITH (
 CREATE INDEX IF NOT EXISTS "object_type_id"
     ON "observation"."object" USING btree
     ("object_type_id" ASC NULLS LAST);
+
+CREATE INDEX IF NOT EXISTS "object_name"
+    ON "observation"."object" USING btree
+    ("object_name" ASC NULLS LAST);

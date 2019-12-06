@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS "model"."model"
     "model_accuracy" DOUBLE PRECISION,
     
     PRIMARY KEY ("model_id"),
+	UNIQUE("model_name"),
 
     CONSTRAINT "model_type_id" FOREIGN KEY ("model_type_id")
         REFERENCES "model"."model_type" ("model_type_id") MATCH SIMPLE
@@ -34,6 +35,6 @@ WITH (
     OIDS = FALSE
 );
 
-CREATE INDEX "model_type_id"
+CREATE INDEX IF NOT EXISTS "model_type_id"
     ON "model"."model" USING btree
     ("model_type_id" ASC NULLS LAST);

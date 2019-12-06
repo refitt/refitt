@@ -10,11 +10,13 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE "message"."message_level"
+CREATE TABLE IF NOT EXISTS "message"."message_level"
 (
     "message_level_id" BIGSERIAL NOT NULL,
     "message_level_name" TEXT NOT NULL,
-    PRIMARY KEY ("message_level_id")
+
+    PRIMARY KEY ("message_level_id"),
+	UNIQUE("message_level_name")
 )
 WITH (
     OIDS = FALSE

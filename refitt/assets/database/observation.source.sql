@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS "observation"."source"
     "source_reference" TEXT,
 
     PRIMARY KEY ("source_id"),
+	UNIQUE("source_name"),
 
     CONSTRAINT "source_type_id" FOREIGN KEY ("source_type_id")
         REFERENCES "observation"."source_type" ("source_type_id") MATCH FULL

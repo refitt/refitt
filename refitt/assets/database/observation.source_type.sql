@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS "observation"."source_type"
     "source_type_name" TEXT NOT NULL,
     "source_type_description" TEXT,
     
-    PRIMARY KEY ("source_type_id")
+    PRIMARY KEY ("source_type_id"),
+	UNIQUE("source_type_name")
 )
 WITH (
     OIDS = FALSE
