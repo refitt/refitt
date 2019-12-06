@@ -163,11 +163,12 @@ class DataInsertApp(Application):
         else:
             reader = getattr(pandas, f'read_{self.input_format}')
 
-        log.debug(f'reading data from {self.infile} (format={self.input_format})')
+        infile_label = '<stdin>' if self.infile is sys.stdin else self.infile
+        log.info(f'reading data from {infile_label} (format={self.input_format})')
         data = reader(self.infile)
 
-        log.debug(f'inserting {len(data)} records into "{schema}"."{table}"')
-        database.schema[schema][table].insert(data)
+        log.info(f'inserting {len(data)} records into "{schema}"."{table}"')
+        database.data[schema][table].insert(data)
 
 
 # inherit docstring from module
