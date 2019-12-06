@@ -27,7 +27,7 @@ from ...__meta__ import (__appname__, __copyright__, __developer__,
 
 # external libs
 from cmdkit.app import Application
-from cmdkit.cli import Interface, ArgumentError, HelpOption
+from cmdkit.cli import Interface, ArgumentError
 
 # type annotations
 from typing import List
@@ -39,7 +39,7 @@ PROGRAM = f'{__appname__} {NAME}'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} NAME [NAME...] [--all] [--dry-run] [--debug]
+usage: {PROGRAM} NAME [NAME...] [--all] [--drop] [--dry-run] [--debug]
        {PADDING} [--help]
 
 {__doc__}\
@@ -58,6 +58,7 @@ HELP = f"""\
 
 options:
     --all                    Initialize all database objects.
+    --drop                   Apply drop on objects before re-initializing.
     --dry-run                Show SQL without executing.
 -d, --debug                  Show debugging messages.
 -h, --help                   Show this message and exit.
@@ -89,8 +90,8 @@ DATABASE_OBJECTS = (
     'observation.file',
     'recommendation',
     'recommendation.recommendation_group',
-    'recommendation.recommendation',
     'recommendation.recommendation_object',
+    'recommendation.recommendation',
     'model',
     'model.model_type',
     'model.model',
@@ -102,15 +103,22 @@ DATABASE_OBJECTS = (
 )
 
 
+DROP_TABLE = 'DROP TABLE {name}'
+DROP_SCHEMA = 'DROP SCHEMA {name}'
+
+
 class DataInitDBApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
     names: List[str] = []
     interface.add_argument('names', metavar='NAME', nargs='*')
-    
+
     all_names: bool = False
     interface.add_argument('-a', '--all', action='store_true', dest='all_names')
+
+    drop: bool = False
+    interface.add_argument('--drop', action='store_true')
 
     dry_run: bool = False
     interface.add_argument('--dry-run', action='store_true')
@@ -149,18 +157,24 @@ class DataInitDBApp(Application):
         if 'tunnel' not in info:
             with DatabaseClient(**info['server']) as client:
                 for name in self.names:
-                    log.info(f'initializing {name}')
+                    quoted = name if '.' not in name else '"{}"."{}"'.format(*name.split('.'))
+                    if self.drop is True:
+                        QUERY = DROP_TABLE if '.' in name else DROP_SCHEMA
+                        QUERY = QUERY.format(name=quoted)
+                        client.engine.execute(QUERY)
+                        log.info(QUERY.lower().replace('drop', 'dropped'))
                     client.engine.execute(self.load_sql(name))
+                    log.info(f'initialed {name}')
         else:
             with DatabaseClient(**info['server']).use_tunnel(**info['tunnel']) as client:
                 for name in self.names:
                     log.info(f'initializing {name}')
                     client.engine.execute(self.load_sql(name))
-    
+
     @functools.lru_cache(maxsize=len(DATABASE_OBJECTS))
     def load_sql(self, name: str) -> str:
         """Load and strip SQL from package file."""
-        return '\n'.join(list(filter(lambda line: not line.startswith('--'), 
+        return '\n'.join(list(filter(lambda line: not line.startswith('--'),
                                      load_asset(f'database/{name}.sql').strip().split('\n'))))
 
     @property
