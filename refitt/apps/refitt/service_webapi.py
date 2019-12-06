@@ -19,7 +19,7 @@ import json
 import subprocess
 
 # internal libs
-from ... import database
+from ...database import auth
 from ...core.logging import logger
 from ...__meta__ import (__appname__, __copyright__, __developer__,
                          __contact__, __website__)
@@ -49,56 +49,69 @@ def not_found(error=None) -> Response:
                     mimetype='application/json')
 
 
-@application.route('/user/auth', methods=['GET'])
-def auth() -> Response:
-    """Request for a user's `authkey` and `authtoken`."""
+@application.route('/user/auth', methods=['GET', 'POST'])
+def route_user_auth() -> Response:
+    """
+    Request for a user's most recent valid credentials (GET) or create a new set
+    of credentials (POST).
+
+    Arguments
+    ---------
+    auth_key: str
+        The 16-bit cryptographic key for the level-0 account.
+
+    auth_token: str
+        The 64-bit cryptographic token for the level-0 account.
+
+    user_id: int
+        The user_id for the user whose most recent, valid credentials
+        are being requested.
+
+    Returns
+    -------
+    response: JSON
+        RESTful response; payload is under 'data'.
+    """
 
     args = dict(request.args)
     response = {'status': 'success',
                 'query': {'endpoint': '/user/auth',
+                          'method': request.method,
                           'input': request.args}}
-
     try:
         # required query parameters
-        auth0_key = str(args.pop('auth_key'))
-        auth0_token = str(args.pop('auth_token'))
+        key = str(args.pop('auth_key'))
+        token = str(args.pop('auth_token'))
         user_id = int(args.pop('user_id'))
+
+        log.info(f'{request.method}: user_id={user_id}')
 
         if args:
             raise ValueError('Invalid parameters', list(args.keys()))
 
         # query database for credentials
-        auth0 = database.user.auth(auth_key=auth0_key, auth_valid=True)
+        if not auth.check_valid(key, token, 0):
+            raise ValueError('Invalid level-0 credentials')
 
-        if auth0.empty:
-            raise ValueError('Invalid or missing credentials.')
+        if request.method == 'GET':
+            # query for user credentials
+            user = auth.from_user(user_id)
+            if user.empty:
+                raise ValueError(f'No valid credentials for userid={user_id}.')
+            # most recent credentials
+            user = user.iloc[0].to_dict()
 
-        if auth0_token not in auth0.auth_token.values:
-            raise ValueError('Token is not valid.')
+        elif request.method == 'POST':
+            user = auth.gen_auth(user_id, level=2)  # FIXME: default level for new auth?
+            auth.put_auth(user)
 
-        # select credential
-        auth0_chosen = auth0[auth0.auth_token == auth0_token].iloc[0]
-
-        # only 0-level auth can request credentials
-        if auth0_chosen.auth_level > 0:
-            raise ValueError('Level zero authorization required.')
-
-        # query for user credentials
-        user = database.user.auth(user_id=user_id, auth_valid=True)
-
-        if user.empty:
-            raise ValueError(f'No valid credentials for userid={user_id}.')
-
-        # select newest valid credentials and re-inject "auth_id" as named field
         # NOTE: `numpy` types are not serializable by `json` (ergo, must be coerced back to Python types)
-        user_auth = user.reset_index().sort_values(by='auth_time', ascending=False).iloc[0].to_dict()
-        response['data'] = {'auth_id': int(user_auth['auth_id']),
-                            'auth_level': int(user_auth['auth_level']),
-                            'auth_key': str(user_auth['auth_key']),
-                            'auth_token': str(user_auth['auth_token']),
-                            'auth_valid': bool(user_auth['auth_valid']),
-                            'auth_time': str(user_auth['auth_time']),
-                            'user_id': int(user_auth['user_id'])}
+        response['data'] = {'auth_level': int(user['auth_level']),
+                            'auth_key': str(user['auth_key']),
+                            'auth_token': str(user['auth_token']),
+                            'auth_valid': bool(user['auth_valid']),
+                            'auth_time': str(user['auth_time']),
+                            'user_id': int(user['user_id'])}
 
     except KeyError as error:
         response['status'] = 'error'
@@ -120,12 +133,6 @@ def auth() -> Response:
 @application.route('/observation/object_type', methods=['GET'])
 def observation_object_type() -> str:
     """Query database for observation records."""
-
-    from io import StringIO
-
-    buffer = StringIO()
-    database.observation.object_types.to_json(buffer, orient='records')
-    return buffer.getvalue()
 
 
 # program name is constructed from module file name
@@ -180,7 +187,7 @@ class WebAPIApp(Application):
     interface.add_argument('-w', '--workers', type=int, default=workers)
 
     def run(self) -> None:
-        """Run Refitt pipeline."""
+        """Start REFITT Web-API server."""
         log.info(f'starting web-api on port {self.port} with {self.workers} workers')
         subprocess.run(['gunicorn', '--bind', f'0.0.0.0:{self.port}', '--workers', f'{self.workers}',
                         'refitt.apps.refitt.service_webapi'], stdout=sys.stdout, stderr=sys.stderr)
