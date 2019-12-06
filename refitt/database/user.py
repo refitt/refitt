@@ -14,18 +14,12 @@
 
 # standard libs
 import json
-import secrets
-from datetime import datetime
-
-# type annotations
-# from typing import Tuple, Dict, Any, List
 
 # internal libs
 from ..core.logging import logger
 from .interface import execute
 
 # external libs
-from pandas import DataFrame
 from sqlalchemy.sql import text
 
 # initialize module level logger
@@ -40,7 +34,7 @@ ON CONFLICT (user_id) DO UPDATE
         user_last_name  = excluded.user_last_name,
         user_email      = excluded.user_email,
         user_alias      = excluded.user_alias,
-        user_profile    = excluded.user_profile; 
+        user_profile    = excluded.user_profile;
 """
 
 INSERT_QUERY = """\

@@ -35,7 +35,7 @@ class AlertInterface:
     def data(self) -> AlertJSON:
         """Access to underlying alert data."""
         return self._data
-    
+
     @data.setter
     def data(self, other: AlertJSON) -> None:
         """Set underlying alert data."""
@@ -76,15 +76,15 @@ class AlertInterface:
     def from_str(cls, value: str, **options) -> 'AlertInterface':
         """Load an alert from existing string (JSON)."""
         return cls(json.loads(value, **options))
-    
+
     def to_str(self, indent: int = 4, **options) -> str:
         """Convert alert to string (JSON) format."""
         return json.dumps(self.data, indent=indent, **options)
-    
+
     def __str__(self) -> str:
         """View alert in string (JSON) form."""
         return self.to_str(indent=4)
-    
+
     def __repr__(self) -> str:
         """Interactive representation (JSON)."""
         return str(self)
