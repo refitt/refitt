@@ -32,7 +32,8 @@ from .service_webapi import WebAPIApp
 from .data_select import DataSelectApp
 from .data_insert import DataInsertApp
 from .data_initdb import DataInitDBApp
-from .data_auth import DataAuthApp
+from .user_auth import UserAuthApp
+from .user_facility import UserFacilityApp
 
 
 SUB_COMMANDS = {
@@ -42,7 +43,8 @@ SUB_COMMANDS = {
     'data.select': DataSelectApp,
     'data.insert': DataInsertApp,
     'data.initdb': DataInitDBApp,
-    'data.auth': DataAuthApp,
+    'user.auth': UserAuthApp,
+    'user.facility': UserFacilityApp,
 }
 
 PROGRAM = __appname__
@@ -101,7 +103,15 @@ commands:
         .select        {DataSelectApp.__doc__}
         .insert        {DataInsertApp.__doc__}
         .initdb        {DataInitDBApp.__doc__}
-        .auth          {DataAuthApp.__doc__}
+"""
+
+USER_GROUP = f"""\
+Manage user credentials and facility profiles.
+
+commands:
+    user
+        .facility      {UserFacilityApp.__doc__}
+        .auth          {UserAuthApp.__doc__}
 """
 
 GROUPS = {
@@ -109,6 +119,7 @@ GROUPS = {
     'service':  SERVICE_GROUP,
     'job':      JOB_GROUP,
     'data':     DATA_GROUP,
+    'user':     USER_GROUP,
 
 }
 
@@ -131,6 +142,7 @@ groups:
     service           {GROUP_DESC['service']}
     job               {GROUP_DESC['job']}
     data              {GROUP_DESC['data']}
+    user              {GROUP_DESC['user']}
 
 options:
 -h, --help             Show this message and exit.

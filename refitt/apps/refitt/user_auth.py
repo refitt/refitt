@@ -65,7 +65,7 @@ options:
 log = logger.with_name(f'{__appname__}.{NAME}')
 
 
-class DataAuthApp(Application):
+class UserAuthApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -115,4 +115,4 @@ class DataAuthApp(Application):
 
 
 # inherit docstring from module
-DataAuthApp.__doc__ = __doc__
+UserAuthApp.__doc__ = __doc__
