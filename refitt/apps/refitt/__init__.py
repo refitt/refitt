@@ -163,7 +163,7 @@ class CompletedCommand(Exception):
     """Lift exit_status of sub-commands `main` method."""
 
 
-class RefittMain(Application):
+class Refitt(Application):
     """Application class for primary Refitt console-app."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
@@ -195,4 +195,4 @@ class RefittMain(Application):
 
 def main() -> int:
     """Entry-point for `refitt` console application."""
-    return RefittMain.main(sys.argv[1:2])  # only first argument if present
+    return Refitt.main(sys.argv[1:2])  # only first argument if present
