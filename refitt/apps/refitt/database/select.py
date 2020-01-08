@@ -10,7 +10,11 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Select data from REFITT's database."""
+"""Select data from the REFITT database."""
+
+# type annotations
+from __future__ import annotations
+from typing import List, IO, Union
 
 # standard libs
 import os
@@ -18,31 +22,28 @@ import sys
 import functools
 
 # internal libs
-from ... import database
-from ...core.logging import logger
-from ...__meta__ import (__appname__, __copyright__, __developer__,
-                         __contact__, __website__)
+from .... import database
+from ....core.exceptions import log_and_exit
+from ....core.logging import Logger, SYSLOG_HANDLER
+from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
-from cmdkit.app import Application
+from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 from tabulate import tabulate
 from pandas import DataFrame
 
-# type annotations
-from typing import List, IO, Union
-
 
 # program name is constructed from module file name
-NAME = os.path.basename(__file__)[:-3].replace('_', '.')
-PROGRAM = f'{__appname__} {NAME}'
+PROGRAM = f'{__appname__} database select'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
 usage: {PROGRAM} <schema>.<table> [--columns NAME [NAME...]] [--where CONDITION [CONDITION...]]
        {PADDING} [--output PATH] [--format FORMAT | ...] [--tablefmt FORMAT]
        {PADDING} [--limit COUNT | --no-limit] [--join] [--order-by NAME] [--descending]
-       {PADDING} [--debug] [--dry-run] [--help]
+       {PADDING} [--debug | --verbose] [--syslog] [--dry-run]
+       {PADDING} [--help]
 
 {__doc__}\
 """
@@ -80,10 +81,6 @@ options:
     --descending             Sort in descending order.
 -j, --join                   Swap in fkey _id fields for _name fields.
     --dry-run                Show SQL without executing.
--d, --debug                  Show debugging messages.
--h, --help                   Show this message and exit.
-
-formats:
 -f, --format     FORMAT      Name of output format. (default: CSV)
   , --ascii
   , --json
@@ -91,15 +88,17 @@ formats:
   , --feather
   , --excel
   , --html
-
-    --tablefmt   FORMAT      Format scheme for ASCII output.
-
+    --tablefmt   FORMAT      Output format (with --ascii).
+-d, --debug                  Show debugging messages.
+-v, --verbose                Show information messages.
+    --syslog                 Use syslog style messages.
+-h, --help                   Show this message and exit.
 
 {EPILOG}\
 """
 
 # initialize module level logger
-log = logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
 def to_ascii(self, output: Union[str, IO], tablefmt: str = 'plain') -> None:
@@ -116,7 +115,8 @@ def to_ascii(self, output: Union[str, IO], tablefmt: str = 'plain') -> None:
 DataFrame.to_ascii = to_ascii
 
 
-class DataSelectApp(Application):
+class Select(Application):
+    """Select data from the REFITT database."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -166,14 +166,21 @@ class DataSelectApp(Application):
     interface.add_argument('--dry-run', action='store_true')
 
     debug: bool = False
-    interface.add_argument('-d', '--debug', action='store_true')
+    verbose: bool = False
+    logging_interface = interface.add_mutually_exclusive_group()
+    logging_interface.add_argument('-d', '--debug', action='store_true')
+    logging_interface.add_argument('-v', '--verbose', action='store_true')
+
+    syslog: bool = False
+    interface.add_argument('--syslog', action='store_true')
+
+    exceptions = {
+        RuntimeError: functools.partial(log_and_exit, logger=log.critical,
+                                        status=exit_status.runtime_error),
+    }
 
     def run(self) -> None:
         """Run query."""
-
-        if self.debug:
-            for handler in log.handlers:
-                handler.level = log.levels[0]
 
         limit = None if self.no_limit else self.limit
         schema, table = self.source.split('.')
@@ -230,6 +237,19 @@ class DataSelectApp(Application):
 
         writer(self.output)
 
+    def __enter__(self) -> Select:
+        """Initialize resources."""
 
-# inherit docstring from module
-DataSelectApp.__doc__ = __doc__
+        if self.syslog:
+            log.handlers[0] = SYSLOG_HANDLER
+        if self.debug:
+            log.handlers[0].level = log.levels[0]
+        elif self.verbose:
+            log.handlers[0].level = log.levels[1]
+        else:
+            log.handlers[0].level = log.levels[2]
+
+        return self
+
+    def __exit__(self, *exc) -> None:
+        """Release resources."""

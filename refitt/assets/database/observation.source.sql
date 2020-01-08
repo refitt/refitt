@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS "observation"."source"
 
     "source_type_id" BIGINT NOT NULL,
     "facility_id" BIGINT,
+    'user_id' BIGINT,
 
     "source_name" TEXT NOT NULL,
     "source_description" TEXT,
@@ -34,6 +35,12 @@ CREATE TABLE IF NOT EXISTS "observation"."source"
         REFERENCES "user"."facility" ("facility_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
+        NOT VALID,
+    
+    CONSTRAINT "user_id" FOREIGN KEY ("user_id")
+        REFERENCES "user"."user" ("user_id") MATCH FULL
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
         NOT VALID
 )
 WITH (
@@ -47,3 +54,7 @@ CREATE INDEX IF NOT EXISTS "source_type_id"
 CREATE INDEX IF NOT EXISTS "facility_id"
     ON "observation"."source" USING btree
     ("facility_id" ASC NULLS LAST);
+
+CREATE INDEX IF NOT EXISTS "user_id"
+    ON "observation"."source" USING btree
+    ("user_id" ASC NULLS LAST);

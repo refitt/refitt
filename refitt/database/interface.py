@@ -19,7 +19,7 @@ import functools
 from typing import List
 
 # internal libs
-from ..core.logging import logger
+from ..core.logging import Logger
 from .client import DatabaseClient
 from .config import connection_info
 
@@ -29,7 +29,7 @@ from sqlalchemy.engine.result import ResultProxy
 
 
 # initialize module level logger
-log = logger.with_name(f'refitt.database')
+log = Logger.with_name(f'refitt.database')
 
 
 def execute(statement: str, **params) -> ResultProxy:
@@ -45,7 +45,7 @@ def execute(statement: str, **params) -> ResultProxy:
             return client.engine.execute(statement, **params)
 
 
-def insert(data: DataFrame, table: str, schema: str, if_exists: str = 'append',
+def insert(data: DataFrame, schema: str, table: str, if_exists: str = 'append',
            index: bool = False, chunksize: int = 10000) -> None:
     """
     Insert `data` into `schema`.`table`.
@@ -227,7 +227,7 @@ class Table:
 
     def insert(self, dataframe: DataFrame, **options) -> None:
         """Insert full `dataframe` into table."""
-        insert(dataframe, self.name, self.schema, **options)
+        insert(dataframe, self.schema, self.name, **options)
 
     def insert_record(self, **fields) -> None:
         """Insert named `fields` into the table."""

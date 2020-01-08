@@ -39,5 +39,5 @@ CREATE INDEX IF NOT EXISTS "user_id"
     ("user_id" ASC NULLS LAST);
 
 CREATE INDEX IF NOT EXISTS "auth_key"
-	ON "user"."auth" USING btree
-	("auth_key" ASC NULLS LAST);
+    ON "user"."auth" USING btree
+    ("auth_key" ASC NULLS LAST);

@@ -12,34 +12,34 @@
 
 """Initialize the REFITT database."""
 
+# type annotations
+from __future__ import annotations
+from typing import List
+
 # standard libs
 import os
 import functools
 
 # internal libs
-# from ... import database
-from ...database.client import DatabaseClient
-from ...database.config import connection_info
-from ...assets import load_asset
-from ...core.logging import logger
-from ...__meta__ import (__appname__, __copyright__, __developer__,
-                         __contact__, __website__)
+from ....database.client import DatabaseClient
+from ....database.config import connection_info
+from ....assets import load_asset
+from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.exceptions import log_and_exit
+from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
-from cmdkit.app import Application
+from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
-
-# type annotations
-from typing import List
 
 
 # program name is constructed from module file name
-NAME = os.path.basename(__file__)[:-3].replace('_', '.')
-PROGRAM = f'{__appname__} {NAME}'
+PROGRAM = f'{__appname__} database init'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} NAME [NAME...] [--all] [--drop] [--dry-run] [--debug]
+usage: {PROGRAM} NAME [NAME...] [--all] [--drop] [--dry-run]
+       {PADDING} [--debug | --verbose] [--syslog]
        {PADDING} [--help]
 
 {__doc__}\
@@ -61,6 +61,8 @@ options:
     --drop                   Apply drop on objects before re-initializing.
     --dry-run                Show SQL without executing.
 -d, --debug                  Show debugging messages.
+-v, --verbose                Show information messages.
+    --syslog                 Use syslog style messages.
 -h, --help                   Show this message and exit.
 
 {EPILOG}
@@ -68,7 +70,7 @@ options:
 
 
 # initialize module level logger
-log = logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
 # initialization order of schemas and tables based on
@@ -107,7 +109,8 @@ DROP_TABLE = 'DROP TABLE {name}'
 DROP_SCHEMA = 'DROP SCHEMA {name}'
 
 
-class DataInitDBApp(Application):
+class Init(Application):
+    """Initialize the REFITT database."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -124,15 +127,21 @@ class DataInitDBApp(Application):
     interface.add_argument('--dry-run', action='store_true')
 
     debug: bool = False
-    interface.add_argument('-d', '--debug', action='store_true')
+    verbose: bool = False
+    logging_interface = interface.add_mutually_exclusive_group()
+    logging_interface.add_argument('-d', '--debug', action='store_true')
+    logging_interface.add_argument('-v', '--verbose', action='store_true')
 
+    syslog: bool = False
+    interface.add_argument('--syslog', action='store_true')
+
+    exceptions = {
+        RuntimeError: functools.partial(log_and_exit, logger=log.critical,
+                                        status=exit_status.runtime_error),
+    }
 
     def run(self) -> None:
         """Initialize Database."""
-
-        if self.debug:
-            for handler in log.handlers:
-                handler.level = log.levels[0]
 
         if self.names and self.all_names:
             raise ArgumentError('Using --all with specified objects is ambiguous')
@@ -183,6 +192,19 @@ class DataInitDBApp(Application):
         """Load and format full database schema."""
         return '\n\n'.join(list(map(self.load_sql, self.names)))
 
+    def __enter__(self) -> Init:
+        """Initialize resources."""
 
-# inherit docstring from module
-DataInitDBApp.__doc__ = __doc__
+        if self.syslog:
+            log.handlers[0] = SYSLOG_HANDLER
+        if self.debug:
+            log.handlers[0].level = log.levels[0]
+        elif self.verbose:
+            log.handlers[0].level = log.levels[1]
+        else:
+            log.handlers[0].level = log.levels[2]
+
+        return self
+
+    def __exit__(self, *exc) -> None:
+        """Release resources."""

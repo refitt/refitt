@@ -12,19 +12,23 @@ dependencies:
   - xlrd
   - pyyaml
   - yaml
-  - ipyparallel
   - sqlalchemy
   - psycopg2
   - paramiko
   - flask
   - keras
   - tensorflow
+  - ipython
+  - sphinx
+  - pytest
+  - hypothesis
+  - pylint
   - pip
   - pip:
     - antares-client
-    - cmdkit
+    - cmdkit>=1.1.0
     - gunicorn
-    - logalpha
+    - logalpha>=2.0.0
     - slackclient
     - sphinx-rtd-theme
     - sshtunnel

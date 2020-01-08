@@ -20,11 +20,11 @@ import subprocess
 # internal libs
 from .client import DatabaseClient, ServerAddress, UserAuth
 from ..core.config import config, Namespace
-from ..core.logging import logger
+from ..core.logging import Logger
 
 
 # initialize module level logger
-log = logger.with_name(f'refitt.database')
+log = Logger.with_name(f'refitt.database')
 
 
 def expand_parameters(prefix: str, namespace: Namespace) -> str:

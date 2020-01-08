@@ -19,7 +19,7 @@ from typing import NamedTuple
 # internal libs
 from ..__meta__ import __appname__
 from ..core.config import HOME
-from ..core.logging import logger
+from ..core.logging import Logger
 
 # external libs
 from sshtunnel import SSHTunnelForwarder
@@ -28,7 +28,7 @@ from sqlalchemy.engine import Engine
 
 
 # initialize module level logger
-log = logger.with_name(f'{__appname__}.database.client')
+log = Logger.with_name(f'{__appname__}.database.client')
 
 
 class ServerAddress(NamedTuple):
