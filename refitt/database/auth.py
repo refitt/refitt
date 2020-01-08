@@ -17,12 +17,12 @@ import secrets
 from datetime import datetime
 
 # internal libs
-from ..core.logging import logger
+from ..core.logging import Logger
 from .interface import user, execute
 
 
 # initialize module level logger
-log = logger.with_name(f'refitt.database.auth')
+log = Logger.with_name(f'refitt.database.auth')
 
 
 def gen_key() -> str:

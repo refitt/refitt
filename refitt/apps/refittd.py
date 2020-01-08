@@ -16,7 +16,7 @@
 import sys
 
 # internal libs
-from ..core.logging import logger
+from ..core.logging import Logger
 from ..__meta__ import (__appname__, __version__, __copyright__,
                         __developer__, __contact__, __website__)
 
@@ -52,7 +52,7 @@ options:
 """
 
 # initialize module level logger
-log = logger.with_name(PROGRAM)
+log = Logger.with_name(PROGRAM)
 
 
 class RefittDaemon(Application):

@@ -16,7 +16,7 @@
 import sys
 
 # internal libs
-from ...core.logging import logger
+from ...core.logging import Logger
 from ...__meta__ import (__appname__, __version__, __description__,
                          __copyright__, __developer__, __contact__,
                          __website__)
@@ -156,7 +156,11 @@ learn more about their usage.
 
 
 # initialize module level logger
-log = logger.with_name(__appname__)
+log = Logger.with_name(__appname__)
+
+
+class CompletedCommand(Exception):
+    """Lift exit_status of sub-commands `main` method."""
 
 
 class RefittMain(Application):
@@ -168,14 +172,22 @@ class RefittMain(Application):
     subcommand: str = None
     interface.add_argument('subcommand')
 
+    exceptions = {
+        # extract exit status from exception arguments
+        CompletedCommand: (lambda exc: int(exc.args[0])),
+    }
+
     def run(self) -> None:
         """Show usage/help/version or defer to subcommand."""
+
         try:
             if self.subcommand in GROUPS.keys():
                 print(GROUP_HELP.format(name=f'{__appname__} {self.subcommand}',
                                         info=GROUPS[self.subcommand]))
             else:
-                SUB_COMMANDS[self.subcommand].main(sys.argv[2:])
+                status = SUB_COMMANDS[self.subcommand].main(sys.argv[2:])
+                raise CompletedCommand(status)
+
         except KeyError as error:
             cmd, = error.args
             raise ArgumentError(f'"{cmd}" is not an available subcommand.')

@@ -19,7 +19,7 @@ import functools
 from typing import List
 
 # internal libs
-from ..core.logging import logger
+from ..core.logging import Logger
 from .client import DatabaseClient
 from .config import connection_info
 
@@ -29,7 +29,7 @@ from sqlalchemy.engine.result import ResultProxy
 
 
 # initialize module level logger
-log = logger.with_name(f'refitt.database')
+log = Logger.with_name(f'refitt.database')
 
 
 def execute(statement: str, **params) -> ResultProxy:

@@ -16,7 +16,7 @@
 import json
 
 # internal libs
-from ..core.logging import logger
+from ..core.logging import Logger
 from .interface import execute, select, insert
 
 # external libs
@@ -28,7 +28,7 @@ from typing import List
 
 
 # initialize module level logger
-log = logger.with_name(f'refitt.database.user')
+log = Logger.with_name(f'refitt.database.user')
 
 
 def get_facilities_map(user_id: int) -> List[int]:

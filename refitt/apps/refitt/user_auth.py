@@ -12,17 +12,22 @@
 
 """Manage user credentials for the REFITT database."""
 
+# type annotations
+from __future__ import annotations
+
 # standard libs
 import os
+import functools
 
 # internal libs
 from ...database import auth, data, execute
-from ...core.logging import logger
+from ...core.exceptions import log_and_exit
+from ...core.logging import Logger, SYSLOG_HANDLER
 from ...__meta__ import (__appname__, __copyright__, __developer__,
                          __contact__, __website__)
 
 # external libs
-from cmdkit.app import Application
+from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 
 
@@ -32,7 +37,8 @@ PROGRAM = f'{__appname__} {NAME}'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <user_id> [--gen-key] [--gen-token] [--level INT] [--purge] [--debug]
+usage: {PROGRAM} <user_id> [--gen-key] [--gen-token] [--level INT] [--purge]
+       {PADDING} [--debug | --verbose] [--syslog]
        {PADDING} [--help]
 
 {__doc__}\
@@ -55,6 +61,8 @@ options:
     --level                  Apply specific authorization level. (default: 2)
     --purge                  Mark all previous credentials as invalid.
 -d, --debug                  Show debugging messages.
+-v, --verbose                Show information messages.
+    --syslog                 Use syslog style messages.
 -h, --help                   Show this message and exit.
 
 {EPILOG}
@@ -62,7 +70,7 @@ options:
 
 
 # initialize module level logger
-log = logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name(f'{__appname__}.{NAME}')
 
 
 class UserAuthApp(Application):
@@ -85,15 +93,21 @@ class UserAuthApp(Application):
     interface.add_argument('--purge', action='store_true')
 
     debug: bool = False
-    interface.add_argument('-d', '--debug', action='store_true')
+    verbose: bool = False
+    logging_interface = interface.add_mutually_exclusive_group()
+    logging_interface.add_argument('-d', '--debug', action='store_true')
+    logging_interface.add_argument('-v', '--verbose', action='store_true')
 
+    syslog: bool = False
+    interface.add_argument('--syslog', action='store_true')
+
+    exceptions = {
+        RuntimeError: functools.partial(log_and_exit, logger=log.critical,
+                                        status=exit_status.runtime_error),
+    }
 
     def run(self) -> None:
         """Run auth management."""
-
-        if self.debug:
-            for handler in log.handlers:
-                handler.level = log.levels[0]
 
         # check that user_id is valid
         if data['user']['user'].select(where=[f'user_id = {self.user_id}'], limit=1).empty:
@@ -112,6 +126,23 @@ class UserAuthApp(Application):
         key = None if not self.gen_key else auth.gen_key()
         new_auth = auth.gen_auth(user_id=self.user_id, key=key, level=self.level)
         auth.put_auth(new_auth)
+
+    def __enter__(self) -> UserAuthApp:
+        """Initialize resources."""
+
+        if self.syslog:
+            log.handlers[0] = SYSLOG_HANDLER
+        if self.debug:
+            log.handlers[0].level = log.levels[0]
+        elif self.verbose:
+            log.handlers[0].level = log.levels[1]
+        else:
+            log.handlers[0].level = log.levels[2]
+
+        return self
+
+    def __exit__(self, *exc) -> None:
+        """Release resources."""
 
 
 # inherit docstring from module
