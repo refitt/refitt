@@ -12,13 +12,17 @@ dependencies:
   - xlrd
   - pyyaml
   - yaml
-  - ipyparallel
   - sqlalchemy
   - psycopg2
   - paramiko
   - flask
   - keras
   - tensorflow
+  - ipython
+  - sphinx
+  - pytest
+  - hypothesis
+  - pylint
   - pip
   - pip:
     - antares-client
