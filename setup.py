@@ -48,9 +48,7 @@ setup(
     long_description     = readme_file(),
     classifiers          = ['Development Status :: 4 - Beta',
                             'Topic :: Scientific/Engineering :: Astronomy',
-                            'Programming Language :: Python :: 3.6',
                             'Programming Language :: Python :: 3.7', ],
-    install_requires     = ['logalpha', 'cmdkit', ],
     entry_points         = {'console_scripts': [
         f'{name}={method}' for name, method in console_apps.items()
     ]},
