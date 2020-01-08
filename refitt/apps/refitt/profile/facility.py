@@ -10,11 +10,11 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Manage user facility profiles."""
+"""Manage facility profiles."""
 
 # type annotations
 from __future__ import annotations
-from typing import Tuple, Union
+from typing import Tuple
 
 # standard libs
 import os
@@ -23,11 +23,10 @@ import json
 import functools
 
 # internal libs
-from ...database import user
-from ...core.exceptions import log_and_exit
-from ...core.logging import Logger, SYSLOG_HANDLER
-from ...__meta__ import (__appname__, __copyright__, __developer__,
-                         __contact__, __website__)
+from ....database import user
+from ....core.exceptions import log_and_exit
+from ....core.logging import Logger, SYSLOG_HANDLER
+from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -36,8 +35,7 @@ import pandas as pd
 
 
 # program name is constructed from module file name
-NAME = os.path.basename(__file__)[:-3].replace('_', '.')
-PROGRAM = f'{__appname__} {NAME}'
+PROGRAM = f'{__appname__} profile facility'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
@@ -76,10 +74,11 @@ options:
 
 
 # initialize module level logger
-log = Logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
-class UserFacilityApp(Application):
+class Facility(Application):
+    """Manage facility profiles."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -112,7 +111,7 @@ class UserFacilityApp(Application):
     facility_name: str = None
 
     def run(self) -> None:
-        """Top-level entry-point for get/set methods."""
+        """Delegate to get/set methods."""
         run_ = getattr(self, self.mode)
         run_()
 
@@ -156,7 +155,7 @@ class UserFacilityApp(Application):
         for _, profile in data.iterrows():
             user.set_facility(profile.to_dict())
 
-    def __enter__(self) -> UserFacilityApp:
+    def __enter__(self) -> Facility:
         """Initialize resources."""
 
         if self.syslog:
@@ -172,7 +171,3 @@ class UserFacilityApp(Application):
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-
-
-# inherit docstring from module
-UserFacilityApp.__doc__ = __doc__

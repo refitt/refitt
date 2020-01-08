@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Insert data into REFITT's database."""
+"""Insert data into the REFITT database."""
 
 # type annotations
 from __future__ import annotations
@@ -22,11 +22,10 @@ import sys
 import functools
 
 # internal libs
-from ... import database
-from ...core.exceptions import log_and_exit
-from ...core.logging import Logger, SYSLOG_HANDLER
-from ...__meta__ import (__appname__, __copyright__, __developer__,
-                         __contact__, __website__)
+from .... import database
+from ....core.exceptions import log_and_exit
+from ....core.logging import Logger, SYSLOG_HANDLER
+from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -35,8 +34,7 @@ import pandas
 
 
 # program name is constructed from module file name
-NAME = os.path.basename(__file__)[:-3].replace('_', '.')
-PROGRAM = f'{__appname__} {NAME}'
+PROGRAM = f'{__appname__} database insert'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
@@ -83,10 +81,11 @@ options:
 """
 
 # initialize module level logger
-log = Logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
-class DataInsertApp(Application):
+class Insert(Application):
+    """Insert data into the REFITT database."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -177,7 +176,7 @@ class DataInsertApp(Application):
         log.info(f'inserting {len(data)} records into "{schema}"."{table}"')
         database.data[schema][table].insert(data)
 
-    def __enter__(self) -> DataInsertApp:
+    def __enter__(self) -> Insert:
         """Initialize resources."""
 
         if self.syslog:
@@ -193,6 +192,3 @@ class DataInsertApp(Application):
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-
-# inherit docstring from module
-DataInsertApp.__doc__ = __doc__

@@ -10,20 +10,18 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""End-to-end workflow for refitt."""
+"""Run forecast on candidate."""
 
 # type annotations
 from __future__ import annotations
 
 # standard libs
-import os
 import functools
 
 # internal libs
-from ...core.logging import Logger, SYSLOG_HANDLER
-from ...core.exceptions import log_and_exit
-from ...__meta__ import (__appname__, __copyright__, __developer__,
-                         __contact__, __website__)
+from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.exceptions import log_and_exit
+from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -31,14 +29,13 @@ from cmdkit.cli import Interface
 
 
 # program name is constructed from module file name
-NAME = os.path.basename(__file__).strip('.py').replace('_', '.')
-PROGRAM = f'{__appname__} {NAME}'
+PROGRAM = f'{__appname__} pipeline forecast'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
 usage: {PROGRAM} <source> [--output-directory PATH]
        {PADDING} [--debug | --verbose] [--syslog]
-       {PADDING} [--help] [--version]
+       {PADDING} [--help]
 
 {__doc__}\
 """
@@ -68,10 +65,11 @@ options:
 """
 
 # initialize module level logger
-log = Logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
-class PipelineApp(Application):
+class Forecast(Application):
+    """Run forecast on candidate."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -95,10 +93,9 @@ class PipelineApp(Application):
 
     def run(self) -> None:
         """Run Refitt pipeline."""
-
         raise RuntimeError('not implemented')
 
-    def __enter__(self) -> PipelineApp:
+    def __enter__(self) -> Forecast:
         """Initialize resources."""
 
         if self.syslog:
@@ -114,7 +111,3 @@ class PipelineApp(Application):
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-
-
-# inherit docstring from module
-PipelineApp.__doc__ = __doc__

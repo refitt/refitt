@@ -21,13 +21,12 @@ import os
 import functools
 
 # internal libs
-from ...database.client import DatabaseClient
-from ...database.config import connection_info
-from ...assets import load_asset
-from ...core.logging import Logger, SYSLOG_HANDLER
-from ...core.exceptions import log_and_exit
-from ...__meta__ import (__appname__, __copyright__, __developer__,
-                         __contact__, __website__)
+from ....database.client import DatabaseClient
+from ....database.config import connection_info
+from ....assets import load_asset
+from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.exceptions import log_and_exit
+from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -35,8 +34,7 @@ from cmdkit.cli import Interface, ArgumentError
 
 
 # program name is constructed from module file name
-NAME = os.path.basename(__file__)[:-3].replace('_', '.')
-PROGRAM = f'{__appname__} {NAME}'
+PROGRAM = f'{__appname__} database init'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
@@ -72,7 +70,7 @@ options:
 
 
 # initialize module level logger
-log = Logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
 # initialization order of schemas and tables based on
@@ -111,7 +109,8 @@ DROP_TABLE = 'DROP TABLE {name}'
 DROP_SCHEMA = 'DROP SCHEMA {name}'
 
 
-class DataInitDBApp(Application):
+class Init(Application):
+    """Initialize the REFITT database."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -193,7 +192,7 @@ class DataInitDBApp(Application):
         """Load and format full database schema."""
         return '\n\n'.join(list(map(self.load_sql, self.names)))
 
-    def __enter__(self) -> DataInitDBApp:
+    def __enter__(self) -> Init:
         """Initialize resources."""
 
         if self.syslog:
@@ -209,6 +208,3 @@ class DataInitDBApp(Application):
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-
-# inherit docstring from module
-DataInitDBApp.__doc__ = __doc__

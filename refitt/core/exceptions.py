@@ -16,6 +16,10 @@
 from typing import Callable
 
 
+class CompletedCommand(Exception):
+    """Lift exit_status of sub-commands `main` method."""
+
+
 def log_and_exit(exc: Exception, logger: Callable[[str], None], status: int) -> int:
     """Log the exception arguments and return with `status`."""
     logger(*exc.args)

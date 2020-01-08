@@ -10,21 +10,19 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Manage user credentials for the REFITT database."""
+"""Generate new authentication keys/tokens."""
 
 # type annotations
 from __future__ import annotations
 
 # standard libs
-import os
 import functools
 
 # internal libs
-from ...database import auth, data, execute
-from ...core.exceptions import log_and_exit
-from ...core.logging import Logger, SYSLOG_HANDLER
-from ...__meta__ import (__appname__, __copyright__, __developer__,
-                         __contact__, __website__)
+from ....database import auth, data
+from ....core.exceptions import log_and_exit
+from ....core.logging import Logger, SYSLOG_HANDLER
+from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -32,8 +30,7 @@ from cmdkit.cli import Interface
 
 
 # program name is constructed from module file name
-NAME = os.path.basename(__file__)[:-3].replace('_', '.')
-PROGRAM = f'{__appname__} {NAME}'
+PROGRAM = f'{__appname__} auth generate'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
@@ -70,10 +67,11 @@ options:
 
 
 # initialize module level logger
-log = Logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
-class UserAuthApp(Application):
+class Generate(Application):
+    """Generate new authentication keys/tokens."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -127,7 +125,7 @@ class UserAuthApp(Application):
         new_auth = auth.gen_auth(user_id=self.user_id, key=key, level=self.level)
         auth.put_auth(new_auth)
 
-    def __enter__(self) -> UserAuthApp:
+    def __enter__(self) -> Generate:
         """Initialize resources."""
 
         if self.syslog:
@@ -143,7 +141,3 @@ class UserAuthApp(Application):
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-
-
-# inherit docstring from module
-UserAuthApp.__doc__ = __doc__

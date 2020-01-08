@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Subscribe to remote data brokers and stream alerts into REFITT."""
+"""Subscribe to remote data brokers and stream alerts."""
 
 # type annotations
 from __future__ import annotations
@@ -20,12 +20,11 @@ import os
 import functools
 
 # internal libs
-from ...core.config import config
-from ...core.exceptions import log_and_exit
-from ...core.logging import Logger, SYSLOG_HANDLER
-from ...stream.antares import AntaresClient, AntaresAlert
-from ...__meta__ import (__appname__, __copyright__, __developer__,
-                         __contact__, __website__)
+from ....core.config import config
+from ....core.exceptions import log_and_exit
+from ....core.logging import Logger, SYSLOG_HANDLER
+from ....stream.antares import AntaresClient
+from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -33,8 +32,7 @@ from cmdkit.cli import Interface
 
 
 # program name is constructed from module file name
-NAME = os.path.basename(__file__).strip('.py').replace('_', '.')
-PROGRAM = f'{__appname__} {NAME}'
+PROGRAM = f'{__appname__} service stream'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
@@ -74,7 +72,7 @@ options:
 """
 
 # initialize module level logger
-log = Logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name('.'.join(PROGRAM.split()))
 
 # available streams
 client = {
@@ -82,7 +80,8 @@ client = {
 }
 
 
-class StreamApp(Application):
+class Stream(Application):
+    """Subscribe to remote data brokers and stream alerts."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -164,7 +163,7 @@ class StreamApp(Application):
                     alert.to_file(filepath)
                     log.info(f'{self.broker}:{alert.alert_id} written to {filepath}')
 
-    def __enter__(self) -> StreamApp:
+    def __enter__(self) -> Stream:
         """Initialize resources."""
 
         if self.syslog:
@@ -180,7 +179,3 @@ class StreamApp(Application):
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-
-
-# inherit docstring from module
-StreamApp.__doc__ = __doc__

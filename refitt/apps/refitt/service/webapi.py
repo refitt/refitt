@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""REST API server for refitt database queries."""
+"""RESTful API server for refitt queries."""
 
 # type annotations
 from __future__ import annotations
@@ -23,11 +23,10 @@ import functools
 import subprocess
 
 # internal libs
-from ...database import auth, user
-from ...core.exceptions import log_and_exit
-from ...core.logging import Logger, SYSLOG_HANDLER
-from ...__meta__ import (__appname__, __copyright__, __developer__,
-                         __contact__, __website__)
+from ....database import auth, user
+from ....core.exceptions import log_and_exit
+from ....core.logging import Logger, SYSLOG_HANDLER
+from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -216,8 +215,7 @@ def route_user_user() -> Response:
 
 
 # program name is constructed from module file name
-NAME = os.path.basename(__file__).strip('.py').replace('_', '.')
-PROGRAM = f'{__appname__} {NAME}'
+PROGRAM = f'{__appname__} service webapi'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
@@ -254,10 +252,11 @@ options:
 """
 
 # initialize module level logger
-log = Logger.with_name(f'{__appname__}.{NAME}')
+log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
-class WebAPIApp(Application):
+class WebAPI(Application):
+    """RESTful API server for refitt queries."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -286,11 +285,11 @@ class WebAPIApp(Application):
 
     def run(self) -> None:
         """Start REFITT Web-API server."""
-        log.info(f'starting web-api on port {self.port} with {self.workers} workers')
+        log.info(f'starting API server on port {self.port} with {self.workers} workers')
         subprocess.run(['gunicorn', '--bind', f'0.0.0.0:{self.port}', '--workers', f'{self.workers}',
                         'refitt.apps.refitt.service_webapi'], stdout=sys.stdout, stderr=sys.stderr)
 
-    def __enter__(self) -> WebAPIApp:
+    def __enter__(self) -> WebAPI:
         """Initialize resources."""
 
         if self.syslog:
@@ -306,7 +305,3 @@ class WebAPIApp(Application):
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-
-
-# inherit docstring from module
-WebAPIApp.__doc__ = __doc__
