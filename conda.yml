@@ -22,9 +22,9 @@ dependencies:
   - pip
   - pip:
     - antares-client
-    - cmdkit
+    - cmdkit>=1.1.0
     - gunicorn
-    - logalpha
+    - logalpha>=2.0.0
     - slackclient
     - sphinx-rtd-theme
     - sshtunnel
