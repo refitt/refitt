@@ -10,14 +10,24 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Defines default configuration and reads from /etc/refitt.yml."""
+"""Runtime configuration for REFITT."""
+
+# type annotations
+from typing import Dict
 
 # standard libs
 import os
-import socket
+import functools
 
 # external libs
 from cmdkit.config import Namespace, Configuration
+
+# internal libs
+from .logging import Logger
+from ..__meta__ import __appname__
+
+# module level logger
+log = Logger.with_name(f'{__appname__}.config')
 
 
 # home directory
@@ -25,51 +35,80 @@ HOME = os.getenv('HOME')
 if HOME is None:
     raise ValueError('"HOME" environment variable not defined.')
 
-# retain for use elsewhere in refitt
-HOSTNAME = socket.gethostname()
 
 # environment variables
 # ---------------------
-# Load any environment variable that begins with "REFITT_".
-# TODO: define variables for runtime configurability.
-ENV_DEFAULTS = {'REFITT_SITE': os.getcwd()}
-ENV = Namespace.from_env(prefix='REFITT_', defaults=ENV_DEFAULTS)
-
+# Load any environment variable that begins with "{PREFIX}_".
+# TODO: specify environment variables for runtime configurability.
+PREFIX = __appname__.upper()
+ENV_DEFAULTS = {f'{PREFIX}_SITE': os.getcwd()}
+ENV = Namespace.from_env(prefix=f'{PREFIX}_', defaults=ENV_DEFAULTS)
 
 # runtime/configuration paths
 # ---------------------------
-SITE = {
+ROOT = True if os.getuid() == 0 else False
+SITE = 'system' if ROOT else 'user'
+SITE = SITE if f'{PREFIX}_SITE' not in os.environ else ENV[f'{PREFIX}_SITE']
+LOCAL_SITE = ENV[f'{PREFIX}_SITE']
+SITEMAP = {
     'system': {
-        'lib': '/var/lib/refitt',
-        'log': '/var/log/refitt',
-        'run': '/var/run/refitt',
-        'cfg': '/etc/refitt.yml'},
+        'lib': f'/var/lib/{__appname__}',
+        'log': f'/var/log/{__appname__}',
+        'run': f'/var/run/{__appname__}',
+        'cfg': f'/etc/{__appname__}.yml'},
     'user': {
-        'lib': f'{HOME}/.refitt/lib',
-        'log': f'{HOME}/.refitt/log',
-        'run': f'{HOME}/.refitt/run',
-        'cfg': f'{HOME}/.refitt/config.yml'},
+        'lib': f'{HOME}/.{__appname__}/lib',
+        'log': f'{HOME}/.{__appname__}/log',
+        'run': f'{HOME}/.{__appname__}/run',
+        'cfg': f'{HOME}/.{__appname__}/config.yml'},
     'site': {
-        'lib': f'{ENV["REFITT_SITE"]}/lib',
-        'log': f'{ENV["REFITT_SITE"]}/log',
-        'run': f'{ENV["REFITT_SITE"]}/run',
-        'cfg': f'{ENV["REFITT_SITE"]}/etc/refitt.yml'},
+        'lib': f'{LOCAL_SITE}/.{__appname__}/lib',
+        'log': f'{LOCAL_SITE}/.{__appname__}/log',
+        'run': f'{LOCAL_SITE}/.{__appname__}/run',
+        'cfg': f'{LOCAL_SITE}/.{__appname__}/config.yml'},
 }
 
-# configuration files
-# -------------------
-# Load the system, user, and site level configuration files as `Namespace`s
-# if and only if that file path exists, otherwise making it empty.
-namespaces = dict()
-for site, paths in SITE.items():
-    filepath = paths['cfg']
-    if os.path.exists(filepath):
-        namespaces[site] = Namespace.from_local(filepath)
-    else:
-        namespaces[site] = Namespace()
 
-# runtime configuration
-# ---------------------
-# Merge each available namespace into a single `ChainMap` like structure.
-# A call to __getitem__ returns in a reverse-order depth-first search.
-config = Configuration(**namespaces)
+@functools.lru_cache(maxsize=1)
+def get_site() -> Dict[str, str]:
+    """
+    Return the runtime site.
+    Automatically creates directories if needed.
+    """
+    site = SITEMAP[SITE]
+    for folder in ['lib', 'log', 'run']:
+        if not os.path.isdir(site[folder]):
+            log.info(f'creating directory {site[folder]}')
+            os.makedirs(site[folder])
+    return site
+
+
+def get_config() -> Configuration:
+    """Load configuration."""
+    # configuration files
+    # -------------------
+    # Load the system, user, and site level configuration files as `Namespace`s
+    # if and only if that file path exists, otherwise making it empty.
+    namespaces = dict()
+    for site, paths in SITEMAP.items():
+        filepath = paths['cfg']
+        if os.path.exists(filepath):
+            namespaces[site] = Namespace.from_local(filepath)
+        else:
+            namespaces[site] = Namespace()
+
+    # runtime configuration
+    # ---------------------
+    # Merge each available namespace into a single `ChainMap` like structure.
+    # A call to __getitem__ returns in a reverse-order depth-first search.
+    config = Configuration(**namespaces)
+    return config
+
+
+# global instance
+# some uses may reload this
+config = get_config()
+
+
+class ConfigurationError(Exception):
+    """Exception specif to configuration errors."""
