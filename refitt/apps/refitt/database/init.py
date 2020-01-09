@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import List
 
 # standard libs
-import os
 import functools
 
 # internal libs
@@ -33,7 +32,6 @@ from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
 
 
-# program name is constructed from module file name
 PROGRAM = f'{__appname__} database init'
 PADDING = ' ' * len(PROGRAM)
 
@@ -158,7 +156,7 @@ class Init(Application):
             self.names = [name for name in DATABASE_OBJECTS if name in self.names]
 
         if self.dry_run is True:
-            log.debug(f'dry-run: showing SQL')
+            log.debug('dry-run: showing SQL')
             print(self.schema)
             return
 

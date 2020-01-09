@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Insert data into the REFITT database."""
+"""Insert data the REFITT database."""
 
 # type annotations
 from __future__ import annotations
@@ -34,7 +34,7 @@ import pandas
 
 
 # program name is constructed from module file name
-PROGRAM = f'{__appname__} database insert'
+PROGRAM = f'{__appname__} database init'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
@@ -77,6 +77,7 @@ options:
 -v, --verbose                Show information messages.
     --syslog                 Use syslog style messages.
 -h, --help                   Show this message and exit.
+
 {EPILOG}
 """
 
@@ -85,7 +86,7 @@ log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
 class Insert(Application):
-    """Insert data into the REFITT database."""
+    """Insert data the REFITT database."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 

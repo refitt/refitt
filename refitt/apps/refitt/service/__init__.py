@@ -34,7 +34,7 @@ COMMANDS = {
     'webapi': WebAPI,
 }
 
-PROGRAM = f'{__appname__} profile'
+PROGRAM = f'{__appname__} service'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
