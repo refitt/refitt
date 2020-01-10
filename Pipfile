@@ -1,0 +1,35 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+ipython = "*"
+pytest = "*"
+hypothesis = "*"
+pylint = "*"
+sphinx = "*"
+sphinx-rtd-theme = "*"
+
+[packages]
+numpy = "*"
+scipy = "*"
+pandas = "*"
+h5py = "*"
+xlrd = "*"
+sqlalchemy = "*"
+paramiko = "*"
+flask = "*"
+antares-client = "*"
+cmdkit = "*"
+logalpha = "*"
+gunicorn = "*"
+slackclient = "*"
+sshtunnel = "*"
+tabulate = "*"
+psycopg2 = "*"
+e1839a8 = {editable = true,path = "."}
+pyyaml = "*"
+
+[requires]
+python_version = "3.7"
