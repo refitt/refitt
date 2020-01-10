@@ -30,6 +30,8 @@ tabulate = "*"
 psycopg2 = "*"
 e1839a8 = {editable = true,path = "."}
 pyyaml = "*"
+tensorflow = "*"
+keras = "*"
 
 [requires]
 python_version = "3.7"
