@@ -128,7 +128,7 @@ class Stream(Application):
         if self.key is None:
             try:
                 self.key = config['stream'][self.broker]['key']
-                log.debug(f'loaded api key from configuration file')
+                log.debug('loaded api key from configuration file')
             except KeyError:
                 log.critical(f'No `--key` given and "stream.{self.broker}.key" not found in config.')
                 return
@@ -136,7 +136,7 @@ class Stream(Application):
         if self.token is None:
             try:
                 self.token = config['stream'][self.broker]['token']
-                log.debug(f'loaded api token from configuration file')
+                log.debug('loaded api token from configuration file')
             except KeyError:
                 log.critical(f'No `--token` given and "stream.{self.broker}.token" not found in config.')
                 return

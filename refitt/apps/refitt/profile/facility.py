@@ -88,7 +88,7 @@ class Facility(Application):
 
     source: str = None
     filepath: str = None
-    interface.add_argument('source', nargs='?', default=None) # required for "get"
+    interface.add_argument('source', nargs='?', default=None)  # required for "get"
 
     oneline: bool = False
     interface.add_argument('-1', '--oneline', action='store_true')

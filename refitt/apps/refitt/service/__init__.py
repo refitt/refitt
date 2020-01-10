@@ -25,16 +25,18 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # commands
+from .test import Test
 from .stream import Stream
 from .webapi import WebAPI
 
 
 COMMANDS = {
+    'test':   Test,
     'stream': Stream,
     'webapi': WebAPI,
 }
 
-PROGRAM = f'{__appname__} profile'
+PROGRAM = f'{__appname__} service'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\

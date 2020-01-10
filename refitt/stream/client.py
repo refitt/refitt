@@ -45,16 +45,16 @@ class ClientInterface(ABC):
     @abstractmethod
     def __iter__(self) -> Iterator[AlertInterface]:
         """Should yield back Alert objects."""
-    
+
     def __enter__(self) -> 'Client':
         """Context manager setup."""
         return self
-    
+
     def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
         """Context manager shutdown."""
         self.close()
 
-    # clients can define static methods that start with the `filter_` 
+    # clients can define static methods that start with the `filter_`
     # prefix which can be used to reject incoming alerts.
 
     @staticmethod

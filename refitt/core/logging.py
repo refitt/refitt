@@ -24,6 +24,7 @@ from typing import List, Callable
 # standard libraries
 import io
 import sys
+import socket
 from datetime import datetime
 from dataclasses import dataclass
 
@@ -33,8 +34,10 @@ from cmdkit import logging as _cmdkit_logging
 
 # internal library
 from ..__meta__ import __appname__
-from ..core.config import HOSTNAME
 
+
+# get hostname from `socket` instead of `.config`
+HOSTNAME = socket.gethostname()
 
 # NOTICE messages won't actually be formatted with color.
 LEVELS = levels.Level.from_names(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
