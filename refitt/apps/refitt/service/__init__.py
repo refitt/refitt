@@ -25,11 +25,13 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # commands
+from .test import Test
 from .stream import Stream
 from .webapi import WebAPI
 
 
 COMMANDS = {
+    'test':   Test,
     'stream': Stream,
     'webapi': WebAPI,
 }

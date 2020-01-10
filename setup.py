@@ -16,23 +16,18 @@
 import os
 from setuptools import setup, find_packages
 
+# toml required for deployment
+import toml
+
 # metadata
 from refitt.__meta__ import (__appname__, __version__, __authors__,
                              __contact__, __license__, __description__,
                              __keywords__, __website__)
 
 
-def readme_file():
-    """Use README.md as long_description."""
-    with open(os.path.join(os.path.dirname(__file__), 'README.md'), 'r') as readme:
-        return readme.read()
+with open('README.rst', mode='r') as readme:
+    long_description = readme.read()
 
-
-console_apps = {
-    'refitt': 'refitt.apps.refitt:main',
-    'refittd': 'refitt.apps.refittd:main',
-    'refittctl': 'refitt.apps.refittctl:main'
-}
 
 setup(
     name                 = __appname__,
@@ -44,12 +39,21 @@ setup(
     keywords             = __keywords__,
     url                  = __website__,
     packages             = find_packages(),
-    include_package_data = True,
-    long_description     = readme_file(),
+    include_package_data = True,  # see MANIFEST.in
+    long_description     = long_description,
     classifiers          = ['Development Status :: 4 - Beta',
                             'Topic :: Scientific/Engineering :: Astronomy',
-                            'Programming Language :: Python :: 3.7', ],
-    entry_points         = {'console_scripts': [
-        f'{name}={method}' for name, method in console_apps.items()
-    ]},
+                            'Programming Language :: Python :: 3',
+                            'Programming Language :: Python :: 3.7',
+                            'Operating System :: POSIX :: Linux', ],
+    entry_points         = {'console_scripts': ['refitt=refitt.apps.refitt:main',
+                                                'refittd=refitt.apps.refittd:main',
+                                                'refittctl=refitt.apps.refittctl:main']},
+    install_requires     = [
+        'numpy', 'scipy', 'pandas', 'h5py', 'xlrd', 'sqlalchemy', 'psycopg2',
+        'paramiko', 'sshtunnel', 'flask', 'tabulate', 'gunicorn', 'slackclient',
+        'cmdkit', 'logalpha', 'toml', 'keras', 'tensorflow'],
+    extras_require       = {
+        'dev': ['ipython', 'pytest', 'hypothesis', 'pylint', 'sphinx',
+                'sphinx-rtd-theme']},
 )

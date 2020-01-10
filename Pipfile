@@ -10,6 +10,7 @@ hypothesis = "*"
 pylint = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
+twine = "*"
 
 [packages]
 numpy = "*"
@@ -28,10 +29,11 @@ slackclient = "*"
 sshtunnel = "*"
 tabulate = "*"
 psycopg2 = "*"
-e1839a8 = {editable = true,path = "."}
 pyyaml = "*"
+toml = "*"
 tensorflow = "*"
 keras = "*"
+refitt = {editable = true,path = "."}
 
 [requires]
 python_version = "3.7"

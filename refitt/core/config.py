@@ -35,14 +35,25 @@ HOME = os.getenv('HOME')
 if HOME is None:
     raise ValueError('"HOME" environment variable not defined.')
 
+# global variables
+VARS = {
+    'SITE': os.getcwd(),
+    'DAEMON_PORT': '50000',
+    'DAEMON_KEY':  '__REFITT__DAEMON__KEY__',
+    'DAEMON_REFRESH_TIME': '10',   # seconds
+    'DAEMON_INTERRUPT_TIMEOUT': '4',  # seconds
+}
 
 # environment variables
 # ---------------------
 # Load any environment variable that begins with "{PREFIX}_".
-# TODO: specify environment variables for runtime configurability.
 PREFIX = __appname__.upper()
-ENV_DEFAULTS = {f'{PREFIX}_SITE': os.getcwd()}
+ENV_DEFAULTS = {f'{PREFIX}_{name}': value for name, value in VARS.items()}
 ENV = Namespace.from_env(prefix=f'{PREFIX}_', defaults=ENV_DEFAULTS)
+
+# update VARS to include ENV overrides
+for name, value in ENV.items():
+    VARS[name[len(PREFIX)+1:]] = value
 
 # runtime/configuration paths
 # ---------------------------

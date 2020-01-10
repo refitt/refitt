@@ -10,13 +10,12 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""RESTful API server for refitt queries."""
+"""Start the REFITT API server."""
 
 # type annotations
 from __future__ import annotations
 
 # standard libs
-import os
 import sys
 import json
 import functools
@@ -25,7 +24,7 @@ import subprocess
 # internal libs
 from ....database import auth, user
 from ....core.exceptions import log_and_exit
-from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.logging import Logger, SYSLOG_HANDLER, HOSTNAME
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
@@ -88,8 +87,6 @@ def route_user_auth() -> Response:
         token = str(args.pop('auth_token'))
         user_id = int(args.pop('user_id'))
 
-        log.info(f'{request.method}: user_id={user_id}')
-
         if args:
             raise ValueError('Invalid parameters.', list(args.keys()))
 
@@ -102,7 +99,8 @@ def route_user_auth() -> Response:
             user_auth = auth.from_user(user_id)
             if user_auth.empty:
                 raise ValueError(f'No valid credentials for userid={user_id}.')
-            # most recent credentials
+
+            # most recent valid credentials
             user_auth = user_auth.iloc[0].to_dict()
 
         elif request.method == 'POST':
@@ -165,27 +163,16 @@ def route_user_user() -> Response:
         # required query parameters
         key = str(args.pop('auth_key'))
         token = str(args.pop('auth_token'))
+        alias = str(args.pop('user_alias'))
 
-        # query database for credentials
+        if args:
+            raise ValueError('Invalid parameters.', list(args.keys()))
+
         if not auth.check_valid(key, token, 0):
             raise ValueError('Invalid level-0 credentials.')
 
         if request.method == 'GET':
-
-            user_args = {'user_id', 'user_email', 'user_alias'}
-            if len(args) < 1:
-                raise ValueError(f'At least one of {user_args} required')
-            elif len(args) > 1:
-                raise ValueError(f'Too many arguments, expected one of {user_args}.')
-            else:
-                for arg in args:
-                    if arg not in user_args:
-                        raise ValueError(f'"{arg}" is not a valid, expected one of {user_args}.')
-
-            if 'user_id' in args:
-                profile = user.get_profile(user_id=int(args['user_id']))
-            else:
-                profile = user.get_profile(**args)
+            profile = user.get_profile(user_alias=alias)
 
         elif request.method == 'POST':
             # create the user profile and then re-retrieve it
@@ -256,7 +243,7 @@ log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
 class WebAPI(Application):
-    """RESTful API server for refitt queries."""
+    """Start the REFITT API server."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -285,9 +272,9 @@ class WebAPI(Application):
 
     def run(self) -> None:
         """Start REFITT Web-API server."""
-        log.info(f'starting API server on port {self.port} with {self.workers} workers')
+        log.info(f'starting API server [{HOSTNAME}:{self.port}] with {self.workers} workers')
         subprocess.run(['gunicorn', '--bind', f'0.0.0.0:{self.port}', '--workers', f'{self.workers}',
-                        'refitt.apps.refitt.service_webapi'], stdout=sys.stdout, stderr=sys.stderr)
+                        'refitt.apps.refitt.service.webapi'], stdout=sys.stdout, stderr=sys.stderr)
 
     def __enter__(self) -> WebAPI:
         """Initialize resources."""

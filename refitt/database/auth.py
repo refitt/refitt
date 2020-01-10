@@ -22,7 +22,7 @@ from .interface import user, execute
 
 
 # initialize module level logger
-log = Logger.with_name(f'refitt.database.auth')
+log = Logger.with_name('refitt.database.auth')
 
 
 def gen_key() -> str:
@@ -83,7 +83,7 @@ def gen_auth(user_id: int, level: int = None, key: str = None) -> dict:
     if user_id < 0:
         raise ValueError(f'gen_auth: expected a non-negative integer for `user_id`, given {user_id}.')
     if key is not None and len(key) != 16:
-        raise ValueError(f'gen_auth: expected a 16-character string for `key`.')
+        raise ValueError('gen_auth: expected a 16-character string for `key`.')
     log.debug(f'checking for user_id={user_id}')
     if user['user'].select(where=[f'user_id = {user_id}']).empty:
         raise ValueError(f'gen_auth: user_id={user_id} not found in "user"."user".')
@@ -137,10 +137,8 @@ def from_key(key: str, limit: int = None) -> bool:
     auth: dict
         Most recent valid auth record.
     """
-    auth = user['auth'].select(where=[f"auth_key = '{key}'", f"auth_valid = true"],
-                               orderby='auth_time', ascending=False)
-
-    return auth if not auth.empty else None
+    return user['auth'].select(where=[f"auth_key = '{key}'", "auth_valid = true"],
+                               orderby='auth_time', ascending=False, limit=limit)
 
 
 def from_user(user_id: str, limit: int = None) -> bool:
@@ -160,10 +158,8 @@ def from_user(user_id: str, limit: int = None) -> bool:
     auth: dict
         Most recent valid auth record.
     """
-    auth = user['auth'].select(where=[f"user_id = {user_id}", f"auth_valid = true"],
-                               orderby='auth_time', ascending=False)
-
-    return auth if not auth.empty else None
+    return user['auth'].select(where=[f"user_id = {user_id}", "auth_valid = true"],
+                               orderby='auth_time', ascending=False, limit=limit)
 
 
 def check_valid(key: str, token: str, level: int) -> bool:
