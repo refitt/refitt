@@ -30,16 +30,18 @@ from cmdkit.cli import Interface, ArgumentError
 from .pipeline import PipelineGroup
 from .service import ServiceGroup
 from .database import DatabaseGroup
-from .auth import AuthGroup
 from .profile import ProfileGroup
+from .auth import AuthGroup
+from .config import ConfigGroup
 
 
 GROUPS = {
     'pipeline': PipelineGroup,
-    'service':  ServiceGroup,
     'database': DatabaseGroup,
-    'auth':     AuthGroup,
+    'service':  ServiceGroup,
     'profile':  ProfileGroup,
+    'config':   ConfigGroup,
+    'auth':     AuthGroup,
 }
 
 PROGRAM = __appname__
@@ -67,6 +69,7 @@ pipeline               {PipelineGroup.__doc__}
 database               {DatabaseGroup.__doc__}
 service                {ServiceGroup.__doc__}
 profile                {ProfileGroup.__doc__}
+config                 {ConfigGroup.__doc__}
 auth                   {AuthGroup.__doc__}
 
 options:
