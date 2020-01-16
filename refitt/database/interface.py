@@ -29,7 +29,7 @@ from sqlalchemy.engine.result import ResultProxy
 
 
 # initialize module level logger
-log = Logger.with_name(f'refitt.database')
+log = Logger.with_name('refitt.database')
 
 
 def execute(statement: str, **params) -> ResultProxy:
@@ -38,10 +38,10 @@ def execute(statement: str, **params) -> ResultProxy:
     """
     info = connection_info()
     if 'tunnel' not in info:
-        with DatabaseClient(**info['server']) as client:
+        with DatabaseClient(**info['database']) as client:
             return client.engine.execute(statement, **params)
     else:
-        with DatabaseClient(**info['server']).use_tunnel(**info['tunnel']) as client:
+        with DatabaseClient(**info['database']).use_tunnel(**info['tunnel']) as client:
             return client.engine.execute(statement, **params)
 
 
@@ -55,11 +55,11 @@ def insert(data: DataFrame, schema: str, table: str, if_exists: str = 'append',
     """
     info = connection_info()
     if 'tunnel' not in info:
-        with DatabaseClient(**info['server']) as client:
+        with DatabaseClient(**info['database']) as client:
             data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
                         index=False, chunksize=chunksize)
     else:
-        with DatabaseClient(**info['server']).use_tunnel(**info['tunnel']) as client:
+        with DatabaseClient(**info['database']).use_tunnel(**info['tunnel']) as client:
             data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
                         index=index, chunksize=chunksize)
 
@@ -73,10 +73,10 @@ def _select(query: str) -> DataFrame:
     """
     info = connection_info()
     if 'tunnel' not in info:
-        with DatabaseClient(**info['server']) as client:
+        with DatabaseClient(**info['database']) as client:
             return read_sql(query, client.engine)
     else:
-        with DatabaseClient(**info['server']).use_tunnel(**info['tunnel']) as client:
+        with DatabaseClient(**info['database']).use_tunnel(**info['tunnel']) as client:
             return read_sql(query, client.engine)
 
 
