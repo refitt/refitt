@@ -20,6 +20,7 @@ import os
 import sys
 import shlex
 from signal import SIGINT
+from datetime import datetime, timedelta
 from subprocess import Popen, TimeoutExpired
 
 # internal libs
@@ -40,6 +41,7 @@ class Service:
     name: str = None
     argv: str = None
     cwd: str = None
+    started: datetime = None
     process: Popen = None
 
     def __init__(self, name: str, argv: str, cwd: str = os.getcwd()) -> None:
@@ -51,9 +53,10 @@ class Service:
     def start(self) -> None:
         """Start service."""
         if not self.is_locked:
-            log.info(f'starting "{self.name}" service [argv="refitt service {self.argv} --debug --syslog"]')
+            log.info(f'starting "{self.name}" service')
             self.process = Popen(['refitt', 'service', *shlex.split(self.argv), '--debug', '--syslog'],
                                  stdout=sys.stdout, stderr=sys.stderr, cwd=self.cwd)
+            self.started = datetime.now()
             self.lock()
         else:
             raise ArgumentError(f'"{self.name}" service is already running (pid={self.pid})')
@@ -107,6 +110,14 @@ class Service:
             os.remove(self.pidfile)
         except FileNotFoundError:
             log.warning(f'{self.pidfile} does not exist!')
+
+    @property
+    def uptime(self) -> timedelta:
+        """Time since started."""
+        if not self.started:
+            return timedelta(seconds=0)
+        else:
+            return datetime.now() - self.started
 
     @property
     def is_alive(self) -> bool:

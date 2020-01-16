@@ -18,13 +18,13 @@ import functools
 import subprocess
 
 # internal libs
-from .client import DatabaseClient, ServerAddress, UserAuth
-from ..core.config import config, Namespace
+from .client import ServerAddress, UserAuth
+from ..core.config import config, Namespace, ConfigurationError
 from ..core.logging import Logger
 
 
 # initialize module level logger
-log = Logger.with_name(f'refitt.database')
+log = Logger.with_name('refitt.database')
 
 
 def expand_parameters(prefix: str, namespace: Namespace) -> str:
@@ -52,26 +52,29 @@ def expand_parameters(prefix: str, namespace: Namespace) -> str:
 def connection_info() -> dict:
     """Parse information from configuration file."""
 
-    server = config['database']['server']
-    server_user = None if 'user' not in server else server['user']
-    server_password = expand_parameters('password', server)
+    if 'database' not in config.keys():
+        raise ConfigurationError('database configuration missing')
+
+    db_config = config['database']
+    db_user = None if 'user' not in db_config else db_config['user']
+    db_password = expand_parameters('password', db_config)
 
     info = {
-        'server': {
-            'server': ServerAddress(host=server['host'], port=server['port']),
-            'auth': UserAuth(username=server_user, password=server_password),
-            'database': server['database']
+        'database': {
+            'server': ServerAddress(host=db_config['host'], port=db_config['port']),
+            'auth': UserAuth(username=db_user, password=db_password),
+            'database': db_config['database']
         }
     }
 
-    if 'tunnel' in config['database']:
-        tunnel = config['database']['tunnel']
-        tunnel_user = None if 'user' not in tunnel else tunnel['user']
-        tunnel_password = expand_parameters('password', tunnel)
+    if 'tunnel' in db_config.keys():
+        tunnel_config = db_config['tunnel']
+        tunnel_user = None if 'user' not in tunnel_config else tunnel_config['user']
+        tunnel_password = expand_parameters('password', tunnel_config)
         info['tunnel'] = {
-                'ssh': ServerAddress(host=tunnel['host'], port=tunnel['port']),
+                'ssh': ServerAddress(host=tunnel_config['host'], port=tunnel_config['port']),
                 'auth': UserAuth(username=tunnel_user, password=tunnel_password),
-                'local': ServerAddress(host='localhost', port=tunnel['bind'])
+                'local': ServerAddress(host='localhost', port=tunnel_config['bind'])
         }
 
     return info

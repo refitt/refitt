@@ -162,7 +162,7 @@ class Init(Application):
 
         info = connection_info()
         if 'tunnel' not in info:
-            with DatabaseClient(**info['server']) as client:
+            with DatabaseClient(**info['database']) as client:
                 for name in self.names:
                     quoted = name if '.' not in name else '"{}"."{}"'.format(*name.split('.'))
                     if self.drop is True:
@@ -173,10 +173,16 @@ class Init(Application):
                     client.engine.execute(self.load_sql(name))
                     log.info(f'initialed {name}')
         else:
-            with DatabaseClient(**info['server']).use_tunnel(**info['tunnel']) as client:
+            with DatabaseClient(**info['database']).use_tunnel(**info['tunnel']) as client:
                 for name in self.names:
-                    log.info(f'initializing {name}')
+                    quoted = name if '.' not in name else '"{}"."{}"'.format(*name.split('.'))
+                    if self.drop is True:
+                        QUERY = DROP_TABLE if '.' in name else DROP_SCHEMA
+                        QUERY = QUERY.format(name=quoted)
+                        client.engine.execute(QUERY)
+                        log.info(QUERY.lower().replace('drop', 'dropped'))
                     client.engine.execute(self.load_sql(name))
+                    log.info(f'initialed {name}')
 
     @functools.lru_cache(maxsize=len(DATABASE_OBJECTS))
     def load_sql(self, name: str) -> str:
