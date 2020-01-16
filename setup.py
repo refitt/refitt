@@ -13,11 +13,7 @@
 """Setup and installation script for refitt."""
 
 # standard libs
-import os
 from setuptools import setup, find_packages
-
-# toml required for deployment
-import toml
 
 # metadata
 from refitt.__meta__ import (__appname__, __version__, __authors__,
@@ -52,7 +48,7 @@ setup(
     install_requires     = [
         'numpy', 'scipy', 'pandas', 'h5py', 'xlrd', 'sqlalchemy', 'psycopg2',
         'paramiko', 'sshtunnel', 'flask', 'tabulate', 'gunicorn', 'slackclient',
-        'cmdkit', 'logalpha', 'toml', 'keras', 'tensorflow'],
+        'cmdkit>=1.2.1', 'logalpha>=2.0.2', 'toml', 'keras', 'tensorflow'],
     extras_require       = {
         'dev': ['ipython', 'pytest', 'hypothesis', 'pylint', 'sphinx',
                 'sphinx-rtd-theme']},
