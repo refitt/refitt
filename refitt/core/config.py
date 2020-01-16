@@ -21,9 +21,11 @@ import functools
 
 # external libs
 from cmdkit.config import Namespace, Configuration
+import toml
 
 # internal libs
 from .logging import Logger
+from ..assets import load_asset
 from ..__meta__ import __appname__
 
 # module level logger
@@ -57,36 +59,36 @@ for name, value in ENV.items():
 
 # runtime/configuration paths
 # ---------------------------
-ROOT = True if os.getuid() == 0 else False
+ROOT = os.getuid() == 0
 SITE = 'system' if ROOT else 'user'
-SITE = SITE if f'{PREFIX}_SITE' not in os.environ else ENV[f'{PREFIX}_SITE']
+SITE = SITE if f'{PREFIX}_SITE' not in os.environ else 'site'
 LOCAL_SITE = ENV[f'{PREFIX}_SITE']
 SITEMAP = {
     'system': {
         'lib': f'/var/lib/{__appname__}',
         'log': f'/var/log/{__appname__}',
         'run': f'/var/run/{__appname__}',
-        'cfg': f'/etc/{__appname__}.yml'},
+        'cfg': f'/etc/{__appname__}.toml'},
     'user': {
         'lib': f'{HOME}/.{__appname__}/lib',
         'log': f'{HOME}/.{__appname__}/log',
         'run': f'{HOME}/.{__appname__}/run',
-        'cfg': f'{HOME}/.{__appname__}/config.yml'},
+        'cfg': f'{HOME}/.{__appname__}/config.toml'},
     'site': {
         'lib': f'{LOCAL_SITE}/.{__appname__}/lib',
         'log': f'{LOCAL_SITE}/.{__appname__}/log',
         'run': f'{LOCAL_SITE}/.{__appname__}/run',
-        'cfg': f'{LOCAL_SITE}/.{__appname__}/config.yml'},
+        'cfg': f'{LOCAL_SITE}/.{__appname__}/config.toml'},
 }
 
 
 @functools.lru_cache(maxsize=1)
-def get_site() -> Dict[str, str]:
+def get_site(key: str = None) -> Dict[str, str]:
     """
     Return the runtime site.
     Automatically creates directories if needed.
     """
-    site = SITEMAP[SITE]
+    site = SITEMAP[SITE] if key is None else SITEMAP[key]
     for folder in ['lib', 'log', 'run']:
         if not os.path.isdir(site[folder]):
             log.info(f'creating directory {site[folder]}')
@@ -114,6 +116,16 @@ def get_config() -> Configuration:
     # A call to __getitem__ returns in a reverse-order depth-first search.
     config = Configuration(**namespaces)
     return config
+
+
+def init_config(key: str = None) -> None:
+    """Initialize configuration with defaults if necessary."""
+    site = SITE if key is None else key
+    path = SITEMAP[site]['cfg']
+    if not os.path.exists(path):
+        default = toml.loads(load_asset('config/refitt.toml'))
+        with open(path, mode='w') as config_file:
+            toml.dump(default, config_file)
 
 
 # global instance
