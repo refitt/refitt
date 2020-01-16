@@ -16,13 +16,13 @@
 from __future__ import annotations
 from typing import List, Dict, Tuple
 
-
 # standard libs
 import os
 import sys
 from queue import Empty
 
 # internal libs
+from .daemon import Daemon
 from .service import Service
 from .server import RefittDaemonServer
 from...core.config import get_config, ConfigurationError, Namespace
@@ -71,7 +71,7 @@ options:
 log = Logger.with_name(PROGRAM)
 
 
-class RefittDaemon(Application):
+class RefittDaemon(Application, Daemon):
     """Application class for the refitt daemon, `refittd`."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
@@ -84,6 +84,9 @@ class RefittDaemon(Application):
 
     keep_alive_mode: bool = False
     interface.add_argument('--keep-alive', action='store_true', dest='keep_alive_mode')
+
+    daemonize: bool = False
+    interface.add_argument('--daemon', action='store_true')
 
     # NOTE: debugging messages are always shown for services.
     #       debugging messages for the daemon internals are optional.
@@ -98,6 +101,11 @@ class RefittDaemon(Application):
 
     def run(self) -> None:
         """Start the refitt service daemon."""
+        self.start_services()
+        self.serve_forever()
+
+    def start_services(self) -> None:
+        """Load definitions and start services."""
 
         config = self.get_config()
         if not self.services_requested:
@@ -107,26 +115,36 @@ class RefittDaemon(Application):
                 if service not in config:
                     raise ArgumentError(f'"{service}" not found')
 
+        if self.daemon:
+            self.daemonize()
+
         for name in self.services_requested:
             self.services[name] = Service(name, **config[name])
             self.services[name].start()
 
+    def serve_forever(self) -> None:
+        """Run server and wait for actions."""
         with RefittDaemonServer() as daemon:
-            while True:
-                try:
-                    action = daemon.get_action()
-                    if action == 'shutdown':
-                        break
-                    elif action == 'status':
-                        daemon.status = self.status()
-                    elif action in self.actions:
-                        task = getattr(self, action)
-                        task()
-                    else:
-                        log.error(f'action "{action}" not recognized!')
-                except Empty:
-                    if self.keep_alive_mode:
-                        self.keep_alive()
+            self.await_action(daemon)
+
+    def await_action(self, daemon: RefittDaemonServer) -> None:
+        """Wait for action requests via `daemon`, issue keep_alive."""
+        while True:
+            try:
+                action = daemon.get_action()
+                if action == 'stop':
+                    break
+                elif action == 'status':
+                    daemon.status = self.status()
+                elif action in self.actions:
+                    task = getattr(self, action)
+                    task()
+                else:
+                    log.error(f'action "{action}" not recognized!')
+
+            except Empty:
+                if self.keep_alive_mode:
+                    self.keep_alive()
 
     def keep_alive(self) -> None:
         """Ensure services are running."""
@@ -140,6 +158,7 @@ class RefittDaemon(Application):
         return {name: {'pid': service.pid,
                        'alive': service.is_alive,
                        'pidfile': service.pidfile,
+                       'uptime': service.uptime,
                        'argv': service.argv,
                        'cwd': service.cwd}
                 for name, service in self.services.items()}
@@ -156,7 +175,7 @@ class RefittDaemon(Application):
     def update(self) -> None:
         """Check configuration and restart services as necessary."""
         config = self.get_config()
-        for name in self.services:
+        for name in list(self.services):
             if name in config:
                 self.update_service(name, config[name])
             elif self.all_services:
@@ -180,7 +199,7 @@ class RefittDaemon(Application):
                 if current_value != config_value:
                     log.info(f'"{name}"::{field} changed - restarting!')
                     self.services[name].stop()
-                    self.services[name] = Service(name, **config[name])
+                    self.services[name] = Service(name, **config)
                     self.services[name].start()
             except AttributeError:
                 pass
@@ -189,7 +208,7 @@ class RefittDaemon(Application):
         """Load services from configuration."""
         config = get_config()
         try:
-            services = config['daemon']
+            services = config['service']
         except KeyError:
             raise ConfigurationError('no services found in configuration')
 
