@@ -18,6 +18,7 @@ from __future__ import annotations
 # standard libs
 import sys
 import functools
+import subprocess
 
 # internal libs
 from ..refittd.client import RefittDaemonClient
@@ -35,7 +36,7 @@ from logalpha.colors import ANSI_RESET, Color
 PROGRAM = f'{__appname__}ctl'
 PADDING = ' ' * len(PROGRAM)
 
-ACTIONS = ['start', 'stop', 'status', 'update', 'restart', ]
+ACTIONS = ['start', 'stop', 'status', 'restart', 'reload']
 ACTION_OPT = '{' + ' | '.join(ACTIONS) + '}'
 
 USAGE = f"""\
@@ -72,6 +73,12 @@ ANSI_GREEN = Color.from_name('green').foreground
 ANSI_RED = Color.from_name('red').foreground
 
 
+def daemon_unavailable(exc: Exception) -> int:
+    """The daemon refused the connection, likely not running."""
+    log.critical('daemon refused connection - is it running?')
+    return exit_status.runtime_error
+
+
 class RefittController(Application):
     """Application class for the refitt service daemon, `refittd`."""
 
@@ -82,8 +89,11 @@ class RefittController(Application):
     interface.add_argument('action', choices=ACTIONS)
 
     exceptions = {
-        RuntimeError: functools.partial(log_and_exit, logger=log.critical,
-                                        status=exit_status.runtime_error),
+        RuntimeError:
+            functools.partial(log_and_exit, logger=log.critical,
+                              status=exit_status.runtime_error),
+        ConnectionRefusedError:
+            daemon_unavailable,
     }
 
     def run(self) -> None:
@@ -96,7 +106,7 @@ class RefittController(Application):
 
     def run_start(self) -> None:
         """Start the daemon."""
-        raise RuntimeError('not implemented yet :(')
+        subprocess.run(['refittd', '--all', '--daemon'])
 
     def run_status(self) -> None:
         """Show the status of daemon services."""
@@ -113,7 +123,6 @@ class RefittController(Application):
             print(f'{color}● {service}: {state} ({pid}){ANSI_RESET}')
             for key, value in status.items():
                 print(f'{key:>10}: {value}')
-
 
     def run_action(self) -> None:
         """Run the action."""

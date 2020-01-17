@@ -19,13 +19,14 @@ from typing import List, Dict, Tuple
 # standard libs
 import os
 import sys
+import subprocess
 from queue import Empty
 
 # internal libs
 from .daemon import Daemon
 from .service import Service
 from .server import RefittDaemonServer
-from...core.config import get_config, ConfigurationError, Namespace
+from...core.config import get_site, get_config, ConfigurationError, Namespace
 from...core.logging import Logger, SYSLOG_HANDLER
 from...__meta__ import (__appname__, __version__, __copyright__,
                         __developer__, __contact__, __website__)
@@ -85,7 +86,7 @@ class RefittDaemon(Application, Daemon):
     keep_alive_mode: bool = False
     interface.add_argument('--keep-alive', action='store_true', dest='keep_alive_mode')
 
-    daemonize: bool = False
+    daemon: bool = False
     interface.add_argument('--daemon', action='store_true')
 
     # NOTE: debugging messages are always shown for services.
@@ -97,7 +98,7 @@ class RefittDaemon(Application, Daemon):
     services: Dict[str, Service] = {}
 
     # allowed action requests
-    actions: Tuple[str] = ('restart', 'update', 'flush')
+    actions: Tuple[str] = ('restart', 'reload', 'flush')
 
     def run(self) -> None:
         """Start the refitt service daemon."""
@@ -107,6 +108,9 @@ class RefittDaemon(Application, Daemon):
     def start_services(self) -> None:
         """Load definitions and start services."""
 
+        if self.daemon:
+            self.run_daemon()
+
         config = self.get_config()
         if not self.services_requested:
             self.services_requested = list(config)
@@ -114,9 +118,6 @@ class RefittDaemon(Application, Daemon):
             for service in self.services_requested:
                 if service not in config:
                     raise ArgumentError(f'"{service}" not found')
-
-        if self.daemon:
-            self.daemonize()
 
         for name in self.services_requested:
             self.services[name] = Service(name, **config[name])
@@ -172,12 +173,12 @@ class RefittDaemon(Application, Daemon):
         for name, service in self.services.items():
             service.restart()
 
-    def update(self) -> None:
+    def reload(self) -> None:
         """Check configuration and restart services as necessary."""
         config = self.get_config()
         for name in list(self.services):
             if name in config:
-                self.update_service(name, config[name])
+                self.reload_service(name, config[name])
             elif self.all_services:
                 log.info(f'"{name}" removed from config - stopping')
                 service = self.services.pop(name)
@@ -191,8 +192,8 @@ class RefittDaemon(Application, Daemon):
                     self.services[name] = Service(name, **config[name])
                     self.services[name].start()
 
-    def update_service(self, name: str, config: Namespace) -> None:
-        """Update a service if necessary based on `config`."""
+    def reload_service(self, name: str, config: Namespace) -> None:
+        """Restart a service if necessary based on `config`."""
         for field, config_value in config.items():
             try:
                 current_value = getattr(self.services[name], field)
@@ -215,6 +216,15 @@ class RefittDaemon(Application, Daemon):
         return {name: Namespace({'cwd': os.getcwd(), **services[name]})
                 for name in services}
 
+    def run_daemon(self) -> None:
+        """Run as a daemon."""
+        self.daemonize()
+        # simple way of running as a daemon while also seemlessly redirecting
+        # all stderr is to subprocess with a redirect in normal mode
+        logpath = os.path.join(get_site()['log'], 'refittd.log')
+        with open(logpath, mode='a') as logfile:
+            subprocess.run(['refittd', '--all', '--debug', '--keep-alive'], stderr=logfile)
+
     def __enter__(self) -> RefittDaemon:
         """Initialize resources."""
 
@@ -234,9 +244,11 @@ class RefittDaemon(Application, Daemon):
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-        log.info('stopping services')
-        for name, service in self.services.items():
-            service.stop()
+        # daemon varient doesn't actually start any services
+        if not self.daemon:
+            log.info('stopping services')
+            for name, service in self.services.items():
+                service.stop()
 
 
 def main() -> int:
