@@ -12,6 +12,10 @@ sphinx = "*"
 sphinx-rtd-theme = "*"
 twine = "*"
 
+[dev-packages.refitt]
+editable = true
+path = "."
+
 [packages]
 numpy = "*"
 scipy = "*"
@@ -33,7 +37,7 @@ pyyaml = "*"
 toml = "*"
 tensorflow = "*"
 keras = "*"
-refitt = {editable = true,path = "."}
+ipython = "*"
 
 [requires]
 python_version = "3.7"
