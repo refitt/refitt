@@ -13,9 +13,9 @@
 CREATE TABLE IF NOT EXISTS "recommendation"."recommendation"
 (
     "recommendation_id" bigserial NOT NULL,
-
     "recommendation_group_id" BIGINT NOT NULL,
     "user_id" BIGINT NOT NULL,
+	"object_id" BIGINT NOT NULL,
 
     PRIMARY KEY ("recommendation_id"),
 
@@ -27,6 +27,12 @@ CREATE TABLE IF NOT EXISTS "recommendation"."recommendation"
 
     CONSTRAINT "user_id" FOREIGN KEY ("user_id")
         REFERENCES "user"."user" ("user_id") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
+
+    CONSTRAINT "object_id" FOREIGN KEY ("object_id")
+        REFERENCES "observation"."object" ("object_id") MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
