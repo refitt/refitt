@@ -171,6 +171,7 @@ class RefittDaemon(Application, Daemon):
     def restart(self) -> None:
         """Restart all services."""
         for name, service in self.services.items():
+            log.info(f'restarting {name}')
             service.restart()
 
     def reload(self) -> None:

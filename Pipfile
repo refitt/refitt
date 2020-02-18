@@ -11,10 +11,8 @@ pylint = "*"
 sphinx = "*"
 sphinx-rtd-theme = "*"
 twine = "*"
-
-[dev-packages.refitt]
-editable = true
-path = "."
+requests = "*"
+refitt = {editable = true,path = "."}
 
 [packages]
 numpy = "*"

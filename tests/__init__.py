@@ -10,7 +10,4 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""
-Refitt Unit Testing
-===================
-"""
+"""Refitt Automated Tests"""

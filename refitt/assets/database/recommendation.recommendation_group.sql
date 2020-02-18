@@ -13,7 +13,7 @@
 CREATE TABLE IF NOT EXISTS "recommendation"."recommendation_group"
 (
     "recommendation_group_id" BIGSERIAL NOT NULL,
-    "recommendation_group_time" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "recommendation_group_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     PRIMARY KEY ("recommendation_group_id")
 )
 WITH (

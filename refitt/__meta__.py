@@ -13,7 +13,7 @@
 """Package metadata for refitt."""
 
 __appname__     = 'refitt'
-__version__     = '0.6.0'
+__version__     = '0.7.0'
 __authors__     = """\
 Dan Milisavljevic, Ph.D. <dmilisav@purdue.edu>
 Niharika Sravan, Ph.D. <nsravan@purdue.edu>
