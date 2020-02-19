@@ -40,7 +40,7 @@ PROGRAM = f'{__appname__}d'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} [SERVICE [SERVICE...] | --all]
+usage: {PROGRAM} [SERVICE [SERVICE...] | --all] [--keep-alive] [--daemon]
        {PADDING} [--help] [--version]
 
 {__doc__}\
@@ -62,6 +62,8 @@ SERVICE                Name of service to launch.
 
 options:
     --all              Launch all services from configuration.
+    --keep-alive       Automatically relaunch services.
+    --daemon           Run in daemon mode.
 -h, --help             Show this message and exit.
 -v, --version          Show the version and exit.
 
