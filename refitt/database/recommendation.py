@@ -152,7 +152,7 @@ QUERY_PREVIOUS = """\
 """
 
 def get(user_id: int, group_id: int = None, limit: int = None,
-        previous: int = None) -> List[int]:
+        previous: int = None) -> DataFrame:
     """
     Query for objects recommended to the user.
 
