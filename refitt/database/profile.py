@@ -12,6 +12,9 @@
 
 """User/facility profile management."""
 
+# type annotations
+from typing import List
+
 # standard libs
 import json
 
@@ -23,15 +26,12 @@ from .interface import execute, select, insert
 from sqlalchemy.sql import text
 from pandas import DataFrame
 
-# type annotations
-from typing import List
-
 
 # initialize module level logger
-log = Logger.with_name(f'refitt.database.user')
+log = Logger.with_name('refitt.database.profile')
 
 
-def get_facilities_map(user_id: int) -> List[int]:
+def get_facility_map(user_id: int) -> List[int]:
     """Get list of facility_id's for `user_id` from "user"."facility_map"."""
     records = select(['facility_id'], 'user', 'facility_map', where=[f'user_id = {user_id}'])
     return list(records.facility_id)
@@ -39,7 +39,7 @@ def get_facilities_map(user_id: int) -> List[int]:
 
 def put_facility_map(user_id: int, facility_ids: List[int]) -> None:
     """Insert all `facility_ids` with `user_id` into "user"."facility_map"."""
-    records = DataFrame({'facility_id': facility_ids}).assign(user_id=user_id)
+    records = DataFrame({'facility_id': list(facility_ids)}).assign(user_id=user_id)
     insert(records, 'user', 'facility_map')
     log.info(f'added facilities to map: user_id={user_id}, facility_id={facility_ids}')
 
@@ -56,38 +56,40 @@ def del_facility_map(user_id: int) -> None:
     log.info(f'removed all facilities in map with user_id={user_id}')
 
 
-def _get_profile_from_id(user_id: int) -> DataFrame:
+def _get_user_from_id(user_id: int) -> DataFrame:
     """Get user profile from `user_id`."""
     return select([], 'user', 'user', where=[f"user_id = {user_id}"], set_index=False)
 
 
-def _get_profile_from_email(user_email: str) -> DataFrame:
+def _get_user_from_email(user_email: str) -> DataFrame:
     """Get user profile from `user_email`."""
     return select([], 'user', 'user', where=[f"user_email = '{user_email}'"], set_index=False)
 
 
-def _get_profile_from_alias(user_alias: str) -> DataFrame:
+def _get_user_from_alias(user_alias: str) -> DataFrame:
     """Get user profile from `user_alias`."""
     return select([], 'user', 'user', where=[f"user_alias = '{user_alias}'"], set_index=False)
 
 
-_PROFILE_GETTERS = {
-    'user_id': _get_profile_from_id,
-    'user_email': _get_profile_from_email,
-    'user_alias': _get_profile_from_alias
+_USER_GETTERS = {
+    'user_id': _get_user_from_id,
+    'user_email': _get_user_from_email,
+    'user_alias': _get_user_from_alias
 }
 
 
-def get_profile(**user_field) -> dict:
+def get_user(**user_field) -> dict:
     """Get user profile from one of `user_id`, `user_email` or `user_alias`."""
 
-    if len(user_field) != 1 or list(user_field.keys())[0] not in _PROFILE_GETTERS:
-        raise KeyError(f'Named parameters can only be one of {list(_PROFILE_GETTERS.keys())}')
+    if len(user_field) != 1 or list(user_field.keys())[0] not in _USER_GETTERS:
+        raise KeyError(f'Named parameters can only be one of {list(_USER_GETTERS.keys())}')
 
     for field, value in user_field.items():
-        records = _PROFILE_GETTERS[field](value)
+        records = _USER_GETTERS[field](value)
+        if records.empty:
+            raise ValueError(f'No user with {field}={value}')
         profile = dict(records.iloc[0])
-        return {**profile, **{'user_facilities': get_facilities_map(profile['user_id'])}}
+        return {**profile, **{'user_facilities': get_facility_map(profile['user_id'])}}
 
 
 UPDATE_USER_QUERY = """\
@@ -108,7 +110,7 @@ VALUES (:user_first_name, :user_last_name, :user_email, :user_alias, :user_profi
 """
 
 
-def set_profile(profile: dict) -> None:
+def set_user(profile: dict) -> None:
     """
     Insert/update user profile in database.
 
@@ -139,7 +141,7 @@ def set_profile(profile: dict) -> None:
     else:
         execute(text(INSERT_USER_QUERY), **data)
         log.info(f'created user profile: user_alias={profile["user_alias"]}')
-        put_facility_map(get_profile(user_alias=profile['user_alias'])['user_id'],
+        put_facility_map(get_user(user_alias=profile['user_alias'])['user_id'],
                          set(map(int, profile.get('user_facilities', []))))
 
 
@@ -222,5 +224,4 @@ def get_facility(**facility_field) -> dict:
         records = _FACILITY_GETTERS[field](value)
         if records.empty:
             raise ValueError(f'No facility with {field}={value}')
-        profile = dict(records.iloc[0])
-        return profile
+        return dict(records.iloc[0])

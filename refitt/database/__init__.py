@@ -13,7 +13,7 @@
 """Toplevel API for REFITT's database."""
 
 
-from . import config, interface, user, auth
+from . import config, interface, profile, auth
 from .client import DatabaseClient, connect, disconnect
 from .interface import execute, select, insert
 

@@ -23,7 +23,6 @@ import subprocess
 
 # internal libs
 from .... import database
-from ....database import auth, user, data, recommendation as rec
 from ....core.exceptions import log_and_exit
 from ....core.logging import Logger, SYSLOG_HANDLER, HOSTNAME
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
@@ -95,21 +94,22 @@ def route_auth() -> Response:
         database.connect()
 
         # query database for credentials
-        if not auth.check_valid(key, token, 0):
+        if not database.auth.check_valid(key, token, 0):
             raise ValueError('Invalid level-0 credentials.')
 
         if request.method == 'GET':
             # query for user credentials
-            user_auth = auth.from_user(user_id)
+            user_auth = database.auth.from_user(user_id)
             if user_auth.empty:
                 raise ValueError(f'No valid credentials for userid={user_id}.')
 
             # most recent valid credentials
             user_auth = user_auth.iloc[0].to_dict()
 
+        # FIXME: default level for new auth?
         elif request.method == 'POST':
-            user_auth = auth.gen_auth(user_id, level=2)  # FIXME: default level for new auth?
-            auth.put_auth(user_auth)
+            user_auth = database.auth.gen_auth(user_id, level=2)
+            database.auth.put_auth(user_auth)
 
         # NOTE: `numpy` types are not serializable by `json` (ergo, must be coerced back to Python types)
         response['data'] = {'auth_level': int(user_auth['auth_level']),
@@ -175,17 +175,17 @@ def route_profile_user() -> Response:
         # persistent database connection
         database.connect()
 
-        if not auth.check_valid(key, token, 0):
+        if not database.auth.check_valid(key, token, 0):
             raise ValueError('Invalid level-0 credentials.')
 
         if request.method == 'GET':
-            profile = user.get_profile(user_alias=alias)
+            profile = database.user.get_user(user_alias=alias)
 
         elif request.method == 'POST':
             # create the user profile and then re-retrieve it
             profile = dict(request.json)
-            user.set_profile(profile)
-            profile = user.get_profile(user_alias=profile['user_alias'])
+            database.profile.set_user(profile)
+            profile = database.profile.get_user(user_alias=profile['user_alias'])
 
         # NOTE: the user_id may be a `numpy.int`, we must coerce it back to a regular
         # python integer so that it can be serialized.
@@ -247,17 +247,17 @@ def route_profile_facility() -> Response:
         # persistent database connection
         database.connect()
 
-        if not auth.check_valid(key, token, 0):
+        if not database.auth.check_valid(key, token, 0):
             raise ValueError('Invalid level-0 credentials.')
 
         if request.method == 'GET':
-            profile = user.get_facility(facility_name=facility_name)
+            profile = database.profile.get_facility(facility_name=facility_name)
 
         elif request.method == 'POST':
             # create the user profile and then re-retrieve it
             profile = dict(request.json)  # FIXME: check keys?
-            user.set_facility(profile)
-            profile = user.get_facility(facility_name=profile['facility_name'])
+            database.profile.set_facility(profile)
+            profile = database.profile.get_facility(facility_name=profile['facility_name'])
 
         # NOTE: the facility_id may be a `numpy.int`, we must coerce it back to a regular
         # python integer so that it can be serialized.
@@ -321,10 +321,10 @@ def route_data_object() -> Response:
         database.connect()
 
         # FIXME: what level is sufficient?
-        if not auth.check_valid(key, token, 5):
+        if not database.auth.check_valid(key, token, 5):
             raise ValueError('Invalid credentials.')
 
-        table = data['observation']['object']
+        table = database.data['observation']['object']
         query = table.select(set_index=False, join=True, where=[f'object_id={object_id}'])
 
         if query.empty:
@@ -397,7 +397,7 @@ def route_recommend() -> Response:
         database.connect()
 
         # get user_id
-        user_auths = auth.from_key(key)
+        user_auths = database.auth.from_key(key)
         if user_auths.empty:
             raise ValueError(f'No valid credentials for auth_key={key}')
         elif token not in user_auths.auth_token.values:
@@ -428,7 +428,8 @@ def route_recommend() -> Response:
             raise ValueError('Invalid parameters.', list(args.keys()))
 
         # query for targets and build conditional statement
-        objects = rec.get(user_id=user_id, group_id=group, limit=limit, previous=previous)
+        objects = database.recommendation.get(user_id=user_id, group_id=group,
+                                              limit=limit, previous=previous)
         response['data'] = objects.T.to_dict()
 
     except KeyError as error:
