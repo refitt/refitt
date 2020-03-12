@@ -21,8 +21,6 @@ import functools
 
 # internal libs
 from .... import database
-from ....database.client import DatabaseClient
-from ....database.config import connection_info
 from ....assets import load_asset
 from ....core.logging import Logger, SYSLOG_HANDLER
 from ....core.exceptions import log_and_exit
@@ -161,29 +159,16 @@ class Init(Application):
             print(self.schema)
             return
 
-        info = connection_info()
-        if 'tunnel' not in info:
-            with DatabaseClient(**info['database']) as client:
-                for name in self.names:
-                    quoted = name if '.' not in name else '"{}"."{}"'.format(*name.split('.'))
-                    if self.drop is True:
-                        QUERY = DROP_TABLE if '.' in name else DROP_SCHEMA
-                        QUERY = QUERY.format(name=quoted)
-                        client.engine.execute(QUERY)
-                        log.info(QUERY.lower().replace('drop', 'dropped'))
-                    client.engine.execute(self.load_sql(name))
-                    log.info(f'initialed {name}')
-        else:
-            with DatabaseClient(**info['database']).use_tunnel(**info['tunnel']) as client:
-                for name in self.names:
-                    quoted = name if '.' not in name else '"{}"."{}"'.format(*name.split('.'))
-                    if self.drop is True:
-                        QUERY = DROP_TABLE if '.' in name else DROP_SCHEMA
-                        QUERY = QUERY.format(name=quoted)
-                        client.engine.execute(QUERY)
-                        log.info(QUERY.lower().replace('drop', 'dropped'))
-                    client.engine.execute(self.load_sql(name))
-                    log.info(f'initialed {name}')
+        client = database.connect()
+        for name in self.names:
+            quoted = name if '.' not in name else '"{}"."{}"'.format(*name.split('.'))
+            if self.drop is True:
+                QUERY = DROP_TABLE if '.' in name else DROP_SCHEMA
+                QUERY = QUERY.format(name=quoted)
+                client.engine.execute(QUERY)
+                log.info(QUERY.lower().replace('drop', 'dropped'))
+            client.engine.execute(self.load_sql(name))
+            log.info(f'initialized {name}')
 
     @functools.lru_cache(maxsize=len(DATABASE_OBJECTS))
     def load_sql(self, name: str) -> str:
