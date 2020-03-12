@@ -122,9 +122,9 @@ class Facility(Application):
             raise ArgumentError('ID or NAME is required for "get" request.')
 
         try:
-            profile = database.user.get_facility(facility_id=int(self.source))
+            profile = database.profile.get_facility(facility_id=int(self.source))
         except (ValueError, TypeError):
-            profile = database.user.get_facility(facility_name=self.source)
+            profile = database.profile.get_facility(facility_name=self.source)
 
         # re-construct simple profile with facility_id
         # the facility_id from the original field from `pandas` is not serializable
@@ -141,7 +141,7 @@ class Facility(Application):
         if self.source is None:
             # get profile from stdin
             # if facility_id is present, the profile will be altered
-            database.user.set_facility(json.load(sys.stdin))
+            database.profile.set_facility(json.load(sys.stdin))
             return
 
         if self.source.endswith('.xlsx'):
@@ -153,7 +153,7 @@ class Facility(Application):
             raise ArgumentError(f'"{ext}" is not a supported file type.')
 
         for _, profile in data.iterrows():
-            database.user.set_facility(profile.to_dict())
+            database.profile.set_facility(profile.to_dict())
 
     def __enter__(self) -> Facility:
         """Initialize resources."""

@@ -122,9 +122,9 @@ class User(Application):
             raise ArgumentError('ID or ALIAS is required for "get" request.')
 
         try:
-            profile = database.user.get_user(user_id=int(self.source))
+            profile = database.profile.get_user(user_id=int(self.source))
         except (ValueError, TypeError):
-            profile = database.user.get_user(user_alias=self.source)
+            profile = database.profile.get_user(user_alias=self.source)
 
         # re-construct simple profile with user_id
         # the user_id from the original field from `pandas` is not serializable
@@ -141,7 +141,7 @@ class User(Application):
         if self.source is None:
             # get profile from stdin
             # if user_id is present, the profile will be altered
-            database.user.set_user(json.load(sys.stdin))
+            database.profile.set_user(json.load(sys.stdin))
             return
 
         if self.source.endswith('.xlsx'):
@@ -153,7 +153,7 @@ class User(Application):
             raise ArgumentError(f'"{ext}" is not a supported file type.')
 
         for _, profile in data.iterrows():
-            database.user.set_user(profile.to_dict())
+            database.profile.set_user(profile.to_dict())
 
     def __enter__(self) -> User:
         """Initialize resources."""
