@@ -19,6 +19,7 @@ from __future__ import annotations
 import functools
 
 # internal libs
+from .... import database
 from ....database import auth, data
 from ....core.exceptions import log_and_exit
 from ....core.logging import Logger, SYSLOG_HANDLER
@@ -137,7 +138,10 @@ class Generate(Application):
         else:
             log.handlers[0].level = log.levels[2]
 
+        # persistent connection
+        database.connect()
         return self
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
+        database.disconnect()

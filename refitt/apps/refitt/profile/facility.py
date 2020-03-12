@@ -23,7 +23,7 @@ import json
 import functools
 
 # internal libs
-from ....database import user
+from .... import database
 from ....core.exceptions import log_and_exit
 from ....core.logging import Logger, SYSLOG_HANDLER
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
@@ -122,9 +122,9 @@ class Facility(Application):
             raise ArgumentError('ID or NAME is required for "get" request.')
 
         try:
-            profile = user.get_facility(facility_id=int(self.source))
+            profile = database.user.get_facility(facility_id=int(self.source))
         except (ValueError, TypeError):
-            profile = user.get_facility(facility_name=self.source)
+            profile = database.user.get_facility(facility_name=self.source)
 
         # re-construct simple profile with facility_id
         # the facility_id from the original field from `pandas` is not serializable
@@ -141,7 +141,7 @@ class Facility(Application):
         if self.source is None:
             # get profile from stdin
             # if facility_id is present, the profile will be altered
-            user.set_facility(json.load(sys.stdin))
+            database.user.set_facility(json.load(sys.stdin))
             return
 
         if self.source.endswith('.xlsx'):
@@ -153,7 +153,7 @@ class Facility(Application):
             raise ArgumentError(f'"{ext}" is not a supported file type.')
 
         for _, profile in data.iterrows():
-            user.set_facility(profile.to_dict())
+            database.user.set_facility(profile.to_dict())
 
     def __enter__(self) -> Facility:
         """Initialize resources."""
@@ -167,7 +167,10 @@ class Facility(Application):
         else:
             log.handlers[0].level = log.levels[2]
 
+        # persistent connection
+        database.connect()
         return self
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
+        database.disconnect()

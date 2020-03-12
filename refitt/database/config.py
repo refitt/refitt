@@ -18,13 +18,13 @@ import functools
 import subprocess
 
 # internal libs
-from .client import ServerAddress, UserAuth
+from .types import ServerAddress, UserAuth
 from ..core.config import config, Namespace, ConfigurationError
 from ..core.logging import Logger
 
 
 # initialize module level logger
-log = Logger.with_name('refitt.database')
+log = Logger.with_name('refitt.database.config')
 
 
 def expand_parameters(prefix: str, namespace: Namespace) -> str:

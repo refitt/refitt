@@ -20,6 +20,7 @@ from typing import List
 import functools
 
 # internal libs
+from .... import database
 from ....database.client import DatabaseClient
 from ....database.config import connection_info
 from ....assets import load_asset
@@ -208,7 +209,10 @@ class Init(Application):
         else:
             log.handlers[0].level = log.levels[2]
 
+        # persistent connection
+        database.connect()
         return self
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
+        database.disconnect()

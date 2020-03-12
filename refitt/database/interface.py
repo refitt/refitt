@@ -19,9 +19,10 @@ import functools
 from typing import List
 
 # internal libs
-from ..core.logging import Logger
+from . import config
+from . import client as client_ # obfuscate name to avoid collision
 from .client import DatabaseClient
-from .config import connection_info
+from ..core.logging import Logger
 
 # external libs
 from pandas import DataFrame, read_sql
@@ -32,52 +33,123 @@ from sqlalchemy.engine.result import ResultProxy
 log = Logger.with_name('refitt.database')
 
 
-def execute(statement: str, **params) -> ResultProxy:
+def execute(statement: str, client: DatabaseClient = None, **params) -> ResultProxy:
     """
     Execute arbitrary SQL `statement`.
+
+    Arguments
+    ---------
+    statement: str
+        An SQL query to execute.
+
+    Options
+    -------
+    client: `refitt.database.client.DatabaseClient`
+        A client connection to the database. If None, one will either
+        be created temporarily for the lifetime of this query, or if a
+        `refitt.database.client.PERSISTENT_CLIENT` exists, it will be used.
+
+    Returns
+    -------
+    result: `sqlalchemy.engine.result.ResultProxy`
+
+    See Also
+    --------
+    - `sqlalchemy.engine.execute`
+
+    Example
+    -------
+    >>> from refitt import database
+    >>> database.execute('select * from observation.object_type limit 1').fetchall()
+    [(1, 'SNIa', 'WD detonation, Type Ia SN'),
+     (2, 'SNIa-91bg', 'Peculiar type Ia: 91bg')]
     """
-    info = connection_info()
-    if 'tunnel' not in info:
-        with DatabaseClient(**info['database']) as client:
-            return client.engine.execute(statement, **params)
-    else:
-        with DatabaseClient(**info['database']).use_tunnel(**info['tunnel']) as client:
-            return client.engine.execute(statement, **params)
+    if client is not None:
+        return client.engine.execute(statement, **params)
+    if client_.PERSISTENT_CLIENT is not None:
+        return client_.PERSISTENT_CLIENT.engine.execute(statement, **params)
+    with DatabaseClient.from_config() as client:
+        return client.engine.execute(statement, **params)
 
 
-def insert(data: DataFrame, schema: str, table: str, if_exists: str = 'append',
-           index: bool = False, chunksize: int = 10000) -> None:
+def insert(data: DataFrame, schema: str, table: str, client: DatabaseClient = None,
+           if_exists: str = 'append', index: bool = False, chunksize: int = 10_000) -> None:
     """
     Insert `data` into `schema`.`table`.
 
-    See Also:
-        `pandas.DataFrame.to_sql`
+    Arguments
+    ---------
+    data: `pandas.DataFrame`
+        The data to be inserted into the database.
+
+    schema: str
+        The name of the schema for the `table`.
+
+    table: str
+        The name of the table to insert into.
+
+    Options
+    -------
+    client: `refitt.database.client.DatabaseClient`
+        A client connection to the database. If None, one will either
+        be created temporarily for the lifetime of this query, or if a
+        `refitt.database.client.PERSISTENT_CLIENT` exists, it will be used.
+
+    if_exists: str (default: 'append')
+        Action to take if the `table` already exists. (see `pandas.DataFrame.to_sql`).
+
+    index: bool (default: False)
+        Whether to include the index for insertion. (see `pandas.DataFrame.to_sql`).
+
+    chunksize: int (default: 10_000)
+        Number of rows to insert at a time. (see `pandas.DataFrame.to_sql`).
+
+    See Also
+    --------
+    - `pandas.DataFrame.to_sql`
     """
-    info = connection_info()
-    if 'tunnel' not in info:
-        with DatabaseClient(**info['database']) as client:
-            data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
-                        index=False, chunksize=chunksize)
-    else:
-        with DatabaseClient(**info['database']).use_tunnel(**info['tunnel']) as client:
-            data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
-                        index=index, chunksize=chunksize)
+    if client is not None:
+        return data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
+                           index=index, chunksize=chunksize)
+    if client_.PERSISTENT_CLIENT is not None:
+        return data.to_sql(table, client_.PERSISTENT_CLIENT.engine, schema=schema,
+                           if_exists=if_exists, index=index, chunksize=chunksize)
+    with DatabaseClient.from_config() as client:
+        return data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
+                           index=index, chunksize=chunksize)
 
 
-def _select(query: str) -> DataFrame:
+def _select(query: str, client: DatabaseClient = None) -> DataFrame:
     """
     Execute SQL `query` statement.
 
-    See Also:
-        `pandas.read_sql`
+    Arguments
+    ---------
+    query: str
+        The SQL query to submit to the database.
+
+    Options
+    -------
+    client: `refitt.database.client.DatabaseClient`
+        A client connection to the database. If None, one will either
+        be created temporarily for the lifetime of this query, or if a
+        `refitt.database.client.PERSISTENT_CLIENT` exists, it will be used.
+
+    Results
+    -------
+    table: `pandas.DataFrame`
+
+    See Also
+    --------
+    - `refitt.database.interface.select`
+    - `pandas.read_sql`
     """
-    info = connection_info()
-    if 'tunnel' not in info:
-        with DatabaseClient(**info['database']) as client:
-            return read_sql(query, client.engine)
-    else:
-        with DatabaseClient(**info['database']).use_tunnel(**info['tunnel']) as client:
-            return read_sql(query, client.engine)
+    if client is not None:
+        return read_sql(query, client.engine)
+    if client_.PERSISTENT_CLIENT is not None:
+        return read_sql(query, client_.PERSISTENT_CLIENT.engine)
+    with DatabaseClient.from_config() as client:
+        return read_sql(query, client.engine)
 
 
 @functools.lru_cache(maxsize=None)
@@ -192,10 +264,8 @@ def select(columns: List[str], schema: str, table: str, where: List[str] = [],
 
     Returns
     -------
-    result: `pandas.DataFrame`
-        The resulting table from the query.
+    table: `pandas.DataFrame`
     """
-
     query = _make_select(columns, schema, table, where=where, limit=limit,
                          orderby=orderby, ascending=ascending, join=join)
     result = _select(query)

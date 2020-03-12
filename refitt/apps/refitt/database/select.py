@@ -249,7 +249,10 @@ class Select(Application):
         else:
             log.handlers[0].level = log.levels[2]
 
+        # persistent connection
+        database.connect()
         return self
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
+        database.disconnect()
