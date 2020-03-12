@@ -22,6 +22,7 @@ import functools
 import subprocess
 
 # internal libs
+from .... import database
 from ....database import auth, user, data, recommendation as rec
 from ....core.exceptions import log_and_exit
 from ....core.logging import Logger, SYSLOG_HANDLER, HOSTNAME
@@ -89,6 +90,9 @@ def route_auth() -> Response:
 
         if args:
             raise ValueError('Invalid parameters.', list(args.keys()))
+
+        # persistent database connection
+        database.connect()
 
         # query database for credentials
         if not auth.check_valid(key, token, 0):
@@ -168,6 +172,9 @@ def route_profile_user() -> Response:
         if args:
             raise ValueError('Invalid parameters.', list(args.keys()))
 
+        # persistent database connection
+        database.connect()
+
         if not auth.check_valid(key, token, 0):
             raise ValueError('Invalid level-0 credentials.')
 
@@ -237,6 +244,9 @@ def route_profile_facility() -> Response:
         if args:
             raise ValueError('Invalid parameters.', list(args.keys()))
 
+        # persistent database connection
+        database.connect()
+
         if not auth.check_valid(key, token, 0):
             raise ValueError('Invalid level-0 credentials.')
 
@@ -245,7 +255,7 @@ def route_profile_facility() -> Response:
 
         elif request.method == 'POST':
             # create the user profile and then re-retrieve it
-            profile = dict(request.json)
+            profile = dict(request.json)  # FIXME: check keys?
             user.set_facility(profile)
             profile = user.get_facility(facility_name=profile['facility_name'])
 
@@ -306,6 +316,9 @@ def route_data_object() -> Response:
 
         if args:
             raise ValueError('Invalid parameters.', list(args.keys()))
+
+        # persistent database connection
+        database.connect()
 
         # FIXME: what level is sufficient?
         if not auth.check_valid(key, token, 5):
@@ -379,6 +392,9 @@ def route_recommend() -> Response:
         # required query parameters
         key = str(args.pop('auth_key'))
         token = str(args.pop('auth_token'))
+
+        # persistent database connection
+        database.connect()
 
         # get user_id
         user_auths = auth.from_key(key)

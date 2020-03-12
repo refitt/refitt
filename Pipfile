@@ -12,7 +12,6 @@ sphinx = "*"
 sphinx-rtd-theme = "*"
 twine = "*"
 requests = "*"
-refitt = {editable = true,path = "."}
 
 [packages]
 numpy = "*"
@@ -21,21 +20,20 @@ pandas = "*"
 h5py = "*"
 xlrd = "*"
 sqlalchemy = "*"
+psycopg2 = "*"
 paramiko = "*"
+sshtunnel = "*"
 flask = "*"
+gunicorn = "*"
 antares-client = "*"
 cmdkit = "*"
 logalpha = "*"
-gunicorn = "*"
 slackclient = "*"
-sshtunnel = "*"
 tabulate = "*"
-psycopg2 = "*"
-pyyaml = "*"
 toml = "*"
 tensorflow = "*"
 keras = "*"
-ipython = "*"
+refitt = {editable = true,path = "."}
 
 [requires]
 python_version = "3.7"
