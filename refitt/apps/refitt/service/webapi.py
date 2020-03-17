@@ -179,7 +179,7 @@ def route_profile_user() -> Response:
             raise ValueError('Invalid level-0 credentials.')
 
         if request.method == 'GET':
-            profile = database.user.get_user(user_alias=alias)
+            profile = database.profile.get_user(user_alias=alias)
 
         elif request.method == 'POST':
             # create the user profile and then re-retrieve it
