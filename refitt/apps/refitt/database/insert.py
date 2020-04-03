@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Insert data the REFITT database."""
+"""Insert data into the REFITT database."""
 
 # type annotations
 from __future__ import annotations
@@ -86,7 +86,7 @@ log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
 class Insert(Application):
-    """Insert data the REFITT database."""
+    """Insert data into the REFITT database."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
