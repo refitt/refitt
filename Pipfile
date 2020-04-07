@@ -26,14 +26,16 @@ sshtunnel = "*"
 flask = "*"
 gunicorn = "*"
 antares-client = "*"
-cmdkit = "*"
-logalpha = "*"
+cmdkit = ">=1.2.2"
+logalpha = ">=2.0.2"
 slackclient = "*"
 tabulate = "*"
 toml = "*"
 tensorflow = "*"
 keras = "*"
 refitt = {editable = true,path = "."}
+pyarrow = "*"
+feather-format = "*"
 
 [requires]
 python_version = "3.7"
