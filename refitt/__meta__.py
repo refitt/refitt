@@ -13,7 +13,7 @@
 """Package metadata for refitt."""
 
 __appname__     = 'refitt'
-__version__     = '0.8.1'
+__version__     = '0.8.2'
 __authors__     = """\
 Dan Milisavljevic, Ph.D. <dmilisav@purdue.edu>
 Niharika Sravan, Ph.D. <nsravan@purdue.edu>
@@ -27,3 +27,11 @@ __website__     = 'https://github.rcac.purdue.edu/CassiopeiaGroup/refitt'
 __copyright__   = 'REFITT Team 2019.'
 __description__ = 'The Recommender Engine for Intelligent Transient Tracking.'
 __keywords__    = 'astronomy science machine-learning service'
+
+__ascii_art__   = """\
+    ____  ____________________________
+   / __ \/ ____/ ____/  _/_  __/_  __/
+  / /_/ / __/ / /_   / /  / /   / /   
+ / _, _/ /___/ __/ _/ /  / /   / /    
+/_/ |_/_____/_/   /___/ /_/   /_/  
+"""
