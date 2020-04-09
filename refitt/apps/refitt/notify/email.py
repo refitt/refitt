@@ -223,7 +223,7 @@ class Email(Application):
             auth = UserAuth(username, password)
 
         host = profile.pop('host', '127.0.0.1')
-        port = profile.pop('port', '587')
+        port = profile.pop('port', 0)
         log.debug(f'mail server is {host}:{port}')
         self.server = Server(host, port, auth)
         self.server.connect()
