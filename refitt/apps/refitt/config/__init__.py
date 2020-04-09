@@ -101,4 +101,4 @@ class ConfigGroup(Application):
             status = COMMANDS[self.command].main(sys.argv[3:])
             raise CompletedCommand(status)
         else:
-            raise ArgumentError(f'"{self.command}" is not command.')
+            raise ArgumentError(f'"{self.command}" is not a command.')

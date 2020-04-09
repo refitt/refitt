@@ -31,8 +31,9 @@ from .pipeline import PipelineGroup
 from .service import ServiceGroup
 from .database import DatabaseGroup
 from .profile import ProfileGroup
-from .auth import AuthGroup
+from .notify import NotifyGroup
 from .config import ConfigGroup
+from .auth import AuthGroup
 
 
 GROUPS = {
@@ -40,6 +41,7 @@ GROUPS = {
     'database': DatabaseGroup,
     'service':  ServiceGroup,
     'profile':  ProfileGroup,
+    'notify':   NotifyGroup,
     'config':   ConfigGroup,
     'auth':     AuthGroup,
 }
@@ -69,6 +71,7 @@ pipeline               {PipelineGroup.__doc__}
 database               {DatabaseGroup.__doc__}
 service                {ServiceGroup.__doc__}
 profile                {ProfileGroup.__doc__}
+notify                 {NotifyGroup.__doc__}
 config                 {ConfigGroup.__doc__}
 auth                   {AuthGroup.__doc__}
 

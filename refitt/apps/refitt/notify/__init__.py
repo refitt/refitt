@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Manage user and facility profiles."""
+"""Send notifications to recipients."""
 
 # standard libs
 import sys
@@ -25,21 +25,20 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # commands
-from .user import User
-from .facility import Facility
+from .email import Email
+from .slack import Slack
 
 
 COMMANDS = {
-    'user':     User,
-    'facility': Facility,
+    'email': Email,
+    'slack': Slack,
 }
 
-PROGRAM = f'{__appname__} profile'
+PROGRAM = f'{__appname__} notify'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <command> [<args>...]
-       {PADDING} [--help]
+usage: {PROGRAM} <platform> [<args>...] [--help]
 
 {__doc__}\
 """
@@ -55,12 +54,12 @@ Copyright {__copyright__}
 HELP = f"""\
 {USAGE}
 
-commands:
-user                   {User.__doc__}
-facility               {Facility.__doc__}
+platforms:
+email                 {Email.__doc__}
+slack                 {Slack.__doc__}
 
 options:
--h, --help             Show this message and exit.
+-h, --help            Show this message and exit.
 
 Use the -h/--help flag with the above groups/commands to
 learn more about their usage.
@@ -69,12 +68,11 @@ learn more about their usage.
 """
 
 
-# initialize module level logger
 log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
-class ProfileGroup(Application):
-    """Manage user and facility profiles."""
+class NotifyGroup(Application):
+    """Send notifications to recipients."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 

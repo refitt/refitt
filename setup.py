@@ -41,6 +41,7 @@ setup(
                             'Topic :: Scientific/Engineering :: Astronomy',
                             'Programming Language :: Python :: 3',
                             'Programming Language :: Python :: 3.7',
+                            'Programming Language :: Python :: 3.8',
                             'Operating System :: POSIX :: Linux', ],
     entry_points         = {'console_scripts': ['refitt=refitt.apps.refitt:main',
                                                 'refittd=refitt.apps.refittd:main',
@@ -49,7 +50,7 @@ setup(
         'numpy', 'scipy', 'pandas', 'h5py', 'xlrd', 'sqlalchemy', 'psycopg2',
         'paramiko', 'sshtunnel', 'flask', 'tabulate', 'gunicorn', 'slackclient',
         'cmdkit>=1.2.1', 'logalpha>=2.0.2', 'toml', 'keras', 'tensorflow',
-        'antares_client'],
+        'pyarrow', 'feather-format', 'antares_client'],
     extras_require       = {
         'dev': ['ipython', 'pytest', 'hypothesis', 'pylint', 'sphinx',
                 'sphinx-rtd-theme']},
