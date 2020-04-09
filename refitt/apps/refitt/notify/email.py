@@ -42,6 +42,7 @@ USAGE = f"""\
 usage: {PROGRAM} ADDR [ADDR ...] [--from PROFILE] [--subject MSG]  
        {PADDING} [--message FILE] [--plain | --html] [--attach FILE [FILE ...]]
        {PADDING} [--template NAME [--opts ARG [ARG ...]]]
+       {PADDING} [--debug | --verbose] [--syslog]
        {PADDING} [--help]
 
 {__doc__}\
