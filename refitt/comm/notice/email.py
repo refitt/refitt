@@ -426,13 +426,13 @@ class Template(Mail):
 class Test(Mail):
     """Send a basic test message."""
 
-    message = "This message is a test of REFITT's automated messaging system."
+    message = "This is a test of REFITT's automated messaging system."
 
     def __init__(self, *args, **kwargs) -> None:
         """No attachments or subject allowed."""
 
         attachments = kwargs.pop('attach', None)
-        if attachments is not None:
+        if attachments:
             log.warning('ignore attachments for test message')
 
         text = kwargs.pop('text', None)

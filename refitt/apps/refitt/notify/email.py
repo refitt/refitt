@@ -159,6 +159,7 @@ class Email(Application):
         if self.template not in templates:
             raise ArgumentError(f'template "{self.template}" not found')
 
+        log.debug(f'using {self.template} template')
         Template = templates[self.template]
         mail = Template(*self.options, self.address, self.recipients,
                         subject=self.subject, attach=self.attachments)
@@ -201,7 +202,7 @@ class Email(Application):
         if self.profile not in profile:
             raise ConfigurationError(f'[mail.{self.profile}] not found')
         profile = config['mail'][self.profile]
-        log.debug(f'using profile {self.profile}')
+        log.debug(f'using {self.profile} profile')
 
         self.address = profile.get('address', None)
         if self.address is None:
