@@ -19,33 +19,12 @@ import subprocess
 
 # internal libs
 from .types import ServerAddress, UserAuth
-from ..core.config import config, Namespace, ConfigurationError
+from ..core.config import config, ConfigurationError, expand_parameters
 from ..core.logging import Logger
 
 
 # initialize module level logger
 log = Logger.with_name('refitt.database.config')
-
-
-def expand_parameters(prefix: str, namespace: Namespace) -> str:
-    """Substitute values into namespace if `_env` or `_eval` present."""
-    value = None
-    count = 0
-    for key in filter(lambda key: key.startswith(prefix), namespace.keys()):
-        count += 1
-        if count > 1:
-            raise ValueError(f'more than one variant of "{prefix}" in configuration file')
-        if key.endswith('_env'):
-            value = os.getenv(namespace[key])
-            log.debug(f'expanded "{prefix}" from configuration as environment variable')
-        elif key.endswith('_eval'):
-            value = subprocess.check_output(namespace[key].split()).decode().strip()
-            log.debug(f'expanded "{prefix}" from configuration as shell command')
-        elif key == prefix:
-            value = namespace[key]
-        else:
-            raise ValueError(f'unrecognized variant of "{prefix}" ({key}) in configuration file')
-    return value
 
 
 @functools.lru_cache(maxsize=1)
