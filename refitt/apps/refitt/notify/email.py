@@ -120,7 +120,7 @@ class Email(Application):
     template: str = None
     interface.add_argument('-t', '--template', default=None)
 
-    options: List[str] = None
+    options: List[str] = []
     interface.add_argument('--opts', nargs='+', default=options, dest='options')
 
     debug: bool = False

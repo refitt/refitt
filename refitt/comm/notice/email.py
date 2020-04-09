@@ -423,6 +423,30 @@ class Template(Mail):
     """An email message with a specifically formatted template."""
 
 
+class Test(Mail):
+    """Send a basic test message."""
+
+    message = "This message is a test of REFITT's automated messaging system."
+
+    def __init__(self, *args, **kwargs) -> None:
+        """No attachments or subject allowed."""
+
+        attachments = kwargs.pop('attach', None)
+        if attachments is not None:
+            log.warning('ignore attachments for test message')
+
+        text = kwargs.pop('text', None)
+        if text is not None:
+            log.warning('ignoring text body for test message')
+
+        html = kwargs.pop('html', None)
+        if html is not None:
+            log.warning('ignoring html body for test message')
+
+        super().__init__(*args, **{'text': self.message, **kwargs})
+        self.subject = f'REFITT Test ({self.date})'
+
+
 RECOMMENDATION_NOTICE = """\
 <html>
     <head></head>
@@ -485,5 +509,6 @@ class RecommendationNotice(Template):
 
 # named templates and their classes
 templates = {
+    'test': Test,
     'recommend': RecommendationNotice,
 }
