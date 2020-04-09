@@ -73,7 +73,7 @@ class Logger(loggers.Logger):
 
     @property
     def handlers(self) -> List[handlers.Handler]:
-        """Overide of local handlers to global list."""
+        """Override of local handlers to global list."""
         global _handlers
         return _handlers
 
