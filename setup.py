@@ -41,6 +41,7 @@ setup(
                             'Topic :: Scientific/Engineering :: Astronomy',
                             'Programming Language :: Python :: 3',
                             'Programming Language :: Python :: 3.7',
+                            'Programming Language :: Python :: 3.8',
                             'Operating System :: POSIX :: Linux', ],
     entry_points         = {'console_scripts': ['refitt=refitt.apps.refitt:main',
                                                 'refittd=refitt.apps.refittd:main',
