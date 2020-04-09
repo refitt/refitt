@@ -20,7 +20,7 @@ from ...core.logging import Logger
 from ...core.exceptions import CompletedCommand
 from ...__meta__ import (__appname__, __version__, __description__,
                          __copyright__, __developer__, __contact__,
-                         __website__)
+                         __website__, __ascii_art__)
 
 # external libs
 from cmdkit.app import Application
@@ -95,6 +95,7 @@ class Refitt(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
     interface.add_argument('-v', '--version', version=__version__, action='version')
+    interface.add_argument('--ascii-art', version=__ascii_art__, action='version')
 
     group: str = None
     interface.add_argument('group')
