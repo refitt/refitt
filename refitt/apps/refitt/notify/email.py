@@ -42,6 +42,7 @@ USAGE = f"""\
 usage: {PROGRAM} ADDR [ADDR ...] [--from PROFILE] [--subject MSG]  
        {PADDING} [--message FILE] [--plain | --html] [--attach FILE [FILE ...]]
        {PADDING} [--template NAME [--opts ARG [ARG ...]]]
+       {PADDING} [--debug | --verbose] [--syslog]
        {PADDING} [--help]
 
 {__doc__}\
@@ -119,7 +120,7 @@ class Email(Application):
     template: str = None
     interface.add_argument('-t', '--template', default=None)
 
-    options: List[str] = None
+    options: List[str] = []
     interface.add_argument('--opts', nargs='+', default=options, dest='options')
 
     debug: bool = False
@@ -158,6 +159,7 @@ class Email(Application):
         if self.template not in templates:
             raise ArgumentError(f'template "{self.template}" not found')
 
+        log.debug(f'using {self.template} template')
         Template = templates[self.template]
         mail = Template(*self.options, self.address, self.recipients,
                         subject=self.subject, attach=self.attachments)
@@ -200,7 +202,7 @@ class Email(Application):
         if self.profile not in profile:
             raise ConfigurationError(f'[mail.{self.profile}] not found')
         profile = config['mail'][self.profile]
-        log.debug(f'using profile {self.profile}')
+        log.debug(f'using {self.profile} profile')
 
         self.address = profile.get('address', None)
         if self.address is None:
@@ -222,7 +224,7 @@ class Email(Application):
             auth = UserAuth(username, password)
 
         host = profile.pop('host', '127.0.0.1')
-        port = profile.pop('port', '587')
+        port = profile.pop('port', 0)
         log.debug(f'mail server is {host}:{port}')
         self.server = Server(host, port, auth)
         self.server.connect()
