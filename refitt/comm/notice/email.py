@@ -128,6 +128,7 @@ class Mail:
     _mime: MIMEMultipart = None
     _payload_index: Dict[str, int] = None
     _data: Dict[str, bytes] = None
+    _bcc: List[str] = []  # not included in headers
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize email."""
@@ -227,20 +228,17 @@ class Mail:
     @property
     def bcc(self) -> Optional[List[str]]:
         """The BCC recipients' addresses."""
-        addresses = self.mime['BCC']
-        if addresses is None:
-            return []
-        else:
-            return [addr.strip() for addr in addresses.split(',')]
+        return self._bcc
 
     @bcc.setter
     def bcc(self, other: ADDR_SPEC) -> None:
         """Set the BCC recipients' addresses."""
-        if self.mime['BCC'] is not None:
-            del self.mime['BCC']
-        if other is not None:
-            recipients = [other] if isinstance(other, str) else list(other)
-            self.mime['BCC'] = ', '.join(recipients)
+        if other is None:
+            self._bcc = []
+        elif isinstance(other, str):
+            self._bcc = [other]
+        else:
+            self._bcc = list(map(str, other))
 
     @property
     def date(self) -> Optional[str]:
@@ -442,7 +440,8 @@ class Server:
 
     def send(self, mail: Mail) -> None:
         """Send email using mail server."""
-        self.server.sendmail(mail.address, mail.recipients, str(mail))
+        outgoing = mail.recipients + mail.cc + mail.bcc
+        self.server.sendmail(mail.address, outgoing, str(mail))
 
     def __enter__(self) -> Server:
         """Connect to mail server."""
