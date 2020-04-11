@@ -21,6 +21,7 @@ from typing import List, Dict, Union, Optional
 # standard libs
 import os
 import io
+from abc import abstractproperty
 from datetime import datetime
 from smtplib import SMTP
 from ssl import SSLContext, create_default_context
@@ -152,10 +153,10 @@ class Mail:
         else:
             raise TypeError(f'cannot convert {other} to type Email')
 
-    def _init_constructor(self, from_addr: str, to_addr: ADDR_SPEC, *, subject: str = '',
-                          cc: ADDR_SPEC = None, bcc: ADDR_SPEC = None,
+    def _init_constructor(self, from_addr: str, to_addr: ADDR_SPEC, *,
+                          subject: str = None, cc: ADDR_SPEC = None, bcc: ADDR_SPEC = None,
                           text: str = None, html: str = None, attach: FILE_SPEC = None,
-                          subtype: str = DEFAULT_MIME_TYPE,) -> None:
+                          subtype: str = DEFAULT_MIME_TYPE) -> None:
         """Initialize message parts."""
 
         self._null_constructor(subtype=subtype)
@@ -251,7 +252,8 @@ class Mail:
         """Set the date of the message."""
         if self.mime['Date'] is not None:
             del self.mime['Date']
-        self.mime['Date'] = str(other)
+        if other is not None:
+            self.mime['Date'] = str(other)
 
     @property
     def subject(self) -> Optional[str]:
@@ -263,7 +265,8 @@ class Mail:
         """Set the subject of the message."""
         if self.mime['Subject'] is not None:
             del self.mime['Subject']
-        self.mime['Subject'] = str(other)
+        if other is not None:
+            self.mime['Subject'] = str(other)
 
     def __getitem__(self, key: str) -> Optional[str]:
         """Get attachment."""
@@ -440,17 +443,6 @@ class Server:
     def send(self, mail: Mail) -> None:
         """Send email using mail server."""
         self.server.sendmail(mail.address, mail.recipients, str(mail))
-        self._log_sent(mail)
-
-    @staticmethod
-    def _log_sent(mail: Mail) -> None:
-        """Write a debug message for `mail`."""
-        recipients = ', '.join(mail.recipients)
-        msg = f'sent mail to {recipients}'
-        num_attached = len(mail.attachments)
-        if num_attached > 0:
-            msg += f' with {num_attached} files'
-        log.debug(msg)
 
     def __enter__(self) -> Server:
         """Connect to mail server."""
@@ -465,11 +457,16 @@ class Server:
 class Template(Mail):
     """An email message with a specifically formatted template."""
 
+    @abstractproperty
+    def required(self) -> int:
+        """The number of required positional arguments."""
+
 
 class TestMail(Template):
-    """Send a basic test message."""
+    """Basic test email."""
 
     message = "This is a test of REFITT's automated messaging system."
+    required = 0
 
     def __init__(self, *args, **kwargs) -> None:
         """No attachments or subject allowed."""
@@ -526,7 +523,9 @@ RECOMMENDATION_TEMPLATE = """\
 
 
 class RecommendationMail(Template):
-    """A recommendation email with a CSV of targets attached."""
+    """Recommendation email with a CSV of targets attached."""
+
+    required = 1
 
     def __init__(self, name: str, *args, **kwargs) -> None:
         """
@@ -576,3 +575,8 @@ templates = {
     'test': TestMail,
     'recommend': RecommendationMail,
 }
+
+TEMPLATES = f"""\
+test         {TestMail.__doc__}
+recommend    {RecommendationMail.__doc__}\
+"""

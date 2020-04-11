@@ -23,7 +23,7 @@ import json
 import functools
 
 # internal libs
-from ....comm.notice.email import UserAuth, Mail, Server, templates
+from ....comm.notice.email import UserAuth, Mail, Server, templates, TEMPLATES
 from ....core.exceptions import log_and_exit
 from ....core.logging import Logger, SYSLOG_HANDLER
 from ....core.config import config, ConfigurationError, expand_parameters
@@ -39,11 +39,12 @@ PROGRAM = f'{__appname__} notify email'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} ADDR [ADDR ...] [--from PROFILE] [--subject MSG]  
+usage: {PROGRAM} ADDR [ADDR ...] [--from PROFILE] [--subject MSG]
+       {PADDING} [--cc ADDR [ADDR ...]] [--bcc ADDR [ADDR ...]]
        {PADDING} [--message FILE] [--plain | --html] [--attach FILE [FILE ...]]
        {PADDING} [--template NAME [--opts ARG [ARG ...]]]
-       {PADDING} [--debug | --verbose] [--syslog]
-       {PADDING} [--help]
+       {PADDING} [--dry-run] [--debug | --verbose] [--syslog]
+       {PADDING} [--help] [--list-templates]
 
 {__doc__}\
 """
@@ -59,14 +60,19 @@ Copyright {__copyright__}
 HELP = f"""\
 {USAGE}
 
+If no template is provided, send an email with a custom message.
+Use --plain/--html to specify the format of the message.
+
 arguments:
 ADDR                         Address of recipients.
 
 options:
 -f, --from      PROFILE      Name of mail profile.
 -s, --subject   MSG          Subject of mail.
+    --cc        ADDR...      Address of recipients (CC).
+    --bcc       ADDR...      Address of recipients (BCC).
 -m, --message   FILE         Path to mail body (default: stdin).
-    --plain,                 Send mail as plain text.
+    --plain                  Send mail as plain text.
     --html                   Send mail as html.
 -a, --attach    FILE         Paths to files to attach.
 -t, --template  NAME         Name of mail template.
@@ -74,7 +80,11 @@ options:
 -d, --debug                  Show debugging messages.
 -v, --verbose                Show information messages.
     --syslog                 Use syslog style messages.
+    --dry-run                Show the raw MIME text.
 -h, --help                   Show this message and exit.
+
+extras:
+    --list-templates         Show templates.
 
 {EPILOG}
 """
@@ -98,10 +108,16 @@ class Email(Application):
     recipients: List[str] = []
     interface.add_argument('recipients', nargs='+', default=recipients)
 
+    cc: List[str] = None
+    interface.add_argument('--cc', nargs='+', default=cc)
+
+    bcc: List[str] = None
+    interface.add_argument('--bcc', nargs='+', default=bcc)
+
     profile: str = 'default'
     interface.add_argument('-f', '--from', default=profile, dest='profile')
 
-    subject: str = ''
+    subject: str = None
     interface.add_argument('-s', '--subject', default=subject)
 
     message_file: str = None  # "-" for stdin
@@ -132,6 +148,13 @@ class Email(Application):
     syslog: bool = False
     interface.add_argument('--syslog', action='store_true')
 
+    dry_run: bool = False
+    interface.add_argument('--dry-run', action='store_true')
+
+    list_templates: bool = False
+    interface.add_argument('--list-templates', version=TEMPLATES, action='version')
+
+    mail: Mail = None
     address: str = None
     server: Server = None
 
@@ -161,10 +184,18 @@ class Email(Application):
 
         log.debug(f'using {self.template} template')
         Template = templates[self.template]
-        mail = Template(*self.options, self.address, self.recipients,
-                        subject=self.subject, attach=self.attachments)
+        if len(self.options) != Template.required:
+            raise ArgumentError(f'"{self.template}" requires {Template.required} position arguments '
+                                f'but {len(self.options)} provided from --opts')
 
-        self.server.send(mail)
+        self.mail = Template(*self.options, self.address, self.recipients,
+                             subject=self.subject, cc=self.cc, bcc=self.bcc,
+                             attach=self.attachments)
+        if self.dry_run:
+            print(self.mail)
+        else:
+            self.server.send(self.mail)
+            self.log_message()
 
     def run_basic(self) -> None:
         """Send a basic email without any template."""
@@ -180,10 +211,30 @@ class Email(Application):
 
         msg_type = 'text' if self.message_text else 'html'
         msg_form = {msg_type: message}
-        mail = Mail(self.address, self.recipients, self.subject,
-                    **{**msg_form, 'attach': self.attachments})
+        self.mail = Mail(self.address, self.recipients,
+                         subject=self.subject, cc=self.cc, bcc=self.bcc,
+                         **{**msg_form, 'attach': self.attachments})
 
-        self.server.send(mail)
+        if self.dry_run:
+            print(self.mail)
+        else:
+            self.server.send(self.mail)
+            self.log_message()
+
+    def log_message(self) -> None:
+        """Compose a logging message."""
+        recipients = ', '.join(self.recipients)
+        msg = f'sent email to {recipients}'
+        if self.attachments:
+            count = len(self.attachments)
+            msg += f' [{count} files]'
+        if self.cc:
+            count = len(self.cc)
+            msg += f' [{count} CC]'
+        if self.bcc:
+            count = len(self.bcc)
+            msg += f' [{count} BCC]'
+        log.info(msg)
 
     def __enter__(self) -> Email:
         """Initialize resources."""
