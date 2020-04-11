@@ -21,6 +21,8 @@ from typing import List, Dict, Union, Optional
 # standard libs
 import os
 import io
+from abc import abstractproperty
+from datetime import datetime
 from smtplib import SMTP
 from ssl import SSLContext, create_default_context
 from email.mime.application import MIMEApplication
@@ -85,6 +87,9 @@ class UserAuth:
 # some priority and fallback (html before plain).
 DEFAULT_MIME_TYPE = 'mixed'
 
+# Email address can be specified as a single string or a list of strings.
+# This applies for `recipients`, `cc`, and `bcc`.
+ADDR_SPEC = Union[str, List[str]]
 
 # Attachments can be specified in the parameters passed to the constructor
 # as either a lone simple string, a list of file paths, or a dictionary
@@ -148,14 +153,17 @@ class Mail:
         else:
             raise TypeError(f'cannot convert {other} to type Email')
 
-    def _init_constructor(self, from_addr: str, to_addr: Union[str, List[str]], subject: str,
-                          text: str = None, html: str = None, subtype: str = DEFAULT_MIME_TYPE,
-                          attach: FILE_SPEC = None) -> None:
+    def _init_constructor(self, from_addr: str, to_addr: ADDR_SPEC, *,
+                          subject: str = None, cc: ADDR_SPEC = None, bcc: ADDR_SPEC = None,
+                          text: str = None, html: str = None, attach: FILE_SPEC = None,
+                          subtype: str = DEFAULT_MIME_TYPE) -> None:
         """Initialize message parts."""
 
         self._null_constructor(subtype=subtype)
         self.address = from_addr
         self.recipients = to_addr
+        self.cc = cc
+        self.bcc = bcc
         self.subject = subject
         self.date = formatdate(localtime=True)
 
@@ -191,12 +199,48 @@ class Mail:
         return [addr.strip() for addr in self.mime['To'].split(',')]
 
     @recipients.setter
-    def recipients(self, other: Union[str, List[str]]) -> None:
+    def recipients(self, other: ADDR_SPEC) -> None:
         """Set the recipients' addresses."""
         if self.mime['To'] is not None:
             del self.mime['To']
         recipients = [other] if isinstance(other, str) else list(other)
         self.mime['To'] = ', '.join(recipients)
+
+    @property
+    def cc(self) -> Optional[List[str]]:
+        """The CC recipients' addresses."""
+        addresses = self.mime['CC']
+        if addresses is None:
+            return []
+        else:
+            return [addr.strip() for addr in addresses.split(',')]
+
+    @cc.setter
+    def cc(self, other: ADDR_SPEC) -> None:
+        """Set the CC recipients' addresses."""
+        if self.mime['CC'] is not None:
+            del self.mime['CC']
+        if other is not None:
+            recipients = [other] if isinstance(other, str) else list(other)
+            self.mime['CC'] = ', '.join(recipients)
+
+    @property
+    def bcc(self) -> Optional[List[str]]:
+        """The BCC recipients' addresses."""
+        addresses = self.mime['BCC']
+        if addresses is None:
+            return []
+        else:
+            return [addr.strip() for addr in addresses.split(',')]
+
+    @bcc.setter
+    def bcc(self, other: ADDR_SPEC) -> None:
+        """Set the BCC recipients' addresses."""
+        if self.mime['BCC'] is not None:
+            del self.mime['BCC']
+        if other is not None:
+            recipients = [other] if isinstance(other, str) else list(other)
+            self.mime['BCC'] = ', '.join(recipients)
 
     @property
     def date(self) -> Optional[str]:
@@ -208,7 +252,8 @@ class Mail:
         """Set the date of the message."""
         if self.mime['Date'] is not None:
             del self.mime['Date']
-        self.mime['Date'] = str(other)
+        if other is not None:
+            self.mime['Date'] = str(other)
 
     @property
     def subject(self) -> Optional[str]:
@@ -220,7 +265,8 @@ class Mail:
         """Set the subject of the message."""
         if self.mime['Subject'] is not None:
             del self.mime['Subject']
-        self.mime['Subject'] = str(other)
+        if other is not None:
+            self.mime['Subject'] = str(other)
 
     def __getitem__(self, key: str) -> Optional[str]:
         """Get attachment."""
@@ -397,17 +443,6 @@ class Server:
     def send(self, mail: Mail) -> None:
         """Send email using mail server."""
         self.server.sendmail(mail.address, mail.recipients, str(mail))
-        self._log_sent(mail)
-
-    @staticmethod
-    def _log_sent(mail: Mail) -> None:
-        """Write a debug message for `mail`."""
-        recipients = ', '.join(mail.recipients)
-        msg = f'sent mail to {recipients}'
-        num_attached = len(mail.attachments)
-        if num_attached > 0:
-            msg += f' with {num_attached} files'
-        log.debug(msg)
 
     def __enter__(self) -> Server:
         """Connect to mail server."""
@@ -422,11 +457,16 @@ class Server:
 class Template(Mail):
     """An email message with a specifically formatted template."""
 
+    @abstractproperty
+    def required(self) -> int:
+        """The number of required positional arguments."""
 
-class Test(Mail):
-    """Send a basic test message."""
+
+class TestMail(Template):
+    """Basic test email."""
 
     message = "This is a test of REFITT's automated messaging system."
+    required = 0
 
     def __init__(self, *args, **kwargs) -> None:
         """No attachments or subject allowed."""
@@ -443,18 +483,27 @@ class Test(Mail):
         if html is not None:
             log.warning('ignoring html body for test message')
 
+        subject = kwargs.pop('subject', None)
+        if subject is not None:
+            log.warning('ignore subject for test message')
+
         super().__init__(*args, **{'text': self.message, **kwargs})
         self.subject = f'REFITT Test ({self.date})'
 
 
-RECOMMENDATION_NOTICE = """\
+RECOMMENDATION_TEMPLATE = """\
 <html>
     <head></head>
     <body>
         <p>Hello, {name}.</p>
         
-        <p>Attached is a CSV file with your priority list of targets for tonight.
-        Below is a preview of the first few targets.</p>
+        <p>
+        Attached are your recommended targets for tonight.
+        This email is for convenience purposes. Log in at
+        <a href="https://refitt.org">refitt.org</a> to adjust your notification
+        preferences. Below is a preview of the first few targets.
+        </p>
+        <br>
         
         {table}
         
@@ -463,15 +512,20 @@ RECOMMENDATION_NOTICE = """\
         REFITT Team<p>
         
         <p>--<br>
-        This email was automatically generated by the REFITT system.
+        This email was automatically generated by the REFITT system.<br>
+        This information is current as of {date}.<br>
+        Log in at <a href="https://refitt.org">refitt.org</a> for details.
         </p>
+        <br>
     </body>
 </html>
 """
 
 
-class RecommendationNotice(Template):
-    """A recommendation email with a CSV of targets attached."""
+class RecommendationMail(Template):
+    """Recommendation email with a CSV of targets attached."""
+
+    required = 1
 
     def __init__(self, name: str, *args, **kwargs) -> None:
         """
@@ -479,16 +533,20 @@ class RecommendationNotice(Template):
         A single attachment is required to be a CSV file.
         """
 
+        subject = kwargs.pop('subject', None)
+        if subject is not None:
+            log.warning('ignore subject for test message')
+
         # check attachments
         attachment = kwargs.pop('attach', None)
         if not attachment or len(attachment) != 1:
-            raise ValueError('Recommendation Notice requires a single file attachment.')
+            raise ValueError('RecommendationMail requires a single file attachment.')
         if not isinstance(attachment, list):
-            raise ValueError('Recommendation Notice expected a length-1 list.')
+            raise ValueError('RecommendationMail expected a length-1 list of attachments.')
 
         attachment, = attachment
         if not attachment.endswith('.csv'):
-            raise ValueError(f'Recommendation Notice requires a CSV file, given {attachment}.')
+            raise ValueError(f'RecommendationMail requires a CSV file, given {attachment}.')
 
         # base initialization
         super().__init__(*args, **kwargs)
@@ -497,18 +555,28 @@ class RecommendationNotice(Template):
         self.html = ''
 
         # add attachment (loads the raw data)
-        self.attach({'targets.csv': attachment})
+        time = datetime.utcnow().astimezone()
+        stamp = time.strftime('%Y%m%d-%H%M%S')
+        filename = f'recommendations-{stamp}.csv'
+        self.attach({filename: attachment})
 
         # parse the CSV data
-        data = read_csv(io.BytesIO(self._data['targets.csv']))
+        data = read_csv(io.BytesIO(self._data[filename]))
         table = data.head(4).to_html(justify='right', index=False)
 
         # format html message
-        self.html = RECOMMENDATION_NOTICE.format(name=name, table=table)
+        date = time.strftime('%a, %d %b %Y %T UTC')
+        self.html = RECOMMENDATION_TEMPLATE.format(name=name, table=table, date=date)
+        self.subject = f'REFITT Recommendations ({date})'
 
 
 # named templates and their classes
 templates = {
-    'test': Test,
-    'recommend': RecommendationNotice,
+    'test': TestMail,
+    'recommend': RecommendationMail,
 }
+
+TEMPLATES = f"""\
+test         {TestMail.__doc__}
+recommend    {RecommendationMail.__doc__}\
+"""
