@@ -15,10 +15,13 @@ Assets/templates required by REFITT.
 """
 
 # type annotations
-from typing import IO, Union
+from typing import List, Dict, IO, Union, Generator
 
 # standard libs
 import os
+import re
+import fnmatch
+import functools
 
 # internal libs
 from ..core.logging import Logger
@@ -30,6 +33,45 @@ log = Logger.with_name(__name__)
 
 # either bytes or str depending on how the file was opened
 FileData = Union[str, bytes]
+
+
+# The absolute location of this directory.
+# The trailing path separator is necessary for reconstituting relative paths.
+DIRECTORY = os.path.dirname(__file__) + os.path.sep
+
+
+def abspath(relative_path: str) -> str:
+    """Construct the absolute path to the file within /assets."""
+    path = relative_path.lstrip(os.path.sep)
+    return os.path.normpath(os.path.join(DIRECTORY, path))
+
+
+# do not yield non-asset paths
+IGNORE_PATHS = r'.*\/(__init__.py$|__pycache__\/.*)'
+
+
+def _iter_paths() -> Generator[str, None, None]:
+    """Yield relative file paths below /assets"""
+    ignore = re.compile(IGNORE_PATHS)
+    for root, dirs, files in os.walk(DIRECTORY):
+        yield from filter(lambda path: ignore.match(path) is None,
+                          map(functools.partial(os.path.join, root), files))
+
+
+def _match_glob(pattern: str, path: str) -> bool:
+    """True if `path` matches `pattern`."""
+    return fnmatch.fnmatch(path, pattern)
+
+
+def _match_regex(pattern: str, path: str) -> bool:
+    """True if `path` matches `pattern`."""
+    return re.match(pattern, path) is not None
+
+
+def find_files(pattern: str, regex: bool = False) -> List[str]:
+    """List the assets matching a glob/regex `pattern`."""
+    return sorted(filter(functools.partial(_match_glob if not regex else _match_regex, pattern),
+                         map(lambda path: os.path.normpath(path).replace(DIRECTORY, ''), _iter_paths())))
 
 
 def open_asset(relative_path: str, mode: str = 'r', **kwargs) -> IO:
@@ -85,3 +127,24 @@ def load_asset(relative_path: str, mode: str = 'r', **kwargs) -> FileData:
         content = source.read()
         log.debug(f'loaded /assets/{relative_path}')
         return content
+
+
+def load_assets(pattern: str, regex: bool = False, **kwargs) -> Dict[str, FileData]:
+    """
+    Load all files matching `pattern`.
+
+    Arguments
+    ---------
+    pattern: str
+        Either a glob pattern or regular expression for the files to include.
+
+    regex: bool (default: False)
+        Whether to interpret the `pattern` as a regular expression.
+
+    Returns
+    -------
+    file_data: Dict[str, Union[str, bytes]]
+        A dictionary of the file data, indexed by the relative file path within
+        the /assets directory. Use `mode='rb'` to return raw bytes data.
+    """
+    return {path: load_asset(path, **kwargs) for path in find_files(pattern, regex=regex)}
