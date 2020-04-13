@@ -14,13 +14,74 @@
 Assets/templates required by REFITT.
 """
 
+# type annotations
+from typing import IO, Union
+
 # standard libs
 import os
 
+# internal libs
+from ..core.logging import Logger
 
-def load_asset(relative_path: str) -> str:
-    """Load an asset by its base `filename`."""
+
+# module level logger
+log = Logger.with_name(__name__)
+
+
+# either bytes or str depending on how the file was opened
+FileData = Union[str, bytes]
+
+
+def open_asset(relative_path: str, mode: str = 'r', **kwargs) -> IO:
+    """
+    Open a file from the /assets subpackage.
+
+    Arguments
+    ---------
+    relative_path: str
+        The relative file path below /assets directory.
+
+    mode: str (default: 'r')
+        The mode to open the file with.
+
+    **kwargs:
+        Additional keyword arguments are passed to open.
+
+    Returns
+    -------
+    file: IO
+        The file descriptor for the open file asset.
+    """
     dirname = os.path.dirname(__file__)
     filepath = os.path.join(dirname, relative_path)
-    with open(filepath, mode='r') as source:
-        return source.read()
+    try:
+        return open(filepath, mode=mode, **kwargs)
+    except FileNotFoundError as error:
+        log.error(f'missing /assets/{relative_path}')
+        raise
+
+
+def load_asset(relative_path: str, mode: str = 'r', **kwargs) -> FileData:
+    """
+    Load an asset from its `relative_path` below /assets.
+
+    Arguments
+    ---------
+    relative_path: str
+        The relative file path below /assets directory.
+
+    mode: str (default: 'r')
+        The mode to open the file with.
+
+    **kwargs:
+        Additional keyword arguments are passed to open.
+
+    Returns
+    -------
+    content: Union[str, bytes]
+        The content of the file (depends on the mode).
+    """
+    with open_asset(relative_path, mode=mode, **kwargs) as source:
+        content = source.read()
+        log.debug(f'loaded /assets/{relative_path}')
+        return content
