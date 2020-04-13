@@ -17,9 +17,7 @@ from __future__ import annotations
 from typing import List
 
 # standard libs
-import os
 import sys
-import json
 import functools
 
 # internal libs
