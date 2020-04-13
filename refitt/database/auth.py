@@ -16,6 +16,9 @@
 import secrets
 from datetime import datetime
 
+# external libs
+from pandas import DataFrame
+
 # internal libs
 from ..core.logging import Logger
 from .interface import user, execute
@@ -141,7 +144,7 @@ def from_key(key: str, limit: int = None) -> bool:
                                orderby='auth_time', ascending=False, limit=limit)
 
 
-def from_user(user_id: str, limit: int = None) -> bool:
+def from_user(user_id: str, limit: int = None) -> DataFrame:
     """
     Fetch most recent valid credentials.
 
@@ -210,6 +213,7 @@ DELETE FROM "user"."auth"
 WHERE user_id = {user_id} AND
       auth_valid = false;
 """
+
 
 def del_auth(user_id: int) -> None:
     """
