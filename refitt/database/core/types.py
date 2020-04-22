@@ -29,8 +29,12 @@ class UserAuth(NamedTuple):
 
     def __str__(self) -> str:
         """String representation."""
-        return f'{self.__class__.__name__}(username="{self.username}", password="****")'
+        username = 'None' if self.username is None else f'"{self.username}"'
+        password = 'None' if self.password is None else '"****"'
+        return f'{self.__class__.__name__}(username={username}, password={password})'
 
     def __repr__(self) -> str:
         """Interactive representation."""
-        return f'{self.__class__.__name__}(username="{self.username}", password="****")'
+        username = 'None' if self.username is None else f'"{self.username}"'
+        password = 'None' if self.password is None else '"****"'
+        return f'{self.__class__.__name__}(username={username}, password={password})'

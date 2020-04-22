@@ -13,47 +13,67 @@
 """Parse database configuration."""
 
 # standard libs
-import os
 import functools
-import subprocess
 
 # internal libs
+from ...core.config import config, ConfigurationError, expand_parameters, VARS
+from ...core.logging import Logger
 from .types import ServerAddress, UserAuth
-from ..core.config import config, ConfigurationError, expand_parameters
-from ..core.logging import Logger
 
 
 # initialize module level logger
-log = Logger.with_name('refitt.database.config')
+log = Logger.with_name(__name__)
 
 
-@functools.lru_cache(maxsize=1)
-def connection_info() -> dict:
+@functools.lru_cache(maxsize=None)
+def connection_info(profile: str = None, database: str = None) -> dict:
     """Parse information from configuration file."""
 
-    if 'database' not in config.keys():
-        raise ConfigurationError('database configuration missing')
+    # default is local "refitt" database
+    if profile is None and 'database' not in config.keys():
+        return {'database': {'server': ServerAddress(host='localhost', port=5432),
+                             'auth': None,
+                             'database': 'refitt'}}
 
     db_config = config['database']
-    db_user = None if 'user' not in db_config else db_config['user']
-    db_password = expand_parameters('password', db_config)
 
-    info = {
-        'database': {
-            'server': ServerAddress(host=db_config['host'], port=db_config['port']),
-            'auth': UserAuth(username=db_user, password=db_password),
-            'database': db_config['database']
-        }
-    }
+    # precedence: `profile` > DATABASE_PROFILE > 'default'
+    profile = profile if profile is not None else VARS['DATABASE_PROFILE']
+    if profile not in db_config:
+        raise ConfigurationError(f'database profile not found: {profile}')
 
-    if 'tunnel' in db_config.keys():
-        tunnel_config = db_config['tunnel']
-        tunnel_user = None if 'user' not in tunnel_config else tunnel_config['user']
-        tunnel_password = expand_parameters('password', tunnel_config)
-        info['tunnel'] = {
-                'ssh': ServerAddress(host=tunnel_config['host'], port=tunnel_config['port']),
-                'auth': UserAuth(username=tunnel_user, password=tunnel_password),
-                'local': ServerAddress(host='localhost', port=tunnel_config['bind'])
-        }
+    db_config = db_config[profile]
+    db_name = database if database is not None else db_config.get('database', 'refitt')
+    db_host = db_config.get('host', 'localhost')
+    db_port = db_config.get('port', 5432)
+    db_user = db_config.get('user', None)
+    db_pass = expand_parameters('password', db_config)  # None if absent
 
+    db_auth = None
+    if db_user or db_pass:
+        db_auth = UserAuth(username=db_user, password=db_pass)
+
+    # base configuration (the database itself)
+    info = {'database': {'server': ServerAddress(host=db_host, port=db_port),
+                         'auth': db_auth, 'database': db_name}}
+
+    tunnel = db_config.get('tunnel', None)
+    if tunnel:
+
+        tunnel_host = tunnel.get('host', None)
+        tunnel_port = tunnel.get('port', 22)
+        tunnel_bind = tunnel.get('bind', 54321)
+        tunnel_user = tunnel.get('user', None)
+        tunnel_pass = expand_parameters('password', tunnel)  # None if absent
+
+        if tunnel_host is None:
+            raise ConfigurationError('most provide host for tunnel')
+
+        tunnel_auth = None  # will fall back on ~/.ssh/id_rsa
+        if tunnel_user or tunnel_pass:
+            tunnel_auth = UserAuth(tunnel_user, tunnel_pass)
+
+        # add ssh tunnel in front of database
+        info['tunnel'] = {'ssh': ServerAddress(tunnel_host, tunnel_port), 'auth': tunnel_auth,
+                          'local': ServerAddress('localhost', tunnel_bind)}
     return info

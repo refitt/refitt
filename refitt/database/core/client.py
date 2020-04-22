@@ -14,6 +14,7 @@
 
 # type annotations
 from __future__ import annotations
+from typing import Optional
 
 # standard libs
 import os
@@ -22,8 +23,8 @@ import atexit
 # internal libs
 from .types import ServerAddress, UserAuth
 from .config import connection_info
-from ..core.config import HOME
-from ..core.logging import Logger
+from ...core.config import HOME
+from ...core.logging import Logger
 
 # external libs
 from sshtunnel import SSHTunnelForwarder
@@ -32,7 +33,7 @@ from sqlalchemy.engine import Engine
 
 
 # initialize module level logger
-log = Logger.with_name('refitt.database.client')
+log = Logger.with_name(__name__)
 
 
 class SSHTunnel:
@@ -44,12 +45,11 @@ class SSHTunnel:
     _local: ServerAddress = None
 
     # username/password
-    _auth: UserAuth = None
-    _pkey: str = None  # for password-less
+    _auth: Optional[UserAuth] = None
+    _pkey: Optional[str] = None  # for password-less
 
     # the ssh-tunnel server
     _forwarder: SSHTunnelForwarder = None
-
 
     def __init__(self, ssh: ServerAddress, auth: UserAuth,
                  remote: ServerAddress, local: ServerAddress,
@@ -117,6 +117,8 @@ class SSHTunnel:
     @auth.setter
     def auth(self, other: UserAuth) -> None:
         """Set user authentication for the ssh server."""
+        if other is None:
+            self._auth = UserAuth(None, None)
         if isinstance(other, UserAuth):
             self._auth = other
         else:
@@ -168,7 +170,7 @@ class DatabaseClient:
 
     # connection details
     _server: ServerAddress = ServerAddress('localhost', 5432)
-    _auth: UserAuth = None
+    _auth: Optional[UserAuth] = None
     _database: str = None
 
     # SQLAlchemy database engine
@@ -177,8 +179,7 @@ class DatabaseClient:
     # tunnel instance
     _tunnel: SSHTunnel = None
 
-    def __init__(self, server: ServerAddress, auth: UserAuth,
-                 database: str) -> None:
+    def __init__(self, server: ServerAddress, auth: UserAuth, database: str) -> None:
         """Initialize database connection details."""
 
         self.server = server
@@ -206,7 +207,9 @@ class DatabaseClient:
     @auth.setter
     def auth(self, other: UserAuth) -> None:
         """Set user authentication for the database server."""
-        if isinstance(other, UserAuth):
+        if other is None:
+            self._auth = None
+        elif isinstance(other, UserAuth):
             self._auth = other
         else:
             raise TypeError(f'{self.__class__.__name__}.auth expects {UserAuth}')
@@ -253,9 +256,9 @@ class DatabaseClient:
 
     def connect(self) -> None:
         """Initiate the connection to the database."""
-        username, password = tuple(self.auth)
+        auth = '' if self.auth is None else f'{self.auth.username}:{self.auth.password}@'
         host, port = tuple(self.server)
-        self._engine = create_engine(f'postgresql://{username}:{password}@{host}:{port}/{self.database}')
+        self._engine = create_engine(f'postgresql://{auth}{host}:{port}/{self.database}')
         log.debug(f'connected to "{self.database}" at {self.server.host}:{self.server.port}')
 
     def close(self) -> None:
@@ -266,7 +269,7 @@ class DatabaseClient:
             self.tunnel.forwarder.__exit__()
             log.debug('disconnected tunnel')
 
-    def __enter__(self) -> 'DatabaseClient':
+    def __enter__(self) -> DatabaseClient:
         """Context manager."""
         self.connect()
         return self
@@ -276,7 +279,7 @@ class DatabaseClient:
         self.close()
 
     def use_tunnel(self, ssh: ServerAddress, auth: UserAuth = None,
-                   local: ServerAddress=ServerAddress('localhost', 54320)) -> None:
+                   local: ServerAddress = ServerAddress('localhost', 54321)) -> DatabaseClient:
         """Establish an ssh-tunnel."""
         auth_ = auth if auth is not None else self.auth
         self.tunnel = SSHTunnel(ssh=ssh, auth=auth_, remote=self.server, local=local)
@@ -286,13 +289,12 @@ class DatabaseClient:
         return self
 
     @classmethod
-    def from_config(cls) -> DatabaseClient:
+    def from_config(cls, **kwargs) -> DatabaseClient:
         """Parse config to define client connection."""
-        info = connection_info()
+        info = connection_info(**kwargs)
         client = cls(**info['database'])
         if 'tunnel' in info:
             client.use_tunnel(**info['tunnel'])
-        client.connect()
         return client
 
     def __str__(self) -> str:
@@ -300,9 +302,9 @@ class DatabaseClient:
         if self.tunnel is None:
             return f'<DatabaseClient[{self.server.host}:{self.server.port}]>'
         else:
-            ssh = self.tunnel._ssh
-            local = self.tunnel._local
-            remote = self.tunnel._remote
+            ssh = self.tunnel.ssh
+            local = self.tunnel.local
+            remote = self.tunnel.remote
             return (f'<DatabaseClient[{local.port}:{remote.host}:{remote.port} '
                     f'{ssh.host}:{ssh.port}]>')
 
@@ -312,7 +314,7 @@ class DatabaseClient:
 
 
 # Note: The direct client interface allows for safe connection to the database. However,
-#       repeatedly aquiring/disgarding the connection (especially with SSH tunneling)
+#       repeatedly acquiring/discarding the connection (especially with SSH tunneling)
 #       causes significant delay in the commandline interface. Below, a "persistent"
 #       connection is implemented in a way that allows the higher level methods in
 #       `refitt.database.interface` (e.g., execute()) to reuse an existing connection if
@@ -320,21 +322,58 @@ class DatabaseClient:
 #       though!
 
 # global reference
-PERSISTENT_CLIENT: DatabaseClient = None
+_PERSISTENT_CLIENT: Optional[DatabaseClient] = None
 
-def connect() -> DatabaseClient:
-    """Establish a client connection to the database."""
-    global PERSISTENT_CLIENT
-    if PERSISTENT_CLIENT is not None:
-        return PERSISTENT_CLIENT
 
-    PERSISTENT_CLIENT = DatabaseClient.from_config()
-    return PERSISTENT_CLIENT
+def connect(**kwargs) -> DatabaseClient:
+    """
+    Establish a client connection to the database. This will create a persistent
+    connection that the rest of the library can make use of without the need to
+    specify otherwise.
+
+    :param **kwargs
+        Keyword arguments are passed through to :func:`.DatabaseClient.from_config`.
+
+    :returns client: :class:`.DatabaseClient`
+        A persistent connection.
+
+    .. seealso::
+
+        :ref:`.DatabaseClient.from_config`
+
+    .. note::
+
+        An attempt is made to automatically call :func:`disconnect` at exit.
+        However, this is not guaranteed. If possible, call it manually at exit!
+
+    .. note::
+
+        If this method has already been called previously, the existing client
+        connection is simply provided back. This is independent of the arguments!
+
+    .. example::
+
+        >>> import refitt.database
+        >>> refitt.database.connect(profile='test')
+        <DatabaseClient[localhost:5432]>
+
+        >>> refitt.database.connect(profile='test').engine
+        Engine(postgresql://localhost:5432/refitt)
+
+    """
+    global _PERSISTENT_CLIENT
+    if _PERSISTENT_CLIENT is not None:
+        return _PERSISTENT_CLIENT
+
+    _PERSISTENT_CLIENT = DatabaseClient.from_config(**kwargs)
+    _PERSISTENT_CLIENT.connect()
+    return _PERSISTENT_CLIENT
+
 
 @atexit.register
 def disconnect() -> None:
     """Release database client connection."""
-    global PERSISTENT_CLIENT
-    if PERSISTENT_CLIENT is not None:
-        PERSISTENT_CLIENT.close()
-        PERSISTENT_CLIENT = None
+    global _PERSISTENT_CLIENT
+    if _PERSISTENT_CLIENT is not None:
+        _PERSISTENT_CLIENT.close()
+        _PERSISTENT_CLIENT = None

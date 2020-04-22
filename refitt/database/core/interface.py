@@ -12,20 +12,21 @@
 
 """Access and management to REFITT's database."""
 
+# type annotations
+from typing import List, Dict, Any
+
 # standard libs
 import functools
 
-# type annotations
-from typing import List
-
 # internal libs
 from . import config
-from . import client as client_ # obfuscate name to avoid collision
+from . import client as client_
 from .client import DatabaseClient
-from ..core.logging import Logger
+from refitt.core.logging import Logger
 
 # external libs
 from pandas import DataFrame, read_sql
+from sqlalchemy.sql import text
 from sqlalchemy.engine.result import ResultProxy
 
 
@@ -42,12 +43,10 @@ def execute(statement: str, client: DatabaseClient = None, **params) -> ResultPr
     statement: str
         An SQL query to execute.
 
-    Options
-    -------
-    client: `refitt.database.client.DatabaseClient`
-        A client connection to the database. If None, one will either
-        be created temporarily for the lifetime of this query, or if a
-        `refitt.database.client.PERSISTENT_CLIENT` exists, it will be used.
+    client: `refitt.database.core.client.DatabaseClient`
+        A client connection to the database. If None, one will either be created temporarily
+        for the lifetime of this query, or if a `refitt.database.core.client._PERSISTENT_CLIENT`
+        exists, it will be used.
 
     Returns
     -------
@@ -60,16 +59,16 @@ def execute(statement: str, client: DatabaseClient = None, **params) -> ResultPr
     Example
     -------
     >>> from refitt import database
-    >>> database.execute('select * from observation.object_type limit 1').fetchall()
+    >>> database.execute('select * from observation.object_type limit 2').fetchall()
     [(1, 'SNIa', 'WD detonation, Type Ia SN'),
      (2, 'SNIa-91bg', 'Peculiar type Ia: 91bg')]
     """
     if client is not None:
-        return client.engine.execute(statement, **params)
-    if client_.PERSISTENT_CLIENT is not None:
-        return client_.PERSISTENT_CLIENT.engine.execute(statement, **params)
+        return client.engine.execute(text(statement), **params)
+    if client_._PERSISTENT_CLIENT is not None:  # noqa
+        return client_._PERSISTENT_CLIENT.engine.execute(text(statement), **params)  # noqa
     with DatabaseClient.from_config() as client:
-        return client.engine.execute(statement, **params)
+        return client.engine.execute(text(statement), **params)
 
 
 def insert(data: DataFrame, schema: str, table: str, client: DatabaseClient = None,
@@ -88,12 +87,10 @@ def insert(data: DataFrame, schema: str, table: str, client: DatabaseClient = No
     table: str
         The name of the table to insert into.
 
-    Options
-    -------
-    client: `refitt.database.client.DatabaseClient`
-        A client connection to the database. If None, one will either
-        be created temporarily for the lifetime of this query, or if a
-        `refitt.database.client.PERSISTENT_CLIENT` exists, it will be used.
+    client: `refitt.database.core.client.DatabaseClient`
+        A client connection to the database. If None, one will either be created temporarily
+        for the lifetime of this query, or if a `refitt.database.core.client._PERSISTENT_CLIENT`
+        exists, it will be used.
 
     if_exists: str (default: 'append')
         Action to take if the `table` already exists. (see `pandas.DataFrame.to_sql`).
@@ -111,15 +108,15 @@ def insert(data: DataFrame, schema: str, table: str, client: DatabaseClient = No
     if client is not None:
         return data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
                            index=index, chunksize=chunksize)
-    if client_.PERSISTENT_CLIENT is not None:
-        return data.to_sql(table, client_.PERSISTENT_CLIENT.engine, schema=schema,
+    if client_._PERSISTENT_CLIENT is not None:
+        return data.to_sql(table, client_._PERSISTENT_CLIENT.engine, schema=schema,
                            if_exists=if_exists, index=index, chunksize=chunksize)
     with DatabaseClient.from_config() as client:
         return data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
                            index=index, chunksize=chunksize)
 
 
-def _select(query: str, client: DatabaseClient = None) -> DataFrame:
+def _select(query: str, client: DatabaseClient = None, **params) -> DataFrame:
     """
     Execute SQL `query` statement.
 
@@ -128,14 +125,12 @@ def _select(query: str, client: DatabaseClient = None) -> DataFrame:
     query: str
         The SQL query to submit to the database.
 
-    Options
-    -------
     client: `refitt.database.client.DatabaseClient`
         A client connection to the database. If None, one will either
         be created temporarily for the lifetime of this query, or if a
-        `refitt.database.client.PERSISTENT_CLIENT` exists, it will be used.
+        `refitt.database.client._PERSISTENT_CLIENT` exists, it will be used.
 
-    Results
+    Returns
     -------
     table: `pandas.DataFrame`
 
@@ -145,28 +140,40 @@ def _select(query: str, client: DatabaseClient = None) -> DataFrame:
     - `pandas.read_sql`
     """
     if client is not None:
-        return read_sql(query, client.engine)
-    if client_.PERSISTENT_CLIENT is not None:
-        return read_sql(query, client_.PERSISTENT_CLIENT.engine)
+        return read_sql(text(query), client.engine, params=params)
+    if client_._PERSISTENT_CLIENT is not None:  # noqa
+        return read_sql(text(query), client_._PERSISTENT_CLIENT.engine, params=params)  # noqa
     with DatabaseClient.from_config() as client:
-        return read_sql(query, client.engine)
+        return read_sql(text(query), client.engine, params=params)
+
+
+_FIND_COLUMNS = """\
+SELECT column_name FROM information_schema.columns
+WHERE table_schema = :schema AND table_name = :table
+"""
 
 
 @functools.lru_cache(maxsize=None)
-def get_columns(schema: str, name: str) -> List[str]:
+def get_columns(schema: str, table: str) -> List[str]:
     """List of column names."""
-    return list(_select(f"select column_name from information_schema.columns where "
-                        f"table_schema = '{schema}' and table_name = '{name}'")['column_name'])
+    columns = _select(_FIND_COLUMNS, schema=schema, table=table)
+    return columns.loc[:, 'column_name'].to_list()
+
+
+_FIND_TABLES = """\
+SELECT table_name from information_schema.tables 
+WHERE table_schema = :schema
+"""
 
 
 @functools.lru_cache(maxsize=None)
 def get_tables(schema: str) -> List[str]:
     """List of member tables."""
-    return list(_select(f"select table_name from information_schema.tables where "
-                        f"table_schema = '{schema}'")['table_name'])
+    tables = _select(_FIND_TABLES, schema=schema)
+    return tables.loc[:, 'table_name'].to_list()
 
 
-FOREIGN_KEY_QUERY = """\
+_FIND_FOREIGN_KEYS = """\
 SELECT
     table_constraints.table_schema       AS table_schema,
     table_constraints.constraint_name    AS constraint_name,
@@ -193,12 +200,12 @@ JOIN
 
 WHERE
     table_constraints.constraint_type = 'FOREIGN KEY' AND
-    table_constraints.table_schema='{schema}' AND
-    table_constraints.table_name='{table}';
+    table_constraints.table_schema = :schema AND
+    table_constraints.table_name = :table;
 """
 
 
-SELECT_TEMPLATE = """\
+_SELECT_TEMPLATE = """\
 SELECT
     {columns}
 
@@ -207,7 +214,7 @@ FROM
 """
 
 
-JOIN_TEMPLATE = """
+_JOIN_TEMPLATE = """
 JOIN
     "{foreign_schema}"."{foreign_table}"
     ON
@@ -215,7 +222,7 @@ JOIN
 """
 
 
-def _make_select(columns: List[str], schema: str, table: str, where: List[str] = [],
+def _make_select(columns: List[str], schema: str, table: str, where: List[str] = None,
                  limit: int = None, orderby: str = None, ascending: bool = True,
                  join: bool = False) -> str:
     """Build SQL query. See also: `select`."""
@@ -224,22 +231,21 @@ def _make_select(columns: List[str], schema: str, table: str, where: List[str] =
         columns = get_columns(schema, table)
 
     columns = ', \n    '.join([f'"{table}"."{name}"' for name in columns])
-    query = SELECT_TEMPLATE.format(columns=columns, schema=schema, table=table)
+    query = _SELECT_TEMPLATE.format(columns=columns, schema=schema, table=table)
 
     if join:
-        fkeys = _select(FOREIGN_KEY_QUERY.format(schema=schema, table=table)).drop_duplicates()
+        fkeys = _select(_FIND_FOREIGN_KEYS, schema=schema, table=table).drop_duplicates()
         for _, fkey in fkeys.iterrows():
             foreign_table_columns = get_columns(fkey.foreign_table_schema, fkey.foreign_table_name)
             alternate = fkey.foreign_column_name.replace('_id', '_name')
             if alternate in foreign_table_columns:
                 query = query.replace(f'"{table}"."{fkey.column_name}"',
                                       f'"{fkey.foreign_table_name}"."{alternate}" AS "{alternate}"')
-                query = query + JOIN_TEMPLATE.format(foreign_schema=fkey.foreign_table_schema,
-                                                     foreign_table=fkey.foreign_table_name,
-                                                     foreign_column=fkey.foreign_column_name,
-                                                     table=fkey.table_name,
-                                                     column=fkey.column_name)
-
+                query = query + _JOIN_TEMPLATE.format(foreign_schema=fkey.foreign_table_schema,
+                                                      foreign_table=fkey.foreign_table_name,
+                                                      foreign_column=fkey.foreign_column_name,
+                                                      table=fkey.table_name,
+                                                      column=fkey.column_name)
     if where:
         query += '\nWHERE\n    ' + '\n    AND '.join(where)
 
@@ -253,8 +259,8 @@ def _make_select(columns: List[str], schema: str, table: str, where: List[str] =
     return query
 
 
-def select(columns: List[str], schema: str, table: str, where: List[str] = [],
-           limit: int = None, orderby: str = None, ascending: bool = True,
+def select(columns: List[str], schema: str, table: str, client: DatabaseClient = None,
+           where: List[str] = None, limit: int = None, orderby: str = None, ascending: bool = True,
            join: bool = False, set_index: bool = True) -> DataFrame:
     """
     Construct an SQL query and execute.
@@ -268,7 +274,7 @@ def select(columns: List[str], schema: str, table: str, where: List[str] = [],
     """
     query = _make_select(columns, schema, table, where=where, limit=limit,
                          orderby=orderby, ascending=ascending, join=join)
-    result = _select(query)
+    result = _select(query, client)
     if set_index is True and f'{table}_id' in result.columns:
         result = result.set_index(f'{table}_id')
     return result
@@ -286,12 +292,11 @@ class Table:
         self.name = name
 
     @property
-    @functools.lru_cache(maxsize=1)
     def columns(self) -> List[str]:
         """List of column names."""
         return get_columns(self.schema, self.name)
 
-    def select(self, columns: List[str] = [], **options) -> DataFrame:
+    def select(self, columns: List[str] = None, **options) -> DataFrame:
         """Select records from the table."""
         return select(columns, self.schema, self.name, **options)
 
@@ -299,9 +304,9 @@ class Table:
         """Insert full `dataframe` into table."""
         insert(dataframe, self.schema, self.name, **options)
 
-    def insert_record(self, **fields) -> None:
+    def insert_record(self, record: Dict[str, Any]) -> None:
         """Insert named `fields` into the table."""
-        table_slice = DataFrame({field: [value] for field, value in fields.items()})
+        table_slice = DataFrame({field: [value] for field, value in record.items()})
         self.insert(table_slice)
 
     def __str__(self) -> str:
@@ -311,39 +316,3 @@ class Table:
     def __repr__(self) -> str:
         """Interactive representation of table interface."""
         return str(self)
-
-
-class Schema:
-    """Generic interface to database schema."""
-
-    name: str = None
-
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    @property
-    @functools.lru_cache(maxsize=1)
-    def tables(self) -> List[str]:
-        """List of member tables."""
-        return get_tables(self.name)
-
-    @functools.lru_cache(maxsize=None)
-    def __getitem__(self, table: str) -> Table:
-        """Get table interface."""
-        return Table(self.name, table)
-
-    def __str__(self) -> str:
-        """String view of schema interface."""
-        return f'<{self.__class__.__name__}({self.name})>'
-
-    def __repr__(self) -> str:
-        """Interactive representation of schema interface."""
-        return str(self)
-
-
-# database schema instance variables
-user = Schema('user')
-observation = Schema('observation')
-recommendation = Schema('recommendation')
-model = Schema('model')
-message = Schema('message')
