@@ -40,8 +40,8 @@ from ..__meta__ import __appname__
 HOSTNAME = socket.gethostname()
 
 # NOTICE messages won't actually be formatted with color.
-LEVELS = levels.Level.from_names(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
-COLORS = colors.Color.from_names(['blue', 'green', 'yellow', 'red', 'magenta'])
+LEVELS = levels.Level.from_names(('DEBUG', 'STATUS', 'INFO', 'EVENT', 'WARNING', 'ERROR', 'CRITICAL'))
+COLORS = colors.Color.from_names(('blue', 'cyan', 'green', 'green', 'yellow', 'red', 'magenta'))
 RESET = colors.Color.reset
 
 
@@ -59,6 +59,9 @@ class Message(messages.Message):
 
 class Logger(loggers.Logger):
     """Logger for refitt."""
+
+    levels = LEVELS
+    colors = COLORS
 
     Message: type = Message
     callbacks: dict = {'timestamp': datetime.now,
@@ -81,6 +84,7 @@ class Logger(loggers.Logger):
     #        these levels are already available but pylint complains
     debug: Callable[[str], None]
     info: Callable[[str], None]
+    event: Callable[[str], None]
     warning: Callable[[str], None]
     error: Callable[[str], None]
     critical: Callable[[str], None]
@@ -109,7 +113,8 @@ class SimpleConsoleHandler(handlers.Handler):
     def format(self, msg: Message) -> str:
         """Colorize the log level and with only the message."""
         COLOR = Logger.colors[msg.level.value].foreground
-        return f'{COLOR}{msg.level.name.lower():<8}{RESET} {msg.content}'
+        timestamp = msg.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        return f'{COLOR}[{timestamp}] {msg.content}{RESET}'
 
 
 SYSLOG_HANDLER = ConsoleHandler(LEVELS[2])
