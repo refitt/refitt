@@ -10,22 +10,17 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "user"."auth"
+CREATE TABLE IF NOT EXISTS "observation"."file"
 (
-    "auth_id" BIGSERIAL NOT NULL,
+    "file_id"        BIGSERIAL NOT NULL,
+    "observation_id" BIGINT    NOT NULL,
+    "file_data"      BYTEA     NOT NULL,
+    "file_type"      TEXT      NOT NULL, -- e.g., "fits::gzip"
 
-    "user_id" BIGINT NOT NULL,
+    PRIMARY KEY ("file_id"),
 
-    "auth_level" SMALLINT NOT NULL,
-    "auth_key" CHARACTER(16) NOT NULL,
-    "auth_token" CHARACTER(64) NOT NULL,
-    "auth_valid" BOOLEAN NOT NULL,
-    "auth_time" TIMESTAMP WITH TIME ZONE NOT NULL,
-    
-    PRIMARY KEY ("auth_id"),
-
-    CONSTRAINT "user_id" FOREIGN KEY ("user_id")
-        REFERENCES "user"."user" ("user_id") MATCH SIMPLE
+    CONSTRAINT "observation_id" FOREIGN KEY ("observation_id")
+        REFERENCES "observation"."observation" ("observation_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
@@ -34,10 +29,6 @@ WITH (
     OIDS = FALSE
 );
 
-CREATE INDEX IF NOT EXISTS "user_id"
-    ON "user"."auth" USING btree
-    ("user_id" ASC NULLS LAST);
-
-CREATE INDEX IF NOT EXISTS "auth_key"
-    ON "user"."auth" USING btree
-    ("auth_key" ASC NULLS LAST);
+CREATE INDEX IF NOT EXISTS "observation_id"
+    ON "observation"."file" USING btree
+    ("observation_id" ASC NULLS LAST);

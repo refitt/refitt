@@ -10,15 +10,13 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "observation"."source_type"
+CREATE TABLE IF NOT EXISTS "message"."level"
 (
-    "source_type_id" BIGSERIAL NOT NULL,
+    "level_id"   BIGSERIAL NOT NULL,
+    "level_name" TEXT      NOT NULL, -- e.g., "DEBUG"
 
-    "source_type_name" TEXT NOT NULL,
-    "source_type_description" TEXT,
-    
-    PRIMARY KEY ("source_type_id"),
-	UNIQUE("source_type_name")
+    PRIMARY KEY ("level_id"),
+	UNIQUE ("level_name")
 )
 WITH (
     OIDS = FALSE

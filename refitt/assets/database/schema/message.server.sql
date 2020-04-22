@@ -10,23 +10,18 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "model"."model"
+CREATE TABLE IF NOT EXISTS "message"."server"
 (
-    "model_id" BIGSERIAL NOT NULL,
+    "server_id"   BIGSERIAL     NOT NULL,
+    "host_id"     BIGINT        NOT NULL,
+    "server_port" INT           NOT NULL, -- e.g., 8000
+    "server_key"  CHARACTER(64) NOT NULL, -- e.g., e09d...c488
 
-    "model_type_id" BIGINT NOT NULL,
+    PRIMARY KEY ("server_id"),
+	UNIQUE ("host_id", "server_port"),
 
-    "model_name" TEXT NOT NULL,
-    "model_time" TIMESTAMP WITH TIME ZONE NOT NULL,
-    "model_hash" CHARACTER(64),
-    "model_data" BYTEA NOT NULL,
-    "model_accuracy" DOUBLE PRECISION,
-    
-    PRIMARY KEY ("model_id"),
-	UNIQUE("model_name"),
-
-    CONSTRAINT "model_type_id" FOREIGN KEY ("model_type_id")
-        REFERENCES "model"."model_type" ("model_type_id") MATCH SIMPLE
+    CONSTRAINT "host_id" FOREIGN KEY ("host_id")
+        REFERENCES "message"."host" ("host_id") MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
@@ -34,7 +29,3 @@ CREATE TABLE IF NOT EXISTS "model"."model"
 WITH (
     OIDS = FALSE
 );
-
-CREATE INDEX IF NOT EXISTS "model_type_id"
-    ON "model"."model" USING btree
-    ("model_type_id" ASC NULLS LAST);

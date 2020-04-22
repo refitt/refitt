@@ -12,18 +12,16 @@
 
 CREATE TABLE IF NOT EXISTS "observation"."source"
 (
-    "source_id" BIGSERIAL NOT NULL,
-
-    "source_type_id" BIGINT NOT NULL,
-    "facility_id" BIGINT,
-    'user_id' BIGINT,
-
-    "source_name" TEXT NOT NULL,
-    "source_description" TEXT,
-    "source_reference" TEXT,
+    "source_id"          BIGSERIAL NOT NULL,
+    "source_type_id"     BIGINT    NOT NULL,
+    "facility_id"        BIGINT,                                 -- IFF from an observer
+    "user_id"            BIGINT,                                 -- IFF from an observer
+    "source_name"        TEXT      NOT NULL,                     -- e.g., "antares"
+    "source_description" TEXT      NOT NULL,                     -- e.g., "The Arizona-NOAO Temporal ... (ANTARES)"
+    "source_metadata"    JSONB     NOT NULL DEFAULT '{}'::jsonb, -- e.g., "{"url": https://antares.noao.edu", ...}"
 
     PRIMARY KEY ("source_id"),
-	UNIQUE("source_name"),
+	UNIQUE ("source_name"),
 
     CONSTRAINT "source_type_id" FOREIGN KEY ("source_type_id")
         REFERENCES "observation"."source_type" ("source_type_id") MATCH FULL
@@ -32,13 +30,13 @@ CREATE TABLE IF NOT EXISTS "observation"."source"
         NOT VALID,
 
     CONSTRAINT "facility_id" FOREIGN KEY ("facility_id")
-        REFERENCES "user"."facility" ("facility_id") MATCH FULL
+        REFERENCES "profile"."facility" ("facility_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
     
     CONSTRAINT "user_id" FOREIGN KEY ("user_id")
-        REFERENCES "user"."user" ("user_id") MATCH FULL
+        REFERENCES "profile"."user" ("user_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID

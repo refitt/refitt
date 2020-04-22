@@ -10,19 +10,13 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "user"."user"
+CREATE TABLE IF NOT EXISTS "message"."topic"
 (
-    "user_id" BIGSERIAL NOT NULL,
+    "topic_id"   BIGSERIAL NOT NULL,
+    "topic_name" TEXT      NOT NULL, -- e.g., "database::auth"
 
-    "user_first_name" TEXT NOT NULL,
-    "user_last_name" TEXT NOT NULL,
-    "user_email" TEXT NOT NULL,
-    "user_alias" TEXT NOT NULL,
-    "user_profile" JSONB NOT NULL,
-
-    PRIMARY KEY ("user_id"),
-	UNIQUE("user_email"),
-	UNIQUE("user_alias")
+    PRIMARY KEY ("topic_id"),
+	UNIQUE ("topic_name")
 )
 WITH (
     OIDS = FALSE

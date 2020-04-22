@@ -10,23 +10,23 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "user"."facility_map"
+CREATE TABLE IF NOT EXISTS "profile"."facility_map"
 (
     "facility_map_id" BIGSERIAL NOT NULL,
-
-    "facility_id" BIGINT NOT NULL,
-    "user_id" BIGINT NOT NULL,
+    "facility_id"     BIGINT    NOT NULL,
+    "user_id"         BIGINT    NOT NULL,
 
     PRIMARY KEY ("facility_map_id"),
+    UNIQUE ("user_id", "facility_id"),  -- only need to record relationship once
 
     CONSTRAINT "facility_id" FOREIGN KEY ("facility_id")
-        REFERENCES "user"."facility" ("facility_id") MATCH FULL
+        REFERENCES "profile"."facility" ("facility_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
 
     CONSTRAINT "user_id" FOREIGN KEY ("user_id")
-        REFERENCES "user"."user" ("user_id") MATCH FULL
+        REFERENCES "profile"."user" ("user_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
@@ -36,9 +36,9 @@ WITH (
 );
 
 CREATE INDEX IF NOT EXISTS "facility_id"
-    ON "user"."facility_map" USING btree
+    ON "profile"."facility_map" USING btree
     ("facility_id" ASC NULLS LAST);
 
 CREATE INDEX IF NOT EXISTS "user_id"
-    ON "user"."facility_map" USING btree
+    ON "profile"."facility_map" USING btree
     ("user_id" ASC NULLS LAST);

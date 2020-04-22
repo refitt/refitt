@@ -10,12 +10,20 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "recommendation"."recommendation_group"
+CREATE TABLE IF NOT EXISTS "observation"."observation_type"
 (
-    "recommendation_group_id" BIGSERIAL NOT NULL,
-    "recommendation_group_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    PRIMARY KEY ("recommendation_group_id")
+    "observation_type_id"          BIGSERIAL NOT NULL,
+    "observation_type_name"        TEXT      NOT NULL, -- e.g., "mag::abs::red", "mag::app::naked"
+    "observation_type_units"       TEXT      NOT NULL, -- e.g., "mag"
+    "observation_type_description" TEXT      NOT NULL, -- e.g., "Sloan filter (red)."
+
+    PRIMARY KEY ("observation_type_id"),
+	UNIQUE ("observation_type_name")
 )
 WITH (
     OIDS = FALSE
 );
+
+CREATE INDEX IF NOT EXISTS "observation_type_units"
+    ON "observation"."observation_type" USING btree
+    ("observation_type_units" ASC NULLS LAST);

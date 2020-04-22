@@ -10,19 +10,14 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "user"."facility"
+CREATE TABLE IF NOT EXISTS "observation"."object_type"
 (
-    "facility_id" BIGSERIAL NOT NULL,
+    "object_type_id"          BIGSERIAL NOT NULL,
+    "object_type_name"        TEXT      NOT NULL, -- e.g., "SNIa",
+    "object_type_description" TEXT      NOT NULL, -- e.g., "WD detonation, Type Ia SN"
 
-    "facility_name" TEXT NOT NULL,
-    "facility_latitude" DOUBLE PRECISION NOT NULL,
-    "facility_longitude" DOUBLE PRECISION NOT NULL,
-    "facility_altitude" DOUBLE PRECISION NOT NULL,
-    "facility_limiting_magnitude" DOUBLE PRECISION NOT NULL,
-    "facility_profile" JSONB NOT NULL,
-
-    PRIMARY KEY ("facility_id"),
-	UNIQUE("facility_name")
+    PRIMARY KEY ("object_type_id"),
+	UNIQUE ("object_type_name")
 )
 WITH (
     OIDS = FALSE

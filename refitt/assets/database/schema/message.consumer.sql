@@ -10,14 +10,14 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "message"."message_topic"
+CREATE TABLE IF NOT EXISTS "message"."consumer"
 (
-    "message_topic_id" BIGSERIAL NOT NULL,
-    "message_topic_name" TEXT NOT NULL,
+    "consumer_id"   BIGSERIAL NOT NULL,
+    "consumer_name" TEXT      NOT NULL, -- e.g., "pipeline::scheduler"
 
-    PRIMARY KEY ("message_topic_id"),
-	UNIQUE("message_topic_name")
+    PRIMARY KEY ("consumer_id"),
+    UNIQUE ("consumer_name")
 )
 WITH (
     OIDS = FALSE
-);
+)

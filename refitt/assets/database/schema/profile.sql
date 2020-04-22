@@ -10,15 +10,4 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "observation"."observation_type"
-(
-    "observation_type_id" BIGSERIAL NOT NULL,
-    "observation_type_name" TEXT NOT NULL,
-    "observation_type_units" TEXT NOT NULL,
-
-    PRIMARY KEY ("observation_type_id"),
-	UNIQUE("observation_type_name")
-)
-WITH (
-    OIDS = FALSE
-);
+CREATE SCHEMA IF NOT EXISTS "profile";

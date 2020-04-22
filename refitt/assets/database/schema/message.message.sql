@@ -12,31 +12,29 @@
 
 CREATE TABLE IF NOT EXISTS "message"."message"
 (
-    "message_id" BIGSERIAL NOT NULL,
-
-    "message_topic_id" BIGINT NOT NULL,
-    "message_level_id" BIGINT NOT NULL,
-    "message_host_id" BIGINT NOT NULL,
-
+    "message_id"   BIGSERIAL                NOT NULL,
+    "topic_id"     BIGINT                   NOT NULL,
+    "level_id"     BIGINT                   NOT NULL,
+    "host_id"      BIGINT                   NOT NULL,
     "message_time" TIMESTAMP WITH TIME ZONE NOT NULL,
-    "message_content" TEXT NOT NULL,
+    "message_text" TEXT                     NOT NULL,
 
     PRIMARY KEY ("message_id"),
 
-    CONSTRAINT "message_topic_id" FOREIGN KEY ("message_topic_id")
-        REFERENCES "message"."message_topic" ("message_topic_id") MATCH SIMPLE
+    CONSTRAINT "topic_id" FOREIGN KEY ("topic_id")
+        REFERENCES "message"."topic" ("topic_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
 
-    CONSTRAINT "message_level_id" FOREIGN KEY ("message_level_id")
-        REFERENCES "message"."message_level" ("message_level_id") MATCH SIMPLE
+    CONSTRAINT "level_id" FOREIGN KEY ("level_id")
+        REFERENCES "message"."level" ("level_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
 
-    CONSTRAINT "message_host_id" FOREIGN KEY ("message_host_id")
-        REFERENCES "message"."message_host" ("message_host_id") MATCH SIMPLE
+    CONSTRAINT "host_id" FOREIGN KEY ("host_id")
+        REFERENCES "message"."host" ("host_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
@@ -45,17 +43,17 @@ WITH (
     OIDS = FALSE
 );
 
-CREATE INDEX IF NOT EXISTS "message_topic_id"
+CREATE INDEX IF NOT EXISTS "topic_id"
     ON "message"."message" USING btree
-    ("message_topic_id" ASC NULLS LAST);
+    ("topic_id" ASC NULLS LAST);
 
-CREATE INDEX IF NOT EXISTS "message_level_id"
+CREATE INDEX IF NOT EXISTS "level_id"
     ON "message"."message" USING btree
-    ("message_level_id" ASC NULLS LAST);
+    ("level_id" ASC NULLS LAST);
 
-CREATE INDEX IF NOT EXISTS "message_host_id"
+CREATE INDEX IF NOT EXISTS "host_id"
     ON "message"."message" USING btree
-    ("message_host_id" ASC NULLS LAST);
+    ("host_id" ASC NULLS LAST);
 
 CREATE INDEX IF NOT EXISTS "message_time"
     ON "message"."message" USING btree

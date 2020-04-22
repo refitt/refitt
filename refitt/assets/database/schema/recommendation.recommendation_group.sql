@@ -10,14 +10,12 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "observation"."object_type"
+CREATE TABLE IF NOT EXISTS "recommendation"."recommendation_group"
 (
-    "object_type_id" BIGSERIAL NOT NULL,
-    "object_type_name" TEXT NOT NULL,
-    "object_type_description" TEXT NOT NULL,
+    "recommendation_group_id"   BIGSERIAL                NOT NULL,
+    "recommendation_group_time" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    PRIMARY KEY ("object_type_id"),
-	UNIQUE("object_type_name")
+    PRIMARY KEY ("recommendation_group_id")
 )
 WITH (
     OIDS = FALSE

@@ -10,27 +10,14 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "observation"."file"
+CREATE TABLE IF NOT EXISTS "message"."host"
 (
-    "file_id" BIGSERIAL NOT NULL,
+    "host_id"   BIGSERIAL NOT NULL,
+    "host_name" TEXT      NOT NULL, -- e.g., "planck.physics.purdue.edu"
 
-    "observation_id" BIGINT NOT NULL,
-
-    "file_data" BYTEA NOT NULL,
-    "file_type" TEXT NOT NULL,
-
-    PRIMARY KEY ("file_id"),
-
-    CONSTRAINT "observation_id" FOREIGN KEY ("observation_id")
-        REFERENCES "observation"."observation" ("observation_id") MATCH FULL
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-        NOT VALID
+    PRIMARY KEY ("host_id"),
+	UNIQUE ("host_name")
 )
 WITH (
     OIDS = FALSE
 );
-
-CREATE INDEX IF NOT EXISTS "observation_id"
-    ON "observation"."file" USING btree
-    ("observation_id" ASC NULLS LAST);

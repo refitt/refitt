@@ -10,16 +10,24 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "model"."model_type"
+CREATE TABLE IF NOT EXISTS "observation"."alert"
 (
-    "model_type_id" BIGSERIAL NOT NULL,
-    "model_type_name" TEXT NOT NULL,
-    "model_type_format" TEXT NOT NULL,
-    "model_type_description" TEXT,
+    "alert_id"       BIGSERIAL NOT NULL,
+    "observation_id" BIGINT    NOT NULL,
+    "alert_data"     JSONB     NOT NULL,
 
-    PRIMARY KEY ("model_type_id"),
-	UNIQUE("model_type_name")
+    PRIMARY KEY ("alert_id"),
+
+    CONSTRAINT "observation_id" FOREIGN KEY ("observation_id")
+        REFERENCES "observation"."observation" ("observation_id") MATCH FULL
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
 )
 WITH (
     OIDS = FALSE
 );
+
+CREATE INDEX IF NOT EXISTS "observation_id"
+    ON "observation"."alert" USING btree
+    ("observation_id" ASC NULLS LAST);

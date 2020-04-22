@@ -10,9 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""
-Assets/templates required by REFITT.
-"""
+"""Assets/templates required by REFITT."""
 
 # type annotations
 from typing import List, Dict, IO, Union, Generator
@@ -103,6 +101,7 @@ def open_asset(relative_path: str, mode: str = 'r', **kwargs) -> IO:
         raise
 
 
+@functools.lru_cache(maxsize=None)
 def load_asset(relative_path: str, mode: str = 'r', **kwargs) -> FileData:
     """
     Load an asset from its `relative_path` below /assets.

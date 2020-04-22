@@ -10,13 +10,13 @@
 -- You should have received a copy of the Apache License along with this program.
 -- If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-CREATE TABLE IF NOT EXISTS "message"."message_host"
+CREATE TABLE IF NOT EXISTS "message"."producer"
 (
-    "message_host_id" BIGSERIAL NOT NULL,
-    "message_host_name" TEXT NOT NULL,
+    "producer_id"   BIGSERIAL NOT NULL,
+    "producer_name" TEXT      NOT NULL, -- e.g., "service::message"
 
-    PRIMARY KEY ("message_host_id"),
-	UNIQUE("message_host_name")
+    PRIMARY KEY ("producer_id"),
+	UNIQUE ("producer_name")
 )
 WITH (
     OIDS = FALSE

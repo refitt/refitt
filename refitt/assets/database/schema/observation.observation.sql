@@ -12,33 +12,31 @@
 
 CREATE TABLE IF NOT EXISTS "observation"."observation"
 (
-    "observation_id" BIGSERIAL NOT NULL,
-
-    "object_id" BIGINT NOT NULL,
-    "observation_type_id" BIGINT NOT NULL,
-    "source_id" BIGINT NOT NULL,
-
-    "observation_time" TIMESTAMP WITH TIME ZONE NOT NULL,
-    "observation_value" DOUBLE PRECISION,
-    "observation_uncertainty" DOUBLE PRECISION,
-    "observation_reference_time" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "observation_id"        BIGSERIAL                NOT NULL,
+    "object_id"             BIGINT                   NOT NULL,
+    "observation_type_id"   BIGINT                   NOT NULL,
+    "source_id"             BIGINT                   NOT NULL,
+    "observation_time"      TIMESTAMP WITH TIME ZONE NOT NULL,
+    "observation_value"     DOUBLE PRECISION         NOT NULL,
+    "observation_error"     DOUBLE PRECISION,
+    "observation_recorded"  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     PRIMARY KEY ("observation_id"),
 
     CONSTRAINT "object_id" FOREIGN KEY ("object_id")
-        REFERENCES "observation"."object" ("object_id") MATCH SIMPLE
+        REFERENCES "observation"."object" ("object_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
 
     CONSTRAINT "observation_type_id" FOREIGN KEY ("observation_type_id")
-        REFERENCES "observation"."observation_type" ("observation_type_id") MATCH SIMPLE
+        REFERENCES "observation"."observation_type" ("observation_type_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
 
     CONSTRAINT "source_id" FOREIGN KEY ("source_id")
-        REFERENCES "observation"."source" ("source_id") MATCH SIMPLE
+        REFERENCES "observation"."source" ("source_id") MATCH FULL
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID
@@ -59,6 +57,10 @@ CREATE INDEX IF NOT EXISTS "source_id"
     ON "observation"."observation" USING btree
     ("source_id" ASC NULLS LAST);
 
-CREATE INDEX IF NOT EXISTS "observation_reference_time"
+CREATE INDEX IF NOT EXISTS "observation_time"
     ON "observation"."observation" USING btree
-    ("observation_reference_time" ASC NULLS LAST);
+    ("observation_time" ASC NULLS LAST);
+
+CREATE INDEX IF NOT EXISTS "observation_recorded"
+    ON "observation"."observation" USING btree
+    ("observation_recorded" ASC NULLS LAST);
