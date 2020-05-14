@@ -24,7 +24,7 @@ import functools
 # internal libs
 from .... import database
 from ....assets import find_files, load_asset, load_assets
-from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.logging import Logger, cli_setup
 from ....core.exceptions import log_and_exit
 from ....core.config import ConfigurationError
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
@@ -240,17 +240,7 @@ class Init(Application):
 
     def __enter__(self) -> Init:
         """Initialize resources."""
-
-        if self.syslog:
-            log.handlers[0] = SYSLOG_HANDLER
-        if self.debug:
-            log.handlers[0].level = log.levels[0]
-        elif self.verbose:
-            log.handlers[0].level = log.levels[1]
-        else:
-            log.handlers[0].level = log.levels[2]
-
-        # persistent connection
+        cli_setup(self)
         database.connect(profile=self.profile)
         log.info(f'initializing database (profile={self.profile})')
 

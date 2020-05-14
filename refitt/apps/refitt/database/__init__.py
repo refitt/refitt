@@ -40,9 +40,7 @@ PROGRAM = f'{__appname__} database'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <command> [<args>...]
-       {PADDING} [--help]
-
+usage: {PROGRAM} [--help] <command> [<args>...]
 {__doc__}\
 """
 

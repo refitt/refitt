@@ -10,35 +10,34 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Send notifications to recipients."""
+"""Manage facility profiles."""
 
 # standard libs
 import sys
 
 # internal libs
-from ....core.logging import Logger
-from ....core.exceptions import CompletedCommand
-from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
+from .....core.exceptions import CompletedCommand
+from .....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # commands
-from .email import Email
-from .slack import Slack
+from .get import FacilityGet
+from .set import FacilitySet
 
 
 COMMANDS = {
-    'email': Email,
-    'slack': Slack,
+    'get': FacilityGet,
+    'set': FacilitySet,
 }
 
-PROGRAM = f'{__appname__} notify'
+PROGRAM = f'{__appname__} profile facility'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} [--help] <platform> [<args>...] [--help]
+usage: {PROGRAM} [--help] <action> [<args>...] [--help]
 {__doc__}\
 """
 
@@ -53,12 +52,12 @@ Copyright {__copyright__}
 HELP = f"""\
 {USAGE}
 
-platforms:
-email                 {Email.__doc__}
-slack                 {Slack.__doc__}
+actions:
+get                  {FacilityGet.__doc__}
+set                  {FacilitySet.__doc__}
 
 options:
--h, --help            Show this message and exit.
+-h, --help           Show this message and exit.
 
 Use the -h/--help flag with the above groups/commands to
 learn more about their usage.
@@ -67,8 +66,8 @@ learn more about their usage.
 """
 
 
-class NotifyGroup(Application):
-    """Send notifications to platforms."""
+class FacilityGroup(Application):
+    """Manage facility profiles."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -83,7 +82,7 @@ class NotifyGroup(Application):
         """Show usage/help/version or defer to command."""
 
         if self.command in COMMANDS:
-            status = COMMANDS[self.command].main(sys.argv[3:])
+            status = COMMANDS[self.command].main(sys.argv[4:])
             raise CompletedCommand(status)
         else:
             raise ArgumentError(f'"{self.command}" is not a command.')

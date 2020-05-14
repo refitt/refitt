@@ -16,7 +16,6 @@
 import sys
 
 # internal libs
-from ....core.logging import Logger
 from ....core.exceptions import CompletedCommand
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
@@ -41,9 +40,7 @@ PROGRAM = f'{__appname__} config'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <command> [<args>...]
-       {PADDING} [--help]
-
+usage: {PROGRAM} [--help] <command> [<args>...]
 {__doc__}\
 """
 
@@ -76,10 +73,6 @@ learn more about their usage.
 
 {EPILOG}\
 """
-
-
-# initialize module level logger
-log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
 class ConfigGroup(Application):

@@ -22,5 +22,5 @@ class CompletedCommand(Exception):
 
 def log_and_exit(exc: Exception, logger: Callable[[str], None], status: int) -> int:
     """Log the exception arguments and return with `status`."""
-    logger(*exc.args)
+    logger(' - '.join(exc.args))
     return status
