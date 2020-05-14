@@ -14,7 +14,7 @@
 
 # standard libs
 import json
-from abc import ABC, abstractmethod
+from abc import ABC, abstractproperty
 from typing import Dict, Any
 
 
@@ -46,8 +46,7 @@ class AlertInterface:
         else:
             raise TypeError(f'{self.__class__.__name__}.data expects {dict}.')
 
-    @property
-    @abstractmethod
+    @abstractproperty
     def alert_id(self) -> int:
         """Unique identifier from this alert."""
         return 0
