@@ -104,11 +104,13 @@ class RefittController(Application):
         else:
             self.run_action()
 
-    def run_start(self) -> None:
+    @staticmethod
+    def run_start() -> None:
         """Start the daemon."""
         subprocess.run(['refittd', '--all', '--daemon'])
 
-    def run_status(self) -> None:
+    @staticmethod
+    def run_status() -> None:
         """Show the status of daemon services."""
 
         # retrieve status from daemon (returns dict)

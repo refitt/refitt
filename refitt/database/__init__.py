@@ -12,14 +12,9 @@
 
 """Toplevel API for REFITT's database."""
 
-
-from . import config, interface, profile, auth
-from .client import DatabaseClient, connect, disconnect
-from .interface import execute, select, insert
-
-# group schema instances together
-data = {'user': interface.user,
-        'observation': interface.observation,
-        'recommendation': interface.recommendation,
-        'model': interface.model,
-        'message': interface.message}
+# internal libs
+from . import core
+from .core import types, config, client, interface
+from .core.client import DatabaseClient, connect, disconnect
+from .core.interface import execute, select, insert
+from . import auth, profile, observation, model, message, recommendation

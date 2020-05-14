@@ -1,0 +1,30 @@
+[
+  {
+    "level_id": 0,
+    "level_name": "DEBUG"
+  },
+  {
+    "level_id": 1,
+    "level_name": "STATUS"
+  },
+  {
+    "level_id": 2,
+    "level_name": "INFO"
+  }, 
+  {
+    "level_id": 3,
+    "level_name": "EVENT"
+  },
+  {
+    "level_id": 4,
+    "level_name": "WARNING"
+  }, 
+  {
+    "level_id": 5,
+    "level_name": "ERROR"
+  }, 
+  {
+    "level_id": 6,
+    "level_name": "CRITICAL"
+  }
+]

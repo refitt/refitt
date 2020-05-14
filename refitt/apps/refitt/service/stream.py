@@ -14,15 +14,17 @@
 
 # type annotations
 from __future__ import annotations
+from typing import Optional
 
 # standard libs
 import os
 import functools
 
 # internal libs
+from .... import database
 from ....core.config import config
 from ....core.exceptions import log_and_exit
-from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.logging import Logger, cli_setup
 from ....stream.antares import AntaresClient
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
@@ -37,7 +39,8 @@ PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
 usage: {PROGRAM} <broker> <topic> [--output-directory DIR] [--filter NAME]
-       {PADDING} [--key KEY] [--token TOKEN] [--debug | --verbose] [--syslog]
+       {PADDING} [--key KEY] [--token TOKEN] [--profile NAME] 
+       {PADDING} [--debug | --verbose] [--syslog]
        {PADDING} [--help]
 
 {__doc__}\
@@ -61,6 +64,7 @@ arguments:
 options:
 --key                   STR    API key for broker.
 --token                 STR    API token for broker.
+    --profile           NAME   Name of database profile (e.g., "test").
 -o, --output-directory  DIR    Path to directory for alert files (default $CWD).
 -f, --filter            NAME   Name of filter to reject alerts.
 -d, --debug                    Show debugging messages.
@@ -97,6 +101,9 @@ class Stream(Application):
 
     token: str = None
     interface.add_argument('--token', default=token)
+
+    profile: Optional[str] = None
+    interface.add_argument('--profile', default=profile)
 
     filter_name: str = 'none'
     interface.add_argument('--filter', dest='filter_name', default=filter_name)
@@ -165,17 +172,10 @@ class Stream(Application):
 
     def __enter__(self) -> Stream:
         """Initialize resources."""
-
-        if self.syslog:
-            log.handlers[0] = SYSLOG_HANDLER
-        if self.debug:
-            log.handlers[0].level = log.levels[0]
-        elif self.verbose:
-            log.handlers[0].level = log.levels[1]
-        else:
-            log.handlers[0].level = log.levels[2]
-
+        cli_setup(self)
+        database.connect(profile=self.profile)
         return self
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
+        database.disconnect()

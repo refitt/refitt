@@ -17,15 +17,13 @@ from __future__ import annotations
 from typing import List
 
 # standard libs
-import os
 import sys
-import json
 import functools
 
 # internal libs
 from ....comm.notice.email import UserAuth, Mail, Server, templates, TEMPLATES
 from ....core.exceptions import log_and_exit
-from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.logging import Logger, cli_setup
 from ....core.config import config, ConfigurationError, expand_parameters
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
@@ -239,14 +237,7 @@ class Email(Application):
     def __enter__(self) -> Email:
         """Initialize resources."""
 
-        if self.syslog:
-            log.handlers[0] = SYSLOG_HANDLER
-        if self.debug:
-            log.handlers[0].level = log.levels[0]
-        elif self.verbose:
-            log.handlers[0].level = log.levels[1]
-        else:
-            log.handlers[0].level = log.levels[2]
+        cli_setup(self)
 
         # email configuration
         profile = config['mail']

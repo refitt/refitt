@@ -25,20 +25,18 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # commands
-from .generate import Generate
+from .create import Create
 
 
 COMMANDS = {
-    'generate': Generate,
+    'create': Create,
 }
 
 PROGRAM = f'{__appname__} auth'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <command> [<args>...]
-       {PADDING} [--help]
-
+usage: {PROGRAM} [--help] <command> [<args>...]
 {__doc__}\
 """
 
@@ -54,7 +52,7 @@ HELP = f"""\
 {USAGE}
 
 commands:
-generate               {Generate.__doc__}
+create                 {Create.__doc__}
 
 options:
 -h, --help             Show this message and exit.

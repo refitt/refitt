@@ -1,0 +1,14 @@
+[Unit]
+Description=refitt service daemon
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart={PREFIX}/bin/refittd --all --debug --keep-alive
+ExecReload={PREFIX}/bin/refittctl reload
+Environment="PATH={PREFIX}/bin:$PATH"
+Restart=on-failure
+StandardError=file:{SITE}/log/refittd.log
+
+[Install]
+WantedBy=multi-user.target

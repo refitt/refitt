@@ -38,8 +38,7 @@ PROGRAM = f'{__appname__} notify'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <platform> [<args>...] [--help]
-
+usage: {PROGRAM} [--help] <platform> [<args>...] [--help]
 {__doc__}\
 """
 
@@ -68,11 +67,8 @@ learn more about their usage.
 """
 
 
-log = Logger.with_name('.'.join(PROGRAM.split()))
-
-
 class NotifyGroup(Application):
-    """Send notifications to recipients."""
+    """Send notifications to platforms."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 

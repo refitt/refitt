@@ -30,11 +30,11 @@ from ..assets import load_asset
 from ..__meta__ import __appname__
 
 # module level logger
-log = Logger.with_name(f'{__appname__}.config')
+log = Logger.with_name(__name__)
 
 
 # home directory
-HOME = os.getenv('HOME')
+HOME = os.getenv('HOME', None)
 if HOME is None:
     raise ValueError('"HOME" environment variable not defined.')
 
@@ -45,6 +45,10 @@ VARS = {
     'DAEMON_KEY':  '__REFITT__DAEMON__KEY__',
     'DAEMON_REFRESH_TIME': '10',   # seconds
     'DAEMON_INTERRUPT_TIMEOUT': '4',  # seconds
+    'DATABASE_PROFILE': 'default',
+    'DATABASE': 'refitt',
+    'PLASMA_MEMORY': 1_000_000,
+    'PLASMA_SOCKET': '/tmp/plasma.sock',
 }
 
 # environment variables
@@ -115,8 +119,7 @@ def get_config() -> Configuration:
     # ---------------------
     # Merge each available namespace into a single `ChainMap` like structure.
     # A call to __getitem__ returns in a reverse-order depth-first search.
-    config = Configuration(**namespaces)
-    return config
+    return Configuration(**namespaces)
 
 
 def init_config(key: str = None) -> None:

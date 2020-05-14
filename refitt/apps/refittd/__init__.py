@@ -22,18 +22,18 @@ import sys
 import subprocess
 from queue import Empty
 
+# external libs
+from cmdkit.app import Application
+from cmdkit.cli import Interface, ArgumentError
+
 # internal libs
 from .daemon import Daemon
 from .service import Service
 from .server import RefittDaemonServer
 from...core.config import get_site, get_config, ConfigurationError, Namespace
-from...core.logging import Logger, SYSLOG_HANDLER
+from...core.logging import Logger, DETAILED_HANDLER
 from...__meta__ import (__appname__, __version__, __copyright__,
                         __developer__, __contact__, __website__)
-
-# external libs
-from cmdkit.app import Application
-from cmdkit.cli import Interface, ArgumentError
 
 
 PROGRAM = f'{__appname__}d'
@@ -88,8 +88,8 @@ class RefittDaemon(Application, Daemon):
     keep_alive_mode: bool = False
     interface.add_argument('--keep-alive', action='store_true', dest='keep_alive_mode')
 
-    daemon: bool = False
-    interface.add_argument('--daemon', action='store_true')
+    daemon_mode: bool = False
+    interface.add_argument('--daemon', action='store_true', dest='daemon_mode')
 
     # NOTE: debugging messages are always shown for services.
     #       debugging messages for the daemon internals are optional.
@@ -110,7 +110,7 @@ class RefittDaemon(Application, Daemon):
     def start_services(self) -> None:
         """Load definitions and start services."""
 
-        if self.daemon:
+        if self.daemon_mode:
             self.run_daemon()
 
         config = self.get_config()
@@ -222,7 +222,7 @@ class RefittDaemon(Application, Daemon):
     def run_daemon(self) -> None:
         """Run as a daemon."""
         self.daemonize()
-        # simple way of running as a daemon while also seemlessly redirecting
+        # simple way of running as a daemon while also seamlessly redirecting
         # all stderr is to subprocess with a redirect in normal mode
         logpath = os.path.join(get_site()['log'], 'refittd.log')
         with open(logpath, mode='a') as logfile:
@@ -237,7 +237,7 @@ class RefittDaemon(Application, Daemon):
         if self.services_requested and self.all_services:
             raise ArgumentError('specified named AND --all is redundant')
 
-        log.handlers[0] = SYSLOG_HANDLER
+        log.handlers[0] = DETAILED_HANDLER
         if self.debug:
             log.handlers[0].level = log.levels[0]
         else:
@@ -247,7 +247,7 @@ class RefittDaemon(Application, Daemon):
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-        # daemon varient doesn't actually start any services
+        # daemon variant doesn't actually start any services
         if not self.daemon:
             log.info('stopping services')
             for name, service in self.services.items():
