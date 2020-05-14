@@ -22,7 +22,7 @@ import functools
 
 # internal libs
 from ....core.exceptions import log_and_exit
-from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.logging import Logger, cli_setup
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
@@ -107,15 +107,7 @@ class Test(Application):
 
     def __enter__(self) -> Test:
         """Initialize resources."""
-
-        if self.syslog:
-            log.handlers[0] = SYSLOG_HANDLER
-        if self.debug:
-            log.handlers[0].level = log.levels[0]
-        elif self.verbose:
-            log.handlers[0].level = log.levels[1]
-        else:
-            log.handlers[0].level = log.levels[2]
+        cli_setup(self)
 
         if self.interval < 0:
             raise ArgumentError('--interval must be positive')

@@ -36,8 +36,7 @@ PROGRAM = f'{__appname__} config edit'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} {{--site | --system | --user}} [--help]
-
+usage: {PROGRAM} {{--system | --user | --site}} [--help]
 {__doc__}\
 """
 
@@ -52,11 +51,13 @@ Copyright {__copyright__}
 HELP = f"""\
 {USAGE}
 
+The EDITOR environment variable must be set.
+
 options:
-    --site                   Apply to site configuration.
-    --user                   Apply to user configuration.
-    --system                 Apply to system configuration.
--h, --help                   Show this message and exit.
+    --system         Edit system configuration.
+    --user           Edit user configuration.
+    --site           Edit local configuration.
+-h, --help           Show this message and exit.
 
 {EPILOG}
 """
@@ -85,7 +86,7 @@ class Edit(Application):
     }
 
     def run(self) -> None:
-        """Run init task."""
+        """Open editor for configuration."""
 
         site = None
         config_path = None
@@ -103,13 +104,3 @@ class Edit(Application):
 
         editor = os.environ['EDITOR']
         subprocess.run([editor, config_path])
-
-
-    def __enter__(self) -> Edit:
-        """Initialize resources."""
-        # always set to INFO
-        log.handlers[0].level = log.levels[1]
-        return self
-
-    def __exit__(self, *exc) -> None:
-        """Release resources."""

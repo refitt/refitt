@@ -21,7 +21,7 @@ import os
 import functools
 
 # internal libs
-from ....core.config import get_site
+from ....core.config import get_site, init_config
 from ....core.exceptions import log_and_exit
 from ....core.logging import Logger
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
@@ -37,7 +37,7 @@ PROGRAM = f'{__appname__} config set'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <section>[...].<variable> <value> [--system | --user] [--help]
+usage: {PROGRAM} SECTION[...].VAR VALUE [--system | --user | --site] [--help] 
 {__doc__}\
 """
 
@@ -53,13 +53,14 @@ HELP = f"""\
 {USAGE}
 
 arguments:
-section[...].variable        Path to variable.
-value                        Value to be set.
+SECTION[...].VAR        Path to variable.
+VALUE                   Value to be set.
 
 options:
-    --user                   Apply to user configuration.
-    --system                 Apply to system configuration.
--h, --help                   Show this message and exit.
+    --system            Apply to system configuration.
+    --user              Apply to user configuration.
+    --site              Apply to local configuration.
+-h, --help              Show this message and exit.
 
 {EPILOG}
 """
@@ -69,13 +70,14 @@ options:
 log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
-def smart_type(init_value: str) -> TypeVar('SmartType', int, float, str):
+SmartType = TypeVar('SmartType', int, float, str)
+def smart_type(init_value: str) -> SmartType:
     """Passively coerce `init_value` to int or float if possible."""
     try:
         return int(init_value)
     except ValueError:
         try:
-            return  float(init_value)
+            return float(init_value)
         except ValueError:
             pass
     return init_value
@@ -92,6 +94,7 @@ class Set(Application):
     value: str = None
     interface.add_argument('value', type=smart_type)
 
+    site: bool = False
     user: bool = False
     system: bool = False
     site_interface = interface.add_mutually_exclusive_group()
@@ -108,13 +111,13 @@ class Set(Application):
         """Run init task."""
 
         config_path = get_site()['cfg']
-        for key in ('user', 'system'):
+        for key in ('site', 'user', 'system'):
             if getattr(self, key) is True:
+                init_config(key)
                 config_path = get_site(key)['cfg']
 
         if not os.path.exists(config_path):
             raise RuntimeError(f'{config_path} does not exist')
-
 
         with open(config_path, mode='r') as config_file:
             config = toml.load(config_file)

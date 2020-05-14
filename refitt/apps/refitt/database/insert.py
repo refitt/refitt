@@ -14,7 +14,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List
+from typing import List, Optional
 
 # standard libs
 import os
@@ -24,21 +24,22 @@ import functools
 # internal libs
 from .... import database
 from ....core.exceptions import log_and_exit
-from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.logging import Logger, cli_setup
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface
+from cmdkit.cli import Interface, ArgumentError
 import pandas
 
 
 # program name is constructed from module file name
-PROGRAM = f'{__appname__} database init'
+PROGRAM = f'{__appname__} database insert'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <schema>.<table> [--input PATH] [--format=FORMAT | ...] [--update]
+usage: {PROGRAM} <schema>.<table> [--profile NAME] [--update]
+       {PADDING} [--input PATH] [--format=FORMAT | ...]
        {PADDING} [--debug | --verbose] [--syslog]
        {PADDING} [--help]
 
@@ -64,6 +65,7 @@ arguments:
 <schema>.<table>             Name of the table to insert.
 
 options:
+    --profile    NAME        Name of database profile (e.g., "test"). 
 -i, --input      PATH        File path for input data.
 -u, --update                 Alter existing data.
 -f, --format     FORMAT      Name of input format. (default: CSV)
@@ -92,6 +94,9 @@ class Insert(Application):
 
     table: str = None
     interface.add_argument('table', metavar='<schema>.<table>')
+
+    profile: Optional[str] = None
+    interface.add_argument('--profile', default=profile)
 
     infile: str = None
     interface.add_argument('-i', '--infile', default=None)
@@ -129,7 +134,7 @@ class Insert(Application):
         """Run insert."""
 
         if self.update:
-            log.warning('The --update feature is not currently implemented')
+            raise ArgumentError('--update is not implemented')
 
         schema, table = self.table.split('.')
 
@@ -156,10 +161,8 @@ class Insert(Application):
 
         # output is either a path or <stdout> instance
         if self.infile in (None, '-'):
-            self.infile = sys.stdin
-
-        # determine reader method
-        if self.input_format == 'ascii':
+            reader = lambda path: sys.stdin.read()
+        elif self.input_format == 'ascii':
             reader = functools.partial(pandas.read_fwf)
         elif self.input_format == 'csv':
             reader = functools.partial(pandas.read_csv, sep=self.delim)
@@ -170,27 +173,17 @@ class Insert(Application):
         else:
             reader = getattr(pandas, f'read_{self.input_format}')
 
-        infile_label = '<stdin>' if self.infile is sys.stdin else self.infile
+        infile_label = '<stdin>' if self.infile in (None, '-') else self.infile
         log.info(f'reading data from {infile_label} (format={self.input_format})')
         data = reader(self.infile)
 
         log.info(f'inserting {len(data)} records into "{schema}"."{table}"')
-        database.data[schema][table].insert(data)
+        database.insert(data, schema, table)
 
     def __enter__(self) -> Insert:
         """Initialize resources."""
-
-        if self.syslog:
-            log.handlers[0] = SYSLOG_HANDLER
-        if self.debug:
-            log.handlers[0].level = log.levels[0]
-        elif self.verbose:
-            log.handlers[0].level = log.levels[1]
-        else:
-            log.handlers[0].level = log.levels[2]
-
-        # persistent connection
-        database.connect()
+        cli_setup(self)
+        database.connect(profile=self.profile)
         return self
 
     def __exit__(self, *exc) -> None:

@@ -14,7 +14,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, IO, Union
+from typing import List, IO, Union, Optional
 
 # standard libs
 import os
@@ -24,7 +24,7 @@ import functools
 # internal libs
 from .... import database
 from ....core.exceptions import log_and_exit
-from ....core.logging import Logger, SYSLOG_HANDLER
+from ....core.logging import Logger, cli_setup
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
@@ -39,7 +39,8 @@ PROGRAM = f'{__appname__} database select'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <schema>.<table> [--columns NAME [NAME...]] [--where CONDITION [CONDITION...]]
+usage: {PROGRAM} <schema>.<table> [--profile NAME] 
+       {PADDING} [--columns NAME [NAME...]] [--where CONDITION [CONDITION...]]
        {PADDING} [--output PATH] [--format FORMAT | ...] [--tablefmt FORMAT]
        {PADDING} [--limit COUNT | --no-limit] [--join] [--order-by NAME] [--descending]
        {PADDING} [--debug | --verbose] [--syslog] [--dry-run]
@@ -72,6 +73,7 @@ arguments:
 <schema>.<table>             Name of the table.
 
 options:
+    --profile    NAME        Name of database profile (e.g., "test").
 -c, --columns    NAME        Names of columns to include.
 -o, --output     PATH        File path for output.
 -w, --where      CONDITION   Quoted SQL conditional statements.
@@ -123,13 +125,16 @@ class Select(Application):
     source: str = None
     interface.add_argument('source', metavar='<schema>.<table>')
 
+    profile: Optional[str] = None
+    interface.add_argument('--profile', default=profile)
+
     columns: List[str] = []
     interface.add_argument('-c', '--columns', nargs='+', default=[])
 
     where: List[str] = []
     interface.add_argument('-w', '--where', nargs='+', default=[])
 
-    output: str = None
+    output: Union[str, IO] = None
     interface.add_argument('-o', '--output', default=None)
     ext_map: dict = {'.csv': 'csv', '.xlsx': 'excel', '.feather': 'feather',
                      '.html': 'html', '.json': 'json'}
@@ -216,7 +221,7 @@ class Select(Application):
                       orderby=self.order_by, ascending=(not self.descending), join=self.join)
 
         if self.dry_run:
-            sys.stdout.write(database.interface._make_select(**params))
+            sys.stdout.write(database.core.interface._make_select(**params))  # noqa (protected member)
             return
 
         # fetch all records
@@ -239,18 +244,8 @@ class Select(Application):
 
     def __enter__(self) -> Select:
         """Initialize resources."""
-
-        if self.syslog:
-            log.handlers[0] = SYSLOG_HANDLER
-        if self.debug:
-            log.handlers[0].level = log.levels[0]
-        elif self.verbose:
-            log.handlers[0].level = log.levels[1]
-        else:
-            log.handlers[0].level = log.levels[2]
-
-        # persistent connection
-        database.connect()
+        cli_setup(self)
+        database.connect(profile=self.profile)
         return self
 
     def __exit__(self, *exc) -> None:

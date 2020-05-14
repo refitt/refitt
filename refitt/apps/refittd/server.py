@@ -45,7 +45,7 @@ class RefittDaemonServer(BaseManager):
         self.register('_get_queue', callable=lambda:self._queue)
         self.register('_get_status', callable=lambda:self._status)
 
-    def get_action(self) -> None:
+    def get_action(self) -> str:
         """Get an `action` from the queue."""
         action = self._queue.get(timeout=DAEMON_REFRESH_TIME)
         self._queue.task_done()

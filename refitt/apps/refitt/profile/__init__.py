@@ -25,22 +25,20 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # commands
-from .user import User
-from .facility import Facility
+from .user import UserGroup
+from .facility import FacilityGroup
 
 
 COMMANDS = {
-    'user':     User,
-    'facility': Facility,
+    'user':     UserGroup,
+    'facility': FacilityGroup,
 }
 
 PROGRAM = f'{__appname__} profile'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <command> [<args>...]
-       {PADDING} [--help]
-
+usage: {PROGRAM} [--help] <command> [<args>...]
 {__doc__}\
 """
 
@@ -56,8 +54,8 @@ HELP = f"""\
 {USAGE}
 
 commands:
-user                   {User.__doc__}
-facility               {Facility.__doc__}
+user                   {UserGroup.__doc__}
+facility               {FacilityGroup.__doc__}
 
 options:
 -h, --help             Show this message and exit.
@@ -67,10 +65,6 @@ learn more about their usage.
 
 {EPILOG}\
 """
-
-
-# initialize module level logger
-log = Logger.with_name('.'.join(PROGRAM.split()))
 
 
 class ProfileGroup(Application):
@@ -89,7 +83,7 @@ class ProfileGroup(Application):
         """Show usage/help/version or defer to command."""
 
         if self.command in COMMANDS:
-            status = COMMANDS[self.command].main(sys.argv[3:])
+            status = COMMANDS[self.command].main(sys.argv[3:4])
             raise CompletedCommand(status)
         else:
             raise ArgumentError(f'"{self.command}" is not a command.')
