@@ -13,20 +13,22 @@
 """Access and management to REFITT's database."""
 
 # type annotations
-from typing import List, Dict, Any
+from __future__ import annotations
+from typing import List, Tuple, Dict, Any, Union, Optional, Type
 
 # standard libs
 import functools
+from abc import ABC
 
 # internal libs
-from . import config
-from . import client as client_
+from . import client as _client
 from .client import DatabaseClient
 from refitt.core.logging import Logger
 
 # external libs
-from pandas import DataFrame, read_sql
+from pandas import DataFrame, Series, read_sql
 from sqlalchemy.sql import text
+from sqlalchemy.engine import Engine, Connection  # noqa (not declared in __all__)
 from sqlalchemy.engine.result import ResultProxy
 
 
@@ -34,23 +36,42 @@ from sqlalchemy.engine.result import ResultProxy
 log = Logger.with_name('refitt.database')
 
 
-def execute(statement: str, client: DatabaseClient = None, **params) -> ResultProxy:
+# executable interface to the database
+Interface = Union[DatabaseClient, Engine, Connection]
+Executable = Union[Engine, Connection]
+
+
+def get_executable(interface: Optional[Interface] = None) -> Executable:
     """
-    Execute arbitrary SQL `statement`.
+    Passively derive a database engine or direct connection.
+    """
+    if isinstance(interface, DatabaseClient):
+        return interface.engine
+    if isinstance(interface, (Engine, Connection)):
+        return interface
+    if interface is not None:
+        raise TypeError(f'expected one of {Interface.__args__}')
+    else:
+        return _client.connect().engine
+
+
+def execute(statement: str, interface: Optional[Interface] = None, **params) -> ResultProxy:
+    """
+    Execute SQL `statement`.
 
     Arguments
     ---------
     statement: str
         An SQL query to execute.
 
-    client: `refitt.database.core.client.DatabaseClient`
+    interface: `DatabaseClient`, `Engine`, or `Connection`
         A client connection to the database. If None, one will either be created temporarily
         for the lifetime of this query, or if a `refitt.database.core.client._PERSISTENT_CLIENT`
-        exists, it will be used.
+        exists, it will be used. An existing direct `Connection` is also allowed.
 
     Returns
     -------
-    result: `sqlalchemy.engine.result.ResultProxy`
+    result: `ResultProxy`
 
     See Also
     --------
@@ -63,15 +84,10 @@ def execute(statement: str, client: DatabaseClient = None, **params) -> ResultPr
     [(1, 'SNIa', 'WD detonation, Type Ia SN'),
      (2, 'SNIa-91bg', 'Peculiar type Ia: 91bg')]
     """
-    if client is not None:
-        return client.engine.execute(text(statement), **params)
-    if client_._PERSISTENT_CLIENT is not None:  # noqa
-        return client_._PERSISTENT_CLIENT.engine.execute(text(statement), **params)  # noqa
-    with DatabaseClient.from_config() as client:
-        return client.engine.execute(text(statement), **params)
+    return get_executable(interface).execute(text(statement), **params)
 
 
-def insert(data: DataFrame, schema: str, table: str, client: DatabaseClient = None,
+def insert(data: DataFrame, schema: str, table: str, interface: Interface = None,
            if_exists: str = 'append', index: bool = False, chunksize: int = 10_000) -> None:
     """
     Insert `data` into `schema`.`table`.
@@ -87,10 +103,10 @@ def insert(data: DataFrame, schema: str, table: str, client: DatabaseClient = No
     table: str
         The name of the table to insert into.
 
-    client: `refitt.database.core.client.DatabaseClient`
+    interface: `DatabaseClient`, `Engine`, or `Connection`
         A client connection to the database. If None, one will either be created temporarily
         for the lifetime of this query, or if a `refitt.database.core.client._PERSISTENT_CLIENT`
-        exists, it will be used.
+        exists, it will be used. An existing direct `Connection` is also allowed.
 
     if_exists: str (default: 'append')
         Action to take if the `table` already exists. (see `pandas.DataFrame.to_sql`).
@@ -103,48 +119,14 @@ def insert(data: DataFrame, schema: str, table: str, client: DatabaseClient = No
 
     See Also
     --------
-    - `pandas.DataFrame.to_sql`
+    - `DataFrame.to_sql`
     """
-    if client is not None:
-        return data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
-                           index=index, chunksize=chunksize)
-    if client_._PERSISTENT_CLIENT is not None:
-        return data.to_sql(table, client_._PERSISTENT_CLIENT.engine, schema=schema,
-                           if_exists=if_exists, index=index, chunksize=chunksize)
-    with DatabaseClient.from_config() as client:
-        return data.to_sql(table, client.engine, schema=schema, if_exists=if_exists,
-                           index=index, chunksize=chunksize)
+    return data.to_sql(table, get_executable(interface), schema=schema,
+                       if_exists=if_exists, index=index, chunksize=chunksize)
 
 
-def _select(query: str, client: DatabaseClient = None, **params) -> DataFrame:
-    """
-    Execute SQL `query` statement.
-
-    Arguments
-    ---------
-    query: str
-        The SQL query to submit to the database.
-
-    client: `refitt.database.client.DatabaseClient`
-        A client connection to the database. If None, one will either
-        be created temporarily for the lifetime of this query, or if a
-        `refitt.database.client._PERSISTENT_CLIENT` exists, it will be used.
-
-    Returns
-    -------
-    table: `pandas.DataFrame`
-
-    See Also
-    --------
-    - `refitt.database.interface.select`
-    - `pandas.read_sql`
-    """
-    if client is not None:
-        return read_sql(text(query), client.engine, params=params)
-    if client_._PERSISTENT_CLIENT is not None:  # noqa
-        return read_sql(text(query), client_._PERSISTENT_CLIENT.engine, params=params)  # noqa
-    with DatabaseClient.from_config() as client:
-        return read_sql(text(query), client.engine, params=params)
+def _select(query: str, interface: Optional[Interface] = None, **params) -> DataFrame:
+    return read_sql(text(query), get_executable(interface), params=params)
 
 
 _FIND_COLUMNS = """\
@@ -161,7 +143,7 @@ def get_columns(schema: str, table: str) -> List[str]:
 
 
 _FIND_TABLES = """\
-SELECT table_name from information_schema.tables 
+SELECT table_name from information_schema.tables
 WHERE table_schema = :schema
 """
 
@@ -259,22 +241,54 @@ def _make_select(columns: List[str], schema: str, table: str, where: List[str] =
     return query
 
 
-def select(columns: List[str], schema: str, table: str, client: DatabaseClient = None,
+def select(columns: List[str], schema: str, table: str, interface: Optional[Interface] = None,
            where: List[str] = None, limit: int = None, orderby: str = None, ascending: bool = True,
            join: bool = False, set_index: bool = True) -> DataFrame:
     """
-    Construct an SQL query and execute.
+    Construct and execute an SQL query based on the selection criteria.
 
     Arguments
     ---------
+    columns: List[str]
+        The names of the columns to return. If None, all columns are returned.
+
+    schema: str
+        The name of the database schema to use.
+
+    table: str
+        The name of the database table to select from.
+
+    interface: `DatabaseClient`, `Engine`, or `Connection`
+        A client connection to the database. If None, one will either be created temporarily
+        for the lifetime of this query, or if a `refitt.database.core.client._PERSISTENT_CLIENT`
+        exists, it will be used. An existing direct `Connection` is also allowed.
+
+    where: List[str]
+        A list of conditional statements, e.g., "foo = 10".
+
+    limit: int
+        The number of records to return. If None, do not limit.
+
+    orderby: str
+        The name of the column to order records by. If None, do not order.
+
+    ascending: bool (default: True)
+        Whether to order as ascending or descending.
+
+    join: bool (default: False)
+        Apply automatic, intelligent joins to swap out "_id" foreign keys as their
+        associated "_name" values from their parent table.
+
+    set_index: bool (default: True)
+        If True and a "`table`_id" column exists, set it as the index.
 
     Returns
     -------
-    table: `pandas.DataFrame`
+    table: `DataFrame`
     """
     query = _make_select(columns, schema, table, where=where, limit=limit,
                          orderby=orderby, ascending=ascending, join=join)
-    result = _select(query, client)
+    result = _select(query, interface)
     if set_index is True and f'{table}_id' in result.columns:
         result = result.set_index(f'{table}_id')
     return result
@@ -316,3 +330,109 @@ class Table:
     def __repr__(self) -> str:
         """Interactive representation of table interface."""
         return str(self)
+
+
+class RecordNotFound(Exception):
+    """A record could not be found."""
+
+
+class Record(ABC):
+    """Like dataclass or namedtuple, but more comprehensive."""
+
+    _fields: Tuple[str, ...] = ()
+    _masked: bool = False
+
+    # delegate to some other factory method based on uniquely
+    # identifiable attribute (e.g., `record_id`).
+    _FACTORIES: Dict[str, str] = {}
+
+    def __init__(self, *inst, **fields) -> None:
+        """Initialize client attributes."""
+        if inst and not fields:
+            self.__init_move(*inst)
+        elif fields and not inst:
+            self.__init_base(**fields)
+        else:
+            raise ValueError(f'{self.__class__.__name__} expects instance or named fields.')
+
+    def __init_move(self, other: Record) -> None:
+        """Initialize new Record from existing an instance."""
+        self.__init_base(**other.to_dict())
+
+    def __init_base(self, **fields) -> None:
+        """Initialize new Record from named fields."""
+        for field, value in fields.items():
+            if field in self._fields:
+                setattr(self, field, value)
+            else:
+                raise AttributeError(f'"{field}" is not an attribute of {self.__class__.__name__}')
+        for field in self._fields[1:]:  # not necessarily the primary key
+            if field not in fields:
+                raise AttributeError(f'must specify "{field}"')
+
+    @property
+    def _values(self) -> tuple:
+        """The associated values of the _fields."""
+        return tuple(getattr(self, name) for name in self._fields)
+
+    def _repr(self, name: str) -> str:
+        """Format the named field (as used in __repr__)."""
+        value = repr(getattr(self, name))
+        return f'{name}={value}'
+
+    def __str__(self) -> str:
+        """String representation."""
+        _repr = ', '.join(list(map(self._repr, self._fields)))
+        _repr = f'{self.__class__.__name__}({_repr})'
+        _repr = _repr if not self._masked else f'<{_repr}>'
+        return _repr
+
+    def __repr__(self) -> str:
+        """Interactive representation (see also: __str__)."""
+        return str(self)
+
+    def copy(self) -> Record:
+        """Create a duplicate record."""
+        old = self.to_dict()
+        return self.__class__.from_dict(old.copy())
+
+    @classmethod
+    def from_dict(cls, other: Dict[str, Any]) -> Record:
+        """Initialize from a dictionary of values."""
+        return cls(**other)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {field: getattr(self, field) for field in self._fields}
+
+    @classmethod
+    def from_series(cls, other: Series) -> Record:
+        """Initialize from an extracted `pandas.Series`."""
+        return cls.from_dict(dict(other))
+
+    @classmethod
+    def from_database(cls, interface: Interface = None, **key) -> Record:
+        """Fetch record from database."""
+        factories = list(cls._FACTORIES)
+        if len(key) != 1 or list(key.keys())[0] not in factories:
+            raise TypeError('expected one of ' + ', '.join([f'"{name}"' for name in factories]))
+        (field, value), = key.items()
+        factory = getattr(cls, cls._FACTORIES[field])
+        return factory(value, interface=interface)
+
+    @classmethod
+    def _from_unique(cls, table: Table, field: str, value: Union[int, str],
+                     interface: Interface = None) -> Record:
+        """Initialize from a uniquely identifiable record in the database."""
+        records = table.select(where=[f"{field} = '{value}'"], set_index=False, interface=interface)
+        if records.empty:
+            raise RecordNotFound(f'from "{table.schema}"."{table.name}" where {field}={value}')
+        return cls.from_series(records.iloc[0])
+
+    def __eq__(self, other: Record) -> bool:
+        """Compare field values."""
+        return isinstance(other, Record) and self.to_dict() == other.to_dict()
+
+    def __ne__(self, other: Record) -> bool:
+        """Compare field values."""
+        return not self == other

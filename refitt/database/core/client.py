@@ -29,7 +29,7 @@ from ...core.logging import Logger
 # external libs
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, Connection  # noqa (__all__)
 
 
 # initialize module level logger
@@ -177,7 +177,7 @@ class DatabaseClient:
     _engine: Engine = None
 
     # tunnel instance
-    _tunnel: SSHTunnel = None
+    _tunnel: Optional[SSHTunnel] = None
 
     def __init__(self, server: ServerAddress, auth: UserAuth, database: str) -> None:
         """Initialize database connection details."""
@@ -297,6 +297,24 @@ class DatabaseClient:
             client.use_tunnel(**info['tunnel'])
         return client
 
+    def begin(self) -> Connection:
+        """
+        Execute a multipart transaction.
+
+        Used within a context manager, this allows multipart database
+        actions to be defined as part of a whole and automatically rollback
+        changes in the event of an error.
+
+        Example
+        -------
+        >>> from refitt import database
+        >>> client = database.connect()
+        >>> with client.begin() as transaction:
+        ...     transaction.execute('A')
+        ...     transaction.execute('B')
+        """
+        return self.engine.begin()
+
     def __str__(self) -> str:
         """String representation of database client."""
         if self.tunnel is None:
@@ -331,35 +349,37 @@ def connect(**kwargs) -> DatabaseClient:
     connection that the rest of the library can make use of without the need to
     specify otherwise.
 
-    :param **kwargs
-        Keyword arguments are passed through to :func:`.DatabaseClient.from_config`.
+    Options
+    -------
+    **kwargs:
+        Keyword arguments are passed through to `.DatabaseClient.from_config`.
 
-    :returns client: :class:`.DatabaseClient`
+    Returns
+    -------
+    client: `.DatabaseClient`
         A persistent connection.
 
-    .. seealso::
+    See Also
+    --------
+    `.DatabaseClient.from_config`
 
-        :ref:`.DatabaseClient.from_config`
+    Note
+    ----
+    An attempt is made to automatically call :func:`disconnect` at exit.
+    However, this is not guaranteed. If possible, call it manually at exit!
 
-    .. note::
+    If this method has already been called previously, the existing client
+    connection is simply provided back. This is independent of the arguments!
 
-        An attempt is made to automatically call :func:`disconnect` at exit.
-        However, this is not guaranteed. If possible, call it manually at exit!
+    Example
+    -------
+    >>> from refitt import database
+    >>> database.connect(profile='test')
+    <DatabaseClient[localhost:5432]>
 
-    .. note::
-
-        If this method has already been called previously, the existing client
-        connection is simply provided back. This is independent of the arguments!
-
-    .. example::
-
-        >>> import refitt.database
-        >>> refitt.database.connect(profile='test')
-        <DatabaseClient[localhost:5432]>
-
-        >>> refitt.database.connect(profile='test').engine
-        Engine(postgresql://localhost:5432/refitt)
-
+    >>> client = database.connect(profile='test')
+    >>> client.engine
+    Engine(postgresql://localhost:5432/refitt)
     """
     global _PERSISTENT_CLIENT
     if _PERSISTENT_CLIENT is not None:
