@@ -26,7 +26,7 @@ from ..core.logging import Logger
 
 
 # module level logger
-log = Logger.with_name(__name__)
+log = Logger(__name__)
 
 
 # either bytes or str depending on how the file was opened

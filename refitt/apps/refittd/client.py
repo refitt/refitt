@@ -25,7 +25,7 @@ from ...core.logging import Logger
 
 
 # initialize module level logger
-log = Logger.with_name('refittd.client')
+log = Logger(__name__)
 
 
 class RefittDaemonClient(BaseManager):

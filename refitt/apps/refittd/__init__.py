@@ -23,6 +23,7 @@ import subprocess
 from queue import Empty
 
 # external libs
+from cmdkit import logging as _cmdkit_logging
 from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
@@ -71,7 +72,12 @@ options:
 """
 
 # initialize module level logger
-log = Logger.with_name(PROGRAM)
+log = Logger(__name__)
+
+
+# inject logger back into cmdkit library
+_cmdkit_logging.log = log
+Application.log_error = log.critical
 
 
 class RefittDaemon(Application, Daemon):

@@ -100,7 +100,7 @@ options:
 """
 
 # initialize module level logger
-log = Logger.with_name('.'.join(PROGRAM.split()))
+log = Logger(__name__)
 
 
 def to_ascii(self, output: Union[str, IO], tablefmt: str = 'plain') -> None:

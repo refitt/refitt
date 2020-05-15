@@ -18,19 +18,19 @@ are written to <stderr> and should be redirected by their parent processes.
 
 Levels
 ------
-TRACE      Like DEBUG, but even more verbose for development or bug finding
-DEBUG      Low level notices (e.g., database connection)
-STATUS     Like DEBUG, but allows progress tracking
-INFO       General messages
-EVENT      Like INFO, but tagged for easy tracking of milestones
-WARNING
-ERROR
-CRITICAL
+TRACE      Like DEBUG, but even more verbose for development or bug finding.
+DEBUG      Low level notices (e.g., database connection).
+STATUS     Like DEBUG, but allows progress tracking for repeated messages.
+INFO       Informational messages of general interest.
+EVENT      Like INFO, but tagged for easy tracking of milestones.
+WARNING    Something unexpected or possibly problematic occurred.
+ERROR      An error caused an action to not be completed.
+CRITICAL   The entire application must halt.
 
 Handlers
 --------
 STANDARD   Simple colorized console output. (no metadata)
-SYSLOG     Detailed (syslog-style) messages (with metadata)
+DETAILED   Detailed (syslog-style) messages (with metadata)
 """
 
 # type annotations
@@ -74,16 +74,20 @@ ERROR    = LEVELS[6]
 CRITICAL = LEVELS[7]
 
 
-# NOTE: global handler list lets `Logger.with_name` instances aware of changes
+# NOTE: global handler list lets `Logger` instances aware of changes
 #       to other logger's handlers. (i.e., changing from SimpleConsoleHandler to ConsoleHandler).
 _handlers: List[handlers.Handler] = []
 
 
 @dataclass
 class Message(messages.Message):
-    """A `logalpha.messages.Message` with a timestamp:`datetime` and source:`str`."""
+    """Message data class (level, content, timestamp, topic, source, host)."""
+    level: levels.Level
+    content: str
     timestamp: datetime
-    source: str
+    topic: str
+    source: str = __appname__
+    host: str = HOSTNAME
 
 
 class Logger(loggers.Logger):
@@ -92,16 +96,15 @@ class Logger(loggers.Logger):
     levels = LEVELS
     colors = COLORS
 
+    topic: str = __appname__
     Message: type = Message
-    callbacks: dict = {'timestamp': datetime.now,
-                       'source': (lambda: __appname__)}
+    callbacks: dict = {'timestamp': datetime.now, }
 
-    @classmethod
-    def with_name(cls, name: str) -> Logger:
-        """Inject alternate `name` into callbacks."""
-        self = cls()
-        self.callbacks = {**self.callbacks, 'source': (lambda: name)}
-        return self
+    def __init__(self, topic: str) -> None:
+        """Setup logger with custom callback for `topic`."""
+        super().__init__()
+        self.topic = topic
+        self.callbacks = {**self.callbacks, 'topic': (lambda: topic)}
 
     @property
     def handlers(self) -> List[handlers.Handler]:
@@ -122,8 +125,8 @@ class Logger(loggers.Logger):
 
 
 @dataclass
-class SimpleHandler(handlers.Handler):
-    """Write detailed messages to standard error."""
+class StandardHandler(handlers.Handler):
+    """Write basic colorized messages to standard error."""
 
     level: levels.Level
     resource: io.TextIOWrapper = sys.stderr
@@ -137,29 +140,24 @@ class SimpleHandler(handlers.Handler):
 
 @dataclass
 class DetailedHandler(handlers.Handler):
-    """Write simple colorized messages to standard error."""
+    """Write detailed (syslog-like) messages to standard error."""
 
     level: levels.Level
     resource: io.TextIOWrapper = sys.stderr
 
     def format(self, msg: Message) -> str:
         """Syslog style with padded spaces."""
-        timestamp = msg.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        return f'{timestamp} {HOSTNAME} {msg.source:<22} {msg.level.name:<8} {msg.content}'
+        ts = msg.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        return f'{ts} {msg.host} [{msg.topic}] {msg.level.name} {msg.content}'
 
 
 # persistent instances
-SIMPLE_HANDLER = SimpleHandler(WARNING)
+STANDARD_HANDLER = StandardHandler(WARNING)
 DETAILED_HANDLER = DetailedHandler(WARNING)
 
 
 # always start with the simple handler
-_handlers.append(SIMPLE_HANDLER)
-
-
-# inject logger back into cmdkit library
-_cmdkit_logging.log = Logger()
-Application.log_error = _cmdkit_logging.log.critical
+_handlers.append(STANDARD_HANDLER)
 
 
 # NOTE: All of the command line entry-points call this function

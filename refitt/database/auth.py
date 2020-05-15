@@ -36,7 +36,7 @@ from .core.interface import execute, Interface, Table, Record, RecordNotFound
 
 
 # initialize module level logger
-log = Logger.with_name(__name__)
+log = Logger(__name__)
 
 
 # interface

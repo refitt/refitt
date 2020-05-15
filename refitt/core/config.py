@@ -30,7 +30,7 @@ from ..assets import load_asset
 from ..__meta__ import __appname__
 
 # module level logger
-log = Logger.with_name(__name__)
+log = Logger(__name__)
 
 
 # home directory

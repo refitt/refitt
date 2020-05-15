@@ -23,6 +23,7 @@ from ...__meta__ import (__appname__, __version__, __description__,
                          __website__, __ascii_art__)
 
 # external libs
+from cmdkit import logging as _cmdkit_logging
 from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
@@ -87,7 +88,12 @@ learn more about their usage.
 
 
 # initialize module level logger
-log = Logger.with_name(__appname__)
+log = Logger(__name__)
+
+
+# inject logger back into cmdkit library
+_cmdkit_logging.log = log
+Application.log_error = log.critical
 
 
 class Refitt(Application):

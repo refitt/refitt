@@ -29,7 +29,7 @@ from pandas import DataFrame
 
 
 # initialize module level logger
-log = Logger.with_name(__name__)
+log = Logger(__name__)
 
 
 # table interface

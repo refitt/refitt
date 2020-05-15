@@ -27,7 +27,7 @@ from ...core.config import get_site
 
 
 # initialize module level logger
-log = Logger.with_name('refittd')
+log = Logger(__name__)
 
 
 class Daemon(abc.ABC):

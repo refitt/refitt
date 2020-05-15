@@ -75,7 +75,7 @@ options:
 
 
 # initialize module level logger
-log = Logger.with_name('.'.join(PROGRAM.split()))
+log = Logger(__name__)
 
 
 # initialization order of schemas and tables based on

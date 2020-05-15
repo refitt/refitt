@@ -73,7 +73,7 @@ options:
 """
 
 # initialize module level logger
-log = Logger.with_name('.'.join(PROGRAM.split()))
+log = Logger(__name__)
 
 
 class WebAPI(Application):

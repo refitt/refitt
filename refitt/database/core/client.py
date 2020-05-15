@@ -33,7 +33,7 @@ from sqlalchemy.engine import Engine, Connection  # noqa (__all__)
 
 
 # initialize module level logger
-log = Logger.with_name(__name__)
+log = Logger(__name__)
 
 
 class SSHTunnel:

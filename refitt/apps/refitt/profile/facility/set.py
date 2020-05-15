@@ -36,7 +36,7 @@ from sqlalchemy.exc import DatabaseError
 
 
 # initialize module level logger
-log = Logger.with_name(__name__)
+log = Logger(__name__)
 
 # program name is constructed from module file name
 PROGRAM = f'{__appname__} profile facility set'

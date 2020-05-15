@@ -33,7 +33,7 @@ from sqlalchemy.engine.result import ResultProxy
 
 
 # initialize module level logger
-log = Logger.with_name('refitt.database')
+log = Logger(__name__)
 
 
 # executable interface to the database

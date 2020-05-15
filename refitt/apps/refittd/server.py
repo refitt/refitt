@@ -25,7 +25,7 @@ from ...core.logging import Logger
 
 
 # initialize module level logger
-log = Logger.with_name('refittd.server')
+log = Logger(__name__)
 
 
 DAEMON_REFRESH_TIME = float(VARS['DAEMON_REFRESH_TIME'])

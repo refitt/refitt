@@ -32,7 +32,7 @@ from cmdkit.cli import ArgumentError
 
 
 # initialize logger
-log = Logger.with_name('refittd.service')
+log = Logger(__name__)
 
 
 class Service:
