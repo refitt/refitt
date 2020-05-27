@@ -23,14 +23,14 @@ Mark Linvill <mlinvill@purdue.edu>
 __developer__   = 'Geoffrey Lentner'
 __contact__     = '<glentner@purdue.edu>'
 __license__     = 'Apache License 2.0'
-__website__     = 'https://github.rcac.purdue.edu/CassiopeiaGroup/refitt'
+__website__     = 'https://github.com/refitt/refitt'
 __copyright__   = 'REFITT Team 2019.'
 __description__ = 'The Recommender Engine for Intelligent Transient Tracking.'
 __keywords__    = 'astronomy science machine-learning service'
 __ascii_art__   = r"""
     ____  ____________________________
    / __ \/ ____/ ____/  _/_  __/_  __/
-  / /_/ / __/ / /_   / /  / /   / /   
- / _, _/ /___/ __/ _/ /  / /   / /    
-/_/ |_/_____/_/   /___/ /_/   /_/  
+  / /_/ / __/ / /_   / /  / /   / /
+ / _, _/ /___/ __/ _/ /  / /   / /
+/_/ |_/_____/_/   /___/ /_/   /_/
 """
