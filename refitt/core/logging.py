@@ -11,7 +11,8 @@
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
 """
-Logging configuration.
+Logging Configuration
+=====================
 
 REFITT uses the `logalpha` package for logging functionality. All messages
 are written to <stderr> and should be redirected by their parent processes.
@@ -31,6 +32,11 @@ Handlers
 --------
 STANDARD   Simple colorized console output. (no metadata)
 DETAILED   Detailed (syslog-style) messages (with metadata)
+
+Environment Variables
+---------------------
+REFITT_LOGGING_LEVEL      INT or NAME of logging level.
+REFITT_LOGGING_HANDLER    STANDARD or DETAILED
 """
 
 # type annotations
@@ -38,6 +44,7 @@ from __future__ import annotations
 from typing import List, Callable
 
 # standard libraries
+import os
 import io
 import sys
 import socket
@@ -72,6 +79,10 @@ EVENT    = LEVELS[4]
 WARNING  = LEVELS[5]
 ERROR    = LEVELS[6]
 CRITICAL = LEVELS[7]
+
+LEVELS_BY_NAME = {'TRACE': TRACE, 'DEBUG': DEBUG, 'STATUS': STATUS,
+                  'INFO': INFO, 'EVENT': EVENT, 'WARNING': WARNING,
+                  'ERROR': ERROR, 'CRITICAL': CRITICAL}
 
 
 # NOTE: global handler list lets `Logger` instances aware of changes
@@ -134,8 +145,7 @@ class StandardHandler(handlers.Handler):
     def format(self, msg: Message) -> str:
         """Colorize the log level and with only the message."""
         COLOR = Logger.colors[msg.level.value].foreground
-        timestamp = msg.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        return f'{COLOR}[{timestamp}] {msg.content}{RESET}'
+        return f'{COLOR}{msg.level.name:<8}{RESET} {msg.content}'
 
 
 @dataclass
@@ -154,10 +164,34 @@ class DetailedHandler(handlers.Handler):
 # persistent instances
 STANDARD_HANDLER = StandardHandler(WARNING)
 DETAILED_HANDLER = DetailedHandler(WARNING)
-
-
-# always start with the simple handler
 _handlers.append(STANDARD_HANDLER)
+
+
+# derive initial logging level from environment
+INITIAL_LEVEL = os.getenv('REFITT_LOGGING_LEVEL', 'WARNING')
+try:
+    INITIAL_LEVEL = LEVELS_BY_NAME[INITIAL_LEVEL]
+except KeyError:
+    try:
+        INITIAL_LEVEL = LEVELS[int(INITIAL_LEVEL)]
+    except (ValueError, IndexError):
+        Logger(__name__).critical(f'unknown level: {INITIAL_LEVEL}')
+        sys.exit(3)
+
+
+HANDLERS_BY_NAME = {'STANDARD': STANDARD_HANDLER,
+                    'DETAILED': DETAILED_HANDLER}
+
+INITIAL_HANDLER = os.getenv('REFITT_LOGGING_HANDLER', 'STANDARD')
+try:
+    INITIAL_HANDLER = HANDLERS_BY_NAME[INITIAL_HANDLER]
+except KeyError:
+    Logger(__name__).critical(f'unknown handler: {INITIAL_HANDLER}')
+
+
+# set initial handler by environment variable or default
+INITIAL_HANDLER.level = INITIAL_LEVEL
+_handlers[0] = INITIAL_HANDLER
 
 
 # NOTE: All of the command line entry-points call this function
@@ -171,4 +205,4 @@ def cli_setup(app: Application) -> None:
     elif app.verbose:  # noqa (missing from base class)
         _handlers[0].level = INFO
     else:
-        _handlers[0].level = WARNING
+        _handlers[0].level = INITIAL_LEVEL
