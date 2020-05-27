@@ -229,7 +229,7 @@ class User(Record):
                 self.add_facilities(user_id, user_facilities, transaction)
                 log.info(f'updated user profile: user_id={user_id}')
             else:
-                ((user_id), ) = execute(_INSERT_USER, interface=transaction, **data)
+                ((user_id, ),) = execute(_INSERT_USER, interface=transaction, **data)
                 self.add_facilities(user_id, user_facilities, transaction)
                 log.info(f'added user profile: user_id={user_id}')
             return user_id
@@ -449,7 +449,7 @@ class Facility(Record):
                 self.add_users(facility_id, facility_users, transaction)
                 log.info(f'updated facility profile: facility_id={facility_id}')
             else:
-                ((facility_id), ) = execute(_INSERT_FACILITY, interface=transaction, **data)
+                ((facility_id, ),) = execute(_INSERT_FACILITY, interface=transaction, **data)
                 self.add_users(facility_id, facility_users, transaction)
                 log.info(f'added facility profile: facility_id={facility_id}')
             return facility_id
