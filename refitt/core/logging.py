@@ -53,8 +53,7 @@ from dataclasses import dataclass
 
 # external libraries
 from logalpha import levels, colors, messages, handlers, loggers
-from cmdkit import logging as _cmdkit_logging
-from cmdkit.app import Application
+from cmdkit.app import Application, exit_status
 
 # internal library
 from ..__meta__ import __appname__
@@ -86,7 +85,7 @@ LEVELS_BY_NAME = {'TRACE': TRACE, 'DEBUG': DEBUG, 'STATUS': STATUS,
 
 
 # NOTE: global handler list lets `Logger` instances aware of changes
-#       to other logger's handlers. (i.e., changing from SimpleConsoleHandler to ConsoleHandler).
+#       to other logger's handlers. (i.e., changing from StandardHandler to DetailedHandler).
 _handlers: List[handlers.Handler] = []
 
 
@@ -187,6 +186,7 @@ try:
     INITIAL_HANDLER = HANDLERS_BY_NAME[INITIAL_HANDLER]
 except KeyError:
     Logger(__name__).critical(f'unknown handler: {INITIAL_HANDLER}')
+    sys.exit(exit_status.runtime_error)
 
 
 # set initial handler by environment variable or default
