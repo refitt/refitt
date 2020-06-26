@@ -58,7 +58,7 @@ def authenticated(route: Callable[..., dict]) -> Callable[..., dict]:
             raise TokenNotFound('expected "Authorization: Bearer <token>" in header')
 
         token = JWT.decrypt(header[len(prefix):].strip().encode())
-        if token.exp is not None and token.exp > datetime.utcnow():
+        if token.exp is not None and datetime.utcnow() > token.exp:
             raise TokenExpired('token expired')
 
         client = Client.from_id(token.sub)

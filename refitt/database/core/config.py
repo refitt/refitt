@@ -22,7 +22,7 @@ from .types import ServerAddress, UserAuth
 
 
 # initialize module level logger
-log = Logger.with_name(__name__)
+log = Logger(__name__)
 
 
 @functools.lru_cache(maxsize=None)

@@ -11,26 +11,32 @@
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
 """
-Logging configuration.
+Logging Configuration
+=====================
 
 REFITT uses the `logalpha` package for logging functionality. All messages
 are written to <stderr> and should be redirected by their parent processes.
 
 Levels
 ------
-TRACE      Like DEBUG, but even more verbose for development or bug finding
-DEBUG      Low level notices (e.g., database connection)
-STATUS     Like DEBUG, but allows progress tracking
-INFO       General messages
-EVENT      Like INFO, but tagged for easy tracking of milestones
-WARNING
-ERROR
-CRITICAL
+TRACE      Like DEBUG, but even more verbose for development or bug finding.
+DEBUG      Low level notices (e.g., database connection).
+STATUS     Like DEBUG, but allows progress tracking for repeated messages.
+INFO       Informational messages of general interest.
+EVENT      Like INFO, but tagged for easy tracking of milestones.
+WARNING    Something unexpected or possibly problematic occurred.
+ERROR      An error caused an action to not be completed.
+CRITICAL   The entire application must halt.
 
 Handlers
 --------
 STANDARD   Simple colorized console output. (no metadata)
-SYSLOG     Detailed (syslog-style) messages (with metadata)
+DETAILED   Detailed (syslog-style) messages (with metadata)
+
+Environment Variables
+---------------------
+REFITT_LOGGING_LEVEL      INT or NAME of logging level.
+REFITT_LOGGING_HANDLER    STANDARD or DETAILED
 """
 
 # type annotations
@@ -38,6 +44,7 @@ from __future__ import annotations
 from typing import List, Callable
 
 # standard libraries
+import os
 import io
 import sys
 import socket
@@ -46,8 +53,7 @@ from dataclasses import dataclass
 
 # external libraries
 from logalpha import levels, colors, messages, handlers, loggers
-from cmdkit import logging as _cmdkit_logging
-from cmdkit.app import Application
+from cmdkit.app import Application, exit_status
 
 # internal library
 from ..__meta__ import __appname__
@@ -73,17 +79,25 @@ WARNING  = LEVELS[5]
 ERROR    = LEVELS[6]
 CRITICAL = LEVELS[7]
 
+LEVELS_BY_NAME = {'TRACE': TRACE, 'DEBUG': DEBUG, 'STATUS': STATUS,
+                  'INFO': INFO, 'EVENT': EVENT, 'WARNING': WARNING,
+                  'ERROR': ERROR, 'CRITICAL': CRITICAL}
 
-# NOTE: global handler list lets `Logger.with_name` instances aware of changes
-#       to other logger's handlers. (i.e., changing from SimpleConsoleHandler to ConsoleHandler).
+
+# NOTE: global handler list lets `Logger` instances aware of changes
+#       to other logger's handlers. (i.e., changing from StandardHandler to DetailedHandler).
 _handlers: List[handlers.Handler] = []
 
 
 @dataclass
 class Message(messages.Message):
-    """A `logalpha.messages.Message` with a timestamp:`datetime` and source:`str`."""
+    """Message data class (level, content, timestamp, topic, source, host)."""
+    level: levels.Level
+    content: str
     timestamp: datetime
-    source: str
+    topic: str
+    source: str = __appname__
+    host: str = HOSTNAME
 
 
 class Logger(loggers.Logger):
@@ -92,16 +106,15 @@ class Logger(loggers.Logger):
     levels = LEVELS
     colors = COLORS
 
+    topic: str = __appname__
     Message: type = Message
-    callbacks: dict = {'timestamp': datetime.now,
-                       'source': (lambda: __appname__)}
+    callbacks: dict = {'timestamp': datetime.now, }
 
-    @classmethod
-    def with_name(cls, name: str) -> Logger:
-        """Inject alternate `name` into callbacks."""
-        self = cls()
-        self.callbacks = {**self.callbacks, 'source': (lambda: name)}
-        return self
+    def __init__(self, topic: str) -> None:
+        """Setup logger with custom callback for `topic`."""
+        super().__init__()
+        self.topic = topic
+        self.callbacks = {**self.callbacks, 'topic': (lambda: topic)}
 
     @property
     def handlers(self) -> List[handlers.Handler]:
@@ -122,8 +135,8 @@ class Logger(loggers.Logger):
 
 
 @dataclass
-class SimpleHandler(handlers.Handler):
-    """Write detailed messages to standard error."""
+class StandardHandler(handlers.Handler):
+    """Write basic colorized messages to standard error."""
 
     level: levels.Level
     resource: io.TextIOWrapper = sys.stderr
@@ -131,35 +144,54 @@ class SimpleHandler(handlers.Handler):
     def format(self, msg: Message) -> str:
         """Colorize the log level and with only the message."""
         COLOR = Logger.colors[msg.level.value].foreground
-        timestamp = msg.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        return f'{COLOR}[{timestamp}] {msg.content}{RESET}'
+        return f'{COLOR}{msg.level.name:<8}{RESET} {msg.content}'
 
 
 @dataclass
 class DetailedHandler(handlers.Handler):
-    """Write simple colorized messages to standard error."""
+    """Write detailed (syslog-like) messages to standard error."""
 
     level: levels.Level
     resource: io.TextIOWrapper = sys.stderr
 
     def format(self, msg: Message) -> str:
         """Syslog style with padded spaces."""
-        timestamp = msg.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        return f'{timestamp} {HOSTNAME} {msg.source:<22} {msg.level.name:<8} {msg.content}'
+        ts = msg.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        return f'{ts} {msg.host} {msg.level.name:<8} [{msg.topic}] {msg.content}'
 
 
 # persistent instances
-SIMPLE_HANDLER = SimpleHandler(WARNING)
+STANDARD_HANDLER = StandardHandler(WARNING)
 DETAILED_HANDLER = DetailedHandler(WARNING)
+_handlers.append(STANDARD_HANDLER)
 
 
-# always start with the simple handler
-_handlers.append(SIMPLE_HANDLER)
+# derive initial logging level from environment
+INITIAL_LEVEL = os.getenv('REFITT_LOGGING_LEVEL', 'WARNING')
+try:
+    INITIAL_LEVEL = LEVELS_BY_NAME[INITIAL_LEVEL]
+except KeyError:
+    try:
+        INITIAL_LEVEL = LEVELS[int(INITIAL_LEVEL)]
+    except (ValueError, IndexError):
+        Logger(__name__).critical(f'unknown level: {INITIAL_LEVEL}')
+        sys.exit(3)
 
 
-# inject logger back into cmdkit library
-_cmdkit_logging.log = Logger()
-Application.log_error = _cmdkit_logging.log.critical
+HANDLERS_BY_NAME = {'STANDARD': STANDARD_HANDLER,
+                    'DETAILED': DETAILED_HANDLER}
+
+INITIAL_HANDLER = os.getenv('REFITT_LOGGING_HANDLER', 'STANDARD')
+try:
+    INITIAL_HANDLER = HANDLERS_BY_NAME[INITIAL_HANDLER]
+except KeyError:
+    Logger(__name__).critical(f'unknown handler: {INITIAL_HANDLER}')
+    sys.exit(exit_status.runtime_error)
+
+
+# set initial handler by environment variable or default
+INITIAL_HANDLER.level = INITIAL_LEVEL
+_handlers[0] = INITIAL_HANDLER
 
 
 # NOTE: All of the command line entry-points call this function
@@ -173,4 +205,4 @@ def cli_setup(app: Application) -> None:
     elif app.verbose:  # noqa (missing from base class)
         _handlers[0].level = INFO
     else:
-        _handlers[0].level = WARNING
+        _handlers[0].level = INITIAL_LEVEL

@@ -25,7 +25,7 @@ from ...core.logging import Logger
 
 
 # initialize module level logger
-log = Logger.with_name('refittd.server')
+log = Logger(__name__)
 
 
 DAEMON_REFRESH_TIME = float(VARS['DAEMON_REFRESH_TIME'])
@@ -42,8 +42,14 @@ class RefittDaemonServer(BaseManager):
         self._queue = JoinableQueue(maxsize=1)  # single action at a time
         self._status = JoinableQueue(maxsize=1)  # holds current status of services
         self._status.put({})  # no services to start with
-        self.register('_get_queue', callable=lambda:self._queue)
-        self.register('_get_status', callable=lambda:self._status)
+        self.register('_get_queue', callable=self._get_queue)
+        self.register('_get_status', callable=self._get_status)
+
+    def _get_queue(self) -> JoinableQueue:
+        return self._queue
+
+    def _get_status(self) -> JoinableQueue:
+        return self._status
 
     def get_action(self) -> str:
         """Get an `action` from the queue."""

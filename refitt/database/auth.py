@@ -36,7 +36,7 @@ from .core.interface import execute, Interface, Table, Record, RecordNotFound
 
 
 # initialize module level logger
-log = Logger.with_name(__name__)
+log = Logger(__name__)
 
 
 # interface
@@ -479,10 +479,10 @@ class Access(Record):
         access_id = data.pop('access_id')
         if access_id:
             execute(_UPDATE_ACCESS, access_id=access_id, **data)
-            log.info(f'updated access token: client_id={data["client_id"]}')
+            log.info(f'updated access token (access_id={access_id})')
         else:
-            ((access_id), ) = execute(_INSERT_ACCESS, **data)
-            log.info(f'added access token: client_id={data["client_id"]}')
+            ((access_id, ),) = execute(_INSERT_ACCESS, **data)
+            log.info(f'added access token (access_id={access_id})')
         return access_id
 
     @classmethod
@@ -526,7 +526,7 @@ class Access(Record):
             record.access_id = old.access_id
         except RecordNotFound:
             pass
-        record.to_database()
+        record.access_id = record.to_database()
         return record
 
     def embed(self, cipher: Cipher = None) -> Dict[str, Claim]:
@@ -724,10 +724,10 @@ class Client(Record):
         client_id = data.pop('client_id')
         if client_id:
             execute(_UPDATE_CLIENT, client_id=client_id, **data)
-            log.info(f'updated client credentials: client_id={client_id}')
+            log.info(f'updated client credentials (client_id={client_id})')
         else:
-            ((client_id), ) = execute(_INSERT_CLIENT, **data).fetchall()
-            log.info(f'added client credentials: client_id={client_id}')
+            ((client_id, ),) = execute(_INSERT_CLIENT, **data).fetchall()
+            log.info(f'added client credentials (client_id={client_id})')
         if self.client_level == 0:
             log.warning(f'added zero-level credentials (client_id={self.client_id})')
         return client_id
@@ -772,8 +772,9 @@ class Client(Record):
             record = Client(user_id=user_id, client_level=client_level,
                             client_key=Key.generate(), client_secret=Secret.generate(),
                             client_valid=True, client_created=datetime.utcnow())
-        record.to_database()
-        log.info(f'client credentials updated (user_id={user_id})')
+        client_id = record.to_database()
+        record.client_id = client_id
+        log.info(f'client credentials updated (client_id={client_id})')
         return record
 
     @classmethod
@@ -818,6 +819,7 @@ class Client(Record):
         >>> Client.revoke(456)
         """
         execute(_REVOKE_CLIENT, client_id=client_id)
+        log.debug(f'client credentials revoked (client_id={client_id}')
 
     @classmethod
     def remove(cls, client_id: int) -> None:
@@ -835,6 +837,7 @@ class Client(Record):
         >>> Client.remove(456)
         """
         execute(_REMOVE_CLIENT, client_id=client_id)
+        log.debug(f'client credentials removed (client_id={client_id}')
 
     def embed(self) -> Dict[str, Any]:
         """Like `to_dict` but dissolved to simple types for export."""

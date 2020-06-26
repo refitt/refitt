@@ -13,7 +13,7 @@
 """Runtime configuration for REFITT."""
 
 # type annotations
-from typing import Dict
+from typing import Dict, Mapping
 
 # standard libs
 import os
@@ -30,7 +30,7 @@ from ..assets import load_asset
 from ..__meta__ import __appname__
 
 # module level logger
-log = Logger.with_name(__name__)
+log = Logger(__name__)
 
 
 # home directory
@@ -160,3 +160,24 @@ def expand_parameters(prefix: str, namespace: Namespace) -> str:
         else:
             raise ValueError(f'unrecognized variant of "{prefix}" ({key}) in configuration file')
     return value
+
+
+def update_config(site: str, data: Mapping) -> None:
+    """
+    Extend the current configuration and commit it to disk.
+
+    Example
+    -------
+    >>> from refitt.core.config import update_config
+    >>> update_config('user', {
+        'api': {
+            'access_token': 'ABC123'
+        }
+    })
+    """
+    get_site(site)  # ensure directories
+    init_config(site)  # ensure default exists
+    new_config = Configuration(old=get_config().namespaces[site],
+                               new=Namespace(data))
+    # commit to file
+    new_config._master.to_local(SITEMAP[site]['cfg'])

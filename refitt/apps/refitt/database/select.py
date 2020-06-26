@@ -25,6 +25,7 @@ import functools
 from .... import database
 from ....core.exceptions import log_and_exit
 from ....core.logging import Logger, cli_setup
+from ....core.config import ConfigurationError
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
@@ -39,7 +40,7 @@ PROGRAM = f'{__appname__} database select'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <schema>.<table> [--profile NAME] 
+usage: {PROGRAM} <schema>.<table> [--profile NAME]
        {PADDING} [--columns NAME [NAME...]] [--where CONDITION [CONDITION...]]
        {PADDING} [--output PATH] [--format FORMAT | ...] [--tablefmt FORMAT]
        {PADDING} [--limit COUNT | --no-limit] [--join] [--order-by NAME] [--descending]
@@ -100,7 +101,7 @@ options:
 """
 
 # initialize module level logger
-log = Logger.with_name('.'.join(PROGRAM.split()))
+log = Logger(__name__)
 
 
 def to_ascii(self, output: Union[str, IO], tablefmt: str = 'plain') -> None:
@@ -108,9 +109,9 @@ def to_ascii(self, output: Union[str, IO], tablefmt: str = 'plain') -> None:
     content = tabulate(self.values.tolist(), list(self.columns), tablefmt=tablefmt)
     if isinstance(output, str):
         with open(output, 'w') as outfile:
-            outfile.write(content)
+            outfile.write(content + '\n')
     else:
-        output.write(content)
+        output.write(content + '\n')
 
 
 # attach to DataFrame for consistency of interface
@@ -182,6 +183,8 @@ class Select(Application):
     exceptions = {
         RuntimeError: functools.partial(log_and_exit, logger=log.critical,
                                         status=exit_status.runtime_error),
+        ConfigurationError: functools.partial(log_and_exit, logger=log.critical,
+                                              status=exit_status.runtime_error),
     }
 
     def run(self) -> None:

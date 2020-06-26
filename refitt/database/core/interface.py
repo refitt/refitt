@@ -33,7 +33,7 @@ from sqlalchemy.engine.result import ResultProxy
 
 
 # initialize module level logger
-log = Logger.with_name('refitt.database')
+log = Logger(__name__)
 
 
 # executable interface to the database
@@ -155,6 +155,18 @@ def get_tables(schema: str) -> List[str]:
     return tables.loc[:, 'table_name'].to_list()
 
 
+_FIND_DTYPES = """\
+SELECT column_name, data_type FROM information_schema.columns
+WHERE table_schema = :schema AND table_name = :table
+"""
+
+
+@functools.lru_cache(maxsize=None)
+def get_dtypes(schema: str, table: str) -> DataFrame:
+    """List of data types by column name."""
+    return _select(_FIND_DTYPES, schema=schema, table=table)
+
+
 _FIND_FOREIGN_KEYS = """\
 SELECT
     table_constraints.table_schema       AS table_schema,
@@ -241,6 +253,16 @@ def _make_select(columns: List[str], schema: str, table: str, where: List[str] =
     return query
 
 
+def _convert_bytea(series: Series) -> Series:
+    """Convert a returned list of bytes characters into continues bytes."""
+    return series.str.join(b'')
+
+
+_dtype_converters = {
+    'bytea': _convert_bytea,
+}
+
+
 def select(columns: List[str], schema: str, table: str, interface: Optional[Interface] = None,
            where: List[str] = None, limit: int = None, orderby: str = None, ascending: bool = True,
            join: bool = False, set_index: bool = True) -> DataFrame:
@@ -288,9 +310,17 @@ def select(columns: List[str], schema: str, table: str, interface: Optional[Inte
     """
     query = _make_select(columns, schema, table, where=where, limit=limit,
                          orderby=orderby, ascending=ascending, join=join)
+
     result = _select(query, interface)
     if set_index is True and f'{table}_id' in result.columns:
         result = result.set_index(f'{table}_id')
+
+    # coerce problematic dtypes (e.g., bytea)
+    dtypes = get_dtypes(schema, table)
+    for dtype_name, dtype_converter in _dtype_converters.items():
+        for column_name in dtypes.loc[dtypes.data_type == dtype_name, 'column_name']:
+            result[column_name] = dtype_converter(result[column_name])
+
     return result
 
 
@@ -347,7 +377,7 @@ class Record(ABC):
     _FACTORIES: Dict[str, str] = {}
 
     def __init__(self, *inst, **fields) -> None:
-        """Initialize client attributes."""
+        """Initialize attributes."""
         if inst and not fields:
             self.__init_move(*inst)
         elif fields and not inst:

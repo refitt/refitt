@@ -25,7 +25,7 @@ from pandas import DataFrame
 
 
 # initialize module level logger
-log = Logger.with_name('refitt.database.recommendation')
+log = Logger(__name__)
 
 # interface
 recommendation_group = Table('recommendation', 'recommendation_group')

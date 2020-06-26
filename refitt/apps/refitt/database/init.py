@@ -40,7 +40,7 @@ PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
 usage: {PROGRAM} NAME [NAME...] [--all] [--profile NAME]
-       {PADDING} [--drop] [--cascade] [--data] [--dry-run] 
+       {PADDING} [--drop] [--cascade] [--data] [--dry-run]
        {PADDING} [--debug | --verbose] [--syslog]
        {PADDING} [--help]
 
@@ -75,7 +75,7 @@ options:
 
 
 # initialize module level logger
-log = Logger.with_name('.'.join(PROGRAM.split()))
+log = Logger(__name__)
 
 
 # initialization order of schemas and tables based on
@@ -140,7 +140,7 @@ class Init(Application):
     interface.add_argument('--data', action='store_true', dest='include_data')
 
     profile: Optional[str] = None
-    interface.add_argument('--profile', default=profile)
+    interface.add_argument('--profile', default=os.getenv('REFITT_DATABASE_PROFILE'))
 
     dry_run: bool = False
     interface.add_argument('--dry-run', action='store_true')
@@ -220,7 +220,7 @@ class Init(Application):
 
     @property
     def schema(self) -> str:
-        """On monolithic SQL for --dry-run."""
+        """One monolithic SQL for --dry-run."""
         return '\n\n'.join([query for name, query in self.schemas.items()
                             if name in self.names])
 

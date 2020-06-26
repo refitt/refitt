@@ -28,6 +28,7 @@ from ...__meta__ import (__appname__, __version__, __copyright__,
                          __developer__, __contact__, __website__)
 
 # external libs
+from cmdkit import logging as _cmdkit_logging
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 from logalpha.colors import ANSI_RESET, Color
@@ -65,7 +66,13 @@ options:
 """
 
 # initialize module level logger
-log = Logger.with_name(PROGRAM)
+log = Logger(__name__)
+
+
+# inject logger back into cmdkit library
+_cmdkit_logging.log = log
+Application.log_error = log.critical
+
 
 # colors
 ANSI_BOLD = '\033[1m'

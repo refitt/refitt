@@ -25,7 +25,7 @@ from flask import request
 from ...core.logging import Logger
 
 
-log = Logger.with_name('refitt.web.api')
+log = Logger(__name__)
 
 
 def logged(route: Callable[..., dict]) -> Callable[..., dict]:

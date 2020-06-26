@@ -1,21 +1,21 @@
 [
   {
-    "source_type_id": 0,
+    "source_type_id": 1,
     "source_type_name": "synthetic",
     "source_type_description": "Reference libraries and future/forecasted observations."
   },
   {
-    "source_type_id": 1,
+    "source_type_id": 2,
     "source_type_name": "catalog",
     "source_type_description": "Real observations from external catalogs."
   },
   {
-    "source_type_id": 2,
+    "source_type_id": 3,
     "source_type_name": "broker",
     "source_type_description": "Alerts from LSST (or other) data brokers."
   },
   {
-    "source_type_id": 3,
+    "source_type_id": 4,
     "source_type_name": "observer",
     "source_type_description": "Observations from external observers."
   }

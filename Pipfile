@@ -9,9 +9,8 @@ pytest = "*"
 hypothesis = "*"
 pylint = "*"
 sphinx = "*"
-sphinx-rtd-theme = "*"
+pydata-sphinx-theme = "*"
 twine = "*"
-requests = "*"
 
 [packages]
 numpy = "*"
@@ -25,17 +24,18 @@ paramiko = "*"
 sshtunnel = "*"
 flask = "*"
 gunicorn = "*"
+requests = "*"
 antares-client = "*"
-cmdkit = ">=1.2.2"
+cmdkit = ">=1.5.3"
 logalpha = ">=2.0.2"
 slackclient = "*"
 tabulate = "*"
 toml = "*"
 tensorflow = "*"
 keras = "*"
-refitt = {editable = true,path = "."}
 pyarrow = "*"
 feather-format = "*"
+refitt = {editable = true,path = "."}
 
 [requires]
-python_version = "3.7"
+python_version = "3.8.3"
