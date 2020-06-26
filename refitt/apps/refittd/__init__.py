@@ -254,7 +254,7 @@ class RefittDaemon(Application, Daemon):
     def __exit__(self, *exc) -> None:
         """Release resources."""
         # daemon variant doesn't actually start any services
-        if not self.daemon:
+        if not self.daemon_mode:
             log.info('stopping services')
             for name, service in self.services.items():
                 service.stop()
