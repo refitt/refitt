@@ -49,7 +49,7 @@ setup(
     install_requires     = [
         'numpy', 'scipy', 'pandas', 'h5py', 'xlrd', 'sqlalchemy', 'psycopg2',
         'paramiko', 'sshtunnel', 'flask', 'tabulate', 'gunicorn', 'slackclient',
-        'cmdkit>=1.2.1', 'logalpha>=2.0.2', 'toml', 'keras', 'tensorflow',
+        'cmdkit>=1.5.3', 'logalpha>=2.0.2', 'toml', 'keras', 'tensorflow',
         'pyarrow', 'feather-format', 'antares_client'],
     extras_require       = {
         'dev': ['ipython', 'pytest', 'hypothesis', 'pylint', 'sphinx',
