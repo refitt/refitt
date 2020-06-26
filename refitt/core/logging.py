@@ -157,7 +157,7 @@ class DetailedHandler(handlers.Handler):
     def format(self, msg: Message) -> str:
         """Syslog style with padded spaces."""
         ts = msg.timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-        return f'{ts} {msg.host} [{msg.topic}] {msg.level.name} {msg.content}'
+        return f'{ts} {msg.host} {msg.level.name:<8} [{msg.topic}] {msg.content}'
 
 
 # persistent instances
