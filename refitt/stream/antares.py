@@ -13,8 +13,11 @@
 
 """Connect to one of the Antares streams."""
 
+# type annotations
+from typing import Tuple, List, Dict, Iterator, Any, Union
+
 # standard libs
-from typing import Tuple, List, Dict, Iterator, Any
+from datetime import datetime
 
 # external libs
 from antares_client import Client as _Antares_Client
@@ -27,11 +30,50 @@ from .alert import AlertInterface
 class AntaresAlert(AlertInterface):
     """An Antares Alert."""
 
-    @property
-    def alert_id(self) -> int:
-        """The "alert_id" specified in the "new_alert" data."""
-        return int(self.data['new_alert']['alert_id'])
+    source_name = 'antares'
 
+    @property
+    def object_name(self) -> str:
+        return f'ANT{self.data["new_alert"]["locus_id"]}'
+
+    @property
+    def object_aliases(self) -> Dict[str, Union[int, str]]:
+        return {'antares': self.object_name,
+                'ztf': self.data['new_alert']['properties']['ztf_object_id']}
+
+    @property
+    def object_type_name(self) -> str:
+        return 'UNKNOWN'
+
+    @property
+    def object_ra(self) -> float:
+        return float(self.data['new_alert']['ra'])
+
+    @property
+    def object_dec(self) -> float:
+        return float(self.data['new_alert']['dec'])
+
+    @property
+    def object_redshift(self) -> float:
+        return 99.99  # FIXME: not available?
+
+    @property
+    def observation_type_name(self) -> str:
+        # FIXME: why is this not consistent?!
+        passband = self.data['new_alert']['properties']['passband'].lower()
+        return f'{passband}-ztf'
+
+    @property
+    def observation_value(self) -> float:
+        return float(self.data['new_alert']['properties']['mag'])
+
+    @property
+    def observation_error(self) -> float:
+        return 99.99  # FIXME: what's the correct measure?
+
+    @property
+    def observation_time(self) -> datetime:
+        return datetime.fromtimestamp(self.data['timestamp_unix'])
 
 class AntaresClient(ClientInterface):
     """Client connection to Antares."""
