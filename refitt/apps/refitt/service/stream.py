@@ -39,7 +39,7 @@ PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
 usage: {PROGRAM} <broker> <topic> [--output-directory DIR] [--filter NAME]
-       {PADDING} [--key KEY] [--token TOKEN] [--profile NAME] 
+       {PADDING} [--key KEY] [--token TOKEN] [--profile NAME] [--local-only]
        {PADDING} [--debug | --verbose] [--syslog]
        {PADDING} [--help]
 
@@ -66,6 +66,7 @@ options:
 --token                 STR    API token for broker.
     --profile           NAME   Name of database profile (e.g., "test").
 -o, --output-directory  DIR    Path to directory for alert files (default $CWD).
+    --local-only               Do not write alerts to the database.
 -f, --filter            NAME   Name of filter to reject alerts.
 -d, --debug                    Show debugging messages.
 -v, --verbose                  Show information messages.
@@ -110,6 +111,9 @@ class Stream(Application):
 
     output_directory: str = os.getcwd()
     interface.add_argument('-o', '--output-directory', default=output_directory)
+
+    local_only: bool = False
+    interface.add_argument('--local-only', action='store_true')
 
     debug: bool = False
     verbose: bool = False
@@ -159,16 +163,22 @@ class Stream(Application):
         log.info(f'connecting to {self.broker}')
         with Client(self.topic, (self.key, self.token)) as stream:
             log.info(f'initiating stream (broker={self.broker} topic={self.topic} filter={self.filter_name})')
-
             for alert in stream:
-                log.info(f'received {self.broker}:{alert.alert_id}')
+                log.info(f'received {self.broker}:{alert.object_name}')
                 if local_filter(alert) is False:
-                    log.info(f'{self.broker}:{alert.alert_id} rejected by {filter_name}')
+                    log.info(f'{self.broker}:{alert.object_name} rejected by {filter_name}')
                 else:
-                    log.info(f'{self.broker}:{alert.alert_id} accepted by {filter_name}')
-                    filepath = os.path.join(self.output_directory, f'{alert.alert_id}.json')
+                    log.info(f'{self.broker}:{alert.object_name} accepted by {filter_name}')
+                    filepath = os.path.join(self.output_directory, f'{alert.object_name}.json')
                     alert.to_file(filepath)
-                    log.info(f'{self.broker}:{alert.alert_id} written to {filepath}')
+                    log.info(f'{self.broker}:{alert.object_name} written to {filepath}')
+                    if not self.local_only:
+                        try:
+                            obs_id, alert_id = alert.to_database()
+                            log.info(f'{self.broker}:{alert.object_name} written to database: alert_id={alert_id}')
+                        except Exception as error:
+                            log.error(f'{self.broker}:{alert.object_name} database error')
+                            log.error(error)
 
     def __enter__(self) -> Stream:
         """Initialize resources."""

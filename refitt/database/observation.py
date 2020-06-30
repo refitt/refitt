@@ -32,6 +32,7 @@ from pandas import Timestamp
 from ..core.config import config, ConfigurationError
 from ..core.logging import Logger
 from .core.interface import execute, Interface, Table, Record, RecordNotFound
+from .core import client
 
 
 # initialize module level logger
@@ -343,17 +344,39 @@ class Object(Record):
         return cls.from_dict(dict(zip(cls._fields, record)))
 
     def to_database(self) -> int:
-        """Add object_type record to the database."""
+        """Add object record to the database."""
         data = self.to_dict()
         data['object_aliases'] = json.dumps(data['object_aliases'])
         data['object_metadata'] = json.dumps(data['object_metadata'])
         object_id = data.pop('object_id')
         if object_id:
+            # if you declared the object_id, just overwrite it
             execute(_UPDATE_OBJECT, object_id=object_id, **data)
             log.info(f'updated object: object_id={object_id}')
         else:
-            ((object_id, ),) = execute(_INSERT_OBJECT, **data)
-            log.info(f'added object: object_id={object_id}')
+            # check if pre-existing objects share any aliases
+            with client.connect().begin() as transaction:
+                old = {}
+                for name, value in self.object_aliases.items():
+                    try:
+                        other = Object.from_alias(**{name: value}, interface=transaction)
+                        old[other.object_id] = other
+                        if len(old) > 1:
+                            log.warning(f'duplicate objects found for alias: {name}={value}')
+                    except ObjectNotFound:
+                        pass
+                if len(old) == 0:
+                    # no pre-existing objects exist for these aliases
+                    # create a new object record
+                    ((object_id, ),) = execute(_INSERT_OBJECT, **data)
+                    log.info(f'added object: object_id={object_id}')
+                else:
+                    # merge prior aliases with current aliases and update object record
+                    object_id, *_ = old.keys()
+                    old = old[object_id]
+                    data['object_aliases'] = json.dumps({**old.object_aliases, **self.object_aliases})
+                    execute(_UPDATE_OBJECT, object_id=object_id, **data)
+                    log.info(f'updated object: object_id={object_id}')
         return object_id
 
     @classmethod
@@ -823,9 +846,10 @@ class Observation(Record):
     _object_id: int = None
     _observation_type_id: int = None
     _source_id: int = None
+    _observation_time: datetime = None
     _observation_value: float = None
     _observation_error: Optional[float] = None
-    _observation_recorded: datetime = None
+    _observation_recorded: Optional[datetime] = None
 
     _FACTORIES = {'observation_id': 'from_id', }
 
@@ -906,16 +930,19 @@ class Observation(Record):
         self._observation_error = float(value)
 
     @property
-    def observation_recorded(self) -> datetime:
+    def observation_recorded(self) -> Optional[datetime]:
         return self._observation_recorded
 
     @observation_recorded.setter
     def observation_recorded(self, value: datetime) -> None:
-        _observation_recorded = value
-        if not isinstance(_observation_recorded, datetime):
-            raise TypeError(f'{self.__class__.__name__}.observation_recorded expects datetime.datetime')
+        if value is None:
+            self._observation_recorded = None
         else:
-            self._observation_recorded = _observation_recorded
+            _observation_recorded = value
+            if not isinstance(_observation_recorded, datetime):
+                raise TypeError(f'{self.__class__.__name__}.observation_recorded expects datetime.datetime')
+            else:
+                self._observation_recorded = _observation_recorded
 
     @classmethod
     def _from_unique(cls, table: Table, field: str, value: Union[int, str],
