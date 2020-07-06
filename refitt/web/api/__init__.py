@@ -25,7 +25,7 @@ from flask import Flask, Response, request
 from ...database.auth import Client
 from .response import STATUS, restful
 from .auth import authenticate, authenticated, authorization
-from .endpoints import token, profile
+from .endpoints import token, profile, recommendation
 from .logging import logged
 
 # flask application
@@ -46,7 +46,7 @@ def not_found(error=None) -> Response:
 @restful
 @authenticate
 def get_token(client: Client) -> dict:
-    return {'access': token.get(client.client_id)}
+    return {'token': token.get(client.client_id)}
 
 
 @application.route('/token/<int:user_id>', methods=['GET'])
@@ -55,7 +55,16 @@ def get_token(client: Client) -> dict:
 @authenticated
 @authorization(level=0)
 def get_user_token(client: Client, user_id: int) -> dict:
-    return {'access': token.get_user(user_id)}
+    return {'token': token.get_user(user_id)}
+
+
+@application.route('/client/<int:user_id>', methods=['GET'])
+@logged
+@restful
+@authenticated
+@authorization(level=0)
+def get_user_client(client: Client, user_id: int) -> dict:
+    return {'client': token.get_client(user_id)}
 
 
 @application.route('/profile/user', methods=['POST'])
@@ -67,31 +76,31 @@ def post_user_profile(client: Client) -> dict:
     return {'profile': profile.user.post(request.json)}
 
 
-@application.route('/profile/user/<int:user_id>', methods=['GET'])
+@application.route('/profile/user/<string:id_or_alias>', methods=['GET'])
 @logged
 @restful
 @authenticated
 @authorization(level=0)
-def get_user_profile(client: Client, user_id: int) -> dict:
-    return {'profile': profile.user.get(user_id)}
+def get_user_profile(client: Client, id_or_alias: str) -> dict:
+    return {'profile': profile.user.get(id_or_alias)}
 
 
-@application.route('/profile/user/<int:user_id>', methods=['PUT'])
+@application.route('/profile/user/<string:id_or_alias>', methods=['PUT'])
 @logged
 @restful
 @authenticated
 @authorization(level=0)
-def put_user_profile(client: Client, user_id: int) -> dict:
-    return {'profile': profile.user.put(user_id, request.json)}
+def put_user_profile(client: Client, id_or_alias: str) -> dict:
+    return {'profile': profile.user.put(id_or_alias, request.json)}
 
 
-@application.route('/profile/user/<int:user_id>', methods=['DELETE'])
+@application.route('/profile/user/<string:id_or_alias>', methods=['DELETE'])
 @logged
 @restful
 @authenticated
 @authorization(level=0)
-def delete_user_profile(client: Client, user_id: int) -> dict:
-    return {'profile': profile.user.delete(user_id)}
+def delete_user_profile(client: Client, id_or_alias: str) -> dict:
+    return {'profile': profile.user.delete(id_or_alias)}
 
 
 @application.route('/profile/facility', methods=['POST'])
@@ -103,31 +112,31 @@ def post_facility_profile(client: Client) -> dict:
     return {'profile': profile.facility.post(request.json)}
 
 
-@application.route('/profile/facility/<int:facility_id>', methods=['GET'])
+@application.route('/profile/facility/<string:id_or_name>', methods=['GET'])
 @logged
 @restful
 @authenticated
 @authorization(level=0)
-def get_facility_profile(client: Client, facility_id: int) -> dict:
-    return {'profile': profile.facility.get(facility_id)}
+def get_facility_profile(client: Client, id_or_name: str) -> dict:
+    return {'profile': profile.facility.get(id_or_name)}
 
 
-@application.route('/profile/facility/<int:facility_id>', methods=['PUT'])
+@application.route('/profile/facility/<string:id_or_name>', methods=['PUT'])
 @logged
 @restful
 @authenticated
 @authorization(level=0)
-def put_facility_profile(client: Client, facility_id: int) -> dict:
-    return {'profile': profile.facility.put(facility_id, request.json)}
+def put_facility_profile(client: Client, id_or_name: str) -> dict:
+    return {'profile': profile.facility.put(id_or_name, request.json)}
 
 
-@application.route('/profile/facility/<int:facility_id>', methods=['DELETE'])
+@application.route('/profile/facility/<string:id_or_name>', methods=['DELETE'])
 @logged
 @restful
 @authenticated
 @authorization(level=0)
-def delete_facility_profile(client: Client, facility_id: int) -> dict:
-    return {'profile': profile.facility.delete(facility_id)}
+def delete_facility_profile(client: Client, id_or_name: str) -> dict:
+    return {'profile': profile.facility.delete(id_or_name)}
 
 
 @application.route('/recommendation', methods=['GET'])
@@ -136,7 +145,7 @@ def delete_facility_profile(client: Client, facility_id: int) -> dict:
 @authenticated
 @authorization(level=None)
 def get_recommendation(client: Client) -> dict:
-    raise NotImplementedError(request.path)
+    return {'recommendation': recommendation.get(client.user_id, **request.args)}
 
 
 @application.route('/recommendation/<int:recommendation_id>', methods=['GET'])
@@ -144,8 +153,8 @@ def get_recommendation(client: Client) -> dict:
 @restful
 @authenticated
 @authorization(level=None)
-def get_single_recommendation(client: Client, recommendation_id) -> dict:
-    raise NotImplementedError(request.path)
+def get_single_recommendation(client: Client, recommendation_id: int) -> dict:
+    return {'recommendation': recommendation.get_by_id(client.user_id, recommendation_id)}
 
 
 @application.route('/recommendation/<int:recommendation_id>', methods=['POST'])
@@ -153,7 +162,7 @@ def get_single_recommendation(client: Client, recommendation_id) -> dict:
 @restful
 @authenticated
 @authorization(level=None)
-def post_recommendation(client: Client, recommendation_id) -> dict:
+def post_recommendation(client: Client, recommendation_id: int) -> dict:
     raise NotImplementedError(request.path)
 
 
@@ -162,5 +171,23 @@ def post_recommendation(client: Client, recommendation_id) -> dict:
 @restful
 @authenticated
 @authorization(level=None)
-def put_recommendation(client: Client, recommendation_id, action) -> dict:
-    raise NotImplementedError(request.path)
+def put_recommendation_action(client: Client, recommendation_id: int, action: str) -> dict:
+    return {'recommendation': recommendation.put_action(client.user_id, recommendation_id, action)}
+
+
+@application.route('/recommendation/group', methods=['GET'])
+@logged
+@restful
+@authenticated
+@authorization(level=None)
+def get_recommendation_groups(client: Client) -> dict:
+    return {'recommendation_group': recommendation.get_groups(**request.args)}
+
+
+@application.route('/recommendation/group/<int:group_id>', methods=['GET'])
+@logged
+@restful
+@authenticated
+@authorization(level=None)
+def get_recommendation_previous(client: Client, group_id: int) -> dict:
+    return {'recommendation': recommendation.get_previous(client.user_id, group_id)}
