@@ -347,7 +347,7 @@ RETURNING access_id;
 
 _REMOVE_ACCESS = """\
 DELETE FROM "auth"."access"
-WHERE client_id = :client_id;
+WHERE access_id = :access_id;
 """
 
 
@@ -537,9 +537,9 @@ class Access(Record):
                 'access_expires': exp}
 
     @classmethod
-    def remove(cls, client_id: int) -> None:
-        """Purge the access record for `client_id`."""
-        execute(_REMOVE_ACCESS, client_id=client_id)
+    def remove(cls, access_id: int) -> None:
+        """Purge the access record for `access_id`."""
+        execute(_REMOVE_ACCESS, access_id=access_id)
 
 
 _UPDATE_CLIENT = """\
@@ -844,4 +844,5 @@ class Client(Record):
         data = self.to_dict()
         data['client_key'] = self.client_key.value
         data['client_secret'] = self.client_secret.value
+        data['client_created'] = str(self.client_created)
         return data
