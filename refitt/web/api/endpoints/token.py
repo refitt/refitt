@@ -16,7 +16,8 @@
 from datetime import timedelta
 
 # internal libs
-from ....database.auth import Client, Access, DEFAULT_EXPIRE_TIME
+from ....database.auth import (Client, ClientInvalid, ClientNotFound, DEFAULT_CLIENT_LEVEL,
+                               Access, DEFAULT_EXPIRE_TIME)
 
 # default access token expiration period
 ACCESS_EXPIRES = timedelta(hours=DEFAULT_EXPIRE_TIME)
@@ -30,6 +31,18 @@ def get(client_id: int) -> dict:
 
 def get_user(user_id: int) -> dict:
     """Generate a new access token on behalf of a different user."""
-    user_client = Client.from_user(user_id)
+    try:
+        user_client = Client.from_user(user_id)
+    except ClientNotFound:
+        user_client = Client.new(user_id, DEFAULT_CLIENT_LEVEL)
+    if not user_client.client_valid:
+        raise ClientInvalid(f'access revoked for user_id={user_id}')
     user_access = Access.new_token(user_client.client_id, access_expires=ACCESS_EXPIRES)
     return user_access.embed()
+
+
+def get_client(user_id: int) -> dict:
+    """Generate a new set of client credentials."""
+    client = Client.new(user_id, DEFAULT_CLIENT_LEVEL)
+    access = Access.new_token(client.client_id, access_expires=ACCESS_EXPIRES)
+    return {**client.embed(), **access.embed()}
