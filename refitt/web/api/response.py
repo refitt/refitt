@@ -24,8 +24,9 @@ from functools import wraps
 from flask import Response, request
 
 # internal libs
-from .exceptions import DataNotFound, BadData, AuthorizationNotFound, AuthorizationInvalid
+from .exceptions import DataNotFound, BadData, AuthorizationNotFound, AuthorizationInvalid, PermissionDenied
 from ...database.profile import UserNotFound, FacilityNotFound
+from ...database.recommendation import RecommendationNotFound
 from ...database.auth import (TokenNotFound, TokenInvalid, TokenExpired,
                               ClientInvalid, ClientInsufficient, ClientNotFound)
 
@@ -75,10 +76,15 @@ def restful(route: Callable[..., dict]) -> Response:
             response['status'] = 'error'
             response['message'] = f'unauthorized: {error.args[0]}'
 
-        except (ClientInvalid, ClientInsufficient, AuthorizationInvalid) as error:
+        except (ClientInvalid, ClientInsufficient, AuthorizationInvalid, PermissionDenied) as error:
             status = STATUS['Forbidden']
             response['status'] = 'error'
             response['message'] = f'forbidden: {error.args[0]}'
+
+        except AttributeError as error:
+            status = STATUS['Bad Request']
+            response['status'] = 'error'
+            response['message'] = str(error)
 
         except UserNotFound:
             status = STATUS['Internal Server Error']
@@ -90,6 +96,11 @@ def restful(route: Callable[..., dict]) -> Response:
             response['status'] = 'error'
             response['message'] = f'facility not found'
 
+        except RecommendationNotFound:
+            status = STATUS['Bad Request']
+            response['status'] = 'error'
+            response['message'] = f'recommendation not found'
+
         except NotImplementedError:
             status = STATUS['Not Implemented']
             response['status'] = 'error'
@@ -97,7 +108,7 @@ def restful(route: Callable[..., dict]) -> Response:
 
         except Exception as error:  # noqa
             status = STATUS['Internal Server Error']
-            message = ' - '.join(str(arg) for arg in error.args)
+            message = str(error)
             response['status'] = 'critical'
             response['message'] = f'internal server error: {message}'
 
