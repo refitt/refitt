@@ -14,7 +14,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, Dict, Any, Optional, Union, Type
+from typing import List, Dict, Any, Optional, Union
 
 # standard libs
 import json
@@ -216,6 +216,23 @@ class User(Record):
     _FACTORIES = {'user_id': 'from_id', 'user_email': 'from_email',
                   'user_alias': 'from_alias'}
 
+    @classmethod
+    def from_id_or_alias(cls, value: str) -> User:
+        """
+        Smart factory guess whether to use from_id or from_alias based
+        on the `value`.
+        """
+        try:
+            user_id = int(value)
+            user_alias = None
+        except ValueError:
+            user_id = None
+            user_alias = value
+        if user_id:
+            return cls.from_id(user_id)
+        else:
+            return cls.from_alias(user_alias)
+
     def to_database(self) -> int:
         """Add user profile into database."""
         data = self.to_dict(expand=False)
@@ -311,7 +328,7 @@ class Facility(Record):
     _FACTORIES = {'facility_id': 'from_id', 'facility_name': 'from_name'}
 
     def __init__(self, **fields) -> None:
-        """Extra attributes are stored under `.user_metadata`."""
+        """Extra attributes are stored under `.facility_metadata`."""
         super().__init__(**{
             'facility_id':         fields.pop('facility_id', None),
             'facility_name':       fields.pop('facility_name'),
@@ -389,7 +406,7 @@ class Facility(Record):
         elif all(isinstance(key, str) for key in dict(value)):
             self._facility_metadata = dict(value)
         else:
-            raise ValueError('User.user_metadata expects all keys to be str.')
+            raise ValueError(f'{self.__class__.__name__}.facility_metadata requires all keys to be str.')
 
     def to_dict(self, expand: bool = True) -> Dict[str, Any]:
         """
@@ -435,6 +452,23 @@ class Facility(Record):
     def from_name(cls, facility_name: str) -> Facility:
         """Load facility from `facility_name`."""
         return cls._from_unique(facility, 'facility_name', facility_name)
+
+    @classmethod
+    def from_id_or_name(cls, value: str) -> Facility:
+        """
+        Smart factory guess whether to use from_id or from_name based
+        on the `value`.
+        """
+        try:
+            facility_id = int(value)
+            facility_name = None
+        except ValueError:
+            facility_id = None
+            facility_name = value
+        if facility_id:
+            return cls.from_id(facility_id)
+        else:
+            return cls.from_name(facility_name)
 
     def to_database(self) -> int:
         """Insert facility profile into database."""

@@ -65,11 +65,11 @@ class AntaresAlert(AlertInterface):
 
     @property
     def observation_value(self) -> float:
-        return float(self.data['new_alert']['properties']['mag'])
+        return float(self.data['new_alert']['properties']['ztf_psfmag'])
 
     @property
     def observation_error(self) -> float:
-        return 99.99  # FIXME: what's the correct measure?
+        return float(self.data['new_alert']['properties']['ztf_sigpsfmag'])
 
     @property
     def observation_time(self) -> datetime:

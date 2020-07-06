@@ -20,9 +20,9 @@ from ...exceptions import DataNotFound, BadData
 from .....database.profile import Facility
 
 
-def get(facility_id: int) -> dict:
+def get(id_or_name: str) -> dict:
     """Get a facility profile."""
-    return Facility.from_id(facility_id).to_dict()
+    return Facility.from_id_or_name(id_or_name).to_dict()
 
 
 def post(data: dict) -> dict:
@@ -40,15 +40,20 @@ def post(data: dict) -> dict:
         raise BadData(f'database: {msgs}') from error
 
 
-def put(facility_id: int, data: dict) -> dict:
+def put(id_or_name: str, data: dict) -> dict:
     """Alter a facility profile."""
     if not data:
         raise DataNotFound('missing facility profile data')
     try:
-        data = {'facility_id': facility_id, **data}
+        profile = Facility.from_id_or_name(id_or_name)
+        given_id = data.pop('facility_id', profile.facility_id)
+        if given_id != profile.facility_id:
+            raise BadData(f'/profile/facility/{id_or_name} does not match '
+                          f'facility_id={given_id} in posted data')
+        data = {'facility_id': profile.facility_id, **data}
         profile = Facility.from_dict(data)
         profile.to_database()
-        return {}
+        return {'facility_id': profile.facility_id}
     except KeyError as error:
         raise BadData(f'missing "{error.args[0]}" in facility profile data') from error
     except DatabaseError as error:
@@ -56,11 +61,12 @@ def put(facility_id: int, data: dict) -> dict:
         raise BadData(f'database: {msgs}') from error
 
 
-def delete(facility_id: int) -> dict:
+def delete(id_or_name: str) -> dict:
     """Remove a facility profile."""
     try:
-        Facility.remove(facility_id)
-        return {}
+        profile = Facility.from_id_or_name(id_or_name)
+        Facility.remove(profile.facility_id)
+        return {'facility_id': profile.facility_id}
     except DatabaseError as error:
         msgs = " - ".join(str(msg) for msg in error.args)
         raise BadData(f'database: {msgs}') from error

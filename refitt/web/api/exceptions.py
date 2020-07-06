@@ -27,3 +27,7 @@ class AuthorizationNotFound(Exception):
 
 class AuthorizationInvalid(Exception):
     """Secret did not match expected value."""
+
+
+class PermissionDenied(Exception):
+    """Action not permitted for current user/level."""

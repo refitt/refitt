@@ -35,6 +35,7 @@ from typing import Dict, Any, Callable
 
 # standard libs
 import os
+import urllib
 import functools
 from datetime import datetime
 
@@ -82,14 +83,14 @@ def login(force: bool = False) -> Dict[str, Claim]:
         return TOKEN
 
     site = config['api'].get('site', 'http://localhost:5000')
-    path = os.path.join(site, 'token')
+    path = urllib.request.urljoin(site, 'token')
     key, secret = config['api']['client_key'], config['api']['client_secret']
     response = requests.get(path, auth=(key, secret))
     response_data = response.json()
     if response.status_code != 200:
         raise APIError(response.status_code, response_data['message'])
 
-    data = response_data['response']['access']
+    data = response_data['response']['token']
     TOKEN = Token(data['access_token'])
     log.debug('GET /token')
     return data
@@ -132,10 +133,10 @@ def request(action: str, endpoint: str, **kwargs) -> Dict[str, Any]:
         All keyword arguments are forwarded to `requests.<action>`.
     """
     site = config['api'].get('site', 'http://localhost:5000')
-    path = os.path.join(site, 'token')
+    path = urllib.request.urljoin(site, endpoint)
     method = getattr(requests, action)
-    response = method(path, **kwargs,
-                      headers={'Authorization': f'Bearer {TOKEN.value}'})
+    response = method(path, data=kwargs.pop('data', None), json=kwargs.pop('json', None),
+                      headers={'Authorization': f'Bearer {TOKEN.value}'}, params=kwargs)
     response_data = response.json()
     if response.status_code != 200:
         raise APIError(response.status_code, response_data['message'])

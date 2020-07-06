@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS "recommendation"."recommendation"
 (
     "recommendation_id"         BIGSERIAL NOT NULL,
     "recommendation_group_id"   BIGINT    NOT NULL,
+    "recommendation_time"       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "recommendation_priority"   BIGINT    NOT NULL,
     "facility_id"               BIGINT    NOT NULL,
     "user_id"                   BIGINT    NOT NULL,
 	"object_id"                 BIGINT    NOT NULL,
