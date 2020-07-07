@@ -67,7 +67,7 @@ log = Logger(__name__)
 TOKEN: Token = None
 
 
-def login(force: bool = False) -> Dict[str, Claim]:
+def login(force: bool = False) -> Token:
     """
     Request new access token and add to configuration file.
     """
@@ -136,7 +136,7 @@ def request(action: str, endpoint: str, **kwargs) -> Dict[str, Any]:
     path = urllib.request.urljoin(site, endpoint)
     method = getattr(requests, action)
     response = method(path, data=kwargs.pop('data', None), json=kwargs.pop('json', None),
-                      headers={'Authorization': f'Bearer {TOKEN.value}'}, 
+                      headers={'Authorization': f'Bearer {TOKEN.value}'},
                       cert=kwargs.pop('cert', None), verify=kwargs.pop('verify', None),
                       params=kwargs)
     response_data = response.json()
