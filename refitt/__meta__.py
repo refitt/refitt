@@ -13,11 +13,11 @@
 """Package metadata for refitt."""
 
 __appname__     = 'refitt'
-__version__     = '0.10.1'
+__version__     = '0.10.2'
 __authors__     = """\
-Dan Milisavljevic, Ph.D. <dmilisav@purdue.edu>
-Niharika Sravan, Ph.D. <nsravan@purdue.edu>
-Geoffrey Lentner, M.Sc. <glentner@purdue.edu>
+Dan Milisavljevic, Ph.D. <dmilisav@purdue.edu>;
+Niharika Sravan, Ph.D. <nsravan@purdue.edu>;
+Geoffrey Lentner, M.Sc. <glentner@purdue.edu>;
 Mark Linvill <mlinvill@purdue.edu>
 """
 __developer__   = 'Geoffrey Lentner'
