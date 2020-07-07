@@ -18,7 +18,7 @@ from setuptools import setup, find_packages
 # metadata
 from refitt.__meta__ import (__appname__, __version__, __authors__,
                              __contact__, __license__, __description__,
-                             __keywords__, __website__)
+                             __keywords__, __website__, __developer__)
 
 
 with open('README.rst', mode='r') as readme:
@@ -28,7 +28,7 @@ with open('README.rst', mode='r') as readme:
 setup(
     name                 = __appname__,
     version              = __version__,
-    author               = __authors__,
+    author               = __developer__,
     author_email         = __contact__,
     description          = __description__,
     license              = __license__,
@@ -37,6 +37,7 @@ setup(
     packages             = find_packages(),
     include_package_data = True,  # see MANIFEST.in
     long_description     = long_description,
+    long_description_content_type = 'text/x-rst',
     classifiers          = ['Development Status :: 4 - Beta',
                             'Topic :: Scientific/Engineering :: Astronomy',
                             'Programming Language :: Python :: 3',
