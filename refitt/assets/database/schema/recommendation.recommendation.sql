@@ -27,13 +27,13 @@ CREATE TABLE IF NOT EXISTS "recommendation"."recommendation"
     "recommendation_priority"   BIGINT    NOT NULL,
     "facility_id"               BIGINT    NOT NULL,
     "user_id"                   BIGINT    NOT NULL,
-	"object_id"                 BIGINT    NOT NULL,
-	"observation_type_id"       BIGINT    NOT NULL,
-	"observation_id"            BIGINT,                 -- what they observed
-	"predicted_observation_id"  BIGINT,                 -- what we predicted
-	"recommendation_accepted"   BOOLEAN   NOT NULL DEFAULT FALSE,
-	"recommendation_rejected"   BOOLEAN   NOT NULL DEFAULT FALSE,
-	"recommendation_metadata"   JSONB     NOT NULL DEFAULT '{}'::jsonb,  -- e.g., {"seeing": 0.82, ...}
+    "object_id"                 BIGINT    NOT NULL,
+    "observation_type_id"       BIGINT    NOT NULL,
+    "observation_id"            BIGINT,                 -- what they observed
+    "predicted_observation_id"  BIGINT,                 -- what we predicted
+    "recommendation_accepted"   BOOLEAN   NOT NULL DEFAULT FALSE,
+    "recommendation_rejected"   BOOLEAN   NOT NULL DEFAULT FALSE,
+    "recommendation_metadata"   JSONB     NOT NULL DEFAULT '{}'::jsonb,  -- e.g., {"seeing": 0.82, ...}
 
     PRIMARY KEY ("recommendation_id"),
 
