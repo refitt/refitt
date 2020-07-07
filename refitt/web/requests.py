@@ -136,7 +136,9 @@ def request(action: str, endpoint: str, **kwargs) -> Dict[str, Any]:
     path = urllib.request.urljoin(site, endpoint)
     method = getattr(requests, action)
     response = method(path, data=kwargs.pop('data', None), json=kwargs.pop('json', None),
-                      headers={'Authorization': f'Bearer {TOKEN.value}'}, params=kwargs)
+                      headers={'Authorization': f'Bearer {TOKEN.value}'}, 
+                      cert=kwargs.pop('cert', None), verify=kwargs.pop('verify', None),
+                      params=kwargs)
     response_data = response.json()
     if response.status_code != 200:
         raise APIError(response.status_code, response_data['message'])
