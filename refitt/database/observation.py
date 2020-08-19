@@ -141,7 +141,7 @@ class ObjectType(Record):
         return cls._from_unique(object_type, 'object_type_id', object_type_id, interface)
 
     @classmethod
-    def from_name(cls, object_type_name: int, interface: Interface = None) -> ObjectType:
+    def from_name(cls, object_type_name: str, interface: Interface = None) -> ObjectType:
         """Get object_type record from `object_type_name`."""
         return cls._from_unique(object_type, 'object_type_name', object_type_name, interface)
 
@@ -645,7 +645,7 @@ class Source(Record):
         return cls._from_unique(source, 'source_id', source_id, interface)
 
     @classmethod
-    def from_name(cls, source_name: int, interface: Interface = None) -> Source:
+    def from_name(cls, source_name: str, interface: Interface = None) -> Source:
         """Get source record from `source_name`."""
         return cls._from_unique(source, 'source_name', source_name, interface)
 
@@ -707,8 +707,8 @@ class ObservationType(Record):
     >>> ObservationType.from_name('g-ztf')
     ObservationType(observation_type_id=1,
                     observation_type_name='g-ztf',
-                    observation_type_units='magnitude',
-                    observation_type_description='G-band apparent magnitude (ZTF).')
+                    observation_type_units='mag',
+                    observation_type_description='G-band apparent magnitude (ZTF)')
     """
 
     _fields = ('observation_type_id', 'observation_type_name', 'observation_type_units',
@@ -773,7 +773,7 @@ class ObservationType(Record):
         return cls._from_unique(observation_type, 'observation_type_id', observation_type_id, interface)
 
     @classmethod
-    def from_name(cls, observation_type_name: int, interface: Interface = None) -> ObservationType:
+    def from_name(cls, observation_type_name: str, interface: Interface = None) -> ObservationType:
         """Get observation_type record from `observation_type_name`."""
         return cls._from_unique(observation_type, 'observation_type_name', observation_type_name, interface)
 

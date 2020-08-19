@@ -14,7 +14,7 @@
 """Connect to one of the Antares streams."""
 
 # type annotations
-from typing import Tuple, List, Dict, Iterator, Any, Union
+from typing import Dict, Iterator, Union
 
 # standard libs
 from datetime import datetime
@@ -25,6 +25,7 @@ from antares_client import Client as _Antares_Client
 # internal libs
 from .client import ClientInterface
 from .alert import AlertInterface
+from ..database.observation import ObservationTypeNotFound
 
 
 class AntaresAlert(AlertInterface):
@@ -57,11 +58,19 @@ class AntaresAlert(AlertInterface):
     def object_redshift(self) -> float:
         return 99.99  # FIXME: not available?
 
+    # ztf_fid property map
+    obs_types: dict = {
+        1: 'g-ztf',
+        2: 'r-ztf'
+    }
+
     @property
     def observation_type_name(self) -> str:
-        # FIXME: why is this not consistent?!
-        passband = self.data['new_alert']['properties']['passband'].lower()
-        return f'{passband}-ztf'
+        ztf_fid = self.data['new_alert']['properties']['ztf_fid']
+        try:
+            return self.obs_types[ztf_fid]
+        except KeyError as error:
+            raise ObservationTypeNotFound(str(error)) from error
 
     @property
     def observation_value(self) -> float:

@@ -21,7 +21,7 @@ from ....database import execute
 from ....database.recommendation import Recommendation, RecommendationGroup
 
 
-def get(user_id: int, **request_params) -> List[Dict[str, Any]]:
+def get(user_id: int, **request_params) -> list:
     """Make call to `Recommendation.select`."""
 
     params = {}
@@ -44,7 +44,7 @@ def get(user_id: int, **request_params) -> List[Dict[str, Any]]:
 
 def get_by_id(user_id, recommendation_id: int) -> Dict[str, Any]:
     """Select a single recommendation by its unique identifier."""
-    recommendation =  Recommendation.select_by_id(recommendation_id)
+    recommendation = Recommendation.select_by_id(recommendation_id)
     if recommendation.user_id == user_id:
         return recommendation.embed()
     else:
@@ -110,8 +110,10 @@ def put_action(user_id, recommendation_id: int, action: str) -> dict:
 def get_groups(**request_params) -> list:
     """Get listing of available recommendation groups."""
 
-    params = {}
-    params['limit'] = int(request_params.pop('limit', 1))
+    if 'limit' in request_params:
+        params = {'limit': int(request_params.pop('limit'))}
+    else:
+        params = {'limit': None}
     if 'before' in request_params:
         params['before'] = int(request_params.pop('before'))
     if 'after' in request_params:
@@ -125,7 +127,7 @@ def get_groups(**request_params) -> list:
             for recommendation_group in RecommendationGroup.select(**params)]
 
 
-def get_previous(user_id: int, group_id: int) -> dict:
+def get_previous(user_id: int, group_id: int) -> list:
     """Get listing of previously seen recommendations."""
     return [recommendation.embed()
             for recommendation in Recommendation.select_group(user_id, group_id)]

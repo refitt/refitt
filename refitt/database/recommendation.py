@@ -21,15 +21,12 @@ import json
 from datetime import datetime
 
 # internal libs
-from ..core.config import config, ConfigurationError
 from ..core.logging import Logger
-from .core.interface import execute, Interface, Table, Record, RecordNotFound, _select
-from .core import client
+from .core.interface import execute, Interface, Table, Record, RecordNotFound
+from .core.interface import _select  # noqa: protected-member
 
 # external libs
-from sqlalchemy import sql
-from pandas import DataFrame
-from pandas._libs.tslibs.timestamps import Timestamp
+from pandas._libs.tslibs.timestamps import Timestamp  # noqa: protected-member
 
 
 # initialize module level logger
@@ -88,10 +85,12 @@ _SELECT_GROUP = """\
 SELECT
     recommendation_group.recommendation_group_id,
     recommendation_group.recommendation_group_time
-
 FROM
     recommendation.recommendation_group as recommendation_group
+"""
 
+
+_SELECT_GROUP += """\
 WHERE
 """
 
@@ -125,7 +124,6 @@ ORDER BY recommendation_group.recommendation_group_time DESC
 _SELECT_GROUP_LIMIT = """\
 LIMIT :limit
 """
-
 
 
 class RecommendationGroup(Record):
@@ -222,7 +220,7 @@ class RecommendationGroup(Record):
 
     @classmethod
     def latest(cls) -> RecommendationGroup:
-        """Fetch the lastest recommendation_group from the database."""
+        """Fetch the latest recommendation_group from the database."""
         records = recommendation_group.select(orderby='recommendation_group_id', ascending=False,
                                               set_index=False, limit=1)
         if records.empty:
@@ -378,7 +376,9 @@ LEFT JOIN
 LEFT JOIN
     observation.observation as observation
     on recommendation.predicted_observation_id = observation.observation_id
+"""
 
+_SELECT_RECOMMENDATIONS += """\
 WHERE
 """
 
