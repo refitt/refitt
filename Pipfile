@@ -11,6 +11,7 @@ pylint = "*"
 sphinx = "*"
 pydata-sphinx-theme = "*"
 twine = "*"
+pytest-cov = "*"
 
 [packages]
 numpy = "*"
@@ -25,7 +26,7 @@ sshtunnel = "*"
 flask = "*"
 gunicorn = "*"
 requests = "*"
-antares-client = "*"
+antares-client = "<1"
 cmdkit = ">=1.5.3"
 logalpha = ">=2.0.2"
 slackclient = "*"
@@ -38,4 +39,4 @@ feather-format = "*"
 refitt = {editable = true,path = "."}
 
 [requires]
-python_version = "3.8.3"
+python_version = "3.8.5"
