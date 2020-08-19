@@ -1,7 +1,7 @@
 [
     {
         "observation_type_id": 1,
-        "observation_type_name": "visible",
+        "observation_type_name": "clear",
         "observation_type_units": "mag",
         "observation_type_description": "Un-filtered apparent magnitude."
     },
