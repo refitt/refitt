@@ -254,11 +254,20 @@ class DatabaseClient:
         else:
             raise TypeError(f'{self.__class__.__name__}.tunnel expects {SSHTunnel}')
 
-    def connect(self) -> None:
-        """Initiate the connection to the database."""
+    def get_url(self) -> str:
+        """
+        Create URL string.
+
+        .. warning:
+            This will expose credentials!
+        """
         auth = '' if self.auth is None else f'{self.auth.username}:{self.auth.password}@'
         host, port = tuple(self.server)
-        self._engine = create_engine(f'postgresql://{auth}{host}:{port}/{self.database}')
+        return f'postgresql://{auth}{host}:{port}/{self.database}'
+
+    def connect(self) -> None:
+        """Initiate the connection to the database."""
+        self._engine = create_engine(self.get_url())
         log.debug(f'connected to "{self.database}" at {self.server.host}:{self.server.port}')
 
     def close(self) -> None:
