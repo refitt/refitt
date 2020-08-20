@@ -48,11 +48,14 @@ setup(
                                                 'refittd=refitt.apps.refittd:main',
                                                 'refittctl=refitt.apps.refittctl:main']},
     install_requires     = [
-        'numpy', 'scipy', 'pandas', 'h5py', 'xlrd', 'sqlalchemy', 'psycopg2',
-        'paramiko', 'sshtunnel', 'flask', 'tabulate', 'gunicorn', 'slackclient',
-        'cmdkit>=1.5.3', 'logalpha>=2.0.2', 'toml', 'keras', 'tensorflow',
-        'pyarrow', 'feather-format', 'antares_client'],
+        'numpy>=1.18.5', 'scipy>=1.4.1', 'pandas>=1.1.0', 'h5py>=2.10.0', 'xlrd>=1.2.0', 'tabulate>=0.8.7',
+        'sqlalchemy>=1.3.19', 'psycopg2>=2.8.5', 'paramiko>=2.7.1', 'sshtunnel>=0.1.5',
+        'flask>=1.1.2', 'gunicorn>=20.0.4', 'requests>=2.24.0',
+        'cmdkit>=1.5.4', 'logalpha>=2.0.2', 'toml>=0.10.1',
+        'antares-client<1', 'slackclient>=2.8.0',
+        'tensorflow>=2.3.0', 'keras>=2.4.3',
+        'pyarrow>=1.0.0', 'feather-format>=0.4.1'],
     extras_require       = {
-        'dev': ['ipython', 'pytest', 'hypothesis', 'pylint', 'sphinx',
-                'sphinx-rtd-theme']},
+        'dev': ['pytest>=6.0.1', 'pytest-cov>=2.10.1', 'hypothesis>=5.26.1', 'ipython>=7.17.0',
+                'pylint>=2.5.3', 'sphinx>=3.2.1', 'pydata-sphinx-theme>=0.3.1', 'twine>=3.2.0']},
 )
