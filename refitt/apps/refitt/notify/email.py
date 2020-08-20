@@ -92,7 +92,7 @@ extras:
 log = Logger(__name__)
 
 
-def connection_refused(exc: ConnectionRefusedError) -> int:
+def connection_refused(exc: ConnectionRefusedError) -> int:  # noqa: unused
     """The mail server refused the connection."""
     log.critical('mail server refused connection')
     return exit_status.runtime_error
@@ -183,7 +183,7 @@ class Email(Application):
         log.debug(f'using {self.template} template')
         Template = templates[self.template]
         if len(self.options) != Template.required:
-            raise ArgumentError(f'"{self.template}" requires {Template.required} position arguments '
+            raise ArgumentError(f'"{self.template}" requires {Template.required} positional arguments '
                                 f'but {len(self.options)} provided from --opts')
 
         self.mail = Template(*self.options, self.address, self.recipients,
