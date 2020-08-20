@@ -534,7 +534,7 @@ class RecommendationMail(Template):
 
         subject = kwargs.pop('subject', None)
         if subject is not None:
-            log.warning('ignore subject for test message')
+            raise ValueError('RecommendationMail already defines the subject line.')
 
         # check attachments
         attachment = kwargs.pop('attach', None)
