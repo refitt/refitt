@@ -184,6 +184,7 @@ class Stream(Application):
         """Initialize resources."""
         cli_setup(self)
         database.connect(profile=self.profile)
+        os.makedirs(self.output_directory, exist_ok=True)
         return self
 
     def __exit__(self, *exc) -> None:
