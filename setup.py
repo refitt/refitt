@@ -16,7 +16,7 @@
 from setuptools import setup, find_packages
 
 # metadata
-from refitt.__meta__ import (__appname__, __version__, __authors__,
+from refitt.__meta__ import (__appname__, __version__,
                              __contact__, __license__, __description__,
                              __keywords__, __website__, __developer__)
 
@@ -52,7 +52,7 @@ setup(
         'sqlalchemy>=1.3.19', 'psycopg2>=2.8.5', 'paramiko>=2.7.1', 'sshtunnel>=0.1.5',
         'flask>=1.1.2', 'gunicorn>=20.0.4', 'requests>=2.24.0',
         'cmdkit>=1.5.4', 'logalpha>=2.0.2', 'toml>=0.10.1',
-        'antares-client<1', 'slackclient>=2.8.0',
+        'astropy>=4.0.1', 'antares-client>=1.0.1', 'slackclient>=2.8.0',
         'tensorflow>=2.3.0', 'keras>=2.4.3',
         'pyarrow>=1.0.0', 'feather-format>=0.4.1'],
     extras_require       = {
