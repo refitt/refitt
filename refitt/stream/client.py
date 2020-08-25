@@ -13,10 +13,12 @@
 """Implements the common `Client` interface for all broker clients."""
 
 
+# type annotations
+from __future__ import annotations
+
 # standard libs
-import os
-from abc import ABC, abstractmethod, abstractstaticmethod
-from typing import Tuple, List, Dict, Iterator, Any, Union
+from abc import ABC, abstractmethod
+from typing import Tuple, Iterator
 
 # internal libs
 from .alert import AlertInterface
@@ -46,7 +48,7 @@ class ClientInterface(ABC):
     def __iter__(self) -> Iterator[AlertInterface]:
         """Should yield back Alert objects."""
 
-    def __enter__(self) -> 'Client':
+    def __enter__(self) -> ClientInterface:
         """Context manager setup."""
         return self
 
@@ -58,6 +60,6 @@ class ClientInterface(ABC):
     # prefix which can be used to reject incoming alerts.
 
     @staticmethod
-    def filter_none(alert: AlertInterface) -> bool:
+    def filter_none(alert: AlertInterface) -> bool:  # noqa: unused
         """Accept all incoming alerts."""
         return True

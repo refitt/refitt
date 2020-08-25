@@ -14,16 +14,15 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Dict, Union, Any
+from typing import Tuple, Dict, Union, Any
 
 # standard libs
 import json
 from datetime import datetime
 from functools import lru_cache
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 
 # internal libs
-from ..database import client
 from ..database.observation import (Object as _Object, Alert as _Alert, Source, Observation,
                                     ObservationType, ObservationTypeNotFound,
                                     ObjectType, ObjectTypeNotFound)
@@ -33,7 +32,7 @@ from ..database.observation import (Object as _Object, Alert as _Alert, Source, 
 AlertJSON = Dict[str, Any]
 
 
-class AlertInterface:
+class AlertInterface(ABC):
     """High-level interface to JSON alert objects."""
 
     _data: AlertJSON = {}
@@ -57,60 +56,71 @@ class AlertInterface:
         else:
             raise TypeError(f'{self.__class__.__name__}.data expects {dict}.')
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def source_name(self) -> str:
-        return None
+        raise NotImplementedError()
 
     @property
     @lru_cache(maxsize=None)
     def source_id(self) -> int:
         return Source.from_name(self.source_name).source_id
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def object_name(self) -> str:
-        return None
+        raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def object_aliases(self) -> Dict[str, Union[int, str]]:
         return {}
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def object_type_name(self) -> str:
-        return None
+        raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def object_ra(self) -> float:
-        return None
+        raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def object_dec(self) -> float:
-        return None
+        raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def object_redshift(self) -> float:
-        return None
+        raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def observation_type_name(self) -> str:
-        return None
+        raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def observation_value(self) -> float:
-        return None
+        raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def observation_error(self) -> float:
-        return None
+        raise NotImplementedError()
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def observation_time(self) -> datetime:
-        return None
+        raise NotImplementedError()
 
-    def to_database(self) -> None:
+    def to_database(self) -> Tuple[int, int]:
         """Create an Object, Observation, and Alert record and write to the database."""
 
         if self.object_type_name is None:
-            object_type_id = 0  # "UNKNOWN" in database
+            object_type_id = 1  # "UNKNOWN" in database
         else:
             try:
                 object_type = ObjectType.from_name(self.object_type_name)
