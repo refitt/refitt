@@ -14,13 +14,17 @@
 """Connect to one of the Antares streams."""
 
 # type annotations
+from __future__ import annotations
+from functools import lru_cache
 from typing import Dict, Iterator, Union
 
 # standard libs
 from datetime import datetime
 
 # external libs
-from antares_client import Client as _Antares_Client
+from antares_client import StreamingClient as _AntaresClient
+from antares_client._api.models import Locus  # noqa: protected
+from astropy.time import Time
 
 # internal libs
 from .client import ClientInterface
@@ -33,14 +37,23 @@ class AntaresAlert(AlertInterface):
 
     source_name = 'antares'
 
+    @classmethod
+    def from_locus(cls, locus: Locus) -> AntaresAlert:
+        """Extract new pseudo-schema from existing `locus`."""
+        return cls.from_dict({
+                'locus_id': locus.locus_id, 'ra': locus.ra, 'dec': locus.dec,
+                'properties': locus.properties,
+                'alert_history': {alert.alert_id: alert.properties
+                                  for alert in reversed(sorted(locus.alerts, key=(lambda alert: alert.mjd)))}})
+
     @property
     def object_name(self) -> str:
-        return f'ANT{self.data["new_alert"]["locus_id"]}'
+        return self.data['locus_id']
 
     @property
     def object_aliases(self) -> Dict[str, Union[int, str]]:
         return {'antares': self.object_name,
-                'ztf': self.data['new_alert']['properties']['ztf_object_id']}
+                'ztf': self.data['properties']['ztf_object_id']}
 
     @property
     def object_type_name(self) -> str:
@@ -48,11 +61,11 @@ class AntaresAlert(AlertInterface):
 
     @property
     def object_ra(self) -> float:
-        return float(self.data['new_alert']['ra'])
+        return float(self.data['ra'])
 
     @property
     def object_dec(self) -> float:
-        return float(self.data['new_alert']['dec'])
+        return float(self.data['dec'])
 
     @property
     def object_redshift(self) -> float:
@@ -65,35 +78,55 @@ class AntaresAlert(AlertInterface):
     }
 
     @property
+    @lru_cache(maxsize=None)
+    def newest_alert_id(self) -> str:
+        return self.data['properties']['newest_alert_id']
+
+    @property
+    @lru_cache(maxsize=None)
+    def newest_alert(self) -> dict:
+        for alert_id in self.data['alert_history']:
+            if alert_id == self.newest_alert_id:
+                return self.data['alert_history'][alert_id]
+        else:
+            raise KeyError(f'{self.newest_alert_id} not found in alert history')
+
+    @property
+    @lru_cache(maxsize=None)
+    def ztf_fid(self) -> int:
+        return int(self.newest_alert['ztf_fid'])
+
+    @property
     def observation_type_name(self) -> str:
-        ztf_fid = self.data['new_alert']['properties']['ztf_fid']
         try:
-            return self.obs_types[ztf_fid]
+            return self.obs_types[self.ztf_fid]
         except KeyError as error:
-            raise ObservationTypeNotFound(str(error)) from error
+            raise ObservationTypeNotFound(f'{error} not in AntaresAlert.obs_types') from error
 
     @property
     def observation_value(self) -> float:
-        return float(self.data['new_alert']['properties']['ztf_magpsf'])
+        return float(self.newest_alert['ztf_magpsf'])
 
     @property
     def observation_error(self) -> float:
-        return float(self.data['new_alert']['properties']['ztf_sigmapsf'])
+        return float(self.newest_alert['ztf_sigmapsf'])
 
     @property
     def observation_time(self) -> datetime:
-        return datetime.fromtimestamp(self.data['timestamp_unix'])
+        mjd = self.data['properties']['newest_alert_observation_time']
+        return Time(mjd, format='mjd', scale='utc').datetime
+
 
 class AntaresClient(ClientInterface):
     """Client connection to Antares."""
 
     # client code already defined via `antares_client.Client`
-    _client: _Antares_Client = None
+    _client: _AntaresClient = None
 
     def connect(self) -> None:
         """Connect to Antares."""
-        key, token = self.credentials
-        self._client = _Antares_Client([self.topic], api_key=key, api_secret=token)
+        key, secret = self.credentials
+        self._client = _AntaresClient([self.topic], api_key=key, api_secret=secret)
 
     def close(self) -> None:
         """Close connection to Antares."""
@@ -101,8 +134,8 @@ class AntaresClient(ClientInterface):
 
     def __iter__(self) -> Iterator[AntaresAlert]:
         """Iterate over alerts."""
-        for _, alert in self._client.iter():
-            yield AntaresAlert.from_dict(alert)
+        for topic, locus in self._client.iter():
+            yield AntaresAlert.from_locus(locus)
 
     @staticmethod
     def filter_not_extragalactic_sso(alert: AntaresAlert) -> bool:
