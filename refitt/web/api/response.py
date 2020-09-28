@@ -21,12 +21,13 @@ import json
 from functools import wraps
 
 # external libs
-from flask import Response, request
+from flask import Response
 
 # internal libs
 from .exceptions import DataNotFound, BadData, AuthorizationNotFound, AuthorizationInvalid, PermissionDenied
 from ...database.profile import UserNotFound, FacilityNotFound
 from ...database.recommendation import RecommendationNotFound
+from ...database.observation import ObjectTypeNotFound, ObjectNotFound
 from ...database.auth import (TokenNotFound, TokenInvalid, TokenExpired,
                               ClientInvalid, ClientInsufficient, ClientNotFound)
 
@@ -51,7 +52,7 @@ STATUS = {
 }
 
 
-def restful(route: Callable[..., dict]) -> Response:
+def restful(route: Callable[..., dict]) -> Callable[[...], dict]:
     """Format response."""
 
     @wraps(route)
@@ -66,7 +67,7 @@ def restful(route: Callable[..., dict]) -> Response:
             response['status'] = 'error'
             response['message'] = f'bad request: {error.args[0]}'
 
-        except TokenInvalid as error:
+        except TokenInvalid:
             status = STATUS['Unauthorized']
             response['status'] = 'error'
             response['message'] = f'unauthorized: invalid token'
@@ -87,19 +88,29 @@ def restful(route: Callable[..., dict]) -> Response:
             response['message'] = str(error)
 
         except UserNotFound:
-            status = STATUS['Internal Server Error']
+            status = STATUS['Not Found']
             response['status'] = 'error'
             response['message'] = f'user not found'
 
         except FacilityNotFound:
-            status = STATUS['Internal Server Error']
+            status = STATUS['Not Found']
             response['status'] = 'error'
             response['message'] = f'facility not found'
 
         except RecommendationNotFound:
-            status = STATUS['Bad Request']
+            status = STATUS['Not Found']
             response['status'] = 'error'
             response['message'] = f'recommendation not found'
+
+        except ObjectTypeNotFound:
+            status = STATUS['Not Found']
+            response['status'] = 'error'
+            response['message'] = f'object type not found'
+
+        except ObjectNotFound:
+            status = STATUS['Not Found']
+            response['status'] = 'error'
+            response['message'] = f'object not found'
 
         except NotImplementedError:
             status = STATUS['Not Implemented']

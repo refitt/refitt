@@ -13,7 +13,7 @@
 """REFITT's API /recommendation end-point implementation."""
 
 # type annotations
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 # internal libs
 from ..exceptions import PermissionDenied
