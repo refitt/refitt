@@ -435,6 +435,10 @@ class Record(ABC):
         """Convert to dictionary."""
         return {field: getattr(self, field) for field in self._fields}
 
+    def embed(self) -> Dict[str, Any]:
+        """Default embed method is the same as `to_dict`."""
+        return self.to_dict()
+
     @classmethod
     def from_series(cls, other: Series) -> Record:
         """Initialize from an extracted `pandas.Series`."""

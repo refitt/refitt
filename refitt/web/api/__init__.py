@@ -25,7 +25,7 @@ from flask import Flask, Response, request
 from ...database.auth import Client
 from .response import STATUS, restful
 from .auth import authenticate, authenticated, authorization
-from .endpoints import token, profile, recommendation
+from .endpoints import token, profile, recommendation, object, observation
 from .logging import logged
 
 # flask application
@@ -191,3 +191,48 @@ def get_recommendation_groups(client: Client) -> dict:
 @authorization(level=None)
 def get_recommendation_previous(client: Client, group_id: int) -> dict:
     return {'recommendation': recommendation.get_previous(client.user_id, group_id)}
+
+
+@application.route('/object/type', methods=['GET'])
+@logged
+@restful
+@authenticated
+@authorization(level=None)
+def get_object_types(client: Client) -> dict:
+    return {'object_type': object.get_types()}
+
+
+@application.route('/object/type/<id_or_name>', methods=['GET'])
+@logged
+@restful
+@authenticated
+@authorization(level=None)
+def get_object_type(client: Client, id_or_name: str) -> dict:
+    return {'object_type': object.get_type(id_or_name)}
+
+
+@application.route('/object/<id_or_name>', methods=['GET'])
+@logged
+@restful
+@authenticated
+@authorization(level=None)
+def get_object(client: Client, id_or_name: str) -> dict:
+    return {'object': object.get(id_or_name)}
+
+
+@application.route('/object', methods=['GET'])
+@logged
+@restful
+@authenticated
+@authorization(level=None)
+def get_all_objects(client: Client) -> dict:
+    raise NotImplementedError(request.path)
+
+
+@application.route('/observation/<int:object_id>', methods=['GET'])
+@logged
+@restful
+@authenticated
+@authorization(level=None)
+def get_observations_by_object(client: Client, object_id: int) -> dict:
+    return {'observation': observation.get_by_object(object_id)}

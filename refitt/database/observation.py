@@ -14,22 +14,13 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Dict, TypeVar, Optional, Union, Any
+from typing import List, Dict, Optional, Union, Any
 
 # standard libs
-import re
 import json
-import string
-import random
-import hashlib
-import functools
-from datetime import datetime, timedelta
-
-# external libs
-from pandas import Timestamp
+from datetime import datetime
 
 # internal libs
-from ..core.config import config, ConfigurationError
 from ..core.logging import Logger
 from .core.interface import execute, Interface, Table, Record, RecordNotFound
 from .core import client
@@ -145,6 +136,23 @@ class ObjectType(Record):
         """Get object_type record from `object_type_name`."""
         return cls._from_unique(object_type, 'object_type_name', object_type_name, interface)
 
+    @classmethod
+    def from_id_or_name(cls, value: str) -> ObjectType:
+        """
+        Smart factory guesses whether to use from_id or from_name based
+        on the possible types `value`.
+        """
+        try:
+            object_type_id = int(value)
+            object_type_name = None
+        except ValueError:
+            object_type_id = None
+            object_type_name = value
+        if object_type_id:
+            return cls.from_id(object_type_id)
+        else:
+            return cls.from_name(object_type_name)
+
     def to_database(self) -> int:
         """Add object_type record to the database."""
         data = self.to_dict()
@@ -161,6 +169,12 @@ class ObjectType(Record):
     def remove(cls, object_type_id: int) -> None:
         """Purge the object_type record for `object_type_id`."""
         execute(_REMOVE_OBJECT_TYPE, object_type_id=object_type_id)
+
+    @classmethod
+    def select(cls, **options) -> List[ObjectType]:
+        """Select all records."""
+        records = object_type.select(set_index=False, **options)
+        return [cls(**fields) for fields in records.to_dict(orient='records')]
 
 
 class ObjectNotFound(RecordNotFound):
@@ -329,6 +343,11 @@ class Object(Record):
         return cls._from_unique(object, 'object_id', object_id, interface)
 
     @classmethod
+    def from_name(cls, object_name: str, interface: Interface = None) -> Object:
+        """Get object record from `object_name`."""
+        return cls._from_unique(object, 'object_name', object_name, interface)
+
+    @classmethod
     def from_alias(cls, interface: Interface = None, **key) -> Object:
         """Get object record from `object_type_name`."""
         if len(key) != 1:
@@ -342,6 +361,23 @@ class Object(Record):
             raise ObjectNotFound(f'alias {key_}={value_}')
         (record, ) = records
         return cls.from_dict(dict(zip(cls._fields, record)))
+
+    @classmethod
+    def from_id_or_name(cls, value: str) -> Object:
+        """
+        Smart factory guesses whether to use from_id or from_name based
+        on the possible types `value`.
+        """
+        try:
+            object_id = int(value)
+            object_name = None
+        except ValueError:
+            object_id = None
+            object_name = value
+        if object_id:
+            return cls.from_id(object_id)
+        else:
+            return cls.from_name(object_name)
 
     def to_database(self) -> int:
         """Add object record to the database."""
@@ -383,6 +419,12 @@ class Object(Record):
     def remove(cls, object_id: int) -> None:
         """Purge the object record for `object_id`."""
         execute(_REMOVE_OBJECT, object_id=object_id)
+
+    @classmethod
+    def select(cls, **options) -> List[Object]:
+        """Select all records."""
+        records = object.select(set_index=False, **options)
+        return [cls(**fields) for fields in records.to_dict(orient='records')]
 
 
 class SourceTypeNotFound(RecordNotFound):
@@ -475,7 +517,7 @@ class SourceType(Record):
         return cls._from_unique(source_type, 'source_type_id', source_type_id, interface)
 
     @classmethod
-    def from_name(cls, source_type_name: int, interface: Interface = None) -> SourceType:
+    def from_name(cls, source_type_name: str, interface: Interface = None) -> SourceType:
         """Get source_type record from `source_type_name`."""
         return cls._from_unique(source_type, 'source_type_name', source_type_name, interface)
 
@@ -958,6 +1000,13 @@ class Observation(Record):
         """Get observation record from `observation_id`."""
         return cls._from_unique(observation, 'observation_id', observation_id, interface)
 
+    def embed(self) -> Dict[str, Any]:
+        """Like to_dict but converts some fields to be JSON-serializable."""
+        data = self.to_dict()
+        data['observation_time'] = str(data['observation_time'])
+        data['observation_recorded'] = str(data['observation_recorded'])
+        return data
+
     def to_database(self) -> int:
         """Add observation record to the database."""
         data = self.to_dict()
@@ -974,6 +1023,12 @@ class Observation(Record):
     def remove(cls, observation_id: int) -> None:
         """Purge the observation record for `observation_id`."""
         execute(_REMOVE_OBSERVATION, observation_id=observation_id)
+
+    @classmethod
+    def select(cls, **options) -> List[Observation]:
+        """Select all records."""
+        records = observation.select(set_index=False, **options)
+        return [cls(**fields) for fields in records.to_dict(orient='records')]
 
 
 class AlertNotFound(RecordNotFound):
