@@ -38,6 +38,8 @@ keras = ">=2.4.3"
 pyarrow = ">=1.0.0"
 feather-format = ">=0.4.1"
 refitt = {editable = true,path = "."}
+matplotlib = ">=3.3.2"
+seaborn = ">=0.11.0"
 
 [requires]
 python_version = "3.8.5"
