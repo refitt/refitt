@@ -92,16 +92,18 @@ class AntaresAlert(AlertInterface):
     @property
     @lru_cache(maxsize=None)
     def newest_alert(self) -> dict:
-        for alert_id in self.data['alert_history']:
-            if alert_id == self.newest_alert_id:
-                return self.data['alert_history'][alert_id]
+        # FIXME: this implementation reflects the old dictionary structure,
+        #        we can have this just pull the first item from the list instead
+        for alert_data in self.data['alert_history']:
+            if alert_data['alert_id'] == self.newest_alert_id:
+                return alert_data
         else:
             raise KeyError(f'{self.newest_alert_id} not found in alert history')
 
     @property
     @lru_cache(maxsize=None)
     def ztf_fid(self) -> int:
-        return int(self.newest_alert['ztf_fid'])
+        return int(self.newest_alert['properties']['ztf_fid'])
 
     @property
     def observation_type_name(self) -> str:
@@ -112,11 +114,11 @@ class AntaresAlert(AlertInterface):
 
     @property
     def observation_value(self) -> float:
-        return float(self.newest_alert['ztf_magpsf'])
+        return float(self.newest_alert['properties']['ztf_magpsf'])
 
     @property
     def observation_error(self) -> float:
-        return float(self.newest_alert['ztf_sigmapsf'])
+        return float(self.newest_alert['properties']['ztf_sigmapsf'])
 
     @property
     def observation_time(self) -> datetime:
