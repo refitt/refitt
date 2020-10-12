@@ -40,11 +40,17 @@ class AntaresAlert(AlertInterface):
     @classmethod
     def from_locus(cls, locus: Locus) -> AntaresAlert:
         """Extract new pseudo-schema from existing `locus`."""
-        data = {'locus_id': locus.locus_id, 'ra': locus.ra, 'dec': locus.dec,
+        data = {'locus_id': locus.locus_id,
+                'ra': locus.ra,
+                'dec': locus.dec,
                 'properties': locus.properties,
-                'alert_history': {alert.alert_id: alert.properties
-                                  for alert in reversed(sorted(locus.alerts, key=(lambda alert: alert.mjd)))}}
-        data['new_alert'] = data['alert_history'][data['properties']['newest_alert_id']]
+                'alert_history': [{'alert_id': alert.alert_id,
+                                   'mjd': alert.mjd,
+                                   'ra': locus.ra,
+                                   'dec': locus.dec,
+                                   'properties': alert.properties}
+                                  for alert in reversed(sorted(locus.alerts, key=(lambda alert: alert.mjd)))]}
+        data['new_alert'] = data['alert_history'][0] # NOTE: sorting is most recent first
         return cls.from_dict(data)
 
     @property
