@@ -69,12 +69,12 @@ class Service:
                 self.process.send_signal(SIGINT)
                 self.process.wait(timeout=float(VARS['DAEMON_INTERRUPT_TIMEOUT']))
         except TimeoutExpired:
-            log.error('interrupt failed for "{self.name}" (pid={self.pid}) - terminating now!')
+            log.error(f'interrupt failed for "{self.name}" (pid={self.pid}) - terminating now!')
             try:
                 self.process.terminate()
                 self.process.wait(timeout=float(VARS['DAEMON_INTERRUPT_TIMEOUT']))
             except TimeoutExpired:
-                log.critical('terminate failed for "{self.name}" (pid={self.pid})!')
+                log.critical(f'terminate failed for "{self.name}" (pid={self.pid})!')
         finally:
             self.unlock()
 
