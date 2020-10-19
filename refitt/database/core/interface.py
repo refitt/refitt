@@ -216,6 +216,84 @@ JOIN
 """
 
 
+_FOREIGN_KEYS = {
+    'observation': {
+        'object_type': [
+        ],
+        'object': [
+            ('observation', 'object_type', 'object_type_id'),
+            ],
+        'source_type': [
+        ],
+        'source': [
+            ('observation', 'source_type', 'source_type_id'),
+            ('profile', 'facility', 'facility_id'),
+            ('profile', 'user', 'user_id')],
+        'observation_type': [
+        ],
+        'observation': [
+            ('observation', 'object', 'object_id'),
+            ('observation', 'source', 'source_id'),
+            ('observation', 'observation_type', 'observation_type_id')
+        ],
+        'alert': [
+            ('observation', 'observation', 'observation_id'),
+        ],
+        'file': [
+            ('observation', 'observation', 'observation_id'),
+        ]
+    },
+    'recommendation': {
+        'recommendation_group': [
+        ],
+        'recommendation': [
+            ('recommendation', 'recommendation_group', 'recommendation_group_id'),
+            ('profile', 'facility', 'facility_id'),
+            ('profile', 'user', 'user_id'),
+            ('observation', 'object', 'object_id'),
+            ('observation', 'observation_type', 'observation_type_id')
+            # observation keys not joinable
+        ],
+    },
+    'message': {
+        'host': [],
+        'level': [],
+        'topic': [],
+        'consumer': [],
+        'server': [
+            ('message', 'host', 'host_id')
+        ],
+        'access': [
+            ('message', 'consumer', 'consumer_id'),
+            ('message', 'topic', 'topic_id'),
+            ('message', 'message', 'message_id')
+        ],
+        'message': [
+            ('message', 'topic', 'topic_id'),
+            ('message', 'level', 'level_id'),
+            ('message', 'host', 'host_id')
+        ]
+    },
+    'model': {
+        'model_type': [],
+        'model': [('model', 'model_type', 'model_type_id')]
+    },
+    'profile': {
+        # profiles not joinable
+        'user': [],
+        'facility': [],
+        'facility_map': []
+    },
+    'auth': {
+        'client': [
+            ('profile', 'user', 'user_id')
+        ],
+        'access': [
+            ('auth', 'client', 'client_id')
+        ]
+    },
+}
+
 def _make_select(columns: List[str], schema: str, table: str, where: List[str] = None,
                  limit: int = None, orderby: str = None, ascending: bool = True,
                  join: bool = False) -> str:
@@ -228,18 +306,19 @@ def _make_select(columns: List[str], schema: str, table: str, where: List[str] =
     query = _SELECT_TEMPLATE.format(columns=columns, schema=schema, table=table)
 
     if join:
-        fkeys = _select(_FIND_FOREIGN_KEYS, schema=schema, table=table).drop_duplicates()
-        for _, fkey in fkeys.iterrows():
-            foreign_table_columns = get_columns(fkey.foreign_table_schema, fkey.foreign_table_name)
-            alternate = fkey.foreign_column_name.replace('_id', '_name')
-            if alternate in foreign_table_columns:
-                query = query.replace(f'"{table}"."{fkey.column_name}"',
-                                      f'"{fkey.foreign_table_name}"."{alternate}" AS "{alternate}"')
-                query = query + _JOIN_TEMPLATE.format(foreign_schema=fkey.foreign_table_schema,
-                                                      foreign_table=fkey.foreign_table_name,
-                                                      foreign_column=fkey.foreign_column_name,
-                                                      table=fkey.table_name,
-                                                      column=fkey.column_name)
+        # fkeys = _select(_FIND_FOREIGN_KEYS, schema=schema, table=table).drop_duplicates()
+        # for _, fkey in fkeys.iterrows():
+        for f_schema, f_table, f_column in _FOREIGN_KEYS[schema][table]:
+            f_columns = get_columns(f_schema, f_table)
+            alternate = f_column.replace('_id', '_name')
+            if alternate in f_columns:
+                query = query.replace(f'"{table}"."{f_column}"',
+                                      f'"{f_table}"."{alternate}" AS "{alternate}"')
+                query = query + _JOIN_TEMPLATE.format(foreign_schema=f_schema,
+                                                      foreign_table=f_table,
+                                                      foreign_column=f_column,
+                                                      table=table,
+                                                      column=f_column)
     if where:
         query += '\nWHERE\n    ' + '\n    AND '.join(where)
 
