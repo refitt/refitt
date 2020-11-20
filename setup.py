@@ -13,27 +13,32 @@
 """Setup and installation script for refitt."""
 
 # standard libs
+import re
 from setuptools import setup, find_packages
 
-# metadata
-from refitt.__meta__ import (__appname__, __version__,
-                             __contact__, __license__, __description__,
-                             __keywords__, __website__, __developer__)
 
-
+# get long description from README.rst
 with open('README.rst', mode='r') as readme:
     long_description = readme.read()
 
 
+# get package metadata by parsing __meta__ module
+with open('refitt/__meta__.py', mode='r') as source:
+    content = source.read().strip()
+    metadata = {key: re.search(key + r'\s*=\s*[\'"]([^\'"]*)[\'"]', content).group(1)
+                for key in ['__appname__', '__version__', '__developer__', '__contact__',
+                            '__description__', '__license__', '__keywords__', '__website__']}
+
+
 setup(
-    name                 = __appname__,
-    version              = __version__,
-    author               = __developer__,
-    author_email         = __contact__,
-    description          = __description__,
-    license              = __license__,
-    keywords             = __keywords__,
-    url                  = __website__,
+    name                 = metadata['__appname__'],
+    version              = metadata['__version__'],
+    author               = metadata['__developer__'],
+    author_email         = metadata['__contact__'],
+    description          = metadata['__description__'],
+    license              = metadata['__license__'],
+    keywords             = metadata['__keywords__'],
+    url                  = metadata['__website__'],
     packages             = find_packages(),
     include_package_data = True,  # see MANIFEST.in
     long_description     = long_description,
