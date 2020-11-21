@@ -20,7 +20,7 @@ __authors__     = ['Dan Milisavljevic, Ph.D. <dmilisav@purdue.edu>',
                    'Geoffrey Lentner, M.Sc. <glentner@purdue.edu>',
                    'Mark Linvill <mlinvill@purdue.edu>']
 __developer__   = 'Geoffrey Lentner'
-__contact__     = '<glentner@purdue.edu>'
+__contact__     = 'glentner@purdue.edu'
 __license__     = 'Apache License 2.0'
 __website__     = 'https://github.com/refitt/refitt'
 __copyright__   = 'REFITT Team 2019'
