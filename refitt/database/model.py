@@ -334,7 +334,7 @@ class FacilityMap(Base, CoreMixin):
 
 # New credentials will be initialized with this level unless
 # otherwise specified
-DEFAULT_CLIENT_LEVEL: int = 5
+DEFAULT_CLIENT_LEVEL: int = 10
 
 
 class Client(Base, CoreMixin):
