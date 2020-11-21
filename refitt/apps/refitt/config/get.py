@@ -12,41 +12,31 @@
 
 """Get variable from configuration file."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import Mapping, Any
 
 # standard libs
 import os
-import functools
+import logging
+from functools import partial
 
 # internal libs
-from ....core.config import get_site, expand_parameters
-from ....core.exceptions import log_and_exit
-from ....core.logging import Logger
-from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
+from ....core.config import SITE, PATH
+from ....core.exceptions import log_exception
 
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
+from cmdkit.config import Namespace, ConfigurationError
 import toml
 
 
-# program name is constructed from module file name
-PROGRAM = f'{__appname__} config get'
-PADDING = ' ' * len(PROGRAM)
-
+PROGRAM = 'refitt config get'
 USAGE = f"""\
-usage: {PROGRAM} SECTION[...].VAR [--system | --user | --site] [--help]
+usage: {PROGRAM} [-h] SECTION[...].VAR [--system | --user | --local]
 {__doc__}\
-"""
-
-EPILOG = f"""\
-Documentation and issue tracking at:
-{__website__}
-
-Copyright {__copyright__}
-{__developer__} {__contact__}.\
 """
 
 HELP = f"""\
@@ -56,32 +46,30 @@ arguments:
 SECTION[...].VAR          Path to variable.
 
 options:
-    --system              Apply to system configuration.
-    --user                Apply to user configuration.
-    --site                Apply to local configuration.
--h, --help                Show this message and exit.
-
-{EPILOG}
+    --system              Load from system configuration.
+    --user                Load from user configuration.
+    --local               Load from local configuration.
+-h, --help                Show this message and exit.\
 """
 
 
-# initialize module level logger
-log = Logger(__name__)
+# application logger
+log = logging.getLogger('refitt')
 
 
-class Get(Application):
-    """Get variable from configuration file."""
+class GetConfigApp(Application):
+    """Application class for config get command."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
     varpath: str = None
     interface.add_argument('varpath', metavar='VAR')
 
-    site: bool = False
+    local: bool = False
     user: bool = False
     system: bool = False
     site_interface = interface.add_mutually_exclusive_group()
-    site_interface.add_argument('--site', action='store_true')
+    site_interface.add_argument('--local', action='store_true')
     site_interface.add_argument('--user', action='store_true')
     site_interface.add_argument('--system', action='store_true')
 
@@ -89,23 +77,24 @@ class Get(Application):
     interface.add_argument('-x', '--expand', action='store_true')
 
     exceptions = {
-        RuntimeError: functools.partial(log_and_exit, logger=log.critical,
-                                        status=exit_status.runtime_error),
+        RuntimeError: partial(log_exception, logger=log.critical,
+                              status=exit_status.runtime_error),
+        ConfigurationError: partial(log_exception, logger=log.critical,
+                                    status=exit_status.bad_config),
     }
 
     def run(self) -> None:
-        """Run init task."""
+        """Business logic for `refitt config get`."""
 
-        config_path = get_site()['cfg']
-        for key in ('site', 'user', 'system'):
-            if getattr(self, key) is True:
-                config_path = get_site(key)['cfg']
+        path = PATH[SITE].config
+        for site in ('local', 'user', 'system'):
+            if getattr(self, site) is True:
+                path = PATH[site].config
 
-        if not os.path.exists(config_path):
-            raise RuntimeError(f'{config_path} does not exist')
+        if not os.path.exists(path):
+            raise RuntimeError(f'{path} does not exist')
 
-        with open(config_path, mode='r') as config_file:
-            config = toml.load(config_file)
+        config = Namespace.from_local(path)
 
         if self.varpath == '.':
             self.print_result(config)
@@ -116,7 +105,7 @@ class Get(Application):
                 self.print_result(config[self.varpath])
                 return
             else:
-                raise RuntimeError(f'"{self.varpath}" not found in {config_path}')
+                raise RuntimeError(f'"{self.varpath}" not found in {path}')
 
         if self.varpath.startswith('.'):
             raise RuntimeError(f'section name cannot start with "."')
@@ -132,30 +121,29 @@ class Get(Application):
                 for subsection in subsections:
                     subpath += f'.{subsection}'
                     if not isinstance(config_section[subsection], Mapping):
-                        raise RuntimeError(f'"{subpath}" not a section in {config_path}')
+                        raise RuntimeError(f'"{subpath}" not a section in {path}')
                     else:
                         config_section = config_section[subsection]
             except KeyError as error:
-                raise RuntimeError(f'"{subpath}" not found in {config_path}') from error
+                raise RuntimeError(f'"{subpath}" not found in {path}') from error
 
         if self.expand:
             try:
-                value = expand_parameters(variable, config_section)
+                value = getattr(config_section, variable)
             except ValueError as error:
                 raise RuntimeError(*error.args) from error
             if value is None:
-                raise RuntimeError(f'"{variable}" not found in {config_path}')
+                raise RuntimeError(f'"{variable}" not found in {path}')
             self.print_result(value)
             return
 
         if variable not in config_section:
-            raise RuntimeError(f'"{self.varpath}" not found in {config_path}')
+            raise RuntimeError(f'"{self.varpath}" not found in {path}')
 
         self.print_result(config_section[variable])
 
     def print_result(self, value: Any) -> None:
         """Print the final result."""
-        # FIXME: why toml adds the quotes?!
         if isinstance(value, Mapping):
             if self.varpath == '.':
                 value = toml.dumps(value)

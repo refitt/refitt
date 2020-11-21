@@ -178,7 +178,7 @@ class Insert(Application):
         data = reader(self.infile)
 
         log.info(f'inserting {len(data)} records into "{schema}"."{table}"')
-        database.insert(data, schema, table)
+        data.insert(data, schema, table)
 
     def __enter__(self) -> Insert:
         """Initialize resources."""

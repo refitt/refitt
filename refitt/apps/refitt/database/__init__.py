@@ -10,87 +10,43 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Query and manage database."""
+"""Manage database."""
 
-# standard libs
-import sys
-
-# internal libs
-from ....core.logging import Logger
-from ....core.exceptions import CompletedCommand
-from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
-from cmdkit.app import Application
-from cmdkit.cli import Interface, ArgumentError
+from cmdkit.app import ApplicationGroup
+from cmdkit.cli import Interface
 
-# commands
-from .init import Init
-from .select import Select
-from .insert import Insert
+# internal libs
+from . import init, check
 
 
-COMMANDS = {
-    'init':   Init,
-    'select': Select,
-    'insert': Insert,
-}
-
-PROGRAM = f'{__appname__} database'
-PADDING = ' ' * len(PROGRAM)
-
+PROGRAM = 'refitt database'
 USAGE = f"""\
-usage: {PROGRAM} [--help] <command> [<args>...]
+usage: {PROGRAM} [-h] <command> [<args>...]
 {__doc__}\
-"""
-
-EPILOG = f"""\
-Documentation and issue tracking at:
-{__website__}
-
-Copyright {__copyright__}
-{__developer__} {__contact__}.\
 """
 
 HELP = f"""\
 {USAGE}
 
 commands:
-init                   {Init.__doc__}
-select                 {Select.__doc__}
-insert                 {Insert.__doc__}
+init                     {init.__doc__}
+check                    {check.__doc__}
 
 options:
--h, --help             Show this message and exit.
+-h, --help               Show this message and exit.
 
 Use the -h/--help flag with the above groups/commands to
-learn more about their usage.
-
-{EPILOG}\
+learn more about their usage.\
 """
 
-
-# initialize module level logger
-log = Logger(__name__)
-
-
-class DatabaseGroup(Application):
-    """Query and manage database."""
+class DatabaseApp(ApplicationGroup):
+    """Application class for database command group."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
-
-    command: str = None
     interface.add_argument('command')
 
-    exceptions = {
-        CompletedCommand: (lambda exc: int(exc.args[0])),
-    }
-
-    def run(self) -> None:
-        """Show usage/help/version or defer to command."""
-
-        if self.command in COMMANDS:
-            status = COMMANDS[self.command].main(sys.argv[3:])
-            raise CompletedCommand(status)
-        else:
-            raise ArgumentError(f'"{self.command}" is not a command.')
+    command = None
+    commands = {'init': init.InitDatabaseApp,
+                'check': check.CheckDatabaseApp, }

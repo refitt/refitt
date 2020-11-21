@@ -10,49 +10,27 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Entry-point for refitt command line interface."""
+"""Entry-point for refitt command-line interface."""
+
 
 # standard libs
 import sys
+import logging
 
 # internal libs
-from ...core.logging import Logger
-from ...core.exceptions import CompletedCommand
-from ...__meta__ import (__appname__, __version__, __description__,
+from ...__meta__ import (__version__, __description__,
                          __copyright__, __developer__, __contact__,
                          __website__, __ascii_art__)
+from . import config, database
 
 # external libs
-from cmdkit import logging as _cmdkit_logging
-from cmdkit.app import Application
-from cmdkit.cli import Interface, ArgumentError
-
-# command groups
-from .pipeline import PipelineGroup
-from .service import ServiceGroup
-from .database import DatabaseGroup
-from .profile import ProfileGroup
-from .notify import NotifyGroup
-from .config import ConfigGroup
-from .auth import AuthGroup
+from cmdkit.app import Application, ApplicationGroup
+from cmdkit.cli import Interface
 
 
-GROUPS = {
-    'pipeline': PipelineGroup,
-    'database': DatabaseGroup,
-    'service':  ServiceGroup,
-    'profile':  ProfileGroup,
-    'notify':   NotifyGroup,
-    'config':   ConfigGroup,
-    'auth':     AuthGroup,
-}
-
-PROGRAM = __appname__
-
+PROGRAM = 'refitt'
 USAGE = f"""\
-usage: {PROGRAM} <group> <command>... [<args>...]
-       {PROGRAM} [--help] [--version]
-
+usage: {PROGRAM} [-h] [-v] <command> [<args>...]
 {__description__}\
 """
 
@@ -61,65 +39,54 @@ Documentation and issue tracking at:
 {__website__}
 
 Copyright {__copyright__}
-{__developer__} {__contact__}.\
+{__developer__} <{__contact__}>\
 """
 
 HELP = f"""\
 {USAGE}
 
-groups:
-pipeline               {PipelineGroup.__doc__}
-database               {DatabaseGroup.__doc__}
-service                {ServiceGroup.__doc__}
-profile                {ProfileGroup.__doc__}
-notify                 {NotifyGroup.__doc__}
-config                 {ConfigGroup.__doc__}
-auth                   {AuthGroup.__doc__}
+commands:
+config                 {config.__doc__}
+database               {database.__doc__}
+pipeline               ...
+service                ...
+profile                ...
+notify                 ...
+auth                   ...
 
 options:
 -h, --help             Show this message and exit.
 -v, --version          Show the version and exit.
 
-Use the -h/--help flag with the above groups/commands to
+Use the -h/--help flag with the above commands to
 learn more about their usage.
 
 {EPILOG}\
 """
 
 
-# initialize module level logger
-log = Logger(__name__)
+# initialize application logger
+log = logging.getLogger('refitt')
 
 
-# inject logger back into cmdkit library
-_cmdkit_logging.log = log
-Application.log_error = log.critical
+# logging setup for command-line interface
+Application.log_critical = log.critical
+Application.log_exception = log.exception
 
 
-class Refitt(Application):
-    """Application class for primary Refitt console-app."""
+class RefittApp(ApplicationGroup):
+    """Top-level application class for Refitt."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
-    interface.add_argument('-v', '--version', version=__version__, action='version')
-    interface.add_argument('--ascii-art', version=__ascii_art__, action='version')
+    interface.add_argument('command')
+    interface.add_argument('-v', '--version', action='version', version=__version__)
+    interface.add_argument('--ascii-art', action='version', version=__ascii_art__)
 
-    group: str = None
-    interface.add_argument('group')
-
-    exceptions = {
-        CompletedCommand: (lambda exc: int(exc.args[0])),
-    }
-
-    def run(self) -> None:
-        """Show usage/help/version or defer to group."""
-
-        if self.group in GROUPS:
-            status = GROUPS[self.group].main(sys.argv[2:3])  # only the sub-command if present
-            raise CompletedCommand(status)
-        else:
-            raise ArgumentError(f'"{self.group}" is not a command group.')
+    command = None
+    commands = {'config': config.ConfigApp,
+                'database': database.DatabaseApp, }
 
 
 def main() -> int:
-    """Entry-point for refitt command line interface."""
-    return Refitt.main(sys.argv[1:2])  # only the group if present
+    """Entry-point for `refitt` console application."""
+    return RefittApp.main(sys.argv[1:])  # only first argument if present

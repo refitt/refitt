@@ -12,40 +12,30 @@
 
 """Edit configuration file."""
 
+
 # type annotations
 from __future__ import annotations
 
 # standard libs
 import os
-import functools
-import subprocess
+import logging
+from functools import partial
+from subprocess import run
 
-# internal libs
-from ....core.config import get_site, init_config
-from ....core.exceptions import log_and_exit
-from ....core.logging import Logger
-from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 
+# internal libs
+from ....core.config import SITE, PATH, ConfigurationError
+from ....core.exceptions import log_exception
 
-# program name is constructed from module file name
-PROGRAM = f'{__appname__} config edit'
-PADDING = ' ' * len(PROGRAM)
 
+PROGRAM = 'refitt config edit'
 USAGE = f"""\
-usage: {PROGRAM} {{--system | --user | --site}} [--help]
+usage: {PROGRAM} [-h] [--system | --user | --local]
 {__doc__}\
-"""
-
-EPILOG = f"""\
-Documentation and issue tracking at:
-{__website__}
-
-Copyright {__copyright__}
-{__developer__} {__contact__}.\
 """
 
 HELP = f"""\
@@ -57,50 +47,50 @@ options:
     --system         Edit system configuration.
     --user           Edit user configuration.
     --site           Edit local configuration.
--h, --help           Show this message and exit.
-
-{EPILOG}
+-h, --help           Show this message and exit.\
 """
 
 
-# initialize module level logger
-log = Logger(__name__)
+# application logger
+log = logging.getLogger('refitt')
 
 
-class Edit(Application):
-    """Edit configuration file."""
+class EditConfigApp(Application):
+    """Application class for config edit command."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
-    site: bool = False
+    local: bool = False
     user: bool = False
     system: bool = False
     site_interface = interface.add_mutually_exclusive_group()
-    site_interface.add_argument('--site', action='store_true')
+    site_interface.add_argument('--local', action='store_true')
     site_interface.add_argument('--user', action='store_true')
     site_interface.add_argument('--system', action='store_true')
 
     exceptions = {
-        RuntimeError: functools.partial(log_and_exit, logger=log.critical,
-                                        status=exit_status.runtime_error),
+        RuntimeError: partial(log_exception, logger=log.critical,
+                              status=exit_status.runtime_error),
+        ConfigurationError: partial(log_exception, logger=log.critical,
+                                    status=exit_status.bad_config),
     }
 
     def run(self) -> None:
         """Open editor for configuration."""
 
-        site = None
-        config_path = None
-        for key in ('site', 'user', 'system'):
+        site = SITE
+        path = PATH[site].config
+        for key in ('local', 'user', 'system'):
             if getattr(self, key) is True:
-                config_path = get_site(key)['cfg']
                 site = key
+                path = PATH[site].config
 
-        if not os.path.exists(config_path):
-            log.info(f'{config_path} does not exist - initializing')
-            init_config(site)
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname, exist_ok=True)
 
         if 'EDITOR' not in os.environ:
             raise RuntimeError('EDITOR must be set')
 
         editor = os.environ['EDITOR']
-        subprocess.run([editor, config_path])
+        run([editor, path])

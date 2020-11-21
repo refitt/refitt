@@ -224,11 +224,11 @@ class Select(Application):
                       orderby=self.order_by, ascending=(not self.descending), join=self.join)
 
         if self.dry_run:
-            sys.stdout.write(database.core.interface._make_select(**params))  # noqa (protected member)
+            sys.stdout.write(data.core.interface._make_select(**params))  # noqa (protected member)
             return
 
         # fetch all records
-        data = database.select(set_index=False, **params)
+        data = data.select(set_index=False, **params)
 
         # determine writer method
         if self.output_format == 'ascii':
