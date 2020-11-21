@@ -17,7 +17,11 @@ This package provides access to the library of applications, tools, and
 services within the REFITT system.
 """
 
-# pylint: disable=W0611
-from .__meta__ import (__appname__, __version__, __authors__,
-                       __contact__, __license__,
+
+from .__meta__ import (__appname__, __version__, __authors__, __contact__, __license__,
                        __copyright__, __description__)
+
+
+# force logging import triggers configuration and logging setup
+from .core.config import config
+from .core import logging
