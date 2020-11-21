@@ -14,7 +14,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Callable
+from typing import Dict, Type, Callable
 
 # standard libs
 import json
@@ -24,12 +24,9 @@ from functools import wraps
 from flask import Response
 
 # internal libs
-from .exceptions import DataNotFound, BadData, AuthorizationNotFound, AuthorizationInvalid, PermissionDenied
-from ...database.profile import UserNotFound, FacilityNotFound
-from ...database.recommendation import RecommendationNotFound
-from ...database.observation import ObjectTypeNotFound, ObjectNotFound
-from ...database.auth import (TokenNotFound, TokenInvalid, TokenExpired,
-                              ClientInvalid, ClientInsufficient, ClientNotFound)
+from ...database.model import NotFound
+from ..token import TokenNotFound, TokenInvalid, TokenExpired
+from .auth import AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
 
 
 # NOTE: codes and notes from Wikipedia (2020-05-08)
@@ -52,7 +49,26 @@ STATUS = {
 }
 
 
-def restful(route: Callable[..., dict]) -> Callable[[...], dict]:
+class WebException(Exception):
+    """Generic to miscellaneous web exceptions."""
+
+class PayloadTooLarge(WebException):
+    """The requested or posted data was too big."""
+
+
+RESPONSE_MAP: Dict[Type[Exception], int] = {
+    TokenNotFound:            STATUS['Bad Request'],
+    AuthenticationNotFound:   STATUS['Bad Request'],
+    TokenInvalid:             STATUS['Forbidden'],
+    AuthenticationInvalid:    STATUS['Forbidden'],
+    PermissionDenied:         STATUS['Unauthorized'],
+    NotFound:                 STATUS['Not Found'],
+    NotImplementedError:      STATUS['Not Implemented'],
+    PayloadTooLarge:          STATUS['Payload Too Large'],
+}
+
+
+def endpoint(route: Callable[..., dict]) -> Callable[[...], dict]:
     """Format response."""
 
     @wraps(route)
@@ -61,68 +77,15 @@ def restful(route: Callable[..., dict]) -> Callable[[...], dict]:
         response = {'status': 'success'}
         try:
             response['response'] = route(*args, **kwargs)
-
-        except (TokenNotFound, AuthorizationNotFound, DataNotFound, BadData) as error:
-            status = STATUS['Bad Request']
-            response['status'] = 'error'
-            response['message'] = f'bad request: {error.args[0]}'
-
-        except TokenInvalid:
-            status = STATUS['Unauthorized']
-            response['status'] = 'error'
-            response['message'] = f'unauthorized: invalid token'
-
-        except (TokenExpired, ClientNotFound) as error:
-            status = STATUS['Unauthorized']
-            response['status'] = 'error'
-            response['message'] = f'unauthorized: {error.args[0]}'
-
-        except (ClientInvalid, ClientInsufficient, AuthorizationInvalid, PermissionDenied) as error:
-            status = STATUS['Forbidden']
-            response['status'] = 'error'
-            response['message'] = f'forbidden: {error.args[0]}'
-
-        except AttributeError as error:
-            status = STATUS['Bad Request']
-            response['status'] = 'error'
-            response['message'] = str(error)
-
-        except UserNotFound:
-            status = STATUS['Not Found']
-            response['status'] = 'error'
-            response['message'] = f'user not found'
-
-        except FacilityNotFound:
-            status = STATUS['Not Found']
-            response['status'] = 'error'
-            response['message'] = f'facility not found'
-
-        except RecommendationNotFound:
-            status = STATUS['Not Found']
-            response['status'] = 'error'
-            response['message'] = f'recommendation not found'
-
-        except ObjectTypeNotFound:
-            status = STATUS['Not Found']
-            response['status'] = 'error'
-            response['message'] = f'object type not found'
-
-        except ObjectNotFound:
-            status = STATUS['Not Found']
-            response['status'] = 'error'
-            response['message'] = f'object not found'
-
-        except NotImplementedError:
-            status = STATUS['Not Implemented']
-            response['status'] = 'error'
-            response['message'] = 'not implemented'
-
-        except Exception as error:  # noqa
-            status = STATUS['Internal Server Error']
-            message = str(error)
-            response['status'] = 'critical'
-            response['message'] = f'internal server error: {message}'
-
+        except Exception as error:
+            if type(error) in RESPONSE_MAP:
+                response['status'] = 'error'
+                response['message'] = str(error)
+                status = RESPONSE_MAP[type(error)]
+            else:
+                response['status'] = 'critical'
+                response['message'] = str(error)
+                status = STATUS['Internal Server Error']
         finally:
             return Response(json.dumps(response), status=status,
                             mimetype='application/json')

@@ -10,36 +10,66 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""REFITT's REST-API authentication/authorization."""
+"""Authentication and Authorization decorators."""
+
 
 # type annotations
+from __future__ import annotations
 from typing import Callable
 
 # standard libs
-from functools import wraps
+import logging
+import functools
 from datetime import datetime
 
 # external libs
 from flask import request
 
 # internal libs
-from .exceptions import AuthorizationNotFound, AuthorizationInvalid
-from ...database.auth import (Secret, JWT, Client, TokenExpired, TokenNotFound,
-                              ClientInsufficient, ClientInvalid)
+from ...database.model import Client
+from ..token import Secret, JWT, AuthError, TokenNotFound, TokenExpired
+
+
+# initialize module level logger
+log = logging.getLogger(__name__)
+
+
+class ClientNotFound(AuthError):
+    """The client credentials were not found."""
+
+
+class ClientInvalid(AuthError):
+    """The client credentials have been invalidated."""
+
+
+class ClientInsufficient(AuthError):
+    """The client authorization level is too low."""
+
+
+class AuthenticationNotFound(AuthError):
+    """Missing key:secret in authorization."""
+
+
+class AuthenticationInvalid(AuthError):
+    """Secret did not match expected value."""
+
+
+class PermissionDenied(AuthError):
+    """Action not permitted for current user/level."""
 
 
 def authenticate(route: Callable[[Client], dict]) -> Callable[[Client], dict]:
     """Check key:secret authorization in request."""
 
-    @wraps(route)
+    @functools.wraps(route)
     def get_client() -> dict:
         """Lookup/validate credentials and pass to route."""
         if not request.authorization:
-            raise AuthorizationNotFound('expected key:secret authorization')
+            raise AuthenticationNotFound('Missing key:secret in request')
         client = Client.from_key(request.authorization.username)
         secret = Secret(request.authorization.password)
-        if secret != client.client_secret:
-            raise AuthorizationInvalid('client secret was invalid')
+        if secret != client.secret:
+            raise AuthenticationInvalid('Client secret was invalid')
         return route(client)
 
     return get_client
@@ -48,19 +78,16 @@ def authenticate(route: Callable[[Client], dict]) -> Callable[[Client], dict]:
 def authenticated(route: Callable[..., dict]) -> Callable[..., dict]:
     """Check `request` headers for valid token."""
 
-    @wraps(route)
+    @functools.wraps(route)
     def get_client(*args, **kwargs) -> dict:
         """Validate token and lookup client credentials."""
-
         header = request.headers.get('Authorization', None)
         prefix = 'Bearer '
         if header is None or not header.startswith(prefix):
-            raise TokenNotFound('expected "Authorization: Bearer <token>" in header')
-
+            raise TokenNotFound('Expected "Authorization: Bearer <token>" in header')
         token = JWT.decrypt(header[len(prefix):].strip().encode())
-        if token.exp is not None and datetime.utcnow() > token.exp:
-            raise TokenExpired('token expired')
-
+        if token.exp is not None and datetime.now() > token.exp:
+            raise TokenExpired('Token expired')
         client = Client.from_id(token.sub)
         return route(client, *args, **kwargs)
 
@@ -73,13 +100,15 @@ def authorization(level: int = None) -> Callable:
     def valid(route: Callable[..., dict]) -> Callable[..., dict]:
         """Ensure client is valid."""
 
-        @wraps(route)
+        @functools.wraps(route)
         def check_access(client: Client, *args, **kwargs) -> dict:
-            if not client.client_valid:
-                raise ClientInvalid('access has been revoked')
-            if level is not None and client.client_level > level:
-                raise ClientInsufficient('access level insufficient')
+            if not client.valid:
+                raise PermissionDenied('Access has been revoked')
+            if level is not None and client.level > level:
+                log.info(f'Level was {level}')
+                raise PermissionDenied('Access privilege level insufficient')
             return route(client, *args, **kwargs)
 
         return check_access
+
     return valid

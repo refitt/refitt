@@ -18,7 +18,7 @@ Only relative-paths need be specified and the token-based authentication
 is handled automatically.
 
 Example:
-    >>> from refitt.web import requests
+    >>> from refitt.web import request
     >>> requests.get('recommendation')
     {...}
 

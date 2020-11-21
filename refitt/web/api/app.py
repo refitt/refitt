@@ -10,30 +10,30 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Logging for HTTP requests."""
+"""Initialize Flask application instance."""
+
 
 # type annotations
-from typing import Callable
+from __future__ import annotations
 
 # standard libs
-from functools import wraps
+import json
 
 # external libs
-from flask import request
+from flask import Flask, Response, request
 
 # internal libs
-from ...core.logging import Logger
+from .response import STATUS
 
 
-log = Logger(__name__)
+# flask application
+application = Flask(__name__)
 
 
-def logged(route: Callable[..., dict]) -> Callable[..., dict]:
-    """Log the request."""
-
-    @wraps(route)
-    def logged_(*args, **kwargs) -> dict:
-        log.info(f'{request.method} {request.path}')
-        return route(*args, **kwargs)
-
-    return logged_
+@application.errorhandler(STATUS['Not Found'])
+def not_found() -> Response:
+    """Response to an invalid request."""
+    return Response(json.dumps({'status': 'error',
+                                'message': f'not found: {request.path}'}),
+                    status=STATUS['Not Found'],
+                    mimetype='application/json')
