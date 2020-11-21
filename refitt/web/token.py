@@ -313,4 +313,4 @@ class JWT:
             payload = json.loads(_cipher.decrypt(_token).decode())
             return cls.from_dict(payload)
         except InvalidToken as error:
-            raise TokenInvalid(f'Token invalid: \'{Token(_token.decode())}\'')
+            raise TokenInvalid(f'Token invalid: \'{Token(_token.decode())}\'') from error
