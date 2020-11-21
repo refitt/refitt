@@ -152,7 +152,7 @@ class Mail:
             self._payload_index = other._payload_index
             self._data = other._data
         else:
-            raise TypeError(f'cannot convert {other} to type Email')
+            raise TypeError(f'cannot convert {other} to type Mail')
 
     def _init_constructor(self, from_addr: str, to_addr: ADDR_SPEC, *,
                           subject: str = None, cc: ADDR_SPEC = None, bcc: ADDR_SPEC = None,
