@@ -30,7 +30,7 @@ from sqlalchemy.exc import DatabaseError
 
 PROGRAM = 'refitt database init'
 USAGE = f"""\
-usage: {PROGRAM} [-h] [--drop] [--core] [--test]
+usage: {PROGRAM} [-h] [--drop] [--core | --test]
 {__doc__}\
 """
 
@@ -59,10 +59,10 @@ class InitDatabaseApp(Application):
     interface.add_argument('--drop', action='store_true', dest='drop_tables')
 
     load_coredata: bool = False
-    interface.add_argument('--core', action='store_true', dest='load_coredata')
-
     load_testdata: bool = False
-    interface.add_argument('--test', action='store_true', dest='load_testdata')
+    load_interface = interface.add_mutually_exclusive_group()
+    load_interface.add_argument('--core', action='store_true', dest='load_coredata')
+    load_interface.add_argument('--test', action='store_true', dest='load_testdata')
 
     exceptions = {
         RuntimeError: partial(log_exception, logger=log.critical,
