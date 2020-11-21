@@ -20,13 +20,11 @@ import os
 import re
 import fnmatch
 import functools
-
-# internal libs
-from ..core.logging import Logger
+import logging
 
 
-# module level logger
-log = Logger(__name__)
+# initialize module level logger
+log = logging.getLogger(__name__)
 
 
 # either bytes or str depending on how the file was opened
@@ -96,8 +94,8 @@ def open_asset(relative_path: str, mode: str = 'r', **kwargs) -> IO:
     filepath = os.path.join(dirname, relative_path)
     try:
         return open(filepath, mode=mode, **kwargs)
-    except FileNotFoundError as error:
-        log.error(f'missing /assets/{relative_path}')
+    except FileNotFoundError:
+        log.error(f'Missing /assets/{relative_path}')
         raise
 
 
@@ -124,7 +122,7 @@ def load_asset(relative_path: str, mode: str = 'r', **kwargs) -> FileData:
     """
     with open_asset(relative_path, mode=mode, **kwargs) as source:
         content = source.read()
-        log.debug(f'loaded /assets/{relative_path}')
+        log.debug(f'Loaded /assets/{relative_path}')
         return content
 
 
