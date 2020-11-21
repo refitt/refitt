@@ -1,6 +1,16 @@
 [
   {
     "id": null,
+    "first_name": "Clark",
+    "last_name": "Kent",
+    "email": "clark.kent@dailyplanet.com",
+    "alias": "superman",
+    "data": {
+      "user_type": "super"
+    }
+  },
+  {
+    "id": null,
     "first_name": "Jason",
     "last_name": "Bourne",
     "email": "bourne@cia.gov",
