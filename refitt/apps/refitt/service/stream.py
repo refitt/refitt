@@ -25,7 +25,7 @@ from .... import database
 from ....core.config import config
 from ....core.exceptions import log_and_exit
 from ....core.logging import Logger, cli_setup
-from ....stream.antares import AntaresClient
+from ....broker.antares import AntaresClient
 from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
