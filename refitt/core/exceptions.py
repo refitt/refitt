@@ -10,17 +10,14 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Exception handling."""
+"""Common exceptions and error handling."""
+
 
 # type annotations
 from typing import Callable
 
 
-class CompletedCommand(Exception):
-    """Lift exit_status of sub-commands `main` method."""
-
-
-def log_and_exit(exc: Exception, logger: Callable[[str], None], status: int) -> int:
-    """Log the exception arguments and return with `status`."""
-    logger(' - '.join(exc.args))
+def log_exception(exc: Exception, logger: Callable[[str], None], status: int) -> int:
+    """Log the exception and exit with `status`."""
+    logger(str(exc))
     return status
