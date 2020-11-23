@@ -15,11 +15,12 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union, TypeVar
 
 # standard libs
 import json
 import logging
+from datetime import datetime
 
 # internal libs
 from .. import assets
@@ -43,26 +44,33 @@ def drop_database() -> None:
     Base.metadata.drop_all(engine)
 
 
-def _load_records(base: Base, path: str) -> List[Dict[str, Any]]:
-    return [base(**record) for record in json.loads(assets.load_asset(path))]
+__NT = type(None)
+__VT = TypeVar('__VT', __NT, bool, int, float, str)
+def __coerce_datetime(value: __VT) -> Union[__VT, datetime]:
+    if not isinstance(value, str):
+        return value
+    try:
+        return datetime.strptime(value, '%Y-%m-%d %H:%M:%S%z')
+    except ValueError:
+        return value
 
 
-CORE_REFS = ['user', 'level', 'topic', ]
-def load_coredata() -> None:
-    """Load core dataset records into the database."""
-    log.info('Loading core data')
-    session = Session()
-    for name in CORE_REFS:
-        session.add_all(_load_records(tables[name], f'database/core/{name}.json'))
-        session.commit()
+def __load_records(base: Base, path: str) -> List[Dict[str, Any]]:
+    return [base(**{k: __coerce_datetime(v) for k, v in record.items()})
+            for record in json.loads(assets.load_asset(path))]
 
 
 # NOTE: order matters for foreign key references
-TEST_REFS = ['facility', 'user', 'facility_map', 'client', 'session', ]
-def load_testdata() -> None:
-    """Load test dataset records into the database."""
-    log.info('Loading test data')
+__CORE_REFS = ['user', 'level', 'topic', ]
+__TEST_REFS = ['facility', 'user', 'facility_map', 'client', 'session', ]
+__REFS = {'core': __CORE_REFS, 'test': __TEST_REFS}
+
+
+def load_records(section: str) -> None:
+    """Load stored record assets from `section`."""
+    log.info(f'Loading {section} data')
     session = Session()
-    for name in TEST_REFS:
-        session.add_all(_load_records(tables[name], f'database/test/{name}.json'))
+    for name in __REFS[section]:
+        records = __load_records(tables[name], f'database/{section}/{name}.json')
+        session.add_all(records)
         session.commit()

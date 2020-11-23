@@ -20,7 +20,7 @@ from functools import partial
 # internal libs
 from ....core.config import ConfigurationError
 from ....core.exceptions import log_exception
-from ....database import init_database, drop_database, load_testdata, load_coredata
+from ....database import init_database, drop_database, load_records
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -58,11 +58,11 @@ class InitDatabaseApp(Application):
     drop_tables: bool = False
     interface.add_argument('--drop', action='store_true', dest='drop_tables')
 
-    load_coredata: bool = False
-    load_testdata: bool = False
+    load_core: bool = False
+    load_test: bool = False
     load_interface = interface.add_mutually_exclusive_group()
-    load_interface.add_argument('--core', action='store_true', dest='load_coredata')
-    load_interface.add_argument('--test', action='store_true', dest='load_testdata')
+    load_interface.add_argument('--core', action='store_true', dest='load_core')
+    load_interface.add_argument('--test', action='store_true', dest='load_test')
 
     exceptions = {
         RuntimeError: partial(log_exception, logger=log.critical,
@@ -78,7 +78,7 @@ class InitDatabaseApp(Application):
         if self.drop_tables:
             drop_database()
         init_database()
-        if self.load_coredata:
-            load_coredata()
-        if self.load_testdata:
-            load_testdata()
+        if self.load_core:
+            load_records('core')
+        if self.load_test:
+            load_records('test')
