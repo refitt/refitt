@@ -21,6 +21,7 @@ from typing import List, Dict, Union, Optional
 # standard libs
 import os
 import io
+import logging
 from abc import abstractproperty
 from datetime import datetime
 from smtplib import SMTP
@@ -33,12 +34,9 @@ from email.utils import formatdate
 # external libs
 from pandas import read_csv
 
-# internal libs
-from ...core.logging import Logger
-
 
 # initialize module level logger
-log = Logger(__name__)
+log = logging.getLogger(__name__)
 
 
 class UserAuth:
@@ -99,17 +97,14 @@ FILE_SPEC = Union[str, List[str], Dict[str, str]]
 
 class Mail:
     """
-    Construct and send email messages.
+    Construct and send mail messages.
 
     All the message properties can be dynamically altered and the
     underlying MIME document will be modified inplace.
 
-    Example
-    -------
-
-    Send a basic plain text email.
-    >>> mail = Mail('me@mail.com', 'you@mail.com',
-    ...             subject='Hello!', text='Hello, world!')
+    Example:
+        >>> mail = Mail('me@mail.com', 'you@mail.com',
+        ...             subject='Hello!', text='Hello, world!')
 
     Send an html email with plain text alternative.
     >>> mail = Mail('me@mail.com', ['you@mail.com', 'you2@mail.com'],
@@ -368,18 +363,16 @@ class Server:
     """
     A mail server.
 
-    Example
-    -------
-    >>> server = Server('smtp.mail.com', 587)
-    >>> server
-    Server('smtp.gmail.com', 587)
+    Example:
+        >>> server = Server('smtp.mail.com', 587)
+        >>> server
+        Server('smtp.gmail.com', 587)
 
+        >>> mail = Mail('me@mail.com', 'you@mail.com',
+        ...             subject='Hello!', text='Hello, world!')
 
-    >>> mail = Mail('me@mail.com', 'you@mail.com',
-    ...             subject='Hello!', text='Hello, world!')
-
-    >>> auth = UserAuth('username', 'password')
-    >>> with Server('smtp.mail.com', 587, auth) as server:
+        >>> auth = UserAuth('me', 'my-password')
+        >>> with Server('smtp.mail.com', 587, auth) as server:
     ...     server.send(mail)
     """
 
