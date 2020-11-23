@@ -317,6 +317,34 @@ class TestFacility:
         assert User.count() == 4 and Facility.count() == 4 and FacilityMap.count() == 4
 
 
+class TestFacilityMap:
+    """Tests for `FacilityMap` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create facility_map instance and validate accessors."""
+        for data in testdata['facility_map']:
+            facility_map = FacilityMap(**data)
+            for key, value in data.items():
+                assert getattr(facility_map, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['facility_map']:
+            facility_map = FacilityMap.from_dict(data)
+            assert data == facility_map.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['facility_map']:
+            facility_map = FacilityMap.from_dict(data)
+            assert tuple(data.values()) == facility_map.to_tuple()
+
+    def test_embedded(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['facility_map']:
+            assert data == json.loads(json.dumps(FacilityMap(**data).embedded()))
+
+
 class TestClient:
     """Tests for `Client` database model."""
 
