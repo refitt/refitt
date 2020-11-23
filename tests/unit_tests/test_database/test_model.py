@@ -19,8 +19,13 @@ from typing import List, Dict, Any
 import json
 from datetime import datetime
 
+# external libs
+import pytest
+from sqlalchemy.exc import IntegrityError
+
 # internal libs
-from refitt.database.model import User, Facility, FacilityMap, Client, Session
+from refitt.database.model import User, Facility, FacilityMap, Client, Session, NotFound
+from refitt.database.core import config
 from refitt.web.token import JWT
 
 
@@ -63,15 +68,48 @@ class TestUser:
         for i, user in enumerate(testdata['user']):
             assert User.from_id(i + 1).alias == user['alias']
 
+    def test_from_id_missing(self) -> None:
+        """Test exception on missing user `id`."""
+        with pytest.raises(NotFound):
+            User.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on user `id` already exists."""
+        with pytest.raises(IntegrityError):
+            User.add({'id': 1, 'first_name': 'Bryce', 'last_name': 'Wayne', 'email': 'bruce@wayneenterprizes.com',
+                      'alias': 'batman', 'data': {'user_type': 'amateur'}})
+
     def test_from_email(self, testdata: TestData) -> None:
         """Test loading user profile from `email`."""
         for user in testdata['user']:
             assert User.from_email(user['email']).email == user['email']
 
+    def test_from_email_missing(self) -> None:
+        """Test exception on missing user `email`."""
+        with pytest.raises(NotFound):
+            User.from_email('batman@justiceleague.org')
+
+    def test_email_already_exists(self) -> None:
+        """Test exception on user `email` already exists."""
+        with pytest.raises(IntegrityError):
+            User.add({'first_name': 'Bruce', 'last_name': 'Wayne', 'email': 'bourne@cia.gov',
+                      'alias': 'batman', 'data': {'user_type': 'amateur'}})
+
     def test_from_alias(self, testdata: TestData) -> None:
         """Test loading user profile from `alias`."""
         for user in testdata['user']:
             assert User.from_alias(user['alias']).alias == user['alias']
+
+    def test_from_alias_missing(self) -> None:
+        """Test exception on missing user `alias`."""
+        with pytest.raises(NotFound):
+            User.from_alias('batman')
+
+    def test_alias_already_exists(self) -> None:
+        """Test exception on user `alias` already exists."""
+        with pytest.raises(IntegrityError):
+            User.add({'first_name': 'Bryce', 'last_name': 'Wayne', 'email': 'bruce@wayneenterprizes.com',
+                      'alias': 'tomb_raider', 'data': {'user_type': 'amateur'}})
 
     def test_update_email(self) -> None:
         """Update email address of user profile."""
@@ -126,6 +164,11 @@ class TestUser:
         User.delete(User.from_alias('007').id)
         assert User.count() == 4
 
+    def test_delete_missing(self) -> None:
+        """Test exception on attempt to delete non-existent user."""
+        with pytest.raises(NotFound):
+            User.delete(-1)
+
     def test_delete_facility_map_cascade(self) -> None:
         """Create a new user, with facility, then remove."""
         assert User.count() == 4 and Facility.count() == 4 and FacilityMap.count() == 4
@@ -177,10 +220,32 @@ class TestFacility:
         for i, facility in enumerate(testdata['facility']):
             assert Facility.from_id(i + 1).name == facility['name']
 
+    def test_from_id_missing(self) -> None:
+        """Test exception on missing facility `id`."""
+        with pytest.raises(NotFound):
+            Facility.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on facility `id` already exists."""
+        with pytest.raises(IntegrityError):
+            Facility.add({'id': 1, 'name': 'Wayne_4m', 'latitude': -24.5, 'longitude': -69.25, 'elevation': 5050,
+                          'limiting_magnitude': 17.5, 'data': {'telescope_design': 'reflector'}})
+
     def test_from_name(self, testdata: TestData) -> None:
         """Test loading facility profile from `name`."""
         for facility in testdata['facility']:
             assert Facility.from_name(facility['name']).name == facility['name']
+
+    def test_from_name_missing(self) -> None:
+        """Test exception on missing facility `name`."""
+        with pytest.raises(NotFound):
+            Facility.from_name('Wayne_18in')
+
+    def test_name_already_exists(self) -> None:
+        """Test exception on facility `name` already exists."""
+        with pytest.raises(IntegrityError):
+            Facility.add({'name': 'Croft_4m', 'latitude': -24.5, 'longitude': -69.25, 'elevation': 5050,
+                          'limiting_magnitude': 17.5, 'data': {'telescope_design': 'reflector'}})
 
     def test_update_limiting_magnitude(self) -> None:
         """Update limiting magnitude of facility profile."""
@@ -227,17 +292,22 @@ class TestFacility:
     def test_delete(self) -> None:
         """Add a new facility record and then delete it."""
         assert Facility.count() == 4
-        Facility.add({'name': 'Croft_10m', 'latitude': -25.5, 'longitude': -69.25, 'elevation': 5050,
+        Facility.add({'name': 'Croft_10m', 'latitude': -24.5, 'longitude': -69.25, 'elevation': 5050,
                       'limiting_magnitude': 20.5})
         assert Facility.count() == 5
         assert Facility.from_name('Croft_10m').limiting_magnitude == 20.5
         Facility.delete(Facility.from_name('Croft_10m').id)
         assert Facility.count() == 4
 
+    def test_delete_missing(self) -> None:
+        """Test exception on attempt to delete non-existent facility."""
+        with pytest.raises(NotFound):
+            Facility.delete(-1)
+
     def test_delete_facility_map_cascade(self) -> None:
         """Create a new facility, associate it with a user, then remove."""
         assert User.count() == 4 and Facility.count() == 4 and FacilityMap.count() == 4
-        Facility.add({'name': 'Bourne_4m', 'latitude': -25.5, 'longitude': -69.25, 'elevation': 5050,
+        Facility.add({'name': 'Bourne_4m', 'latitude': -24.5, 'longitude': -69.25, 'elevation': 5050,
                       'limiting_magnitude': 17.5, 'data': {'telescope_design': 'reflector'}})
         facility = Facility.from_name('Bourne_4m')
         user = User.from_alias('delta_one')
@@ -277,21 +347,21 @@ class TestClient:
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
         assert Client.from_user(User.from_alias('delta_one').id).embedded() == {
-            "id": 2,
-            "user_id": 2,
-            "level": 10,
-            "key": "78h6IuhW30Re7I-C",
-            "secret": "7ccb08b171f4a28e6b5f2af5597153873d7cd90a972f2bee7b8ac82c43e0e4e9",
-            "valid": True,
-            "created": "2020-10-23 17:45:01-04:00",
-            "user": {
-                "id": 2,
-                "first_name": "Jason",
-                "last_name": "Bourne",
-                "email": "bourne@cia.gov",
-                "alias": "delta_one",
-                "data": {
-                    "user_type": "amateur"
+            'id': 2,
+            'user_id': 2,
+            'level': 10,
+            'key': '78h6IuhW30Re7I-C',
+            'secret': '7ccb08b171f4a28e6b5f2af5597153873d7cd90a972f2bee7b8ac82c43e0e4e9',
+            'valid': True,
+            'created': '2020-10-23 17:45:01' + ('' if config.backend == 'sqlite' else '-04:00'),
+            'user': {
+                'id': 2,
+                'first_name': 'Jason',
+                'last_name': 'Bourne',
+                'email': 'bourne@cia.gov',
+                'alias': 'delta_one',
+                'data': {
+                    'user_type': 'amateur'
                 }
             }
         }
@@ -394,16 +464,16 @@ class TestSession:
         assert Session.from_id(2).embedded() == {
             'id': 2,
             'client_id': 2,
-            'expires': '2020-10-23 18:00:01-04:00',
+            'expires': '2020-10-23 18:00:01' + ('' if config.backend == 'sqlite' else '-04:00'),
             'token': 'c44d20d18e734aea40b30682a57162b53c18f676c1b752696dad5dc6586187fe',
-            'created': '2020-10-23 17:45:01-04:00',
+            'created': '2020-10-23 17:45:01' + ('' if config.backend == 'sqlite' else '-04:00'),
             'client': {'id': 2,
                        'user_id': 2,
                        'level': 10,
                        'key': '78h6IuhW30Re7I-C',
                        'secret': '7ccb08b171f4a28e6b5f2af5597153873d7cd90a972f2bee7b8ac82c43e0e4e9',
                        'valid': True,
-                       'created': '2020-10-23 17:45:01-04:00',
+                       'created': '2020-10-23 17:45:01' + ('' if config.backend == 'sqlite' else '-04:00'),
                        'user': {'id': 2,
                                 'first_name': 'Jason',
                                 'last_name': 'Bourne',
@@ -463,7 +533,10 @@ class TestSession:
         """Generate a new client secret and then manually reset it back."""
         session = Session.from_client(2)
         before = session.created
-        assert datetime.now().astimezone() > before
+        if config.backend == 'sqlite':
+            assert datetime.now() > before
+        else:
+            assert datetime.now().astimezone() > before
         old_hash = session.token
         expired = session.expires
         jwt = Session.new(2)
