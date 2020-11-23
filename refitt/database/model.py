@@ -216,20 +216,25 @@ class User(Base, CoreMixin):
         log.info(f'Dissociated facility ({facility.id}) from user ({self.id})')
 
     @classmethod
-    def delete(cls, id: int) -> None:
-        """Cascade delete to Client and Session."""
+    def delete(cls, user_id: int) -> None:
+        """Cascade delete to Client, Session, and FacilityMap."""
         session = _Session()
-        for client in session.query(Client).filter(Client.user_id == id):
+        user = cls.from_id(user_id)
+        for client in session.query(Client).filter(Client.user_id == user_id):
             for _session in session.query(Session).filter(Session.client_id == client.id):
                 session.delete(_session)
                 session.commit()
-                log.info(f'Deleted session for user ({id})')
+                log.info(f'Deleted session for user ({user_id})')
             session.delete(client)
             session.commit()
-            log.info(f'Deleted client for user ({id})')
-        session.delete(cls.from_id(id, session))
+            log.info(f'Deleted client for user ({user_id})')
+        for mapping in session.query(FacilityMap).filter(FacilityMap.user_id == user_id):
+            session.delete(mapping)
+            session.commit()
+            log.info(f'Dissociated facility ({mapping.facility_id}) from user ({user_id})')
+        session.delete(user)
         session.commit()
-        log.info(f'Deleted user ({id})')
+        log.info(f'Deleted user ({user_id})')
 
 
 class Facility(Base, CoreMixin):
@@ -293,6 +298,19 @@ class Facility(Base, CoreMixin):
             session.delete(mapping)
         session.commit()
         log.info(f'Dissociated facility ({self.id}) from user ({user.id})')
+
+    @classmethod
+    def delete(cls, facility_id: int) -> None:
+        """Cascade delete to FacilityMap."""
+        session = _Session()
+        facility = cls.from_id(facility_id)
+        for mapping in session.query(FacilityMap).filter(FacilityMap.facility_id == facility_id):
+            session.delete(mapping)
+            session.commit()
+            log.info(f'Dissociated facility ({facility_id}) from user ({mapping.user_id})')
+        session.delete(facility)
+        session.commit()
+        log.info(f'Deleted facility ({facility_id})')
 
 
 class FacilityMap(Base, CoreMixin):
