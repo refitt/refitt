@@ -12,6 +12,7 @@
 
 """Core database ORM definitions for REFITT."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import List, Tuple, Dict, Any, Type, Union, Optional
@@ -22,6 +23,7 @@ from datetime import datetime, timedelta
 
 # external libs
 from sqlalchemy import Column, ForeignKey, Index, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.types import Integer, BigInteger, DateTime, Float, Text, String, JSON, Boolean
@@ -101,38 +103,32 @@ class CoreMixin:
     def add(cls, data: dict) -> Optional[int]:
         """Add record from existing `data`, return `id` if applicable."""
         session = _Session()
-        record = cls.from_dict(data)
-        session.add(record)
-        session.commit()
-        log.info(f'Added {cls.__name__.lower()} ({record.id})')
-        return record.id
+        try:
+            record = cls.from_dict(data)
+            session.add(record)
+            session.commit()
+            log.info(f'Added {cls.__name__.lower()} ({record.id})')
+            return record.id
+        except IntegrityError:
+            session.rollback()
+            raise
 
     @classmethod
     def update(cls, id: int, **data) -> None:
-        """
-        Update named attributes of specified record.
-
-        Args:
-            id (int):
-                The unique record `id`.
-
-            **data:
-                Named fields to update. If the field name is one of the columns
-                the value will be updated. If the field name is not an existing
-                column and a `data` column exists, it will be added/updated there.
-
-        Example:
-            >>> User.update(id=1, email='jason.bourne@cia.gov')
-        """
+        """Update named attributes of specified record."""
         session = _Session()
-        record = cls.from_id(id, session)
-        for field, value in data.items():
-            if field in cls.columns:
-                setattr(record, field, value)
-            else:
-                record.data = {**record.data, field: value}
-        session.commit()
-        log.info(f'Updated {cls.__name__.lower()} ({id})')
+        try:
+            record = cls.from_id(id, session)
+            for field, value in data.items():
+                if field in cls.columns:
+                    setattr(record, field, value)
+                else:
+                    record.data = {**record.data, field: value}
+            session.commit()
+            log.info(f'Updated {cls.__name__.lower()} ({id})')
+        except IntegrityError:
+            session.rollback()
+            raise
 
     @classmethod
     def delete(cls, id: int) -> None:
