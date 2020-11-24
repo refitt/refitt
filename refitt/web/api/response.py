@@ -52,6 +52,7 @@ STATUS = {
 class WebException(Exception):
     """Generic to miscellaneous web exceptions."""
 
+
 class PayloadTooLarge(WebException):
     """The requested or posted data was too big."""
 
@@ -62,6 +63,7 @@ RESPONSE_MAP: Dict[Type[Exception], int] = {
     TokenInvalid:             STATUS['Forbidden'],
     AuthenticationInvalid:    STATUS['Forbidden'],
     PermissionDenied:         STATUS['Unauthorized'],
+    TokenExpired:             STATUS['Unauthorized'],
     NotFound:                 STATUS['Not Found'],
     NotImplementedError:      STATUS['Not Implemented'],
     PayloadTooLarge:          STATUS['Payload Too Large'],
