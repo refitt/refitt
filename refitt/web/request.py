@@ -19,7 +19,7 @@ is handled automatically.
 
 Example:
     >>> from refitt.web import request
-    >>> requests.get('recommendation')
+    >>> request.get('recommendation')
     {...}
 
 Note:
@@ -31,21 +31,27 @@ Note:
 """
 
 # type annotations
-from typing import Dict, Any, Callable
+from typing import Tuple, Dict, Any, Callable, Optional, Type, TypeVar
 
 # standard libs
-import os
-import urllib
+import re
+from urllib.request import urljoin  # noqa: missing stub for urllib
+import logging
 import functools
-from datetime import datetime
+import webbrowser
+
 
 # external libs
-import requests
+import requests as __requests
 
 # internal libs
-from ..core.logging import Logger
-from ..core.config import config, ConfigurationError
-from ..database.auth import Claim, Token
+from ..core.config import config, update_config
+from .token import Key, Secret, Token
+from .api.response import STATUS
+
+
+# initialize module level logger
+log = logging.getLogger(__name__)
 
 
 class APIError(Exception):
@@ -59,41 +65,75 @@ class APIError(Exception):
         return str(self)
 
 
-# module level logger
-log = Logger(__name__)
+def __join_path(site: str, port: Optional[int], path: str) -> str:
+    return urljoin(site if not port else f'{site}:{port}', path)
 
 
-# global access token held in-memory
-TOKEN: Token = None
+__has_protocol: re.Pattern = re.compile(r'^http(s)?://')
+def __join_site(path: str) -> str:
+    site = config.api.site
+    site = f'http://{site}' if __has_protocol.match(site) is None else site
+    return __join_path(site, config.api.port, path)
 
 
-def login(force: bool = False) -> Token:
+__CT = TypeVar('__CT', Key, Secret, Token)
+def __get(var: Type[__CT]) -> Optional[__CT]:
+    found = config.api.get(var.__name__.lower(), None)
+    return None if not found else var(found)
+
+
+# global reference to credentials
+KEY: Optional[Key] = None
+SECRET: Optional[Secret] = None
+TOKEN: Optional[Token] = None
+
+
+def login() -> Tuple[Key, Secret]:
     """
-    Request new access token and add to configuration file.
+    Get client key and secret.
+
+    If not already stored in the configuration file, navigate to the web interface and get
+    the credentials, update the configuration file.
     """
+
+    global KEY
+    global SECRET
+    if KEY and SECRET:
+        return KEY, SECRET
+
+    KEY = __get(Key)
+    SECRET = __get(Secret)
+    if KEY and SECRET:
+        return KEY, SECRET
+
+    if not webbrowser.open(config.api.login):
+        print(f'Navigate to {config.api.login} and paste your client key and secret here ...')
+
+    KEY = Key(input('Client key: '))
+    SECRET = Secret(input('Client secret: '))
+    update_config('user', {'api': {'key': KEY.value, 'secret': SECRET.value}})
+    return KEY, SECRET
+
+
+def refresh_token(force: bool = False, persist: bool = False) -> Token:
+    """Request new access token with existing key and secret."""
 
     global TOKEN
-    if 'api' not in config.keys():
-        raise ConfigurationError('[api] section missing')
-    if TOKEN is None:
-        existing_token = config['api'].get('access_token', None)
-        if existing_token is not None:
-            TOKEN = Token(existing_token)
-    if not force and TOKEN is not None:
+    TOKEN = __get(Token)
+    if TOKEN and not force:
         return TOKEN
 
-    site = config['api'].get('site', 'http://localhost:5000')
-    path = urllib.request.urljoin(site, 'token')
-    key, secret = config['api']['client_key'], config['api']['client_secret']
-    response = requests.get(path, auth=(key, secret))
+    url = __join_site('token')
+    key, secret = login()
+    response = __requests.get(url, auth=(key.value, secret.value))
     response_data = response.json()
-    if response.status_code != 200:
+    if response.status_code != STATUS['OK']:
         raise APIError(response.status_code, response_data['message'])
 
-    data = response_data['response']['token']
-    TOKEN = Token(data['access_token'])
-    log.debug('GET /token')
-    return data
+    TOKEN = Token(response_data['response']['token'])
+    if persist:
+        update_config('user', {'api': {'token': TOKEN.value}})
+    return TOKEN
 
 
 def authenticated(func: Callable) -> Callable:
@@ -101,16 +141,15 @@ def authenticated(func: Callable) -> Callable:
 
     @functools.wraps(func)
     def method(*args, **kwargs) -> Dict[str, Any]:
-
         global TOKEN
         if not TOKEN:
-            login()
+            refresh_token()
         try:
             return func(*args, **kwargs)
         except APIError as error:
             status, message = error.args
-            if status == 401 and 'unauthorized: token expired' in message:
-                login(force=True)
+            if status == STATUS['Unauthorized'] and message == 'Token expired':
+                refresh_token(force=True)
                 return func(*args, **kwargs)
             else:
                 raise
@@ -123,24 +162,22 @@ def request(action: str, endpoint: str, **kwargs) -> Dict[str, Any]:
     """
     Issue a request to the REFITT API.
 
-    Arguments
-    ---------
-    action: str
-        The action verb for the request (get, put, ...).
-    endpoint: str
-        The path for the API (e.g., '/profile/user/1').
-    **kwargs:
-        All keyword arguments are forwarded to `requests.<action>`.
+    Args:
+        action (str):
+            The action verb for the request (get, put, ...).
+        endpoint (str):
+            The path for the API (e.g., '/user/1').
+        **kwargs:
+            All keyword arguments are forwarded to the method (i.e., `action`).
     """
-    site = config['api'].get('site', 'http://localhost:5000')
-    path = urllib.request.urljoin(site, endpoint)
-    method = getattr(requests, action)
-    response = method(path, data=kwargs.pop('data', None), json=kwargs.pop('json', None),
+    url = __join_site(endpoint)
+    method = getattr(__requests, action)
+    response = method(url, data=kwargs.pop('data', None), json=kwargs.pop('json', None),
                       headers={'Authorization': f'Bearer {TOKEN.value}'},
                       cert=kwargs.pop('cert', None), verify=kwargs.pop('verify', None),
                       params=kwargs)
     response_data = response.json()
-    if response.status_code != 200:
+    if response.status_code != STATUS['OK']:
         raise APIError(response.status_code, response_data['message'])
     return response_data['response']
 
