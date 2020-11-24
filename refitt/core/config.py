@@ -77,9 +77,15 @@ DEFAULT = Namespace({
         }
     },
 
+    'api': {
+        'site': 'https://api.refitt.org',
+        'port': None,
+        'login': 'https://refitt.org/profile/api_credentials'
+    },
+
     'daemon': {
         'port': 50000,
-        'key': '__REFITT__DAEMON__KEY__',
+        'key': '__REFITT__DAEMON__KEY__',  # this should be overridden
         'refresh': 10,  # seconds to wait before issuing keep-alive to services
         'timeout': 4,   # seconds to wait before hard kill services on interrupt
     },
@@ -148,4 +154,3 @@ _streamkit.config.extend(refitt=Namespace({
    'database': config.database,
    'logging': config.logging
 }))
-
