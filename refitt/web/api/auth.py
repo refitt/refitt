@@ -68,7 +68,7 @@ def authenticate(route: Callable[[Client], dict]) -> Callable[[Client], dict]:
             raise AuthenticationNotFound('Missing key:secret in request')
         client = Client.from_key(request.authorization.username)
         secret = Secret(request.authorization.password)
-        if secret != client.secret:
+        if secret.hashed().value != client.secret:
             raise AuthenticationInvalid('Client secret was invalid')
         return route(client)
 
@@ -105,8 +105,7 @@ def authorization(level: int = None) -> Callable:
             if not client.valid:
                 raise PermissionDenied('Access has been revoked')
             if level is not None and client.level > level:
-                log.info(f'Level was {level}')
-                raise PermissionDenied('Access privilege level insufficient')
+                raise PermissionDenied('Access level insufficient')
             return route(client, *args, **kwargs)
 
         return check_access
