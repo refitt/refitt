@@ -61,8 +61,8 @@ def __load_records(base: Base, path: str) -> List[Dict[str, Any]]:
 
 
 # NOTE: order matters for foreign key references
-__CORE_REFS = ['user', 'level', 'topic', 'object_type', ]
-__TEST_REFS = ['facility', 'user', 'facility_map', 'client', 'session', 'object_type', ]
+__CORE_REFS = ['user', 'object_type', 'level', 'topic', ]
+__TEST_REFS = ['facility', 'user', 'facility_map', 'client', 'session', 'object_type', 'level', 'topic', ]
 __REFS = {'core': __CORE_REFS, 'test': __TEST_REFS}
 
 
