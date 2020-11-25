@@ -1,0 +1,102 @@
+[
+  {
+    "id": null,
+    "name": "Unknown",
+    "description": "Objects with unknown or unspecified type"
+  },
+  {
+    "id": null,
+    "name": "SNIa",
+    "description": "WD detonation, Type Ia SN"
+  },
+  {
+    "id": null,
+    "name": "SNIa-91bg",
+    "description": "Peculiar type Ia: 91bg"
+  },
+  {
+    "id": null,
+    "name": "SNIax",
+    "description": "Peculiar SNIax"
+  },
+  {
+    "id": null,
+    "name": "SNII",
+    "description": "Core Collapse, Type II"
+  },
+  {
+    "id": null,
+    "name": "SNIbc",
+    "description": "Core Collapse, Type Ibc"
+  },
+  {
+    "id": null,
+    "name": "SLSN-I",
+    "description": "Super-Lum. SN (magnetar)"
+  },
+  {
+    "id": null,
+    "name": "TDE",
+    "description": "Tidal Disruption Event"
+  },
+  {
+    "id": null,
+    "name": "KN",
+    "description": "Kilonova (NS-NS merger)"
+  },
+  {
+    "id": null,
+    "name": "AGN",
+    "description": "Active Galactic Nuclei"
+  },
+  {
+    "id": null,
+    "name": "RRL",
+    "description": "RR Lyrae"
+  },
+  {
+    "id": null,
+    "name": "M-dwarf",
+    "description": "M-dwarf stellar flare"
+  },
+  {
+    "id": null,
+    "name": "EB",
+    "description": "Eclipsing Binary stars"
+  },
+  {
+    "id": null,
+    "name": "Mira",
+    "description": "Pulsating variable stars"
+  },
+  {
+    "id": null,
+    "name": "Micro-Lens-Single",
+    "description": "Micro-lens from single lens"
+  },
+  {
+    "id": null,
+    "name": "Micro-Lens-Binary",
+    "description": "Micro-lens from binary lens"
+  },
+  {
+    "id": null,
+    "name": "ILOT",
+    "description": "Intermed. Lum. Optical Trans."
+  },
+  {
+    "id": null,
+    "name": "CaRT",
+    "description": "Calcium Rich Transient"
+  },
+  {
+    "id": null,
+    "name": "PISN",
+    "description": "Pair Instability SN"
+  },
+  {
+    "id": null,
+    "name": "Micro-Lens-String",
+    "description": "Micro-lens from cosmic strings"
+  }
+]

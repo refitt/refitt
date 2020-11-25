@@ -510,6 +510,32 @@ class Session(Base, CoreMixin):
         return jwt
 
 
+class ObjectType(Base, CoreMixin):
+    """Object types (e.g., 'SNIa')."""
+
+    __tablename__ = 'object_type'
+    __table_args__ = {'schema': schema}
+
+    id = Column('id', Integer(), primary_key=True, nullable=False)
+    name = Column('name', Text(), unique=True, nullable=False)
+    description = Column('description', Text(), nullable=False)
+
+    columns = {
+        'id': int,
+        'name': str,
+        'description': str
+    }
+
+    @classmethod
+    def from_name(cls, name: str, session: _Session = None) -> Session:
+        """Query by unique object_type `name`."""
+        try:
+            session = session or _Session()
+            return session.query(cls).filter(cls.name == name).one()
+        except NoResultFound as error:
+            raise NotFound(f'No object_type with name={name}') from error
+
+
 # global registry of tables
 tables: Dict[str, Base] = {
 
@@ -519,6 +545,8 @@ tables: Dict[str, Base] = {
 
     'client': Client,
     'session': Session,
+
+    'object_type': ObjectType,
 
     'level': Level,
     'topic': Topic,

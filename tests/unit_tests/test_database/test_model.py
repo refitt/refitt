@@ -24,9 +24,11 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database.model import User, Facility, FacilityMap, Client, Session, NotFound
 from refitt.database.core import config
 from refitt.web.token import JWT
+from refitt.database.model import (User, Facility, FacilityMap, Client,
+                                   ObjectType,
+                                   Session, NotFound)
 
 
 # test data fixture return type
@@ -400,15 +402,47 @@ class TestClient:
         for i, client in enumerate(testdata['client']):
             assert Client.from_id(i + 1).user.alias == testdata['user'][i]['alias']
 
+    def test_id_missing(self) -> None:
+        """Test exception on missing client `id`."""
+        with pytest.raises(NotFound):
+            Client.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on client `id` already exists."""
+        with pytest.raises(IntegrityError):
+            Client.add({'id': 1, 'user_id': 1, 'level': 10, 'key': 'abc...', 'secret': 'abc...', 'valid': True})
+
     def test_from_user(self) -> None:
         """Test loading client from `user`."""
         for id in range(1, 4):
             assert id == Client.from_user(id).user_id == User.from_id(id).id
 
+    def test_user_missing(self) -> None:
+        """Test exception on missing client `user_id`."""
+        with pytest.raises(NotFound):
+            Client.from_user(-1)
+
+    def test_user_already_exists(self) -> None:
+        """Test exception on client `user` already exists."""
+        with pytest.raises(IntegrityError):
+            Client.add({'user_id': 1, 'level': 10, 'key': 'abc...', 'secret': 'abc...', 'valid': True})
+
     def test_from_key(self, testdata: TestData) -> None:
         """Test loading client from `key`."""
         for client in testdata['client']:
             assert Client.from_key(client['key']).key == client['key']
+
+    def test_key_missing(self) -> None:
+        """Test exception on missing client `key`."""
+        with pytest.raises(NotFound):
+            Client.from_key('abc...')
+
+    def test_key_already_exists(self) -> None:
+        """Test exception on client `key` already exists."""
+        with pytest.raises(IntegrityError):
+            client_1 = Client.from_id(1)
+            client_2 = Client.from_id(2)
+            Client.update(client_1.id, key=client_2.key)
 
     def test_relationship_user(self) -> None:
         """Test user foreign key relationship."""
@@ -519,10 +553,30 @@ class TestSession:
         for id in range(1, 4):
             assert Session.from_id(id).client.user.alias == testdata['user'][id-1]['alias']
 
+    def test_id_missing(self) -> None:
+        """Test exception on missing session `id`."""
+        with pytest.raises(NotFound):
+            Session.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on client `id` already exists."""
+        with pytest.raises(IntegrityError):
+            Session.add({'id': 1, 'client_id': 1, 'expires': datetime.now(), 'token': 'abc...'})
+
     def test_from_client(self) -> None:
         """Test loading session from `client`."""
         for id in range(1, 4):
             assert id == Session.from_client(id).client_id == Client.from_id(id).id
+
+    def test_client_missing(self) -> None:
+        """Test exception on missing session `client`."""
+        with pytest.raises(NotFound):
+            Session.from_client(-1)
+
+    def test_client_already_exists(self) -> None:
+        """Test exception on client `client` already exists."""
+        with pytest.raises(IntegrityError):
+            Session.add({'client_id': 1, 'expires': datetime.now(), 'token': 'abc...'})
 
     def test_relationship_client(self) -> None:
         """Test client foreign key relationship."""
@@ -578,3 +632,55 @@ class TestSession:
         assert new_session.created == before
         assert new_session.token == old_hash
         assert new_session.expires == expired
+
+
+class TestObjectType:
+    """Tests for `Object_Type` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create object_type instance and validate accessors."""
+        for data in testdata['object_type']:
+            object_type = ObjectType(**data)
+            for key, value in data.items():
+                assert getattr(object_type, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['object_type']:
+            object_type = ObjectType.from_dict(data)
+            assert data == object_type.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['object_type']:
+            object_type = ObjectType.from_dict(data)
+            assert tuple(data.values()) == object_type.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['object_type']:
+            assert data == json.loads(json.dumps(ObjectType(**data).embedded(join=False)))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        assert ObjectType.from_name('SNIa').embedded() == {
+            'id': 2,
+            'name': 'SNIa',
+            'description': 'WD detonation, Type Ia SN'
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading object_type from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['object_type']):
+            assert ObjectType.from_id(i+1).name == record['name']
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing session `id`."""
+        with pytest.raises(NotFound):
+            ObjectType.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on client `id` already exists."""
+        with pytest.raises(IntegrityError):
+            ObjectType.add({'id': 1, 'name': 'Ludicrous Nova', 'description': 'The biggest ever'})
