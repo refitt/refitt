@@ -21,7 +21,7 @@ import logging
 from ...__meta__ import (__version__, __description__,
                          __copyright__, __developer__, __contact__,
                          __website__, __ascii_art__)
-from . import config, database
+from . import config, database, service
 
 # external libs
 from cmdkit.app import Application, ApplicationGroup
@@ -48,11 +48,10 @@ HELP = f"""\
 commands:
 config                 {config.__doc__}
 database               {database.__doc__}
+service                {service.__doc__}
 pipeline               ...
-service                ...
-profile                ...
 notify                 ...
-auth                   ...
+login                  ...
 
 options:
 -h, --help             Show this message and exit.
@@ -84,7 +83,8 @@ class RefittApp(ApplicationGroup):
 
     command = None
     commands = {'config': config.ConfigApp,
-                'database': database.DatabaseApp, }
+                'database': database.DatabaseApp,
+                'service': service.ServiceApp, }
 
 
 def main() -> int:

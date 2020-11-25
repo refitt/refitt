@@ -17,6 +17,7 @@ Enables custom logging format and level by configuration as well as streaming
 messages to the database.
 """
 
+
 # standard libs
 import logging as _std
 
