@@ -19,23 +19,23 @@ from __future__ import annotations
 import os
 import sys
 import shlex
+import logging
 from signal import SIGINT
 from datetime import datetime, timedelta
 from subprocess import Popen, TimeoutExpired
 
 # internal libs
-from ...core.config import get_site, VARS
-from ...core.logging import Logger
+from refitt.core.config import get_site, config
 
 # external libs
 from cmdkit.cli import ArgumentError
 
 
-# initialize logger
-log = Logger(__name__)
+# initialize module level logger
+log = logging.getLogger(__name__)
 
 
-class Service:
+class DaemonService:
     """A subprocess of the REFITT daemon."""
 
     name: str = None
@@ -53,28 +53,28 @@ class Service:
     def start(self) -> None:
         """Start service."""
         if not self.is_locked:
-            log.info(f'starting "{self.name}" service')
-            self.process = Popen(['refitt', 'service', *shlex.split(self.argv), '--debug', '--syslog'],
+            self.process = Popen(['refitt', 'service', *shlex.split(self.argv)],
                                  stdout=sys.stdout, stderr=sys.stderr, cwd=self.cwd)
             self.started = datetime.now()
             self.lock()
+            log.info(f'Started \'{self.name}\' service')
         else:
-            raise ArgumentError(f'"{self.name}" service is already running (pid={self.pid})')
+            raise ArgumentError(f'Service \'{self.name}\' already running ({self.pid})')
 
     def stop(self) -> None:
         """Stop the process."""
         try:
             if self.is_alive:
-                log.info(f'stopping "{self.name}" service (pid={self.pid})')
+                log.info(f'Stopping \'{self.name}\' ({self.pid})')
                 self.process.send_signal(SIGINT)
-                self.process.wait(timeout=float(VARS['DAEMON_INTERRUPT_TIMEOUT']))
+                self.process.wait(timeout=float(config.daemon.timeout))
         except TimeoutExpired:
-            log.error(f'interrupt failed for "{self.name}" (pid={self.pid}) - terminating now!')
+            log.error(f'Interrupt failed for \'{self.name}\' ({self.pid}) - terminating now')
             try:
                 self.process.terminate()
-                self.process.wait(timeout=float(VARS['DAEMON_INTERRUPT_TIMEOUT']))
+                self.process.wait(timeout=float(config.daemon.timeout))
             except TimeoutExpired:
-                log.critical(f'terminate failed for "{self.name}" (pid={self.pid})!')
+                log.critical(f'Terminate failed for \'{self.name}\' ({self.pid})')
         finally:
             self.unlock()
 
@@ -109,7 +109,7 @@ class Service:
         try:
             os.remove(self.pidfile)
         except FileNotFoundError:
-            log.warning(f'{self.pidfile} does not exist!')
+            log.warning(f'Pidfile does not exist ({self.pidfile})')
 
     @property
     def uptime(self) -> timedelta:
@@ -127,7 +127,7 @@ class Service:
     def keep_alive(self) -> None:
         """Check state of service and restart if necessary."""
         if not self.is_alive:
-            log.error(f'"{self.name}" service has died - restarting now!')
+            log.error(f'Service \'{self.name}\' died ({self.pid}) - restarting now')
             self.restart()
         else:
-            log.debug(f'keep alive - "{self.name}"')
+            log.debug(f'Keep alive \'{self.name}\'')

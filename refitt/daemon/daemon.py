@@ -20,14 +20,15 @@ import os
 import abc
 import sys
 import atexit
+import logging
+
 
 # internal libs
-from ...core.logging import Logger
-from ...core.config import get_site
+from ..core.config import get_site
 
 
 # initialize module level logger
-log = Logger(__name__)
+log = logging.getLogger(__name__)
 
 
 class Daemon(abc.ABC):

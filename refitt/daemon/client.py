@@ -14,30 +14,33 @@
 
 # type annotations
 from __future__ import annotations
+from typing import Optional, Callable
 
 # standard libs
+import logging
 from multiprocessing import JoinableQueue, TimeoutError
 from multiprocessing.managers import BaseManager
 
 # internal libs
-from ...core.config import VARS
-from ...core.logging import Logger
+from ..core.config import config
 
 
 # initialize module level logger
-log = Logger(__name__)
+log = logging.getLogger(__name__)
 
 
-class RefittDaemonClient(BaseManager):
+class DaemonClient(BaseManager):
     """Connect to the RefittDaemonServer."""
 
     _queue: JoinableQueue = None
     _status: JoinableQueue = None
 
+    _get_queue: Optional[Callable[[], JoinableQueue]] = None
+    _get_status: Optional[Callable[[], JoinableQueue]] = None
+
     def __init__(self) -> None:
         """Initialize the queue."""
-        super().__init__(address=('localhost', int(VARS['DAEMON_PORT'])),
-                         authkey=VARS['DAEMON_KEY'].encode())
+        super().__init__(address=('localhost', int(config.daemon.port)), authkey=config.daemon.key.encode())
         self.register('_get_queue')
         self.register('_get_status')
 
@@ -46,7 +49,7 @@ class RefittDaemonClient(BaseManager):
         try:
             self._queue.put(action, timeout=10)
         except TimeoutError:
-            log.error(f'timeout reached on action "{action}"')
+            log.error(f'Timeout reached on action \'{action}\'')
 
     @property
     def status(self) -> dict:
@@ -66,14 +69,14 @@ class RefittDaemonClient(BaseManager):
         self._status.task_done()
         return value
 
-    def __enter__(self) -> RefittDaemonClient:
+    def __enter__(self) -> DaemonClient:
         """Connect to the server."""
         self.connect()
-        self._queue = self._get_queue()  # pylint: disable=no-member
-        self._status = self._get_status()  # pylint: disable=no-member
-        log.debug('connected to refittd server')
+        self._queue = self._get_queue()
+        self._status = self._get_status()
+        log.debug('Connected to daemon manager')
         return self
 
     def __exit__(self, *exc) -> None:
         """Disconnect from the server."""
-        log.debug('disconnected from refittd server')
+        log.debug('Disconnected from daemon manager')

@@ -10,26 +10,30 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Refitt daemon service manager implementation."""
+"""The Daemon service manager."""
+
 
 # type annotations
 from __future__ import annotations
 
 # standard libs
+import logging
 from multiprocessing import JoinableQueue
 from multiprocessing.managers import BaseManager
 
 # internal libs
-from ...core.config import VARS
-from ...core.logging import Logger
+from ..core.config import config
 
 
 # initialize module level logger
-log = Logger(__name__)
+log = logging.getLogger(__name__)
 
 
-DAEMON_REFRESH_TIME = float(VARS['DAEMON_REFRESH_TIME'])
-class RefittDaemonServer(BaseManager):
+# time between keep alive requests (seconds)
+DAEMON_REFRESH_TIME = float(config.daemon.refresh)
+
+
+class DaemonServer(BaseManager):
     """Serve managed queue of actions."""
 
     _queue: JoinableQueue = None
@@ -37,8 +41,7 @@ class RefittDaemonServer(BaseManager):
 
     def __init__(self) -> None:
         """Initialize the queue."""
-        super().__init__(address=('localhost', int(VARS['DAEMON_PORT'])),
-                         authkey=VARS['DAEMON_KEY'].encode())
+        super().__init__(address=('localhost', int(config.daemon.port)), authkey=config.daemon.key.encode())
         self._queue = JoinableQueue(maxsize=1)  # single action at a time
         self._status = JoinableQueue(maxsize=1)  # holds current status of services
         self._status.put({})  # no services to start with
@@ -72,10 +75,10 @@ class RefittDaemonServer(BaseManager):
         self._status.put(value)
         self._status.task_done()
 
-    def __enter__(self) -> RefittDaemonServer:
+    def __enter__(self) -> DaemonServer:
         """Start the server."""
         self.start()
-        log.info('started refittd service manager')
+        log.info('Started daemon server')
         return self
 
     def __exit__(self, *exc) -> None:
@@ -83,4 +86,4 @@ class RefittDaemonServer(BaseManager):
         self._status.get()  # from __init__
         self._status.task_done()
         self.shutdown()
-        log.info('stopped refittd service manager')
+        log.info('Stopped daemon server')
