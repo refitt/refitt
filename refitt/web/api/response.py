@@ -18,15 +18,20 @@ from typing import Dict, Type, Callable
 
 # standard libs
 import json
+import logging
 from functools import wraps
 
 # external libs
-from flask import Response
+from flask import Response, request
 
 # internal libs
 from ...database.model import NotFound
 from ..token import TokenNotFound, TokenInvalid, TokenExpired
 from .auth import AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
+
+
+# initialize module level logger
+log = logging.getLogger(__name__)
 
 
 # NOTE: codes and notes from Wikipedia (2020-05-08)
@@ -89,6 +94,7 @@ def endpoint(route: Callable[..., dict]) -> Callable[[...], dict]:
                 response['message'] = str(error)
                 status = STATUS['Internal Server Error']
         finally:
+            log.info(f'{request.method} {request.path} {status}')
             return Response(json.dumps(response), status=status,
                             mimetype='application/json')
 
