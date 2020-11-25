@@ -12,6 +12,7 @@
 
 """Service class implementation."""
 
+
 # type annotations
 from __future__ import annotations
 

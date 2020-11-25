@@ -12,6 +12,7 @@
 
 """Implementation of Unix double-fork method of daemonizing a process."""
 
+
 # type annotations
 from __future__ import annotations
 

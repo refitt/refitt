@@ -12,6 +12,7 @@
 
 """Refitt daemon service manager client implementation."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import Optional, Callable

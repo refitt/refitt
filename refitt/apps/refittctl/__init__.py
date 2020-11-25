@@ -135,6 +135,7 @@ class RefittControllerApp(Application):
         with DaemonClient() as daemon:
             daemon.request(self.action)
 
+
 def main() -> int:
     """Entry-point for `refittctl` console application."""
     return RefittControllerApp.main(sys.argv[1:])
