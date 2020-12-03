@@ -1,0 +1,102 @@
+[
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t5xa",
+    "aliases": {"ztf": "ZTF20actrfli", "antares": "ANT2020ae7t5xa"},
+    "ra": 133.0164572,
+    "dec": 44.80034109999999,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t5qi",
+    "aliases": {"ztf": "ZTF20actrfjx", "antares": "ANT2020ae7t5qi"},
+    "ra": 132.1162969,
+    "dec": 48.81782170000001,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t5la",
+    "aliases": {"ztf": "ZTF20actrewh", "antares": "ANT2020ae7t5la"},
+    "ra": 111.3240289,
+    "dec": 58.55685610000001,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t5ky",
+    "aliases": {"ztf": "ZTF20actrezk", "antares": "ANT2020ae7t5ky"},
+    "ra": 121.09173320000001,
+    "dec": 64.0661492,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t5hi",
+    "aliases": {"ztf": "ZTF20actreua", "antares": "ANT2020ae7t5hi"},
+    "ra": 112.6174091,
+    "dec": 58.579073400000006,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t5gq",
+    "aliases": {"ztf": "ZTF20actreyz", "antares": "ANT2020ae7t5gq"},
+    "ra": 107.3137459,
+    "dec": 59.07348999999999,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t46q",
+    "aliases": {"ztf": "ZTF20actreug", "antares": "ANT2020ae7t46q"},
+    "ra": 111.8202268,
+    "dec": 58.88914330000001,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t45i",
+    "aliases": {"ztf": "ZTF20actrexk", "antares": "ANT2020ae7t45i"},
+    "ra": 108.94915950000001,
+    "dec": 59.011556500000005,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t42y",
+    "aliases": {"ztf": "ZTF20actresa", "antares": "ANT2020ae7t42y"},
+    "ra": 106.7365459,
+    "dec": 63.17626109999999,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "name": "ANT2020ae7t42a",
+    "aliases": {"ztf": "ZTF20actrepv", "antares": "ANT2020ae7t42a"},
+    "ra": 111.57354180000002,
+    "dec": 64.47730590000002,
+    "redshift": null,
+    "data": {}
+  }
+]

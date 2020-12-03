@@ -26,15 +26,21 @@ from sqlalchemy.exc import IntegrityError
 # internal libs
 from refitt.database.core import config
 from refitt.web.token import JWT
-from refitt.database.model import (User, Facility, FacilityMap, Client,
-                                   ObjectType,
-                                   Session, NotFound)
+from refitt.database.model import (User, Facility, FacilityMap, Client, Session,
+                                   ObjectType, Object, SourceType, Source, ObservationType, Observation,
+                                   Alert, FileType, File, RecommendationGroup, Recommendation, ModelType, Model,
+                                   NotFound, AlreadyExists)
 
 
 # test data fixture return type
 Record = Dict[str, Any]
 Records = List[Record]
 TestData = Dict[str, Records]
+
+
+def serializable(data: dict) -> dict:
+    """Input `data` is returned after JSON round trip."""
+    return json.loads(json.dumps(data))
 
 
 class TestUser:
@@ -372,7 +378,8 @@ class TestClient:
     def test_embedded_no_join(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['client']:
-            assert data == json.loads(json.dumps(Client(**data).embedded(join=False)))
+            embedded_data = {**data, 'created': str(data['created'])}
+            assert embedded_data == serializable(Client(**data).embedded(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
@@ -477,7 +484,8 @@ class TestClient:
         """Generate a new client secret and then manually reset it back."""
         user = User.from_alias('tomb_raider')
         old_hash = Client.from_user(user.id).secret
-        new_hash = Client.new_secret(user.id).hashed().value
+        key, secret = Client.new_secret(user.id)
+        new_hash = secret.hashed().value
         assert new_hash != old_hash
         Client.update(Client.from_user(user.id).id, secret=old_hash)
         assert Client.from_user(user.id).secret == old_hash
@@ -519,7 +527,8 @@ class TestSession:
     def test_embedded_no_join(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['session']:
-            assert data == json.loads(json.dumps(Session(**data).embedded(join=False)))
+            embedded_data = {**data, 'expires': str(data['expires']), 'created': str(data['created'])}
+            assert embedded_data == serializable(Session(**data).embedded(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
@@ -559,7 +568,7 @@ class TestSession:
             Session.from_id(-1)
 
     def test_id_already_exists(self) -> None:
-        """Test exception on client `id` already exists."""
+        """Test exception on session `id` already exists."""
         with pytest.raises(IntegrityError):
             Session.add({'id': 1, 'client_id': 1, 'expires': datetime.now(), 'token': 'abc...'})
 
@@ -574,12 +583,12 @@ class TestSession:
             Session.from_client(-1)
 
     def test_client_already_exists(self) -> None:
-        """Test exception on client `client` already exists."""
+        """Test exception on session `client` already exists."""
         with pytest.raises(IntegrityError):
             Session.add({'client_id': 1, 'expires': datetime.now(), 'token': 'abc...'})
 
     def test_relationship_client(self) -> None:
-        """Test client foreign key relationship."""
+        """Test session foreign key relationship."""
         for id in range(1, 4):
             assert id == Session.from_client(id).client.id == Client.from_id(id).id
 
@@ -612,7 +621,7 @@ class TestSession:
         assert User.count() == 4 and Client.count() == 4 and Session.count() == 4
 
     def test_new_token(self) -> None:
-        """Generate a new client secret and then manually reset it back."""
+        """Generate a new session token and then manually reset it back."""
         session = Session.from_client(2)
         before = session.created
         if config.backend == 'sqlite':
@@ -635,7 +644,7 @@ class TestSession:
 
 
 class TestObjectType:
-    """Tests for `Object_Type` database model."""
+    """Tests for `ObjectType` database model."""
 
     def test_init(self, testdata: TestData) -> None:
         """Create object_type instance and validate accessors."""
@@ -673,14 +682,650 @@ class TestObjectType:
         """Test loading object_type from `id`."""
         # NOTE: `id` not set until after insert
         for i, record in enumerate(testdata['object_type']):
-            assert ObjectType.from_id(i+1).name == record['name']
+            assert ObjectType.from_id(i + 1).name == record['name']
 
     def test_id_missing(self) -> None:
-        """Test exception on missing session `id`."""
+        """Test exception on missing object_type `id`."""
         with pytest.raises(NotFound):
             ObjectType.from_id(-1)
 
     def test_id_already_exists(self) -> None:
-        """Test exception on client `id` already exists."""
+        """Test exception on object_type `id` already exists."""
         with pytest.raises(IntegrityError):
             ObjectType.add({'id': 1, 'name': 'Ludicrous Nova', 'description': 'The biggest ever'})
+
+    def test_from_name(self, testdata: TestData) -> None:
+        """Test loading object_type from `name`."""
+        for record in testdata['object_type']:
+            assert ObjectType.from_name(record['name']).name == record['name']
+
+    def test_name_missing(self) -> None:
+        """Test exception on missing object_type `name`."""
+        with pytest.raises(NotFound):
+            ObjectType.from_name('Ludicrous SN')
+
+    def test_name_already_exists(self) -> None:
+        """Test exception on object_type `name` already exists."""
+        with pytest.raises(IntegrityError):
+            ObjectType.add({'name': 'SNIa', 'description': 'WD detonation, Type Ia SN'})
+
+
+class TestObject:
+    """Tests for `Object` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create object instance and validate accessors."""
+        for data in testdata['object']:
+            object = Object(**data)
+            for key, value in data.items():
+                assert getattr(object, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['object']:
+            object = Object.from_dict(data)
+            assert data == object.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['object']:
+            object = Object.from_dict(data)
+            assert tuple(data.values()) == object.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['object']:
+            assert data == serializable(Object(**data).embedded(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        assert Object.from_name('ANT2020ae7t5xa').embedded() == {
+            'id': 1,
+            'type_id': 1,
+            'name': 'ANT2020ae7t5xa',
+            'aliases': {'antares': 'ANT2020ae7t5xa', 'ztf': 'ZTF20actrfli'},
+            'ra': 133.0164572,
+            'dec': 44.80034109999999,
+            'redshift': None,
+            'data': {},
+            'type': {
+                'id': 1,
+                'name': 'Unknown',
+                'description': 'Objects with unknown or unspecified type'
+            }
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading object from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['object']):
+            assert Object.from_id(i + 1).name == record['name']
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing object `id`."""
+        with pytest.raises(NotFound):
+            Object.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on object `id` already exists."""
+        with pytest.raises(IntegrityError):
+            Object.add({'id': 1, 'type_id': 5, 'name': 'Betelgeuse',
+                        'aliases': {'bayer': 'α Ori', 'flamsteed': '58 Ori', 'HR': 'HR 2061', 'BD': 'BD + 7°1055',
+                                    'HD': 'HD 39801', 'FK5': 'FK5 224', 'HIP': 'HIP 27989', 'SAO': 'SAO 113271',
+                                    'GC': 'GC 7451', 'CCDM': 'CCDM J05552+0724', 'AAVSO': 'AAVSO 0549+07'},
+                        'ra': 88.7917, 'dec': 7.4069, 'redshift': 0.000073,
+                        'data': {'parallax': 6.55, }})
+
+    def test_from_name(self, testdata: TestData) -> None:
+        """Test loading object from `name`."""
+        for record in testdata['object']:
+            assert Object.from_name(record['name']).name == record['name']
+
+    def test_name_missing(self) -> None:
+        """Test exception on missing object `name`."""
+        with pytest.raises(NotFound):
+            Object.from_name('Missing Object Name')
+
+    def test_name_already_exists(self) -> None:
+        """Test exception on object `name` already exists."""
+        with pytest.raises(IntegrityError):
+            Object.add({'type_id': 1, 'name': 'ANT2020ae7t5xa',
+                        'aliases': {'ztf': 'ZTF20actrfli', 'antares': 'ANT2020ae7t5xa'},
+                        'ra': 133.0164572, 'dec': 44.80034109999999, 'redshift': None, 'data': {}})
+
+    def test_from_alias(self, testdata: TestData) -> None:
+        """Test loading object from known `alias`."""
+        for record in testdata['object']:
+            assert Object.from_alias(ztf=record['aliases']['ztf']).name == record['name']
+
+    def test_alias_missing(self) -> None:
+        """Test exception on object `alias` not found."""
+        with pytest.raises(NotFound):
+            Object.from_alias(foo='bar')
+
+    def test_alias_exists(self) -> None:
+        with pytest.raises(AlreadyExists):
+            Object.add_alias(2, ztf=Object.from_id(1).aliases['ztf'])
+
+    def test_relationship_object_type(self, testdata: TestData) -> None:
+        """Test object foreign key relationship on object_type."""
+        for i, record in enumerate(testdata['object']):
+            assert Object.from_id(i + 1).type.id == record['type_id']
+
+
+class TestObservationType:
+    """Tests for `ObservationType` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create observation_type instance and validate accessors."""
+        for data in testdata['observation_type']:
+            observation_type = ObservationType(**data)
+            for key, value in data.items():
+                assert getattr(observation_type, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['observation_type']:
+            observation_type = ObservationType.from_dict(data)
+            assert data == observation_type.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['observation_type']:
+            observation_type = ObservationType.from_dict(data)
+            assert tuple(data.values()) == observation_type.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['observation_type']:
+            assert data == serializable(ObservationType(**data).embedded(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        assert ObservationType.from_name('g-ztf').embedded() == {
+            'id': 2,
+            'name': 'g-ztf',
+            'units': 'mag',
+            'description': 'G-band apparent magnitude (ZTF).'
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading observation_type from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['observation_type']):
+            assert ObservationType.from_id(i + 1).name == record['name']
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing observation_type `id`."""
+        with pytest.raises(NotFound):
+            ObservationType.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on observation_type `id` already exists."""
+        with pytest.raises(IntegrityError):
+            ObservationType.add({'id': 1, 'name': 'New Type', 'units': 'Kilo-Frobnicate',
+                                 'description': 'A new filter type.'})
+
+    def test_from_name(self, testdata: TestData) -> None:
+        """Test loading observation_type from `name`."""
+        for record in testdata['observation_type']:
+            assert ObservationType.from_name(record['name']).name == record['name']
+
+    def test_name_missing(self) -> None:
+        """Test exception on missing observation_type `name`."""
+        with pytest.raises(NotFound):
+            ObservationType.from_name('Missing ObservationType Name')
+
+    def test_name_already_exists(self) -> None:
+        """Test exception on observation_type `name` already exists."""
+        with pytest.raises(IntegrityError):
+            ObservationType.add({'name': 'clear', 'units': 'mag',
+                                 'description': 'Un-filtered apparent magnitude.'})
+
+
+class TestSourceType:
+    """Tests for `SourceType` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create source_type instance and validate accessors."""
+        for data in testdata['source_type']:
+            source_type = SourceType(**data)
+            for key, value in data.items():
+                assert getattr(source_type, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['source_type']:
+            source_type = SourceType.from_dict(data)
+            assert data == source_type.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['source_type']:
+            source_type = SourceType.from_dict(data)
+            assert tuple(data.values()) == source_type.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['source_type']:
+            assert data == serializable(SourceType(**data).embedded(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        assert SourceType.from_name('catalog').embedded() == {
+            'id': 2,
+            'name': 'catalog',
+            'description': 'Real observations from external catalogs.'
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading source_type from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['source_type']):
+            assert SourceType.from_id(i + 1).name == record['name']
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing source_type `id`."""
+        with pytest.raises(NotFound):
+            SourceType.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on source_type `id` already exists."""
+        with pytest.raises(IntegrityError):
+            SourceType.add({'id': 2, 'name': 'other catalog',
+                            'description': 'Real observations from external catalogs.'})
+
+    def test_from_name(self, testdata: TestData) -> None:
+        """Test loading source_type from `name`."""
+        for record in testdata['source_type']:
+            assert SourceType.from_name(record['name']).name == record['name']
+
+    def test_name_missing(self) -> None:
+        """Test exception on missing source_type `name`."""
+        with pytest.raises(NotFound):
+            SourceType.from_name('Missing SourceType Name')
+
+    def test_name_already_exists(self) -> None:
+        """Test exception on source_type `name` already exists."""
+        with pytest.raises(IntegrityError):
+            SourceType.add({'name': 'catalog',
+                            'description': 'Real observations from external catalogs.'})
+
+
+class TestSource:
+    """Tests for `Source` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create source instance and validate accessors."""
+        for data in testdata['source']:
+            source = Source(**data)
+            for key, value in data.items():
+                assert getattr(source, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['source']:
+            source = Source.from_dict(data)
+            assert data == source.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['source']:
+            source = Source.from_dict(data)
+            assert tuple(data.values()) == source.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['source']:
+            assert data == serializable(Source(**data).embedded(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        assert Source.from_name('antares').embedded() == {
+            'id': 2,
+            'type_id': 3,
+            'facility_id': None,
+            'user_id': None,
+            'name': 'antares',
+            'description': 'Antares is an alert broker developed by NOAO for ZTF and LSST.',
+            'data': {},
+            'type': {
+                'id': 3,
+                'name': 'broker',
+                'description': 'Alerts from data brokers.'
+            }
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading source from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['source']):
+            assert Source.from_id(i + 1).name == record['name']
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing source `id`."""
+        with pytest.raises(NotFound):
+            Source.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on source `id` already exists."""
+        with pytest.raises(IntegrityError):
+            Source.add({'id': 1, 'type_id': 1, 'facility_id': None, 'user_id': None,
+                        'name': 'other', 'description': '...', 'data': {}})
+
+    def test_from_name(self, testdata: TestData) -> None:
+        """Test loading source from `name`."""
+        for record in testdata['source']:
+            assert Source.from_name(record['name']).name == record['name']
+
+    def test_name_missing(self) -> None:
+        """Test exception on missing source `name`."""
+        with pytest.raises(NotFound):
+            Source.from_name('Missing Source Name')
+
+    def test_name_already_exists(self) -> None:
+        """Test exception on source `name` already exists."""
+        with pytest.raises(IntegrityError):
+            Source.add({'type_id': 1, 'facility_id': None, 'user_id': 1, 'name': 'refitt',
+                        'description': '...', 'data': {}})
+
+    def test_relationship_source_type(self, testdata: TestData) -> None:
+        """Test source foreign key relationship on source_type."""
+        for i, record in enumerate(testdata['source']):
+            assert Source.from_id(i + 1).type.id == record['type_id']
+
+
+class TestObservation:
+    """Tests for `Observation` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create observation instance and validate accessors."""
+        for data in testdata['observation']:
+            observation = Observation(**data)
+            for key, value in data.items():
+                assert getattr(observation, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['observation']:
+            observation = Observation.from_dict(data)
+            assert data == observation.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['observation']:
+            observation = Observation.from_dict(data)
+            assert tuple(data.values()) == observation.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['observation']:
+            embedded_data = {**data, 'time': str(data['time']), 'recorded': str(data['recorded'])}
+            assert embedded_data == serializable(Observation(**data).embedded(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        assert Observation.from_id(1).embedded() == {
+            'id': 1,
+            'time': '2020-10-24 18:00:00-04:00',
+            'object_id': 1,
+            'type_id': 3,
+            'source_id': 2,
+            'value': 18.1,
+            'error': 0.08,
+            'recorded': '2020-10-24 18:01:00-04:00',
+            'object': {
+                'id': 1,
+                'type_id': 1,
+                'name': 'ANT2020ae7t5xa',
+                'aliases': {
+                    'antares': 'ANT2020ae7t5xa',
+                    'ztf': 'ZTF20actrfli'
+                },
+                'ra': 133.0164572,
+                'dec': 44.80034109999999,
+                'redshift': None,
+                'data': {},
+                'type': {
+                    'id': 1,
+                    'name': 'Unknown',
+                    'description': 'Objects with unknown or unspecified type',
+                },
+            },
+            'type': {
+                'id': 3,
+                'name': 'r-ztf',
+                'units': 'mag',
+                'description': 'R-band apparent magnitude (ZTF).'
+            },
+            'source': {
+                'id': 2,
+                'type_id': 3,
+                'facility_id': None,
+                'user_id': None,
+                'name': 'antares',
+                'description': 'Antares is an alert broker developed by NOAO for ZTF and LSST.',
+                'data': {},
+                'type': {
+                    'id': 3,
+                    'name': 'broker',
+                    'description': 'Alerts from data brokers.'
+                },
+            },
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading observation from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['observation']):
+            assert Observation.from_id(i + 1).id == i + 1
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing observation `id`."""
+        with pytest.raises(NotFound):
+            Observation.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on observation `id` already exists."""
+        with pytest.raises(IntegrityError):
+            Observation.add({'id': 1, 'time': datetime.now(), 'object_id': 1, 'type_id': 1,
+                             'source_id': 1, 'value': 3.14, 'error': None})
+
+    def test_relationship_observation_type(self, testdata: TestData) -> None:
+        """Test observation foreign key relationship on observation_type."""
+        for i, record in enumerate(testdata['observation']):
+            assert Observation.from_id(i + 1).type.id == record['type_id']
+
+    def test_relationship_object(self, testdata: TestData) -> None:
+        """Test observation foreign key relationship on object."""
+        for i, record in enumerate(testdata['observation']):
+            assert Observation.from_id(i + 1).object.id == record['object_id']
+
+    def test_relationship_source(self, testdata: TestData) -> None:
+        """Test observation foreign key relationship on source."""
+        for i, record in enumerate(testdata['observation']):
+            assert Observation.from_id(i + 1).source.id == record['source_id']
+
+    def test_relationship_object_type(self, testdata: TestData) -> None:
+        """Test observation foreign key relationship on object -> object_type."""
+        for i, record in enumerate(testdata['observation']):
+            assert Observation.from_id(i + 1).object.type.id == Object.from_id(record['object_id']).type.id
+
+    def test_relationship_source_type(self, testdata: TestData) -> None:
+        """Test observation foreign key relationship on source -> source_type."""
+        for i, record in enumerate(testdata['observation']):
+            assert Observation.from_id(i + 1).source.type.id == Source.from_id(record['source_id']).type.id
+
+    def test_with_object(self) -> None:
+        """Test query for observations for a given object."""
+        for object_id, count in [(1, 9), (10, 3)]:
+            results = Observation.with_object(object_id)
+            assert all(isinstance(obs, Observation) for obs in results)
+            assert len(results) == count
+
+    def test_with_source(self) -> None:
+        """Test query for observations for a given source."""
+        for source_id in [3, 4, 5, 6]:
+            results = Observation.with_source(source_id)
+            assert all(isinstance(obs, Observation) for obs in results)
+            assert len(results) == 6
+
+
+class TestAlert:
+    """Tests for `Alert` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create alert instance and validate accessors."""
+        for data in testdata['alert']:
+            alert = Alert(**data)
+            for key, value in data.items():
+                assert getattr(alert, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['alert']:
+            alert = Alert.from_dict(data)
+            assert data == alert.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['alert']:
+            alert = Alert.from_dict(data)
+            assert tuple(data.values()) == alert.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['alert']:
+            assert data == serializable(Alert(**data).embedded(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        assert Alert.from_id(1).embedded() == {
+            'id': 1,
+            'observation_id': 1,
+            'data': {
+                'alert': {
+                    'alert_id': 'ztf:...',
+                    'dec': 44.80034109999999,
+                    'mjd': 59146.916666666664,
+                    'properties': {
+                        'ztf_fid': 2,
+                        'ztf_id': 'ZTF20actrfli',
+                        'ztf_magpsf': 18.1,
+                        'ztf_sigmapsf': 0.08
+                    },
+                    'ra': 133.0164572
+                },
+                'dec': 44.80034109999999,
+                'locus_id': 'ANT2020ae7t5xa',
+                'properties': {},
+                'ra': 133.0164572
+            },
+            'observation': Observation.from_id(1).embedded()
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading alert from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['alert']):
+            assert Alert.from_id(i + 1).id == i + 1
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing alert `id`."""
+        with pytest.raises(NotFound):
+            Alert.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on alert `id` already exists."""
+        with pytest.raises(IntegrityError):
+            Alert.add({'id': 1, 'observation_id': 11,  # NOTE: observation_id=11 is a forecast
+                       'data': {}})
+
+    def test_from_observation(self, testdata: TestData) -> None:
+        """Test loading alert from `observation_id`."""
+        for i, record in enumerate(testdata['alert']):
+            assert Alert.from_observation(record['observation_id']).observation_id == record['observation_id']
+
+    def test_observation_missing(self) -> None:
+        """Test exception on missing alert `observation`."""
+        with pytest.raises(NotFound):
+            Alert.from_observation(-1)
+
+    def test_observation_already_exists(self) -> None:
+        """Test exception on alert `observation_id` already exists."""
+        with pytest.raises(IntegrityError):
+            Alert.add({'id': -1, 'observation_id': 1, 'data': {}})
+
+    def test_relationship_observation_type(self, testdata: TestData) -> None:
+        """Test alert foreign key relationship on observation."""
+        for i, record in enumerate(testdata['alert']):
+            assert Alert.from_id(i + 1).observation.id == record['observation_id']
+
+
+class TestFileType:
+    """Tests for `FileType` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create file_type instance and validate accessors."""
+        for data in testdata['file_type']:
+            file_type = FileType(**data)
+            for key, value in data.items():
+                assert getattr(file_type, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['file_type']:
+            file_type = FileType.from_dict(data)
+            assert data == file_type.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['file_type']:
+            file_type = FileType.from_dict(data)
+            assert tuple(data.values()) == file_type.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['file_type']:
+            assert data == serializable(FileType(**data).embedded(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        assert FileType.from_name('fits.gz').embedded() == {
+            'id': 1,
+            'name': 'fits.gz',
+            'description': 'Gzip compressed FITS file.'
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading file_type from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['file_type']):
+            assert FileType.from_id(i + 1).name == record['name']
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing file_type `id`."""
+        with pytest.raises(NotFound):
+            FileType.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on file_type `id` already exists."""
+        with pytest.raises(IntegrityError):
+            FileType.add({'id': 1, 'name': 'jpeg',
+                          'description': 'A bad format for scientific images.'})
+
+    def test_from_name(self, testdata: TestData) -> None:
+        """Test loading file_type from `name`."""
+        for record in testdata['file_type']:
+            assert FileType.from_name(record['name']).name == record['name']
+
+    def test_name_missing(self) -> None:
+        """Test exception on missing file_type `name`."""
+        with pytest.raises(NotFound):
+            FileType.from_name('png')
+
+    def test_name_already_exists(self) -> None:
+        """Test exception on file_type `name` already exists."""
+        with pytest.raises(IntegrityError):
+            FileType.add({'name': 'fits.gz',
+                          'description': 'Gzip compressed FITS file.'})

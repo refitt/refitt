@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Core interface defines database engine and session manager."""
+"""Core interface for database engine and session manager."""
 
 
 # type annotations
@@ -65,7 +65,7 @@ class URL(dict):
         elif self.user and not self.password:
             url += f'{self.user}@'
         elif self.password and not self.user:
-            raise ConfigurationError('`password` given but not `user`')
+            raise ConfigurationError('Missing \'password\' for \'user\'')
 
         if self.host and self.port:
             url += f'{self.host}:{self.port}'
@@ -105,17 +105,31 @@ class URL(dict):
         return cls(**fields)
 
 
+# allowed database backends
+# mapping translates from name to library/package name (actual)
+backends = {
+    'sqlite': 'sqlite',
+    'postgresql': 'postgresql',
+    'timescaledb': 'postgresql',
+}
+
+
 config = config.database
 schema = config.pop('schema', None)
 connect_args = config.pop('connect_args', {})
 
+
+if config.backend not in backends:
+    raise ConfigurationError(f'Unsupported backend \'{config.backend}\'')
+
+
 # NOTE: TimescaleDB is actually PostgreSQL
-_url_params = Namespace(**{**config.copy(), **{'backend': config.backend.replace('timescaledb', 'postgresql')}})
+_url_params = Namespace(**{**config.copy(), **{'backend': backends[config.backend]}})
 _url = URL.from_namespace(_url_params)
 try:
     engine = create_engine(_url.encode(), connect_args=connect_args)
 except ArgumentError as error:
-    raise ConfigurationError(f'Bad URL: {repr(_url)}') from error
+    raise ConfigurationError(f'Backend config: {repr(_url)}') from error
 
 
 # create thread-local sessions

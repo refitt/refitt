@@ -1,0 +1,22 @@
+[
+  {
+    "id": null,
+    "name": "synthetic",
+    "description": "Reference libraries and future/forecasted observations."
+  },
+  {
+    "id": null,
+    "name": "catalog",
+    "description": "Real observations from external catalogs."
+  },
+  {
+    "id": null,
+    "name": "broker",
+    "description": "Alerts from data brokers."
+  },
+  {
+    "id": null,
+    "name": "observer",
+    "description": "Observations from external observers."
+  }
+]

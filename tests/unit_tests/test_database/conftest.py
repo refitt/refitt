@@ -25,12 +25,20 @@ import pytest
 
 # internal libs
 from refitt import assets
+from refitt.database import __coerce, __RT
 
 
 Records = List[Dict[str, Any]]
 @pytest.fixture(scope='package')
 def testdata() -> Dict[str, Records]:
     """Load test data into in-memory dictionary."""
-    data = assets.load_assets('database/test/*.json')
-    return {os.path.basename(path)[:-5]: json.loads(content)
-            for path, content in data.items()}
+
+    def _parse_data(data: str) -> List[Dict[str, __RT]]:
+        return [{field: __coerce(value) for field, value in record.items()}
+                for record in json.loads(data)]
+
+    def _format_name(path: str) -> str:
+        return os.path.splitext(os.path.basename(path))[0]
+
+    return {_format_name(path): _parse_data(data)
+            for path, data in assets.load_assets('database/test/*.json').items()}
