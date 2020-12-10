@@ -10,11 +10,11 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Client creation end-points."""
+"""Client credential creation end-points."""
 
 
 # internal libs
-from ....database.model import Client, Session, NotFound
+from ....database.model import Client, NotFound
 from ..app import application
 from ..response import endpoint
 from ..auth import authenticated, authorization
@@ -26,18 +26,19 @@ from ..auth import authenticated, authorization
 @authorization(level=0)
 def get_client(admin: Client, user_id: int) -> dict:  # noqa: admin client not used
     try:
-        (key, secret), token = Client.new_key(user_id), Session.new(user_id)
-        return {'client': {'key': key.value, 'secret': secret.value, 'token': token.encrypt()}}
+        key, secret = Client.new_key(user_id)
     except NotFound:
-        (key, secret), token = Client.new(user_id), Session.new(user_id)
-        return {'client': {'key': key.value, 'secret': secret.value, 'token': token.encrypt()}}
+        key, secret, client = Client.new(user_id)
+    return {'client': {'key': key.value, 'secret': secret.value}}
 
 
 @application.route('/client/secret/<int:user_id>', methods=['GET'])
 @endpoint
 @authenticated
 @authorization(level=0)
-def get_client_secret_only(admin: Client, user_id: int) -> dict:  # noqa: admin client not used
-    secret = Client.new_secret(user_id)
-    token = Session.new(user_id)
-    return {'client': {'secret': secret.value, 'token': token.encrypt()}}
+def get_client_secret(admin: Client, user_id: int) -> dict:  # noqa: admin client not used
+    try:
+        key, secret = Client.new_secret(user_id)
+    except NotFound:
+        key, secret, client = Client.new(user_id)
+    return {'client': {'key': key.value, 'secret': secret.value}}
