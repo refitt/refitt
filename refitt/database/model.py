@@ -15,16 +15,17 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, Tuple, Dict, Any, Type, Optional
+from typing import List, Tuple, Dict, Any, Type, Optional, Callable, TypeVar, Union
 
 # standard libs
 import logging
+from base64 import encodebytes as base64_encode, decodebytes as base64_decode
 from datetime import datetime, timedelta
 
 # external libs
 from sqlalchemy import Column, ForeignKey, Index, func, type_coerce
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, joinedload
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.types import Integer, BigInteger, DateTime, Float, Text, String, JSON, Boolean, LargeBinary
 from sqlalchemy.dialects.postgresql import JSONB
@@ -60,6 +61,71 @@ class AlreadyExists(DatabaseError):
     """Exception specific to a record with unique properties already existing."""
 
 
+# JSON value types and their coerced type before loading into database
+__NT = type(None)
+__VT = TypeVar('__VT', __NT, bool, int, float, str, Dict[str, Any], List[str])
+__RT = Union[__VT, datetime, bytes]
+
+
+def __load_datetime(value: __VT) -> Union[__VT, datetime]:
+    """Passively coerce datetime formatted strings into actual datetime values."""
+    if not isinstance(value, str):
+        return value
+    try:
+        return datetime.strptime(value, '%Y-%m-%d %H:%M:%S%z')
+    except ValueError:
+        return value
+
+
+def __dump_datetime(value: __RT) -> __VT:
+    """Passively coerce datetime values to formatted strings."""
+    if not isinstance(value, datetime):
+        return value
+    else:
+        return str(value)
+
+
+def __load_bytes(value: __VT) -> Union[__VT, bytes]:
+    """Passively coerce string lists (base64 encoded raw data)."""
+    if isinstance(value, list) and all(isinstance(member, str) for member in value):
+        return base64_decode('\n'.join(value).encode())
+    else:
+        return value
+
+
+def __dump_bytes(value: __RT) -> __VT:
+    """Passively coerce bytes into base64 encoded string sets."""
+    if not isinstance(value, bytes):
+        return value
+    else:
+        return base64_encode(value).decode().strip().split('\n')
+
+
+# list of defined type coercion filters
+__LM = Callable[[__VT], __RT]
+__DM = Callable[[__RT], __VT]
+__loaders: List[__LM] = [__load_datetime, __load_bytes, ]
+__dumpers: List[__DM] = [__dump_datetime, __dump_bytes, ]
+
+
+def __load_imp(value: __VT, filters: List[__LM]) -> __RT:
+    return value if not filters else filters[0](__load_imp(value, filters[1:]))
+
+
+def _load(value: __VT) -> __RT:
+    """Passively coerce value types of stored record assets to database compatible types."""
+    return __load_imp(value, __loaders)
+
+
+def __dump_imp(value: __RT, filters: List[__DM]) -> __VT:
+    return value if not filters else filters[0](__dump_imp(value, filters[1:]))
+
+
+def _dump(value: __RT) -> __VT:
+    """Passively coerce database types to JSON encoded types."""
+    return __dump_imp(value, __dumpers)
+
+
 class CoreMixin:
     """Core mixin class for all models."""
 
@@ -85,20 +151,19 @@ class CoreMixin:
         """Build record from existing dictionary."""
         return cls(**data)
 
-    def embedded(self, join: bool = True) -> Dict[str, Any]:
-        """Similar to :meth:`to_dict` but with `join` and serializable values."""
-        data = {}
-        for name, dtype in self.columns.items():
-            value = getattr(self, name)
-            if dtype is datetime:
-                data[name] = str(value)
-            else:
-                data[name] = value
-        if join:
+    @classmethod
+    def from_json(cls: Type[Base], data: Dict[str, __VT]) -> Base:
+        """Build record from JSON data (already loaded as dictionary)."""
+        return cls.from_dict({k: _load(v) for k, v in data.items()})
+
+    def to_json(self, join: bool = False) -> Dict[str, __VT]:
+        """Convert record values into JSON formatted types."""
+        data = {k: _dump(v) for k, v in self.to_dict().items()}
+        if join is True:
             for name in self.relationships:
-                child = getattr(self, name)
-                if child:
-                    data[name] = child.embedded(join=join)
+                record = getattr(self, name)
+                if record is not None:
+                    data[name] = record.to_json(join=True)
         return data
 
     @classmethod
@@ -158,6 +223,16 @@ class CoreMixin:
         """Count of records in table."""
         session = session or _Session()
         return session.query(cls).count()
+
+
+# NOTE: patch existing table definitions.
+# This is a hack and will be redone at a later point (likely improvement to StreamKit).
+Level.from_json = lambda data: Level(**{k: _load(v) for k, v in data.items()})
+Topic.from_json = lambda data: Topic(**{k: _load(v) for k, v in data.items()})
+Host.from_json = lambda data: Host(**{k: _load(v) for k, v in data.items()})
+Message.from_json = lambda data: Message(**{k: _load(v) for k, v in data.items()})
+Subscriber.from_json = lambda data: Subscriber(**{k: _load(v) for k, v in data.items()})
+Access.from_json = lambda data: Access(**{k: _load(v) for k, v in data.items()})
 
 
 class User(Base, CoreMixin):
@@ -851,13 +926,43 @@ class File(Base, CoreMixin):
     }
 
     @classmethod
-    def from_observation(cls, observation_id: str, session: _Session = None) -> File:
+    def from_observation(cls, observation_id: int, session: _Session = None) -> File:
         """Query by unique file `observation_id`."""
         try:
             session = session or _Session()
             return session.query(cls).filter(cls.observation_id == observation_id).one()
         except NoResultFound as error:
             raise NotFound(f'No file with observation_id={observation_id}') from error
+
+
+class Forecast(Base, CoreMixin):
+    """Forecast table."""
+
+    __tablename__ = 'forecast'
+    __table_args__ = {'schema': schema}
+
+    id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
+    observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
+                            ForeignKey(Observation.id), unique=True, nullable=False)
+    data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False)
+
+    observation = relationship(Observation, backref='forecast')
+
+    relationships = {'observation': Observation}
+    columns = {
+        'id': int,
+        'observation_id': int,
+        'data': dict,
+    }
+
+    @classmethod
+    def from_observation(cls, observation_id: int, session: _Session = None) -> Alert:
+        """Query by unique forecast `observation_id`."""
+        try:
+            session = session or _Session()
+            return session.query(cls).filter(cls.observation_id == observation_id).one()
+        except NoResultFound as error:
+            raise NotFound(f'No forecast with observation_id={observation_id}') from error
 
 
 class RecommendationGroup(Base, CoreMixin):
@@ -919,9 +1024,11 @@ class Recommendation(Base, CoreMixin):
     group_id = Column('group_id', Integer(), ForeignKey(RecommendationGroup.id), nullable=False)
     time = Column('time', DateTime(timezone=True), nullable=False, server_default=func.now())
     priority = Column('priority', Integer(), nullable=False)
+    object_id = Column('object_id', Integer(), ForeignKey(Object.id), nullable=False)
     facility_id = Column('facility_id', Integer(), ForeignKey(Facility.id), nullable=False)
     user_id = Column('user_id', Integer(), ForeignKey(User.id), nullable=False)
-    object_id = Column('object_id', Integer(), ForeignKey(Object.id), nullable=False)
+    forecast_id = Column('forecast_id', Integer().with_variant(BigInteger(), 'postgresql'),
+                         ForeignKey(Forecast.id), nullable=True)
     predicted_observation_id = Column('predicted_observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
                                       ForeignKey(Observation.id), nullable=True)
     observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
@@ -934,18 +1041,21 @@ class Recommendation(Base, CoreMixin):
     user = relationship(User, backref='recommendation')
     facility = relationship(Facility, backref='recommendation')
     object = relationship(Object, backref='recommendation')
+    forecast = relationship(Forecast, backref='recommendation')
     predicted = relationship(Observation, foreign_keys=[predicted_observation_id, ])
     observed = relationship(Observation, foreign_keys=[observation_id, ])
 
-    relationships = {'user': User, 'facility': Facility, 'predicted': Observation, 'observed': Observation}
+    relationships = {'group': RecommendationGroup, 'user': User, 'facility': Facility, 'object': Object,
+                     'forecast': Forecast, 'predicted': Observation, 'observed': Observation}
     columns = {
         'id': int,
         'group_id': int,
         'time': datetime,
         'priority': int,
+        'object_id': int,
         'facility_id': int,
         'user_id': int,
-        'object_id': int,
+        'forecast_id': int,
         'predicted_observation_id': int,
         'observation_id': int,
         'accepted': bool,
@@ -971,16 +1081,26 @@ class Recommendation(Base, CoreMixin):
                 .filter(cls.group_id == group_id).filter(cls.user_id == user_id)).all()
 
     @classmethod
-    def next(cls, user_id: int, group_id: int = None, limit: int = None) -> None:
+    def next(cls, user_id: int, group_id: int = None, limit: int = None,
+             facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
         """
         Select next recommendation for the given user and group, with the highest priority
         that has neither been 'accepted' nor 'rejected', up to some limit.
         """
+        # TODO: use `joinedload` to make query more efficient for API queries?
         session = _Session()
-        query = session.query(cls).order_by(cls.priority)
+        query = session.query(cls)
+        query = query.order_by(cls.priority)
         query = query.filter(cls.user_id == user_id)
         query = query.filter(cls.group_id == (group_id or RecommendationGroup.latest(session).id))
         query = query.filter(cls.accepted == False).filter(cls.rejected == False)
+
+        if facility_id is not None:
+            query = query.filter(cls.facility_id == facility_id)
+
+        if limiting_magnitude is not None:
+            query = query.filter(cls.predicted.value <= limiting_magnitude)
+
         if limit:
             return query.limit(limit)
         else:
@@ -1065,6 +1185,7 @@ tables: Dict[str, Base] = {
     'source_type': SourceType,
     'source': Source,
     'observation': Observation,
+    'forecast': Forecast,
     'alert': Alert,
     'file_type': FileType,
     'file': File,

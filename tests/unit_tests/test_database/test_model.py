@@ -12,6 +12,7 @@
 
 """Tests for Refitt's database model."""
 
+
 # type annotations
 from typing import List, Dict, Any
 
@@ -28,8 +29,8 @@ from refitt.database.core import config
 from refitt.web.token import JWT
 from refitt.database.model import (User, Facility, FacilityMap, Client, Session,
                                    ObjectType, Object, SourceType, Source, ObservationType, Observation,
-                                   Alert, FileType, File, RecommendationGroup, Recommendation, ModelType, Model,
-                                   NotFound, AlreadyExists)
+                                   Alert, FileType, File, Forecast,
+                                   RecommendationGroup, Recommendation, ModelType, Model, NotFound, AlreadyExists)
 
 
 # test data fixture return type
@@ -68,7 +69,7 @@ class TestUser:
     def test_embedded(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['user']:
-            assert data == json.loads(json.dumps(User(**data).embedded()))
+            assert data == serializable(User(**data).to_json())
 
     def test_from_id(self, testdata: TestData) -> None:
         """Test loading user profile from `id`."""
@@ -220,7 +221,7 @@ class TestFacility:
     def test_embedded(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['facility']:
-            assert data == json.loads(json.dumps(Facility(**data).embedded()))
+            assert data == serializable(Facility(**data).to_json())
 
     def test_from_id(self, testdata: TestData) -> None:
         """Test loading facility profile from `id`."""
@@ -350,7 +351,7 @@ class TestFacilityMap:
     def test_embedded(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['facility_map']:
-            assert data == json.loads(json.dumps(FacilityMap(**data).embedded()))
+            assert data == serializable(FacilityMap(**data).to_json())
 
 
 class TestClient:
@@ -379,11 +380,11 @@ class TestClient:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['client']:
             embedded_data = {**data, 'created': str(data['created'])}
-            assert embedded_data == serializable(Client(**data).embedded(join=False))
+            assert embedded_data == serializable(Client(**data).to_json(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert Client.from_user(User.from_alias('delta_one').id).embedded() == {
+        assert Client.from_user(User.from_alias('delta_one').id).to_json(join=True) == {
             'id': 2,
             'user_id': 2,
             'level': 10,
@@ -528,11 +529,11 @@ class TestSession:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['session']:
             embedded_data = {**data, 'expires': str(data['expires']), 'created': str(data['created'])}
-            assert embedded_data == serializable(Session(**data).embedded(join=False))
+            assert embedded_data == serializable(Session(**data).to_json(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert Session.from_id(2).embedded() == {
+        assert Session.from_id(2).to_json(join=True) == {
             'id': 2,
             'client_id': 2,
             'expires': '2020-10-23 18:00:01' + ('' if config.backend == 'sqlite' else '-04:00'),
@@ -668,11 +669,11 @@ class TestObjectType:
     def test_embedded_no_join(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['object_type']:
-            assert data == json.loads(json.dumps(ObjectType(**data).embedded(join=False)))
+            assert data == json.loads(json.dumps(ObjectType(**data).to_json(join=False)))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert ObjectType.from_name('SNIa').embedded() == {
+        assert ObjectType.from_name('SNIa').to_json(join=True) == {
             'id': 2,
             'name': 'SNIa',
             'description': 'WD detonation, Type Ia SN'
@@ -735,11 +736,11 @@ class TestObject:
     def test_embedded_no_join(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['object']:
-            assert data == serializable(Object(**data).embedded(join=False))
+            assert data == serializable(Object(**data).to_json(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert Object.from_name('ANT2020ae7t5xa').embedded() == {
+        assert Object.from_name('ANT2020ae7t5xa').to_json(join=True) == {
             'id': 1,
             'type_id': 1,
             'name': 'ANT2020ae7t5xa',
@@ -838,11 +839,11 @@ class TestObservationType:
     def test_embedded_no_join(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['observation_type']:
-            assert data == serializable(ObservationType(**data).embedded(join=False))
+            assert data == serializable(ObservationType(**data).to_json(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert ObservationType.from_name('g-ztf').embedded() == {
+        assert ObservationType.from_name('g-ztf').to_json(join=True) == {
             'id': 2,
             'name': 'g-ztf',
             'units': 'mag',
@@ -908,11 +909,11 @@ class TestSourceType:
     def test_embedded_no_join(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['source_type']:
-            assert data == serializable(SourceType(**data).embedded(join=False))
+            assert data == serializable(SourceType(**data).to_json(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert SourceType.from_name('catalog').embedded() == {
+        assert SourceType.from_name('catalog').to_json(join=True) == {
             'id': 2,
             'name': 'catalog',
             'description': 'Real observations from external catalogs.'
@@ -977,11 +978,11 @@ class TestSource:
     def test_embedded_no_join(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['source']:
-            assert data == serializable(Source(**data).embedded(join=False))
+            assert data == serializable(Source(**data).to_json(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert Source.from_name('antares').embedded() == {
+        assert Source.from_name('antares').to_json(join=True) == {
             'id': 2,
             'type_id': 3,
             'facility_id': None,
@@ -1061,19 +1062,19 @@ class TestObservation:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['observation']:
             embedded_data = {**data, 'time': str(data['time']), 'recorded': str(data['recorded'])}
-            assert embedded_data == serializable(Observation(**data).embedded(join=False))
+            assert embedded_data == serializable(Observation(**data).to_json(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert Observation.from_id(1).embedded() == {
+        assert Observation.from_id(1).to_json(join=True) == {
             'id': 1,
-            'time': '2020-10-24 18:00:00-04:00',
+            'time': '2020-10-24 18:00:00' + ('' if config.backend == 'sqlite' else '-04:00'),
             'object_id': 1,
             'type_id': 3,
             'source_id': 2,
             'value': 18.1,
             'error': 0.08,
-            'recorded': '2020-10-24 18:01:00-04:00',
+            'recorded': '2020-10-24 18:01:00' + ('' if config.backend == 'sqlite' else '-04:00'),
             'object': {
                 'id': 1,
                 'type_id': 1,
@@ -1196,11 +1197,11 @@ class TestAlert:
     def test_embedded_no_join(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['alert']:
-            assert data == serializable(Alert(**data).embedded(join=False))
+            assert data == serializable(Alert(**data).to_json(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert Alert.from_id(1).embedded() == {
+        assert Alert.from_id(1).to_json(join=True) == {
             'id': 1,
             'observation_id': 1,
             'data': {
@@ -1221,7 +1222,7 @@ class TestAlert:
                 'properties': {},
                 'ra': 133.0164572
             },
-            'observation': Observation.from_id(1).embedded()
+            'observation': Observation.from_id(1).to_json(join=True)
         }
 
     def test_from_id(self, testdata: TestData) -> None:
@@ -1287,11 +1288,11 @@ class TestFileType:
     def test_embedded_no_join(self, testdata: TestData) -> None:
         """Tests embedded method to check JSON-serialization."""
         for data in testdata['file_type']:
-            assert data == serializable(FileType(**data).embedded(join=False))
+            assert data == serializable(FileType(**data).to_json(join=False))
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert FileType.from_name('fits.gz').embedded() == {
+        assert FileType.from_name('fits.gz').to_json(join=True) == {
             'id': 1,
             'name': 'fits.gz',
             'description': 'Gzip compressed FITS file.'
@@ -1329,3 +1330,355 @@ class TestFileType:
         with pytest.raises(IntegrityError):
             FileType.add({'name': 'fits.gz',
                           'description': 'Gzip compressed FITS file.'})
+
+
+class TestFile:
+    """Tests for `File` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create file instance and validate accessors."""
+        for data in testdata['file']:
+            file = File(**data)
+            for key, value in data.items():
+                assert getattr(file, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['file']:
+            file = File.from_dict(data)
+            assert data == file.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['file']:
+            file = File.from_dict(data)
+            assert tuple(data.values()) == file.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['file']:
+            assert data == serializable(File(**data).to_json(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        assert File.from_id(1).to_json(join=True) == {
+            'id': 1,
+            'observation_id': 19,
+            'type_id': 1,
+            'data': ['H4sICIVdxV8C/2xvY2FsXzMuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE',
+                     'kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6',
+                     'a+TpafFHd1RcoLKvnXv+5e42Igy/8uisT2Pwqd5ryr1mi8W+vXa9HlOSdefqH8t7nxghhBBCCFnN',
+                     'GwAA///sxbEJAAAIAzCh///sILj1g2TJnNiuAwC8BQAA//8DABVnAU2AFgAA'],
+            'type': FileType.from_id(1).to_json(join=True),
+            'observation': Observation.from_id(19).to_json(join=True)
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading file from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['file']):
+            assert File.from_id(i + 1).to_json(join=False) == {**record, 'id': i + 1}
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing file `id`."""
+        with pytest.raises(NotFound):
+            File.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on file `id` already exists."""
+        with pytest.raises(IntegrityError):
+            File.add({'id': 1, 'observation_id': 1, 'type_id': 1, 'data': b'...'})
+
+    def test_from_observation(self, testdata: TestData) -> None:
+        """Test loading file from `observation_id`."""
+        for i, record in enumerate(testdata['file']):
+            assert File.from_observation(record['observation_id']).to_json(join=False) == {**record, 'id': i + 1}
+
+    def test_observation_missing(self) -> None:
+        """Test exception on missing file `observation_id`."""
+        with pytest.raises(NotFound):
+            File.from_observation(-1)
+
+    def test_observation_already_exists(self) -> None:
+        """Test exception on file `observation` already exists."""
+        with pytest.raises(IntegrityError):
+            File.add({'observation_id': File.from_id(1).observation_id, 'type_id': 1, 'data': b'...'})
+
+
+class TestForecast:
+    """Tests for `Forecast` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create forecast instance and validate accessors."""
+        for data in testdata['forecast']:
+            forecast = Forecast(**data)
+            for key, value in data.items():
+                assert getattr(forecast, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['forecast']:
+            forecast = Forecast.from_dict(data)
+            assert data == forecast.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['forecast']:
+            forecast = Forecast.from_dict(data)
+            assert tuple(data.values()) == forecast.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['forecast']:
+            assert data == serializable(Forecast(**data).to_json(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and auto-join."""
+        forecast = Forecast.from_id(1)
+        assert forecast.to_json(join=True) == {
+            'id': 1,
+            'observation_id': forecast.observation_id,
+            'data': forecast.data,
+            'observation': Observation.from_id(forecast.observation_id).to_json(join=True)
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading forecast from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['forecast']):
+            assert Forecast.from_id(i + 1).to_json(join=False) == {**record, 'id': i + 1}
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing forecast `id`."""
+        with pytest.raises(NotFound):
+            Forecast.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on forecast `id` already exists."""
+        with pytest.raises(IntegrityError):
+            Forecast.add({'id': 1, 'observation_id': 1, 'data': {}})
+
+    def test_from_observation(self, testdata: TestData) -> None:
+        """Test loading forecast from `observation_id`."""
+        for i, record in enumerate(testdata['forecast']):
+            assert Forecast.from_observation(record['observation_id']).to_json(join=False) == {**record, 'id': i + 1}
+
+    def test_observation_missing(self) -> None:
+        """Test exception on missing forecast `observation_id`."""
+        with pytest.raises(NotFound):
+            Forecast.from_observation(-1)
+
+    def test_observation_already_exists(self) -> None:
+        """Test exception on forecast `observation` already exists."""
+        with pytest.raises(IntegrityError):
+            Forecast.add({'observation_id': Forecast.from_id(1).observation_id, 'data': {}})
+
+
+class TestRecommendationGroup:
+    """Tests for `RecommendationGroup` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create recommendation_group instance and validate accessors."""
+        for data in testdata['recommendation_group']:
+            recommendation_group = RecommendationGroup(**data)
+            for key, value in data.items():
+                assert getattr(recommendation_group, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['recommendation_group']:
+            recommendation_group = RecommendationGroup.from_dict(data)
+            assert data == recommendation_group.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['recommendation_group']:
+            recommendation_group = RecommendationGroup.from_dict(data)
+            assert tuple(data.values()) == recommendation_group.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['recommendation_group']:
+            assert data == serializable(RecommendationGroup(**data).to_json(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and full join."""
+        assert RecommendationGroup.from_id(1).to_json(join=True) == {
+            'id': 1,
+            'created': '2020-10-24 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+        }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading recommendation_group from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['recommendation_group']):
+            assert RecommendationGroup.from_id(i + 1).id == i + 1
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing recommendation_group `id`."""
+        with pytest.raises(NotFound):
+            RecommendationGroup.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on recommendation_group `id` already exists."""
+        with pytest.raises(IntegrityError):
+            RecommendationGroup.add({'id': 1})
+
+    def test_new(self) -> None:
+        """Test the creation of a new recommendation_group."""
+        assert RecommendationGroup.count() == 3
+        group = RecommendationGroup.new()
+        assert RecommendationGroup.count() == 4
+        RecommendationGroup.delete(group.id)
+        assert RecommendationGroup.count() == 3
+
+    def test_latest(self) -> None:
+        """Test query for latest recommendation_group."""
+        assert RecommendationGroup.latest().to_json(join=True) == {
+            'id': 3,
+            'created': '2020-10-26 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+        }
+
+    def test_select_with_limit(self) -> None:
+        """Test the selection of recommendation_group with a limit."""
+        assert [group.to_json(join=True) for group in RecommendationGroup.select(limit=2)] == [
+            {
+                'id': 3,
+                'created': '2020-10-26 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+            },
+            {
+                'id': 2,
+                'created': '2020-10-25 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+            }
+        ]
+
+    def test_select_with_limit_and_offset(self) -> None:
+        """Test the selection of recommendation_group with a limit and offset."""
+        assert [group.to_json(join=True) for group in RecommendationGroup.select(limit=2, offset=1)] == [
+            {
+                'id': 2,
+                'created': '2020-10-25 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+            },
+            {
+                'id': 1,
+                'created': '2020-10-24 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+            }
+        ]
+
+
+class TestRecommendation:
+    """Tests for `Recommendation` database model."""
+
+    def test_init(self, testdata: TestData) -> None:
+        """Create recommendation instance and validate accessors."""
+        for data in testdata['recommendation']:
+            recommendation = Recommendation(**data)
+            for key, value in data.items():
+                assert getattr(recommendation, key) == value
+
+    def test_dict(self, testdata: TestData) -> None:
+        """Test round-trip of dict translations."""
+        for data in testdata['recommendation']:
+            recommendation = Recommendation.from_dict(data)
+            assert data == recommendation.to_dict()
+
+    def test_tuple(self, testdata: TestData) -> None:
+        """Test tuple-conversion."""
+        for data in testdata['recommendation']:
+            recommendation = Recommendation.from_dict(data)
+            assert tuple(data.values()) == recommendation.to_tuple()
+
+    def test_embedded_no_join(self, testdata: TestData) -> None:
+        """Tests embedded method to check JSON-serialization."""
+        for data in testdata['recommendation']:
+            assert data == serializable(Recommendation(**data).to_json(join=False))
+
+    def test_embedded(self) -> None:
+        """Test embedded method to check JSON-serialization and full join."""
+        assert Recommendation.from_id(1).to_json(join=True) == {
+            'id': 1,
+            'group_id': 1,
+            'time': '2020-10-24 20:02:00' + ('' if config.backend == 'sqlite' else '-4:00'),
+            'priority': 1,
+            'object_id': 1,
+            'facility_id': 1,
+            'user_id': 2,
+            'forecast_id': 1,
+            'predicted_observation_id': 11,
+            'observation_id': 19,
+            'accepted': True,
+            'rejected': False,
+            'data': {},
+            'group': RecommendationGroup.from_id(1).to_json(join=True),
+            'user': User.from_id(2).to_json(join=True),
+            'facility': Facility.from_id(1).to_json(join=True),
+            'object': Object.from_id(1).to_json(join=True),
+            'forecast': Forecast.from_id(1).to_json(join=True),
+            'predicted': Observation.from_id(11).to_json(join=True),
+            'observed': Observation.from_id(19).to_json(join=True),
+            }
+
+    def test_from_id(self, testdata: TestData) -> None:
+        """Test loading recommendation from `id`."""
+        # NOTE: `id` not set until after insert
+        for i, record in enumerate(testdata['recommendation']):
+            assert Recommendation.from_id(i + 1).id == i + 1
+
+    def test_id_missing(self) -> None:
+        """Test exception on missing recommendation `id`."""
+        with pytest.raises(NotFound):
+            Recommendation.from_id(-1)
+
+    def test_id_already_exists(self) -> None:
+        """Test exception on recommendation `id` already exists."""
+        with pytest.raises(IntegrityError):
+            Recommendation.add({'id': 1, 'group_id': 1, 'priority': 1, 'object_id': 1,
+                                'facility_id': 1, 'user_id': 2})
+
+    def test_for_user(self) -> None:
+        """Test query for all recommendations for a given user."""
+        user_id = User.from_alias('tomb_raider').id
+        results = Recommendation.for_user(user_id)
+        assert len(results) == 4
+        for record in results:
+            assert record.user_id == user_id
+            assert record.group_id == 3
+
+    def test_for_user_with_group_id(self) -> None:
+        """Test query for all recommendations for a given user and group."""
+        user_id = User.from_alias('tomb_raider').id
+        results = Recommendation.for_user(user_id, group_id=3)
+        assert len(results) == 4
+        for record in results:
+            assert record.user_id == user_id
+            assert record.group_id == 3
+
+    def test_for_user_with_group_id_2(self) -> None:
+        """Test query for all recommendations for a given user and group."""
+        user_id = User.from_alias('tomb_raider').id
+        results = Recommendation.for_user(user_id, group_id=2)
+        assert len(results) == 4
+        for record in results:
+            assert record.user_id == user_id
+            assert record.group_id == 2
+
+    def test_next(self) -> None:
+        """Test query for latest recommendation."""
+
+        user_id = User.from_alias('tomb_raider').id
+        response = Recommendation.next(user_id=user_id)
+        assert len(response) == 0  # NOTE: all accepted already
+
+        rec_id = Recommendation.for_user(user_id)[0].id
+        Recommendation.update(rec_id, accepted=False)
+
+        response = Recommendation.next(user_id=user_id)
+        assert len(response) == 1
+
+        Recommendation.update(rec_id, accepted=True)
+        response = Recommendation.next(user_id=user_id)
+        assert len(response) == 0
+
+
+# TODO: TestModelType
+# TODO: TestModel
