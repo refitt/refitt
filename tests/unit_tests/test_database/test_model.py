@@ -85,7 +85,7 @@ class TestUser:
     def test_id_already_exists(self) -> None:
         """Test exception on user `id` already exists."""
         with pytest.raises(IntegrityError):
-            User.add({'id': 1, 'first_name': 'Bryce', 'last_name': 'Wayne', 'email': 'bruce@wayneenterprizes.com',
+            User.add({'id': 1, 'first_name': 'Bruce', 'last_name': 'Wayne', 'email': 'bruce@waynecorp.com',
                       'alias': 'batman', 'data': {'user_type': 'amateur'}})
 
     def test_from_email(self, testdata: TestData) -> None:
@@ -117,7 +117,7 @@ class TestUser:
     def test_alias_already_exists(self) -> None:
         """Test exception on user `alias` already exists."""
         with pytest.raises(IntegrityError):
-            User.add({'first_name': 'Bryce', 'last_name': 'Wayne', 'email': 'bruce@wayneenterprizes.com',
+            User.add({'first_name': 'Bryce', 'last_name': 'Wayne', 'email': 'bruce@waynecorp.com',
                       'alias': 'tomb_raider', 'data': {'user_type': 'amateur'}})
 
     def test_update_email(self) -> None:
