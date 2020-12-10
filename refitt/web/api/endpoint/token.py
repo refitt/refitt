@@ -14,7 +14,7 @@
 
 
 # internal libs
-from ....database.model import Client, Session
+from ....database.model import Client, Session, NotFound
 from ..app import application
 from ..response import endpoint
 from ..auth import authenticate, authenticated, authorization
@@ -32,4 +32,8 @@ def get_token(client: Client) -> dict:
 @authenticated
 @authorization(level=0)
 def get_token_for_user(admin: Client, user_id: int) -> dict:  # noqa: client not used
-    return {'token': Session.new(user_id).encrypt()}
+    try:
+        return {'token': Session.new(user_id).encrypt()}
+    except NotFound:
+        Client.new(user_id)
+        return {'token': Session.new(user_id).encrypt()}
