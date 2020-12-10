@@ -50,7 +50,7 @@ class AntaresAlert(AlertInterface):
                                    'dec': locus.dec,
                                    'properties': alert.properties}
                                   for alert in reversed(sorted(locus.alerts, key=(lambda alert: alert.mjd)))]}
-        data['new_alert'] = data['alert_history'][0] # NOTE: sorting is most recent first
+        data['new_alert'] = data['alert_history'][0]  # NOTE: sorting is most recent first
         return cls.from_dict(data)
 
     @property
