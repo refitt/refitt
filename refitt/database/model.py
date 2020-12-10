@@ -23,6 +23,7 @@ from base64 import encodebytes as base64_encode, decodebytes as base64_decode
 from datetime import datetime, timedelta
 
 # external libs
+from names_generator import generate_name
 from sqlalchemy import Column, ForeignKey, Index, func, type_coerce
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, joinedload
@@ -179,9 +180,9 @@ class CoreMixin:
             raise NotFound(f'No {cls.__name__.lower()} with id={id}') from error
 
     @classmethod
-    def add(cls, data: dict) -> Optional[int]:
+    def add(cls, data: dict, session: _Session = None) -> Optional[int]:
         """Add record from existing `data`, return `id` if applicable."""
-        session = _Session()
+        session = session or _Session()
         try:
             record = cls.from_dict(data)
             session.add(record)
@@ -193,9 +194,9 @@ class CoreMixin:
             raise
 
     @classmethod
-    def update(cls, id: int, **data) -> None:
+    def update(cls, id: int, session: Session = None, **data) -> None:
         """Update named attributes of specified record."""
-        session = _Session()
+        session = session or _Session()
         try:
             record = cls.from_id(id, session)
             for field, value in data.items():
@@ -210,9 +211,9 @@ class CoreMixin:
             raise
 
     @classmethod
-    def delete(cls, id: int) -> None:
+    def delete(cls, id: int, session: _Session = None) -> None:
         """Delete existing record with `id`."""
-        session = _Session()
+        session = session or _Session()
         record = cls.from_id(id, session)
         session.delete(record)
         session.commit()
@@ -305,9 +306,9 @@ class User(Base, CoreMixin):
         log.info(f'Dissociated facility ({facility.id}) from user ({self.id})')
 
     @classmethod
-    def delete(cls, user_id: int) -> None:
+    def delete(cls, user_id: int, session: _Session = None) -> None:
         """Cascade delete to Client, Session, and FacilityMap."""
-        session = _Session()
+        session = session or _Session()
         user = cls.from_id(user_id)
         for client in session.query(Client).filter(Client.user_id == user_id):
             for _session in session.query(Session).filter(Session.client_id == client.id):
@@ -389,9 +390,9 @@ class Facility(Base, CoreMixin):
         log.info(f'Dissociated facility ({self.id}) from user ({user.id})')
 
     @classmethod
-    def delete(cls, facility_id: int) -> None:
+    def delete(cls, facility_id: int, session: _Session = None) -> None:
         """Cascade delete to FacilityMap."""
-        session = _Session()
+        session = session or _Session()
         facility = cls.from_id(facility_id)
         for mapping in session.query(FacilityMap).filter(FacilityMap.facility_id == facility_id):
             session.delete(mapping)
@@ -423,15 +424,15 @@ class FacilityMap(Base, CoreMixin):
         raise NotImplementedError()
 
     @classmethod
-    def add(cls, data: dict) -> Optional[int]:
+    def add(cls, data: dict, session: _Session = None) -> Optional[int]:
         raise NotImplementedError()
 
     @classmethod
-    def delete(cls, id: int) -> None:
+    def delete(cls, id: int, session: _Session = None) -> None:
         raise NotImplementedError()
 
     @classmethod
-    def update(cls, id: int, **data) -> None:
+    def update(cls, id: int, session: _Session = None, **data) -> None:
         raise NotImplementedError()
 
 
@@ -633,7 +634,7 @@ class Object(Base, CoreMixin):
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(ObjectType.id), nullable=False)
-    name = Column('name', Text(), unique=True, nullable=False)
+    name = Column('name', Text(), unique=True, nullable=True)
     aliases = Column('aliases', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     ra = Column('ra', Float(), nullable=False)
     dec = Column('dec', Float(), nullable=False)
@@ -693,6 +694,21 @@ class Object(Base, CoreMixin):
                     obj.aliases[provider] = name
             session.commit()
         except (IntegrityError, AlreadyExists):
+            session.rollback()
+            raise
+
+    @classmethod
+    def add(cls, data: dict, session: _Session = None) -> Optional[int]:
+        """Custom add method for object to automatically initialize the name."""
+        session = session or _Session()
+        object_id = super().add(data, session)
+        try:
+            object = cls.from_id(object_id, session)
+            object.name = generate_name(style='underscore', seed=object_id)
+            object.aliases = {**object.aliases, 'refitt': object.name}
+            session.commit()
+            return object_id
+        except IntegrityError:
             session.rollback()
             raise
 

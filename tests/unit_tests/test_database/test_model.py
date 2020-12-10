@@ -22,6 +22,7 @@ from datetime import datetime
 
 # external libs
 import pytest
+from names_generator import generate_name
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
@@ -740,11 +741,11 @@ class TestObject:
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert Object.from_name('ANT2020ae7t5xa').to_json(join=True) == {
+        assert Object.from_name('competent_mayer').to_json(join=True) == {
             'id': 1,
             'type_id': 1,
-            'name': 'ANT2020ae7t5xa',
-            'aliases': {'antares': 'ANT2020ae7t5xa', 'ztf': 'ZTF20actrfli'},
+            'name': 'competent_mayer',
+            'aliases': {'antares': 'ANT2020ae7t5xa', 'ztf': 'ZTF20actrfli', 'refitt': 'competent_mayer'},
             'ra': 133.0164572,
             'dec': 44.80034109999999,
             'redshift': None,
@@ -790,7 +791,7 @@ class TestObject:
     def test_name_already_exists(self) -> None:
         """Test exception on object `name` already exists."""
         with pytest.raises(IntegrityError):
-            Object.add({'type_id': 1, 'name': 'ANT2020ae7t5xa',
+            Object.add({'type_id': 1, 'name': 'competent_mayer',
                         'aliases': {'ztf': 'ZTF20actrfli', 'antares': 'ANT2020ae7t5xa'},
                         'ra': 133.0164572, 'dec': 44.80034109999999, 'redshift': None, 'data': {}})
 
@@ -1078,10 +1079,11 @@ class TestObservation:
             'object': {
                 'id': 1,
                 'type_id': 1,
-                'name': 'ANT2020ae7t5xa',
+                'name': 'competent_mayer',
                 'aliases': {
                     'antares': 'ANT2020ae7t5xa',
-                    'ztf': 'ZTF20actrfli'
+                    'ztf': 'ZTF20actrfli',
+                    'refitt': 'competent_mayer',
                 },
                 'ra': 133.0164572,
                 'dec': 44.80034109999999,
