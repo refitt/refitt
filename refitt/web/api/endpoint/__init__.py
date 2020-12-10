@@ -10,6 +10,4 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""REFITT's REST-API end-point implementations."""
-
-
+"""REFITT's REST-API endpoint implementations."""

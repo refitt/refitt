@@ -37,13 +37,14 @@ log = logging.getLogger(__name__)
 # NOTE: codes and notes from Wikipedia (2020-05-08)
 # https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 STATUS = {
-    'OK':                            200,  # standard success
-    'Created':                       201,  # resource created
-    'No Content':                    204,  # note response body
-    'Bad Request':                   400,  # TokenNotFound, TokenInvalid, AuthorizationNotFound, DataNotFound, BadData
-    'Unauthorized':                  401,  # TokenExpired, ClientNotFound
-    'Forbidden':                     403,  # ClientInvalid, ClientInsufficient, AuthorizationInvalid
-    'Not Found':                     404,  # route undefined
+    'OK':                            200,
+    'Created':                       201,
+    'No Content':                    204,
+    'Bad Request':                   400,
+    'Unauthorized':                  401,
+    'Forbidden':                     403,
+    'Not Found':                     404,
+    'Method Not Allowed':            405,
     'Payload Too Large':             413,  # TODO: limit allowed response size?
     'I\'m a teapot':                 418,  # TODO: awesome Easter egg potential?
     'Too Many Requests':             429,  # TODO: rate limiting?
@@ -62,6 +63,26 @@ class PayloadTooLarge(WebException):
     """The requested or posted data was too big."""
 
 
+class PayloadNotFound(WebException):
+    """Expected data in the payload and didn't find any."""
+
+
+class PayloadMalformed(WebException):
+    """Expected a particular type of data (i.e., JSON) in the payload."""
+
+
+class PayloadInvalid(WebException):
+    """The contents of the payload did not meet some content-specific requirement."""
+
+
+class ConstraintViolation(WebException):
+    """The request violated some constraint or integrity within the data model."""
+
+
+class ParameterInvalid(WebException):
+    """The URL parameter is not valid for the requested endpoint."""
+
+
 RESPONSE_MAP: Dict[Type[Exception], int] = {
     TokenNotFound:            STATUS['Bad Request'],
     AuthenticationNotFound:   STATUS['Bad Request'],
@@ -72,6 +93,11 @@ RESPONSE_MAP: Dict[Type[Exception], int] = {
     NotFound:                 STATUS['Not Found'],
     NotImplementedError:      STATUS['Not Implemented'],
     PayloadTooLarge:          STATUS['Payload Too Large'],
+    PayloadNotFound:          STATUS['Bad Request'],
+    PayloadMalformed:         STATUS['Bad Request'],
+    PayloadInvalid:           STATUS['Bad Request'],
+    ConstraintViolation:      STATUS['Bad Request'],
+    ParameterInvalid:         STATUS['Bad Request'],
 }
 
 
