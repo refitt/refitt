@@ -84,8 +84,8 @@ class ParameterInvalid(WebException):
 
 
 RESPONSE_MAP: Dict[Type[Exception], int] = {
-    TokenNotFound:            STATUS['Bad Request'],
-    AuthenticationNotFound:   STATUS['Bad Request'],
+    TokenNotFound:            STATUS['Forbidden'],
+    AuthenticationNotFound:   STATUS['Forbidden'],
     TokenInvalid:             STATUS['Forbidden'],
     AuthenticationInvalid:    STATUS['Forbidden'],
     PermissionDenied:         STATUS['Unauthorized'],
