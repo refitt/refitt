@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Client credential creation end-points."""
+"""Client credential creation endpoints."""
 
 
 # internal libs
@@ -21,7 +21,7 @@ from ..auth import authenticated, authorization
 
 
 @application.route('/client/<int:user_id>', methods=['GET'])
-@endpoint
+@endpoint('application/json')
 @authenticated
 @authorization(level=0)
 def get_client(admin: Client, user_id: int) -> dict:  # noqa: admin client not used
@@ -33,7 +33,7 @@ def get_client(admin: Client, user_id: int) -> dict:  # noqa: admin client not u
 
 
 @application.route('/client/secret/<int:user_id>', methods=['GET'])
-@endpoint
+@endpoint('application/json')
 @authenticated
 @authorization(level=0)
 def get_client_secret(admin: Client, user_id: int) -> dict:  # noqa: admin client not used

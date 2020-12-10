@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Token creation end-points."""
+"""Token creation endpoints."""
 
 
 # internal libs
@@ -21,14 +21,14 @@ from ..auth import authenticate, authenticated, authorization
 
 
 @application.route('/token', methods=['GET'])
-@endpoint
+@endpoint('application/json')
 @authenticate
 def get_token(client: Client) -> dict:
     return {'token': Session.new(client.user_id).encrypt()}
 
 
 @application.route('/token/<int:user_id>', methods=['GET'])
-@endpoint
+@endpoint('application/json')
 @authenticated
 @authorization(level=0)
 def get_token_for_user(admin: Client, user_id: int) -> dict:  # noqa: client not used

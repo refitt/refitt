@@ -14,7 +14,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Dict, Type, Callable
+from typing import Tuple, Dict, Type, Callable, Union, Generator
 
 # standard libs
 import json
@@ -22,7 +22,7 @@ import logging
 from functools import wraps
 
 # external libs
-from flask import Response, request
+from flask import Response, request, stream_with_context
 
 # internal libs
 from ...database.model import NotFound
@@ -75,27 +75,70 @@ RESPONSE_MAP: Dict[Type[Exception], int] = {
 }
 
 
-def endpoint(route: Callable[..., dict]) -> Callable[[...], dict]:
-    """Format response."""
+ByteGenerator = Tuple[dict, Generator[None, bytes, None]]
+EndpointDecorator = Callable[..., Response]
 
-    @wraps(route)
-    def formatted_response(*args, **kwargs) -> dict:
-        status = STATUS['OK']
-        response = {'status': 'success'}
-        try:
-            response['response'] = route(*args, **kwargs)
-        except Exception as error:
-            if type(error) in RESPONSE_MAP:
-                response['status'] = 'error'
-                response['message'] = str(error)
-                status = RESPONSE_MAP[type(error)]
-            else:
-                response['status'] = 'critical'
-                response['message'] = str(error)
-                status = STATUS['Internal Server Error']
-        finally:
-            log.info(f'{request.method} {request.path} {status}')
-            return Response(json.dumps(response), status=status,
-                            mimetype='application/json')
 
-    return formatted_response
+def endpoint(content_type: str) -> Callable[..., EndpointDecorator]:
+    """Correctly format the response based on content-type."""
+
+    def format_response(route: Callable[..., Union[dict, ByteGenerator]]) -> EndpointDecorator:
+        """Dispatch based on content-type."""
+
+        @wraps(route)
+        def format_json(*args, **kwargs) -> Response:
+            status = STATUS['OK']
+            response = {'status': 'success'}
+            try:
+                response['response'] = route(*args, **kwargs)
+            except Exception as error:
+                if type(error) in RESPONSE_MAP:
+                    response['status'] = 'error'
+                    response['message'] = str(error)
+                    status = RESPONSE_MAP[type(error)]
+                else:
+                    response['status'] = 'critical'
+                    response['message'] = str(error)
+                    status = STATUS['Internal Server Error']
+            finally:
+                log.info(f'{request.method} {request.path} {status}')
+                return Response(json.dumps(response), status=status,
+                                mimetype='application/json')
+
+        @wraps(route)
+        def format_stream(*args, **kwargs) -> Response:
+            status = STATUS['OK']
+            try:
+                headers, stream = route(*args, **kwargs)
+                response = Response(stream, status=status, mimetype='application/octet-stream')
+                for key, value in headers.items():
+                    response.headers[key] = value
+            except Exception as error:
+                response = dict()
+                if type(error) in RESPONSE_MAP:
+                    status = RESPONSE_MAP[type(error)]
+                    response['status'] = 'error'
+                else:
+                    status = STATUS['Internal Server Error']
+                    response['status'] = 'critical'
+                response['message'] = str(error)
+                return Response(json.dumps(response), status=status,
+                                mimetype='application/json')
+            finally:
+                log.info(f'{request.method} {request.path} {status}')
+
+        @wraps(route)
+        def content_type_not_implemented(*args, **kwargs) -> Response:  # noqa: unused arguments
+            return Response(json.dumps({'status': 'critical',
+                                        'message': f'Content-type not defined: \'{content_type}\''}),
+                            mimetype='application/json', status=STATUS['Internal Server Error'])
+
+        if content_type == 'application/json':
+            return format_json
+
+        if content_type == 'application/octet-stream':
+            return format_stream
+
+        return content_type_not_implemented
+
+    return format_response
