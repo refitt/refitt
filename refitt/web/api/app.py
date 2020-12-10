@@ -31,9 +31,18 @@ application = Flask(__name__)
 
 
 @application.errorhandler(STATUS['Not Found'])
-def not_found() -> Response:
+def not_found(error) -> Response:  # noqa: unused error object
     """Response to an invalid request."""
     return Response(json.dumps({'status': 'error',
                                 'message': f'not found: {request.path}'}),
                     status=STATUS['Not Found'],
+                    mimetype='application/json')
+
+
+@application.errorhandler(STATUS['Method Not Allowed'])
+def method_not_allowed(error) -> Response:  # noqa: unused error object
+    """Response to an invalid request."""
+    return Response(json.dumps({'status': 'error',
+                                'message': f'Method not allowed: {request.method} {request.path}'}),
+                    status=STATUS['Method Not Allowed'],
                     mimetype='application/json')
