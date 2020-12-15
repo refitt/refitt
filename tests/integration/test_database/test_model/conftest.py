@@ -10,11 +10,11 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Fixtures for database tests."""
+"""Fixtures for database model tests."""
 
 
 # type annotations
-from typing import List, Dict, Any
+from typing import List, Dict
 
 # standard libs
 import os
@@ -28,8 +28,12 @@ from refitt import assets
 from refitt.database.model import __VT
 
 
+Record = Dict[str, __VT]
+TestData = Dict[str, List[Record]]
+
+
 @pytest.fixture(scope='package')
-def testdata() -> Dict[str, List[Dict[str, __VT]]]:
+def testdata() -> TestData:
     """Load test data into in-memory dictionary."""
 
     def _format_name(path: str) -> str:
