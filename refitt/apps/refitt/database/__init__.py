@@ -18,7 +18,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import init, check
+from . import init, check, query
 
 
 PROGRAM = 'refitt database'
@@ -33,6 +33,7 @@ HELP = f"""\
 commands:
 init                     {init.__doc__}
 check                    {check.__doc__}
+query                    {query.__doc__}
 
 options:
 -h, --help               Show this message and exit.
@@ -49,4 +50,6 @@ class DatabaseApp(ApplicationGroup):
 
     command = None
     commands = {'init': init.InitDatabaseApp,
-                'check': check.CheckDatabaseApp, }
+                'check': check.CheckDatabaseApp,
+                'query': query.QueryDatabaseApp,
+                }
