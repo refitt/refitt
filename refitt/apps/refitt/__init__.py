@@ -21,7 +21,7 @@ import logging
 from ...__meta__ import (__version__, __description__,
                          __copyright__, __developer__, __contact__,
                          __website__, __ascii_art__)
-from . import config, database, service
+from . import config, database, service, auth, login, api
 
 # external libs
 from cmdkit.app import Application, ApplicationGroup
@@ -46,12 +46,14 @@ HELP = f"""\
 {USAGE}
 
 commands:
+auth                   {auth.__doc__}
+login                  {login.__doc__}
 config                 {config.__doc__}
 database               {database.__doc__}
 service                {service.__doc__}
+api                    {api.__doc__}
 pipeline               ...
 notify                 ...
-login                  ...
 
 options:
 -h, --help             Show this message and exit.
@@ -82,11 +84,16 @@ class RefittApp(ApplicationGroup):
     interface.add_argument('--ascii-art', action='version', version=__ascii_art__)
 
     command = None
-    commands = {'config': config.ConfigApp,
+    commands = {'auth': auth.AuthApp,
+                'login': login.LoginApp,
+                'config': config.ConfigApp,
                 'database': database.DatabaseApp,
-                'service': service.ServiceApp, }
+                'service': service.ServiceApp,
+                'api': api.WebApp,
+                }
 
 
 def main() -> int:
     """Entry-point for `refitt` console application."""
     return RefittApp.main(sys.argv[1:])  # only first argument if present
+
