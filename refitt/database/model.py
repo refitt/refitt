@@ -26,7 +26,7 @@ from datetime import datetime, timedelta
 from names_generator import generate_name
 from sqlalchemy import Column, ForeignKey, Index, func, type_coerce
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship, joinedload
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.types import Integer, BigInteger, DateTime, Float, Text, String, JSON, Boolean, LargeBinary
 from sqlalchemy.dialects.postgresql import JSONB
@@ -177,7 +177,7 @@ class CoreMixin:
             else:
                 raise AttributeError(f'{cls} has no `id` attribute')
         except NoResultFound as error:
-            raise NotFound(f'No {cls.__name__.lower()} with id={id}') from error
+            raise cls.NotFound(f'No {cls.__name__.lower()} with id={id}') from error
 
     @classmethod
     def add(cls, data: dict, session: _Session = None) -> Optional[int]:
@@ -258,6 +258,9 @@ class User(Base, CoreMixin):
         'data': dict
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to User."""
+
     @classmethod
     def from_email(cls, address: str, session: _Session = None) -> User:
         """Query by unique email `address`."""
@@ -265,7 +268,7 @@ class User(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.email == address).one()
         except NoResultFound as error:
-            raise NotFound(f'No user with email={address}') from error
+            raise User.NotFound(f'No user with email={address}') from error
 
     @classmethod
     def from_alias(cls, alias: str, session: _Session = None) -> User:
@@ -274,7 +277,7 @@ class User(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.alias == alias).one()
         except NoResultFound as error:
-            raise NotFound(f'No user with alias={alias}') from error
+            raise User.NotFound(f'No user with alias={alias}') from error
 
     def facilities(self, session: _Session = None) -> List[Facility]:
         """Facilities associated with this user (queries `facility_map`)."""
@@ -287,7 +290,7 @@ class User(Base, CoreMixin):
         try:
             facility = Facility.from_id(facility_id, session)
         except NoResultFound as error:
-            raise NotFound(f'No facility with id={facility_id}') from error
+            raise Facility.NotFound(f'No facility with id={facility_id}') from error
         session.add(FacilityMap(user_id=self.id, facility_id=facility.id))
         session.commit()
         log.info(f'Associated facility ({facility.id}) with user ({self.id})')
@@ -298,7 +301,7 @@ class User(Base, CoreMixin):
         try:
             facility = Facility.from_id(facility_id, session)
         except NoResultFound as error:
-            raise NotFound(f'No facility with id={facility_id}') from error
+            raise Facility.NotFound(f'No facility with id={facility_id}') from error
         for mapping in session.query(FacilityMap).filter(FacilityMap.user_id == self.id,
                                                          FacilityMap.facility_id == facility.id):
             session.delete(mapping)
@@ -351,6 +354,9 @@ class Facility(Base, CoreMixin):
         'data': dict
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to Facility."""
+
     @classmethod
     def from_name(cls, name: str, session: _Session = None) -> Facility:
         """Query by unique `name`."""
@@ -358,7 +364,7 @@ class Facility(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
-            raise NotFound(f'No facility with name={name}') from error
+            raise Facility.NotFound(f'No facility with name={name}') from error
 
     def users(self, session: _Session = None) -> List[User]:
         """Users associated with this facility (queries `facility_map`)."""
@@ -371,7 +377,7 @@ class Facility(Base, CoreMixin):
         try:
             user = User.from_id(user_id, session)
         except NoResultFound as error:
-            raise NotFound(f'No user with id={user_id}') from error
+            raise User.NotFound(f'No user with id={user_id}') from error
         session.add(FacilityMap(user_id=user.id, facility_id=self.id))
         session.commit()
         log.info(f'Associated facility ({self.id}) with user ({user.id})')
@@ -382,7 +388,7 @@ class Facility(Base, CoreMixin):
         try:
             user = User.from_id(user_id, session)
         except NoResultFound as error:
-            raise NotFound(f'No user with id={user_id}') from error
+            raise User.NotFound(f'No user with id={user_id}') from error
         for mapping in session.query(FacilityMap).filter(FacilityMap.user_id == user.id,
                                                          FacilityMap.facility_id == self.id):
             session.delete(mapping)
@@ -468,6 +474,9 @@ class Client(Base, CoreMixin):
         'created': datetime
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to Client."""
+
     @classmethod
     def from_key(cls, key: str, session: _Session = None) -> Client:
         """Query by unique `key`."""
@@ -475,7 +484,7 @@ class Client(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.key == key).one()
         except NoResultFound as error:
-            raise NotFound(f'No client with key={key}') from error
+            raise Client.NotFound(f'No client with key={key}') from error
 
     @classmethod
     def from_user(cls, user_id: int, session: _Session = None) -> Client:
@@ -484,7 +493,7 @@ class Client(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.user_id == user_id).one()
         except NoResultFound as error:
-            raise NotFound(f'No client with user_id={user_id}') from error
+            raise Client.NotFound(f'No client with user_id={user_id}') from error
 
     @classmethod
     def new(cls, user_id: int, level: int = DEFAULT_CLIENT_LEVEL) -> Tuple[Key, Secret, Client]:
@@ -499,10 +508,7 @@ class Client(Base, CoreMixin):
                 Authorization level (default: `DEFAULT_CLIENT_LEVEL`).
         """
         session = _Session()
-        try:
-            user = User.from_id(user_id, session)
-        except NoResultFound as error:
-            raise NotFound(f'No user with id={user_id}') from error
+        user = User.from_id(user_id, session)
         key, secret = Key.generate(), Secret.generate()
         client = Client(user_id=user.id, level=level, key=key.value, secret=secret.hashed().value, valid=True)
         session.add(client)
@@ -514,10 +520,7 @@ class Client(Base, CoreMixin):
     def new_secret(cls, user_id: int) -> Tuple[Key, Secret]:
         """Generate a new secret (store the hashed value)."""
         session = _Session()
-        try:
-            client = Client.from_user(user_id, session)
-        except NoResultFound as error:
-            raise NotFound(f'No client with user_id={user_id}') from error
+        client = Client.from_user(user_id, session)
         secret = Secret.generate()
         client.secret = secret.hashed().value
         session.commit()
@@ -528,10 +531,7 @@ class Client(Base, CoreMixin):
     def new_key(cls, user_id: int) -> Tuple[Key, Secret]:
         """Generate a new key and secret (store the hashed value)."""
         session = _Session()
-        try:
-            client = Client.from_user(user_id, session)
-        except NoResultFound as error:
-            raise NotFound(f'No client with user_id={user_id}') from error
+        client = Client.from_user(user_id, session)
         key, secret = Key.generate(), Secret.generate()
         client.key = key.value
         client.secret = secret.hashed().value
@@ -568,6 +568,9 @@ class Session(Base, CoreMixin):
         'created': datetime
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to Session."""
+
     @classmethod
     def from_client(cls, client_id: int, session: _Session = None) -> Session:
         """Query by unique client `id`."""
@@ -575,7 +578,7 @@ class Session(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.client_id == client_id).one()
         except NoResultFound as error:
-            raise NotFound(f'No session with client_id={client_id}') from error
+            raise Session.NotFound(f'No session with client_id={client_id}') from error
 
     @classmethod
     def new(cls, user_id: int) -> JWT:
@@ -592,7 +595,7 @@ class Session(Base, CoreMixin):
             old.expires = jwt.exp
             old.token = token
             old.created = datetime.now()
-        except NoResultFound:
+        except Session.NotFound:
             new = Session(client_id=client.id, expires=jwt.exp, token=token)
             session.add(new)
         session.commit()
@@ -616,6 +619,9 @@ class ObjectType(Base, CoreMixin):
         'description': str
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to ObjectType."""
+
     @classmethod
     def from_name(cls, name: str, session: _Session = None) -> ObjectType:
         """Query by unique object_type `name`."""
@@ -623,7 +629,7 @@ class ObjectType(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
-            raise NotFound(f'No object_type with name={name}') from error
+            raise ObjectType.NotFound(f'No object_type with name={name}') from error
 
 
 class Object(Base, CoreMixin):
@@ -655,6 +661,9 @@ class Object(Base, CoreMixin):
         'data': dict,
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to ObjectType."""
+
     @classmethod
     def from_name(cls, name: str, session: _Session = None) -> Object:
         """Query by unique object `name`."""
@@ -662,7 +671,7 @@ class Object(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
-            raise NotFound(f'No object with name={name}') from error
+            raise Object.NotFound(f'No object with name={name}') from error
 
     @classmethod
     def from_alias(cls, session: _Session = None, **alias: str) -> Object:
@@ -675,7 +684,7 @@ class Object(Base, CoreMixin):
             session = session or _Session()
             return session.query(Object).filter(Object.aliases[provider] == type_coerce(name, JSON)).one()
         except NoResultFound as error:
-            raise NotFound(f'No object with alias {provider}={name}') from error
+            raise Object.NotFound(f'No object with alias {provider}={name}') from error
         except MultipleResultsFound as error:
             raise NotDistinct(f'Multiple objects with alias {provider}={name}') from error
 
@@ -690,7 +699,7 @@ class Object(Base, CoreMixin):
                     existing = Object.from_alias(session, **{provider: name, })
                     if existing.id != object_id:
                         raise AlreadyExists(f'Object with alias {provider}={name} already exists')
-                except NotFound:
+                except Object.NotFound:
                     obj.aliases[provider] = name
             session.commit()
         except (IntegrityError, AlreadyExists):
@@ -731,6 +740,9 @@ class ObservationType(Base, CoreMixin):
         'description': str
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to ObservationType."""
+
     @classmethod
     def from_name(cls, name: str, session: _Session = None) -> ObservationType:
         """Query by unique observation_type `name`."""
@@ -738,7 +750,7 @@ class ObservationType(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
-            raise NotFound(f'No observation_type with name={name}') from error
+            raise ObservationType.NotFound(f'No observation_type with name={name}') from error
 
 
 class SourceType(Base, CoreMixin):
@@ -757,6 +769,9 @@ class SourceType(Base, CoreMixin):
         'description': str
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to SourceType."""
+
     @classmethod
     def from_name(cls, name: str, session: _Session = None) -> SourceType:
         """Query by unique source_type `name`."""
@@ -764,7 +779,7 @@ class SourceType(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
-            raise NotFound(f'No source_type with name={name}') from error
+            raise SourceType.NotFound(f'No source_type with name={name}') from error
 
 
 class Source(Base, CoreMixin):
@@ -796,6 +811,9 @@ class Source(Base, CoreMixin):
         'data': dict,
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to Source."""
+
     @classmethod
     def from_name(cls, name: str, session: _Session = None) -> Source:
         """Query by unique source `name`."""
@@ -803,7 +821,7 @@ class Source(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
-            raise NotFound(f'No source with name={name}') from error
+            raise Source.NotFound(f'No source with name={name}') from error
 
     @classmethod
     def with_facility(cls, facility_id: int, session: _Session = None) -> Source:
@@ -849,6 +867,9 @@ class Observation(Base, CoreMixin):
         'recorded': datetime
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to Observation."""
+
     @classmethod
     def with_object(cls, object_id: int, session: _Session = None) -> List[Observation]:
         """All observations with `object_id`."""
@@ -882,6 +903,9 @@ class Alert(Base, CoreMixin):
         'data': dict,
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to Alert."""
+
     @classmethod
     def from_observation(cls, observation_id: int, session: _Session = None) -> Alert:
         """Query by unique alert `observation_id`."""
@@ -889,7 +913,7 @@ class Alert(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.observation_id == observation_id).one()
         except NoResultFound as error:
-            raise NotFound(f'No alert with observation_id={observation_id}') from error
+            raise Alert.NotFound(f'No alert with observation_id={observation_id}') from error
 
 
 class FileType(Base, CoreMixin):
@@ -908,6 +932,9 @@ class FileType(Base, CoreMixin):
         'description': str
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to FileType."""
+
     @classmethod
     def from_name(cls, name: str, session: _Session = None) -> FileType:
         """Query by unique file_type `name`."""
@@ -915,7 +942,7 @@ class FileType(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
-            raise NotFound(f'No file_type with name={name}') from error
+            raise FileType.NotFound(f'No file_type with name={name}') from error
 
 
 class File(Base, CoreMixin):
@@ -941,6 +968,9 @@ class File(Base, CoreMixin):
         'data': bytes,
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to File."""
+
     @classmethod
     def from_observation(cls, observation_id: int, session: _Session = None) -> File:
         """Query by unique file `observation_id`."""
@@ -948,7 +978,7 @@ class File(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.observation_id == observation_id).one()
         except NoResultFound as error:
-            raise NotFound(f'No file with observation_id={observation_id}') from error
+            raise File.NotFound(f'No file with observation_id={observation_id}') from error
 
 
 class Forecast(Base, CoreMixin):
@@ -971,6 +1001,9 @@ class Forecast(Base, CoreMixin):
         'data': dict,
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to Forecast."""
+
     @classmethod
     def from_observation(cls, observation_id: int, session: _Session = None) -> Alert:
         """Query by unique forecast `observation_id`."""
@@ -978,7 +1011,7 @@ class Forecast(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.observation_id == observation_id).one()
         except NoResultFound as error:
-            raise NotFound(f'No forecast with observation_id={observation_id}') from error
+            raise Forecast.NotFound(f'No forecast with observation_id={observation_id}') from error
 
 
 class RecommendationGroup(Base, CoreMixin):
@@ -995,14 +1028,8 @@ class RecommendationGroup(Base, CoreMixin):
         'created': datetime
     }
 
-    @classmethod
-    def from_id(cls, id: int, session: _Session = None) -> RecommendationGroup:
-        """Query by unique `id`."""
-        try:
-            session = session or _Session()
-            return session.query(cls).filter(cls.id == id).one()
-        except NoResultFound as error:
-            raise NotFound(f'No recommendation_group with id={id}') from error
+    class NotFound(NotFound):
+        """NotFound exception specific to RecommendationGroup."""
 
     @classmethod
     def new(cls, session: _Session = None) -> RecommendationGroup:
@@ -1079,14 +1106,8 @@ class Recommendation(Base, CoreMixin):
         'data': dict
     }
 
-    @classmethod
-    def from_id(cls, id: int, session: _Session = None) -> Recommendation:
-        """Query by unique `id`."""
-        try:
-            session = session or _Session()
-            return session.query(cls).filter(cls.id == id).one()
-        except NoResultFound as error:
-            raise NotFound(f'No recommendation with id={id}') from error
+    class NotFound(NotFound):
+        """NotFound exception specific to Recommendation."""
 
     @classmethod
     def for_user(cls, user_id: int, group_id: int = None, session: _Session = None) -> List[Recommendation]:
@@ -1100,8 +1121,12 @@ class Recommendation(Base, CoreMixin):
     def next(cls, user_id: int, group_id: int = None, limit: int = None,
              facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
         """
-        Select next recommendation for the given user and group, with the highest priority
-        that has neither been 'accepted' nor 'rejected', up to some limit.
+        Select next recommendation(s) for the given user and group, with the highest priority
+        that has neither been 'accepted' nor 'rejected', up to some `limit`.
+
+        If `facility_id` is provided, only recommendations for the given facility are returned.
+        If `limiting_magnitude` is provided, only recommendations with a 'predicted' magnitude
+        brighter than this value are returned.
         """
         # TODO: use `joinedload` to make query more efficient for API queries?
         session = _Session()
@@ -1141,6 +1166,9 @@ class ModelType(Base, CoreMixin):
         'description': str
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to ModelType."""
+
     @classmethod
     def from_name(cls, name: str, session: _Session = None) -> ModelType:
         """Query by unique model_type `name`."""
@@ -1148,7 +1176,7 @@ class ModelType(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
-            raise NotFound(f'No model_type with name={name}') from error
+            raise ModelType.NotFound(f'No model_type with name={name}') from error
 
 
 class Model(Base, CoreMixin):
@@ -1178,6 +1206,9 @@ class Model(Base, CoreMixin):
         'created': datetime
     }
 
+    class NotFound(NotFound):
+        """NotFound exception specific to Model."""
+
     @classmethod
     def from_name(cls, name: str, session: _Session = None) -> Model:
         """Query by unique model `name`."""
@@ -1185,7 +1216,7 @@ class Model(Base, CoreMixin):
             session = session or _Session()
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
-            raise NotFound(f'No model with name={name}') from error
+            raise Model.NotFound(f'No model with name={name}') from error
 
 
 # global registry of tables
