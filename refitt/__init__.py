@@ -25,3 +25,10 @@ from .__meta__ import (__appname__, __version__, __authors__, __contact__, __lic
 # force logging import triggers configuration and logging setup
 from .core.config import config
 from .core import logging
+
+
+# render uncaught exceptions with highlighting
+import sys
+if sys.stdout.isatty():
+    from rich.traceback import install
+    install()
