@@ -269,7 +269,7 @@ class JWT:
         if value is None or isinstance(value, datetime):
             self._exp = value
         elif isinstance(value, timedelta):
-            self._exp = datetime.utcnow() + value
+            self._exp = datetime.now() + value
         elif isinstance(value, (int, float)):
             self._exp = None if value == -1 else datetime.fromtimestamp(float(value))
         else:
