@@ -12,6 +12,7 @@
 
 """Setup and installation script for refitt."""
 
+
 # standard libs
 import re
 from setuptools import setup, find_packages
@@ -26,12 +27,12 @@ with open('README.rst', mode='r') as readme:
 with open('refitt/__meta__.py', mode='r') as source:
     content = source.read().strip()
     metadata = {key: re.search(key + r'\s*=\s*[\'"]([^\'"]*)[\'"]', content).group(1)
-                for key in ['__appname__', '__version__', '__developer__', '__contact__',
+                for key in ['__version__', '__developer__', '__contact__',
                             '__description__', '__license__', '__keywords__', '__website__']}
 
 
 setup(
-    name                 = metadata['__appname__'],
+    name                 = 'refitt',
     version              = metadata['__version__'],
     author               = metadata['__developer__'],
     author_email         = metadata['__contact__'],
@@ -54,12 +55,11 @@ setup(
                                                 'refittd=refitt.apps.refittd:main',
                                                 'refittctl=refitt.apps.refittctl:main']},
     install_requires     = [
-        'numpy>=1.18.5', 'scipy>=1.4.1', 'pandas>=1.1.0', 'pyarrow>=1.0.0',
+        'numpy>=1.18.5', 'scipy>=1.4.1', 'pandas>=1.1.0', 'pyarrow>=2.0.0',
         'sqlalchemy>=1.3.19', 'psycopg2>=2.8.5',
         'flask>=1.1.2', 'gunicorn>=20.0.4', 'requests>=2.24.0', 'cryptography>=3.2.1',
-        'cmdkit>=2.1.2', 'toml>=0.10.2', 'streamkit>=0.3.1',
+        'cmdkit>=2.1.3', 'toml>=0.10.2', 'streamkit>=0.3.2', 'names_generator>=0.1.0',
         'astropy>=4.0.1', 'antares-client>=1.0.1', 'slackclient>=2.8.0',
-        'matplotlib>=3.3.2', 'seaborn>=0.11.0',
-        'tensorflow>=2.3.1',
+        'matplotlib>=3.3.2', 'seaborn>=0.11.0', 'rich>=9.4.0',
     ],
 )
