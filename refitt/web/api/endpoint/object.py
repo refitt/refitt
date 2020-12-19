@@ -13,9 +13,6 @@
 """Object endpoints."""
 
 
-# type annotations
-from typing import Union
-
 # internal libs
 from ....database.model import Client, Object, ObjectType
 from ....database.core import Session
@@ -27,11 +24,22 @@ from ..auth import authenticated, authorization
 from flask import request
 
 
+info: dict = {
+    'Description': 'Request objects',
+    'Endpoints': {
+        '/object/<id>': {},
+        '/object/<id>/type': {},
+        '/object/type': {},
+        '/object/type/<id>': {},
+    }
+}
+
+
 @application.route('/object/<id_or_name>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_object(client: Client, id_or_name: Union[int, str]) -> dict:  # noqa: unused client
+def get_object(client: Client, id_or_name: str) -> dict:  # noqa: unused client
     """Query for object data."""
     params = dict(request.args)
     join = params.pop('join', 'true')
@@ -49,26 +57,141 @@ def get_object(client: Client, id_or_name: Union[int, str]) -> dict:  # noqa: un
         return {'object': Object.from_name(object_name).to_json(join=join)}
 
 
+info['Endpoints']['/object/<id>']['GET'] = {
+    'Description': 'Request object by ID or name',
+    'Permissions': 'Anyone',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for object (or name)',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'Object data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Object does not exist'},
+    }
+}
+
+
+@application.route('/object/<id_or_name>/type', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_type_from_object(client: Client, id_or_name: str) -> dict:  # noqa: unused client
+    """Get object type for specific object by ID or name."""
+    try:
+        object_id = int(id_or_name)
+        return {'object_type': Object.from_id(object_id).type.to_json()}
+    except ValueError:
+        object_name = str(id_or_name)
+        return {'object_type': Object.from_name(object_name).type.to_json()}
+
+
+info['Endpoints']['/object/<id>/type']['GET'] = {
+    'Description': 'Request type of specified object by ID or name',
+    'Permissions': 'Anyone',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for object (or name)',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'Object type data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Object does not exist'},
+    }
+}
+
+
 @application.route('/object/type', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
 def get_object_types(client: Client) -> dict:  # noqa: unused client
-    """Query for object type data."""
+    """Get list of all object types."""
     session = Session()
     object_types = session.query(ObjectType).all()
     return {'object_type': [object_type.to_json() for object_type in object_types]}
+
+
+info['Endpoints']['/object/type']['GET'] = {
+    'Description': 'Request all object types',
+    'Permissions': 'Anyone',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'List of object type data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+    }
+}
 
 
 @application.route('/object/type/<id_or_name>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_object_type(client: Client, id_or_name: Union[int, str]) -> dict:  # noqa: unused client
-    """Query for object type data."""
+def get_object_type(client: Client, id_or_name: str) -> dict:  # noqa: unused client
+    """Get for object type by ID or name."""
     try:
-        object_type_id = int(id_or_name)
-        return {'object_type': ObjectType.from_id(object_type_id).to_json()}
+        id = int(id_or_name)
+        return {'object_type': ObjectType.from_id(id).to_json()}
     except ValueError:
-        object_type_name = str(id_or_name)
-        return {'object_type': ObjectType.from_name(object_type_name).to_json()}
+        name = str(id_or_name)
+        return {'object_type': ObjectType.from_name(name).to_json()}
+
+
+info['Endpoints']['/object/type/<id>']['GET'] = {
+    'Description': 'Request object type by ID or name',
+    'Permissions': 'Anyone',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for object type (or name)',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'Object type data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Object type does not exist'},
+    }
+}
