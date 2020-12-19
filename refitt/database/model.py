@@ -177,7 +177,7 @@ class CoreMixin:
             else:
                 raise AttributeError(f'{cls} has no `id` attribute')
         except NoResultFound as error:
-            raise cls.NotFound(f'No {cls.__name__.lower()} with id={id}') from error
+            raise cls.NotFound(f'No {cls.__tablename__} with id={id}') from error
 
     @classmethod
     def add(cls: Type[Base], data: dict, session: _Session = None) -> Base:
@@ -187,7 +187,7 @@ class CoreMixin:
             record = cls.from_dict(data)
             session.add(record)
             session.commit()
-            log.info(f'Added {cls.__name__.lower()} ({record.id})')
+            log.info(f'Added {cls.__tablename__} ({record.id})')
             return record
         except (IntegrityError, DatabaseError):
             session.rollback()
@@ -205,20 +205,20 @@ class CoreMixin:
                 else:
                     record.data = {**record.data, field: value}
             session.commit()
-            log.info(f'Updated {cls.__name__.lower()} ({id})')
+            log.info(f'Updated {cls.__tablename__} ({id})')
             return record
         except (IntegrityError, DatabaseError):
             session.rollback()
             raise
 
     @classmethod
-    def delete(cls, id: int, session: _Session = None) -> None:
+    def delete(cls: Type[Base], id: int, session: _Session = None) -> None:
         """Delete existing record with `id`."""
         session = session or _Session()
         record = cls.from_id(id, session)
         session.delete(record)
         session.commit()
-        log.info(f'Deleted {cls.__name__.lower()} ({id})')
+        log.info(f'Deleted {cls.__tablename__} ({id})')
 
     @classmethod
     def count(cls, session: _Session = None) -> int:
