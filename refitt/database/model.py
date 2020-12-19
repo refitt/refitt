@@ -554,7 +554,7 @@ class Session(Base, CoreMixin):
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     client_id = Column('client_id', Integer(), ForeignKey(Client.id, ondelete='cascade'), unique=True, nullable=False)
-    expires = Column('expires', DateTime(timezone=True), nullable=False)
+    expires = Column('expires', DateTime(timezone=True), nullable=True)  # NULL is no-expiration!
     token = Column('token', String(64), nullable=False)
     created = Column('created', DateTime(timezone=True), nullable=False, server_default=func.now())
 
@@ -582,14 +582,16 @@ class Session(Base, CoreMixin):
             raise Session.NotFound(f'No session with client_id={client_id}') from error
 
     @classmethod
-    def new(cls, user_id: int) -> JWT:
+    def new(cls, user_id: int, expires: Optional[Union[float, timedelta]] = DEFAULT_EXPIRE_TIME) -> JWT:
         """Create new session for `user`."""
         session = _Session()
-        try:
-            client = Client.from_user(user_id, session)
-        except NoResultFound as error:
-            raise NotFound(f'No client with user_id={user_id}') from error
-        jwt = JWT(sub=client.id, exp=timedelta(seconds=DEFAULT_EXPIRE_TIME))
+        client = Client.from_user(user_id, session)
+        if expires is None:
+            exp = None
+            log.warning('Creating session token with no expiration time')
+        else:
+            exp = expires if isinstance(expires, timedelta) else timedelta(seconds=expires)
+        jwt = JWT(sub=client.id, exp=exp)
         token = Token(jwt.encrypt()).hashed().value
         try:
             old = Session.from_client(client.id, session)
