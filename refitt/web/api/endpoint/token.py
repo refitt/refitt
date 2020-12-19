@@ -14,10 +14,19 @@
 
 
 # internal libs
-from ....database.model import Client, Session, NotFound
+from ....database.model import Client, Session, User, NotFound
 from ..app import application
 from ..response import endpoint
 from ..auth import authenticate, authenticated, authorization
+
+
+info: dict = {
+    'Description': 'Requests for session token',
+    'Endpoints': {
+        '/token': {},
+        '/token/<user_id>': {}
+    }
+}
 
 
 @application.route('/token', methods=['GET'])
@@ -27,6 +36,25 @@ def get_token(client: Client) -> dict:
     return {'token': Session.new(client.user_id).encrypt()}
 
 
+info['Endpoints']['/token']['GET'] = {
+    'Description': 'Request new token',
+    'Permissions': 'User',
+    'Requires': {
+        'Auth': 'Basic HTTP authentication with key:secret',
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'New token',
+                'Type': 'application/json'
+            },
+        },
+        403: {'Description': 'Authentication not found, invalid, or not permitted'},
+    }
+}
+
+
 @application.route('/token/<int:user_id>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
@@ -34,6 +62,6 @@ def get_token(client: Client) -> dict:
 def get_token_for_user(admin: Client, user_id: int) -> dict:  # noqa: client not used
     try:
         return {'token': Session.new(user_id).encrypt()}
-    except NotFound:
+    except Client.NotFound:
         Client.new(user_id)
         return {'token': Session.new(user_id).encrypt()}
