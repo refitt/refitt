@@ -21,13 +21,6 @@ Example:
     >>> from refitt.web import request
     >>> request.get('recommendation')
     {...}
-
-Note:
-    A `login` method issues the initial necessary GET /token request.
-    That token is held in-memory and all future requests use it.
-    To force a new GET /token request, use `login(force=True)`.
-    This is attempted on your behalf if the response suggests the
-    token was expired.
 """
 
 # type annotations
@@ -88,22 +81,24 @@ SECRET: Optional[Secret] = None
 TOKEN: Optional[Token] = None
 
 
-def login() -> Tuple[Key, Secret]:
+def login(force: bool = False) -> Tuple[Key, Secret]:
     """
     Get client key and secret.
 
     If not already stored in the configuration file, navigate to the web interface and get
-    the credentials, update the configuration file.
+    the credentials and update the configuration file.
+
+    Using `force` will force new credential creation.
     """
 
     global KEY
     global SECRET
-    if KEY and SECRET:
+    if KEY and SECRET and not force:
         return KEY, SECRET
 
     KEY = __get(Key)
     SECRET = __get(Secret)
-    if KEY and SECRET:
+    if KEY and SECRET and not force:
         return KEY, SECRET
 
     if not webbrowser.open(config.api.login):
@@ -113,6 +108,10 @@ def login() -> Tuple[Key, Secret]:
     SECRET = Secret(input('Client secret: '))
     update_config('user', {'api': {'key': KEY.value, 'secret': SECRET.value}})
     return KEY, SECRET
+
+
+# global setting to require tokens get persisted
+PERSIST_TOKEN: bool = False
 
 
 def refresh_token(force: bool = False, persist: bool = False) -> Token:
@@ -128,10 +127,10 @@ def refresh_token(force: bool = False, persist: bool = False) -> Token:
     response = __requests.get(url, auth=(key.value, secret.value))
     response_data = response.json()
     if response.status_code != STATUS['OK']:
-        raise APIError(response.status_code, response_data['message'])
+        raise APIError(response.status_code, response_data['Message'])
 
-    TOKEN = Token(response_data['response']['token'])
-    if persist:
+    TOKEN = Token(response_data['Response']['token'])
+    if persist or PERSIST_TOKEN:
         update_config('user', {'api': {'token': TOKEN.value}})
     return TOKEN
 
@@ -170,7 +169,7 @@ def request(action: str, endpoint: str, **kwargs) -> Dict[str, Any]:
         **kwargs:
             All keyword arguments are forwarded to the method (i.e., `action`).
     """
-    url = __join_site(endpoint)
+    url = __join_site(endpoint.lstrip('/'))
     method = getattr(__requests, action)
     response = method(url, data=kwargs.pop('data', None), json=kwargs.pop('json', None),
                       headers={'Authorization': f'Bearer {TOKEN.value}'},
@@ -178,8 +177,8 @@ def request(action: str, endpoint: str, **kwargs) -> Dict[str, Any]:
                       params=kwargs)
     response_data = response.json()
     if response.status_code != STATUS['OK']:
-        raise APIError(response.status_code, response_data['message'])
-    return response_data['response']
+        raise APIError(response.status_code, response_data['Message'])
+    return response_data['Response']
 
 
 # exposed methods
