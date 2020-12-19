@@ -180,7 +180,7 @@ class CoreMixin:
             raise cls.NotFound(f'No {cls.__name__.lower()} with id={id}') from error
 
     @classmethod
-    def add(cls, data: dict, session: _Session = None) -> Optional[int]:
+    def add(cls: Type[Base], data: dict, session: _Session = None) -> Base:
         """Add record from existing `data`, return `id` if applicable."""
         session = session or _Session()
         try:
@@ -188,13 +188,13 @@ class CoreMixin:
             session.add(record)
             session.commit()
             log.info(f'Added {cls.__name__.lower()} ({record.id})')
-            return record.id
+            return record
         except (IntegrityError, DatabaseError):
             session.rollback()
             raise
 
     @classmethod
-    def update(cls, id: int, session: Session = None, **data) -> None:
+    def update(cls: Type[Base], id: int, session: Session = None, **data) -> Base:
         """Update named attributes of specified record."""
         session = session or _Session()
         try:
@@ -206,6 +206,7 @@ class CoreMixin:
                     record.data = {**record.data, field: value}
             session.commit()
             log.info(f'Updated {cls.__name__.lower()} ({id})')
+            return record
         except (IntegrityError, DatabaseError):
             session.rollback()
             raise
@@ -716,7 +717,7 @@ class Object(Base, CoreMixin):
             object.name = generate_name(style='underscore', seed=object_id)
             object.aliases = {**object.aliases, 'refitt': object.name}
             session.commit()
-            return object_id
+            return object
         except IntegrityError:
             session.rollback()
             raise
