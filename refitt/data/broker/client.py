@@ -34,7 +34,6 @@ class ClientInterface(ABC):
         """Initialize topics and connection configuration."""
         self.topic = topic
         self.credentials = credentials
-        self.connect()
 
     @abstractmethod
     def connect(self) -> None:
@@ -50,6 +49,7 @@ class ClientInterface(ABC):
 
     def __enter__(self) -> ClientInterface:
         """Context manager setup."""
+        self.connect()
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback) -> None:
