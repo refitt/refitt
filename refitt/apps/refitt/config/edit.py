@@ -77,7 +77,6 @@ class EditConfigApp(Application):
 
     def run(self) -> None:
         """Open editor for configuration."""
-
         site = SITE
         path = PATH[site].config
         for key in ('local', 'user', 'system'):

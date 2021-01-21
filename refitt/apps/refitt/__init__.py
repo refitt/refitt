@@ -95,5 +95,4 @@ class RefittApp(ApplicationGroup):
 
 def main() -> int:
     """Entry-point for `refitt` console application."""
-    return RefittApp.main(sys.argv[1:])  # only first argument if present
-
+    return RefittApp.main(sys.argv[1:])
