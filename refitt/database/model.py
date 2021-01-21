@@ -181,7 +181,7 @@ class CoreMixin:
 
     @classmethod
     def add(cls: Type[Base], data: dict, session: _Session = None) -> Base:
-        """Add record from existing `data`, return `id` if applicable."""
+        """Add record from existing `data`, return constructed record."""
         session = session or _Session()
         try:
             record = cls.from_dict(data)
@@ -710,13 +710,12 @@ class Object(Base, CoreMixin):
             raise
 
     @classmethod
-    def add(cls, data: dict, session: _Session = None) -> Optional[int]:
+    def add(cls, data: dict, session: _Session = None) -> Object:
         """Custom add method for object to automatically initialize the name."""
         session = session or _Session()
-        object_id = super().add(data, session)
+        object = super().add(data, session)
         try:
-            object = cls.from_id(object_id, session)
-            object.name = generate_name(style='underscore', seed=object_id)
+            object.name = generate_name(style='underscore', seed=object.id)
             object.aliases = {**object.aliases, 'refitt': object.name}
             session.commit()
             return object

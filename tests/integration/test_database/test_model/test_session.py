@@ -121,29 +121,29 @@ class TestSession:
     def test_delete(self) -> None:
         """Add a new session and remove it directly."""
         assert User.count() == 4 and Client.count() == 4 and Session.count() == 4
-        user_id = User.add({'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
-                            'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}})
+        user = User.add({'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
+                         'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}})
         assert User.count() == 5 and Client.count() == 4 and Session.count() == 4
-        key, secret, client = Client.new(user_id)
+        key, secret, client = Client.new(user.id)
         assert User.count() == 5 and Client.count() == 5 and Session.count() == 4
-        Session.new(user_id)
+        Session.new(user.id)
         assert User.count() == 5 and Client.count() == 5 and Session.count() == 5
         Session.delete(Session.from_client(client.id).id)
         assert User.count() == 5 and Client.count() == 5 and Session.count() == 4
-        User.delete(user_id)  # NOTE: deletes client
+        User.delete(user.id)  # NOTE: deletes client
         assert User.count() == 4 and Client.count() == 4 and Session.count() == 4
 
     def test_delete_client_cascade(self) -> None:
         """Add a new user, client, and session. Remove user to clear client and session."""
         assert User.count() == 4 and Client.count() == 4 and Session.count() == 4
-        user_id = User.add({'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
-                            'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}})
+        user = User.add({'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
+                         'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}})
         assert User.count() == 5 and Client.count() == 4 and Session.count() == 4
-        Client.new(user_id)
+        Client.new(user.id)
         assert User.count() == 5 and Client.count() == 5 and Session.count() == 4
-        Session.new(user_id)
+        Session.new(user.id)
         assert User.count() == 5 and Client.count() == 5 and Session.count() == 5
-        User.delete(user_id)
+        User.delete(user.id)
         assert User.count() == 4 and Client.count() == 4 and Session.count() == 4
 
     def test_new_token(self) -> None:

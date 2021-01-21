@@ -130,25 +130,25 @@ class TestClient:
     def test_delete(self) -> None:
         """Add a new user and client. Remove the client directly."""
         assert User.count() == 4 and Client.count() == 4
-        user_id = User.add({'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
-                            'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}})
+        user = User.add({'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
+                         'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}})
         assert User.count() == 5 and Client.count() == 4
-        key, secret, client = Client.new(user_id)
+        key, secret, client = Client.new(user.id)
         assert User.count() == 5 and Client.count() == 5
         Client.delete(client.id)
         assert User.count() == 5 and Client.count() == 4
-        User.delete(user_id)
+        User.delete(user.id)
         assert User.count() == 4 and Client.count() == 4
 
     def test_delete_user_cascade(self) -> None:
         """Add a new user and client record and then remove them."""
         assert User.count() == 4 and Client.count() == 4
-        user_id = User.add({'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
-                            'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}})
+        user = User.add({'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
+                         'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}})
         assert User.count() == 5 and Client.count() == 4
-        Client.new(user_id)
+        Client.new(user.id)
         assert User.count() == 5 and Client.count() == 5
-        User.delete(user_id)
+        User.delete(user.id)
         assert User.count() == 4 and Client.count() == 4
 
     def test_new_secret(self) -> None:
