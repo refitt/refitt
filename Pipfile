@@ -36,4 +36,4 @@ rich = ">=9.4.0"
 refitt = {editable = true, path = "."}
 
 [requires]
-python_version = "3.8.6"
+python_version = "3.8"
