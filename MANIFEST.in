@@ -2,4 +2,4 @@ include refitt/assets/cluster/*
 include refitt/assets/config/*.toml
 include refitt/assets/database/core/*.json
 include refitt/assets/database/test/*.json
-include systemd/*.service
+include refitt/assets/systemd/*.service
