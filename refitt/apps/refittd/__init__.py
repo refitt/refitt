@@ -10,7 +10,8 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Start the REFITT daemon."""
+"""Daemon service manager."""
+
 
 # type annotations
 from __future__ import annotations
@@ -19,31 +20,23 @@ from typing import List, Dict, Tuple
 # standard libs
 import os
 import sys
+import logging
 import subprocess
 from queue import Empty
 
 # external libs
-from cmdkit import logging as _cmdkit_logging
 from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from .daemon import Daemon
-from .service import Service
-from .server import RefittDaemonServer
-from...core.config import get_site, get_config, ConfigurationError, Namespace
-from...core.logging import Logger, DETAILED_HANDLER
-from...__meta__ import (__appname__, __version__, __copyright__,
-                        __developer__, __contact__, __website__)
+from ...daemon import Daemon, DaemonService, DaemonServer
+from ...core.config import config as base_config, get_site, get_config, ConfigurationError, Namespace
+from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
 
 
-PROGRAM = f'{__appname__}d'
-PADDING = ' ' * len(PROGRAM)
-
+PROGRAM = 'refittd'
 USAGE = f"""\
-usage: {PROGRAM} [SERVICE [SERVICE...] | --all] [--keep-alive] [--daemon]
-       {PADDING} [--help] [--version]
-
+usage: {PROGRAM} [-h] [-v] [SERVICE [SERVICE...] | --all] [--keep-alive] [--daemon]
 {__doc__}\
 """
 
@@ -52,7 +45,7 @@ Documentation and issue tracking at:
 {__website__}
 
 Copyright {__copyright__}
-{__developer__} {__contact__}.\
+{__developer__} <{__contact__}>\
 """
 
 HELP = f"""\
@@ -71,16 +64,17 @@ options:
 {EPILOG}\
 """
 
-# initialize module level logger
-log = Logger(__name__)
+
+# initialize top-level daemon logger
+log = logging.getLogger('refittd')
 
 
-# inject logger back into cmdkit library
-_cmdkit_logging.log = log
-Application.log_error = log.critical
+# logging setup for command-line interface
+Application.log_critical = log.critical
+Application.log_exception = log.exception
 
 
-class RefittDaemon(Application, Daemon):
+class RefittDaemonApp(Application, Daemon):
     """Application class for the refitt daemon, `refittd`."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
@@ -97,19 +91,15 @@ class RefittDaemon(Application, Daemon):
     daemon_mode: bool = False
     interface.add_argument('--daemon', action='store_true', dest='daemon_mode')
 
-    # NOTE: debugging messages are always shown for services.
-    #       debugging messages for the daemon internals are optional.
-    debug: bool = False
-    interface.add_argument('--debug', action='store_true')
-
     # dictionary of running services
-    services: Dict[str, Service] = {}
+    services: Dict[str, DaemonService] = {}
 
     # allowed action requests
     actions: Tuple[str] = ('restart', 'reload', 'flush')
 
     def run(self) -> None:
         """Start the refitt service daemon."""
+        log.info('Started master daemon')
         self.start_services()
         self.serve_forever()
 
@@ -125,18 +115,18 @@ class RefittDaemon(Application, Daemon):
         else:
             for service in self.services_requested:
                 if service not in config:
-                    raise ArgumentError(f'"{service}" not found')
+                    raise ArgumentError(f'Service \'{service}\' not in configuration')
 
         for name in self.services_requested:
-            self.services[name] = Service(name, **config[name])
+            self.services[name] = DaemonService(name, **config[name])
             self.services[name].start()
 
     def serve_forever(self) -> None:
         """Run server and wait for actions."""
-        with RefittDaemonServer() as daemon:
+        with DaemonServer() as daemon:
             self.await_action(daemon)
 
-    def await_action(self, daemon: RefittDaemonServer) -> None:
+    def await_action(self, daemon: DaemonServer) -> None:
         """Wait for action requests via `daemon`, issue keep_alive."""
         while True:
             try:
@@ -149,8 +139,7 @@ class RefittDaemon(Application, Daemon):
                     task = getattr(self, action)
                     task()
                 else:
-                    log.error(f'action "{action}" not recognized!')
-
+                    log.error(f'Action \'{action}\' not recognized')
             except Empty:
                 if self.keep_alive_mode:
                     self.keep_alive()
@@ -158,9 +147,7 @@ class RefittDaemon(Application, Daemon):
     def keep_alive(self) -> None:
         """Ensure services are running."""
         for name, service in self.services.items():
-            if not service.is_alive:
-                log.error(f'"{name}" service has died - relaunching now!')
-                service.restart()
+            service.keep_alive()
 
     def status(self) -> dict:
         """Update the status for running services."""
@@ -179,7 +166,7 @@ class RefittDaemon(Application, Daemon):
     def restart(self) -> None:
         """Restart all services."""
         for name, service in self.services.items():
-            log.info(f'restarting {name}')
+            log.info(f'Restarting {name}')
             service.restart()
 
     def reload(self) -> None:
@@ -189,16 +176,16 @@ class RefittDaemon(Application, Daemon):
             if name in config:
                 self.reload_service(name, config[name])
             elif self.all_services:
-                log.info(f'"{name}" removed from config - stopping')
+                log.info(f'Service \'{name}\' removed from config - stopping')
                 service = self.services.pop(name)
                 service.stop()
             else:
-                log.warning(f'"{name}" not found in config!')
+                log.warning(f'Missing \'{name}\' from config')
         if self.all_services:
             for name in config:
                 if name not in self.services:
-                    log.info(f'"{name}" service found in config')
-                    self.services[name] = Service(name, **config[name])
+                    log.info(f'Service \'{name}\' found in config')
+                    self.services[name] = DaemonService(name, **config[name])
                     self.services[name].start()
 
     def reload_service(self, name: str, config: Namespace) -> None:
@@ -207,59 +194,53 @@ class RefittDaemon(Application, Daemon):
             try:
                 current_value = getattr(self.services[name], field)
                 if current_value != config_value:
-                    log.info(f'"{name}"::{field} changed - restarting!')
+                    log.info(f'Service config changed ({name}::{field}) - restarting')
                     self.services[name].stop()
-                    self.services[name] = Service(name, **config)
+                    self.services[name] = DaemonService(name, **config)
                     self.services[name].start()
             except AttributeError:
                 pass
 
-    def get_config(self) -> Dict[str, Namespace]:
+    @staticmethod
+    def get_config() -> Dict[str, Namespace]:
         """Load services from configuration."""
         config = get_config()
         try:
-            services = config['service']
-        except KeyError:
-            raise ConfigurationError('no services found in configuration')
-
-        return {name: Namespace({'cwd': os.getcwd(), **services[name]})
-                for name in services}
+            services = config.service
+        except KeyError as error:
+            raise ConfigurationError('No services found in configuration') from error
+        return {name: Namespace({'cwd': os.getcwd(), **params}) for name, params in services.items()}
 
     def run_daemon(self) -> None:
         """Run as a daemon."""
+        # NOTE: A simple way of running as a daemon while also seamlessly redirecting
+        #       all stderr is to subprocess with a redirect in normal mode
         self.daemonize()
-        # simple way of running as a daemon while also seamlessly redirecting
-        # all stderr is to subprocess with a redirect in normal mode
         logpath = os.path.join(get_site()['log'], 'refittd.log')
+        env = {**os.environ,
+               'REFITT_LOGGING_FORMAT': '%(asctime)s.%(msecs)03d %(hostname)s %(levelname)-8s [%(name)s] %(msg)s',
+               'REFITT_LOGGING_DATEFMT': '%Y-%m-%d %H:%M:%S',
+               'REFITT_LOGGING_LEVEL': 'DEBUG' if base_config.logging.level.upper() == 'DEBUG' else 'INFO'}
         with open(logpath, mode='a') as logfile:
-            subprocess.run(['refittd', '--all', '--debug', '--keep-alive'], stderr=logfile)
+            subprocess.run(['refittd', '--all', '--keep-alive'], stderr=logfile, env=env)
 
-    def __enter__(self) -> RefittDaemon:
+    def __enter__(self) -> RefittDaemonApp:
         """Initialize resources."""
-
         if not self.services_requested and not self.all_services:
-            raise ArgumentError('no services specified')
-
+            raise ArgumentError('No services specified')
         if self.services_requested and self.all_services:
-            raise ArgumentError('specified named AND --all is redundant')
-
-        log.handlers[0] = DETAILED_HANDLER
-        if self.debug:
-            log.handlers[0].level = log.levels[0]
-        else:
-            log.handlers[0].level = log.levels[1]
-
+            raise ArgumentError('Passing named services AND --all is redundant')
         return self
 
     def __exit__(self, *exc) -> None:
         """Release resources."""
-        # daemon variant doesn't actually start any services
+        # Note: daemon variant does not actually start any services in this process
         if not self.daemon_mode:
-            log.info('stopping services')
+            log.info('Stopping services')
             for name, service in self.services.items():
                 service.stop()
 
 
 def main() -> int:
     """Entry-point for `refittd` console application."""
-    return RefittDaemon.main(sys.argv[1:])
+    return RefittDaemonApp.main(sys.argv[1:])

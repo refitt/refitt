@@ -1,0 +1,664 @@
+[
+  {
+    "id": null,
+    "observation_id": 1,
+    "data": {
+      "locus_id": "ANT2020ae7t5xa",
+      "ra": 133.0164572,
+      "dec": 44.80034109999999,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 133.0164572,
+        "dec": 44.80034109999999,
+        "mjd": 59146.916666666664,
+        "properties": {
+          "ztf_id": "ZTF20actrfli",
+          "ztf_fid": 2,
+          "ztf_magpsf": 18.1,
+          "ztf_sigmapsf": 0.08
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 2,
+    "data": {
+      "locus_id": "ANT2020ae7t5qi",
+      "ra": 132.1162969,
+      "dec": 48.81782170000001,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 132.1162969,
+        "dec": 48.81782170000001,
+        "mjd": 59146.91672453703,
+        "properties": {
+          "ztf_id": "ZTF20actrfjx",
+          "ztf_fid": 1,
+          "ztf_magpsf": 19.05,
+          "ztf_sigmapsf": 0.09
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 3,
+    "data": {
+      "locus_id": "ANT2020ae7t5la",
+      "ra": 111.3240289,
+      "dec": 58.55685610000001,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 111.3240289,
+        "dec": 58.55685610000001,
+        "mjd": 59146.91678240741,
+        "properties": {
+          "ztf_id": "ZTF20actrewh",
+          "ztf_fid": 2,
+          "ztf_magpsf": 18.3,
+          "ztf_sigmapsf": 0.12
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 4,
+    "data": {
+      "locus_id": "ANT2020ae7t5ky",
+      "ra": 121.09173320000001,
+      "dec": 64.0661492,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 121.09173320000001,
+        "dec": 64.0661492,
+        "mjd": 59146.91684027778,
+        "properties": {
+          "ztf_id": "ZTF20actrezk",
+          "ztf_fid": 1,
+          "ztf_magpsf": 18.98,
+          "ztf_sigmapsf": 0.04
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 5,
+    "data": {
+      "locus_id": "ANT2020ae7t5hi",
+      "ra": 112.6174091,
+      "dec": 58.579073400000006,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 112.6174091,
+        "dec": 58.579073400000006,
+        "mjd": 59146.91689814815,
+        "properties": {
+          "ztf_id": "ZTF20actreua",
+          "ztf_fid": 2,
+          "ztf_magpsf": 19.01,
+          "ztf_sigmapsf": 0.09
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 6,
+    "data": {
+      "locus_id": "ANT2020ae7t5gq",
+      "ra": 107.3137459,
+      "dec": 59.07348999999999,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 107.3137459,
+        "dec": 59.07348999999999,
+        "mjd": 59146.91695601852,
+        "properties": {
+          "ztf_id": "ZTF20actreyz",
+          "ztf_fid": 1,
+          "ztf_magpsf": 18.71,
+          "ztf_sigmapsf": 0.04
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 7,
+    "data": {
+      "locus_id": "ANT2020ae7t46q",
+      "ra": 111.8202268,
+      "dec": 58.88914330000001,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 111.8202268,
+        "dec": 58.88914330000001,
+        "mjd": 59146.91701388889,
+        "properties": {
+          "ztf_id": "ZTF20actreug",
+          "ztf_fid": 2,
+          "ztf_magpsf": 20.09,
+          "ztf_sigmapsf": 0.03
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 8,
+    "data": {
+      "locus_id": "ANT2020ae7t45i",
+      "ra": 108.94915950000001,
+      "dec": 59.011556500000005,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 108.94915950000001,
+        "dec": 59.011556500000005,
+        "mjd": 59146.91707175926,
+        "properties": {
+          "ztf_id": "ZTF20actrexk",
+          "ztf_fid": 1,
+          "ztf_magpsf": 18.87,
+          "ztf_sigmapsf": 0.02
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 9,
+    "data": {
+      "locus_id": "ANT2020ae7t42y",
+      "ra": 106.7365459,
+      "dec": 63.17626109999999,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 106.7365459,
+        "dec": 63.17626109999999,
+        "mjd": 59146.917129629626,
+        "properties": {
+          "ztf_id": "ZTF20actresa",
+          "ztf_fid": 2,
+          "ztf_magpsf": 19.31,
+          "ztf_sigmapsf": 0.03
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 10,
+    "data": {
+      "locus_id": "ANT2020ae7t42a",
+      "ra": 111.57354180000002,
+      "dec": 64.47730590000002,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 111.57354180000002,
+        "dec": 64.47730590000002,
+        "mjd": 59146.9171875,
+        "properties": {
+          "ztf_id": "ZTF20actrepv",
+          "ztf_fid": 1,
+          "ztf_magpsf": 18.89,
+          "ztf_sigmapsf": 0.02
+        }
+      }
+    }
+  },
+
+  {
+    "id": null,
+    "observation_id": 27,
+    "data": {
+      "locus_id": "ANT2020ae7t5xa",
+      "ra": 133.0164572,
+      "dec": 44.80034109999999,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 133.0164572,
+        "dec": 44.80034109999999,
+        "mjd": 59147.916666666664,
+        "properties": {
+          "ztf_id": "ZTF20actrfli",
+          "ztf_fid": 2,
+          "ztf_magpsf": 17.1,
+          "ztf_sigmapsf": 0.08
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 28,
+    "data": {
+      "locus_id": "ANT2020ae7t5qi",
+      "ra": 132.1162969,
+      "dec": 48.81782170000001,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 132.1162969,
+        "dec": 48.81782170000001,
+        "mjd": 59147.91672453703,
+        "properties": {
+          "ztf_id": "ZTF20actrfjx",
+          "ztf_fid": 1,
+          "ztf_magpsf": 18.05,
+          "ztf_sigmapsf": 0.09
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 29,
+    "data": {
+      "locus_id": "ANT2020ae7t5la",
+      "ra": 111.3240289,
+      "dec": 58.55685610000001,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 111.3240289,
+        "dec": 58.55685610000001,
+        "mjd": 59147.91678240741,
+        "properties": {
+          "ztf_id": "ZTF20actrewh",
+          "ztf_fid": 2,
+          "ztf_magpsf": 17.3,
+          "ztf_sigmapsf": 0.12
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 30,
+    "data": {
+      "locus_id": "ANT2020ae7t5ky",
+      "ra": 121.09173320000001,
+      "dec": 64.0661492,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 121.09173320000001,
+        "dec": 64.0661492,
+        "mjd": 59147.91684027778,
+        "properties": {
+          "ztf_id": "ZTF20actrezk",
+          "ztf_fid": 1,
+          "ztf_magpsf": 17.98,
+          "ztf_sigmapsf": 0.04
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 31,
+    "data": {
+      "locus_id": "ANT2020ae7t5hi",
+      "ra": 112.6174091,
+      "dec": 58.579073400000006,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 112.6174091,
+        "dec": 58.579073400000006,
+        "mjd": 59147.91689814815,
+        "properties": {
+          "ztf_id": "ZTF20actreua",
+          "ztf_fid": 2,
+          "ztf_magpsf": 18.01,
+          "ztf_sigmapsf": 0.09
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 32,
+    "data": {
+      "locus_id": "ANT2020ae7t5gq",
+      "ra": 107.3137459,
+      "dec": 59.07348999999999,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 107.3137459,
+        "dec": 59.07348999999999,
+        "mjd": 59147.91695601852,
+        "properties": {
+          "ztf_id": "ZTF20actreyz",
+          "ztf_fid": 1,
+          "ztf_magpsf": 17.71,
+          "ztf_sigmapsf": 0.04
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 33,
+    "data": {
+      "locus_id": "ANT2020ae7t46q",
+      "ra": 111.8202268,
+      "dec": 58.88914330000001,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 111.8202268,
+        "dec": 58.88914330000001,
+        "mjd": 59147.91701388889,
+        "properties": {
+          "ztf_id": "ZTF20actreug",
+          "ztf_fid": 2,
+          "ztf_magpsf": 19.09,
+          "ztf_sigmapsf": 0.03
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 34,
+    "data": {
+      "locus_id": "ANT2020ae7t45i",
+      "ra": 108.94915950000001,
+      "dec": 59.011556500000005,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 108.94915950000001,
+        "dec": 59.011556500000005,
+        "mjd": 59147.91707175926,
+        "properties": {
+          "ztf_id": "ZTF20actrexk",
+          "ztf_fid": 1,
+          "ztf_magpsf": 17.87,
+          "ztf_sigmapsf": 0.02
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 35,
+    "data": {
+      "locus_id": "ANT2020ae7t42y",
+      "ra": 106.7365459,
+      "dec": 63.17626109999999,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 106.7365459,
+        "dec": 63.17626109999999,
+        "mjd": 59147.917129629626,
+        "properties": {
+          "ztf_id": "ZTF20actresa",
+          "ztf_fid": 2,
+          "ztf_magpsf": 18.31,
+          "ztf_sigmapsf": 0.03
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 36,
+    "data": {
+      "locus_id": "ANT2020ae7t42a",
+      "ra": 111.57354180000002,
+      "dec": 64.47730590000002,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 111.57354180000002,
+        "dec": 64.47730590000002,
+        "mjd": 59147.9171875,
+        "properties": {
+          "ztf_id": "ZTF20actrepv",
+          "ztf_fid": 1,
+          "ztf_magpsf": 17.89,
+          "ztf_sigmapsf": 0.02
+        }
+      }
+    }
+  },
+
+  {
+    "id": null,
+    "observation_id": 53,
+    "data": {
+      "locus_id": "ANT2020ae7t5xa",
+      "ra": 133.0164572,
+      "dec": 44.80034109999999,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 133.0164572,
+        "dec": 44.80034109999999,
+        "mjd": 59148.916666666664,
+        "properties": {
+          "ztf_id": "ZTF20actrfli",
+          "ztf_fid": 2,
+          "ztf_magpsf": 16.1,
+          "ztf_sigmapsf": 0.08
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 54,
+    "data": {
+      "locus_id": "ANT2020ae7t5qi",
+      "ra": 132.1162969,
+      "dec": 48.81782170000001,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 132.1162969,
+        "dec": 48.81782170000001,
+        "mjd": 59148.91672453703,
+        "properties": {
+          "ztf_id": "ZTF20actrfjx",
+          "ztf_fid": 1,
+          "ztf_magpsf": 17.05,
+          "ztf_sigmapsf": 0.09
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 55,
+    "data": {
+      "locus_id": "ANT2020ae7t5la",
+      "ra": 111.3240289,
+      "dec": 58.55685610000001,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 111.3240289,
+        "dec": 58.55685610000001,
+        "mjd": 59148.91678240741,
+        "properties": {
+          "ztf_id": "ZTF20actrewh",
+          "ztf_fid": 2,
+          "ztf_magpsf": 16.3,
+          "ztf_sigmapsf": 0.12
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 56,
+    "data": {
+      "locus_id": "ANT2020ae7t5ky",
+      "ra": 121.09173320000001,
+      "dec": 64.0661492,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 121.09173320000001,
+        "dec": 64.0661492,
+        "mjd": 59148.91684027778,
+        "properties": {
+          "ztf_id": "ZTF20actrezk",
+          "ztf_fid": 1,
+          "ztf_magpsf": 16.98,
+          "ztf_sigmapsf": 0.04
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 57,
+    "data": {
+      "locus_id": "ANT2020ae7t5hi",
+      "ra": 112.6174091,
+      "dec": 58.579073400000006,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 112.6174091,
+        "dec": 58.579073400000006,
+        "mjd": 59148.91689814815,
+        "properties": {
+          "ztf_id": "ZTF20actreua",
+          "ztf_fid": 2,
+          "ztf_magpsf": 17.01,
+          "ztf_sigmapsf": 0.09
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 58,
+    "data": {
+      "locus_id": "ANT2020ae7t5gq",
+      "ra": 107.3137459,
+      "dec": 59.07348999999999,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 107.3137459,
+        "dec": 59.07348999999999,
+        "mjd": 59148.91695601852,
+        "properties": {
+          "ztf_id": "ZTF20actreyz",
+          "ztf_fid": 1,
+          "ztf_magpsf": 16.71,
+          "ztf_sigmapsf": 0.04
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 59,
+    "data": {
+      "locus_id": "ANT2020ae7t46q",
+      "ra": 111.8202268,
+      "dec": 58.88914330000001,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 111.8202268,
+        "dec": 58.88914330000001,
+        "mjd": 59148.91701388889,
+        "properties": {
+          "ztf_id": "ZTF20actreug",
+          "ztf_fid": 2,
+          "ztf_magpsf": 18.09,
+          "ztf_sigmapsf": 0.03
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 60,
+    "data": {
+      "locus_id": "ANT2020ae7t45i",
+      "ra": 108.94915950000001,
+      "dec": 59.011556500000005,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 108.94915950000001,
+        "dec": 59.011556500000005,
+        "mjd": 59148.91707175926,
+        "properties": {
+          "ztf_id": "ZTF20actrexk",
+          "ztf_fid": 1,
+          "ztf_magpsf": 16.87,
+          "ztf_sigmapsf": 0.02
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 61,
+    "data": {
+      "locus_id": "ANT2020ae7t42y",
+      "ra": 106.7365459,
+      "dec": 63.17626109999999,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 106.7365459,
+        "dec": 63.17626109999999,
+        "mjd": 59148.917129629626,
+        "properties": {
+          "ztf_id": "ZTF20actresa",
+          "ztf_fid": 2,
+          "ztf_magpsf": 17.31,
+          "ztf_sigmapsf": 0.03
+        }
+      }
+    }
+  },
+  {
+    "id": null,
+    "observation_id": 62,
+    "data": {
+      "locus_id": "ANT2020ae7t42a",
+      "ra": 111.57354180000002,
+      "dec": 64.47730590000002,
+      "properties": {},
+      "alert": {
+        "alert_id": "ztf:...",
+        "ra": 111.57354180000002,
+        "dec": 64.47730590000002,
+        "mjd": 59148.9171875,
+        "properties": {
+          "ztf_id": "ZTF20actrepv",
+          "ztf_fid": 1,
+          "ztf_magpsf": 16.89,
+          "ztf_sigmapsf": 0.02
+        }
+      }
+    }
+  }
+]

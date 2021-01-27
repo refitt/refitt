@@ -1,0 +1,43 @@
+[
+  {
+    "id": null,
+    "first_name": "Clark",
+    "last_name": "Kent",
+    "email": "clark.kent@dailyplanet.com",
+    "alias": "superman",
+    "data": {
+      "user_type": "super"
+    }
+  },
+  {
+    "id": null,
+    "first_name": "Jason",
+    "last_name": "Bourne",
+    "email": "bourne@cia.gov",
+    "alias": "delta_one",
+    "data": {
+      "user_type": "amateur"
+    }
+  },
+  {
+    "id": null,
+    "first_name": "Lara",
+    "last_name": "Croft",
+    "email": "lara@croft.net",
+    "alias": "tomb_raider",
+    "data": {
+      "user_type": "amateur"
+    }
+  },
+  {
+    "id": null,
+    "first_name": "Isaac",
+    "last_name": "Newton",
+    "email": "newton@cam.ac.uk",
+    "alias": "sir_newton",
+    "data": {
+      "user_type": "professional",
+      "institution": "University of Cambridge"
+    }
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "id": null,
+    "name": "clear",
+    "units": "mag",
+    "description": "Un-filtered apparent magnitude."
+  },
+  {
+    "id": null,
+    "name": "g-ztf",
+    "units": "mag",
+    "description": "G-band apparent magnitude (ZTF)."
+  },
+  {
+    "id": null,
+    "name": "r-ztf",
+    "units": "mag",
+    "description": "R-band apparent magnitude (ZTF)."
+  },
+  {
+    "id": null,
+    "name": "i-ztf",
+    "units": "mag",
+    "description": "I-band apparent magnitude (ZTF)."
+  }
+]

@@ -1,0 +1,92 @@
+[
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actrfli", "antares": "ANT2020ae7t5xa", "tag": "determined_thirsty_cray"},
+    "ra": 133.0164572,
+    "dec": 44.80034109999999,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actrfjx", "antares": "ANT2020ae7t5qi", "tag": "sleepy_musing_khayyam"},
+    "ra": 132.1162969,
+    "dec": 48.81782170000001,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actrewh", "antares": "ANT2020ae7t5la", "tag": "confident_compassionate_tharp"},
+    "ra": 111.3240289,
+    "dec": 58.55685610000001,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actrezk", "antares": "ANT2020ae7t5ky", "tag": "silly_trusting_euclid"},
+    "ra": 121.09173320000001,
+    "dec": 64.0661492,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actreua", "antares": "ANT2020ae7t5hi", "tag": "dreamy_gifted_satoshi"},
+    "ra": 112.6174091,
+    "dec": 58.579073400000006,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actreyz", "antares": "ANT2020ae7t5gq", "tag": "dreamy_awesome_kowalevski"},
+    "ra": 107.3137459,
+    "dec": 59.07348999999999,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actreug", "antares": "ANT2020ae7t46q", "tag": "upbeat_condescending_bardeen"},
+    "ra": 111.8202268,
+    "dec": 58.88914330000001,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actrexk", "antares": "ANT2020ae7t45i", "tag": "beautiful_nostalgic_murdock"},
+    "ra": 108.94915950000001,
+    "dec": 59.011556500000005,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actresa", "antares": "ANT2020ae7t42y"},
+    "ra": 106.7365459,
+    "dec": 63.17626109999999,
+    "redshift": null,
+    "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "aliases": {"ztf": "ZTF20actrepv", "antares": "ANT2020ae7t42a"},
+    "ra": 111.57354180000002,
+    "dec": 64.47730590000002,
+    "redshift": null,
+    "data": {}
+  }
+]

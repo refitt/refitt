@@ -12,41 +12,29 @@
 
 """Set variable in configuration file."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import TypeVar
 
 # standard libs
 import os
-import functools
+import logging
+from functools import partial
 
 # internal libs
-from ....core.config import get_site, init_config
-from ....core.exceptions import log_and_exit
-from ....core.logging import Logger
-from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
+from ....core.config import SITE, PATH, update_config, ConfigurationError
+from ....core.exceptions import log_exception
 
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
-import toml
 
 
-# program name is constructed from module file name
-PROGRAM = f'{__appname__} config set'
-PADDING = ' ' * len(PROGRAM)
-
+PROGRAM = 'refitt config set'
 USAGE = f"""\
-usage: {PROGRAM} SECTION[...].VAR VALUE [--system | --user | --site] [--help] 
+usage: {PROGRAM} [-h] SECTION[...].VAR VALUE [--system | --user | --local]
 {__doc__}\
-"""
-
-EPILOG = f"""\
-Documentation and issue tracking at:
-{__website__}
-
-Copyright {__copyright__}
-{__developer__} {__contact__}.\
 """
 
 HELP = f"""\
@@ -59,15 +47,13 @@ VALUE                   Value to be set.
 options:
     --system            Apply to system configuration.
     --user              Apply to user configuration.
-    --site              Apply to local configuration.
--h, --help              Show this message and exit.
-
-{EPILOG}
+    --local             Apply to local configuration.
+-h, --help              Show this message and exit.\
 """
 
 
-# initialize module level logger
-log = Logger(__name__)
+# application logger
+log = logging.getLogger('refitt')
 
 
 SmartType = TypeVar('SmartType', int, float, str)
@@ -83,8 +69,8 @@ def smart_type(init_value: str) -> SmartType:
     return init_value
 
 
-class Set(Application):
-    """Set variable in configuration file."""
+class SetConfigApp(Application):
+    """Application class for config set command."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -94,33 +80,33 @@ class Set(Application):
     value: str = None
     interface.add_argument('value', type=smart_type)
 
-    site: bool = False
+    local: bool = False
     user: bool = False
     system: bool = False
     site_interface = interface.add_mutually_exclusive_group()
-    site_interface.add_argument('--site', action='store_true')
+    site_interface.add_argument('--local', action='store_true')
     site_interface.add_argument('--user', action='store_true')
     site_interface.add_argument('--system', action='store_true')
 
     exceptions = {
-        RuntimeError: functools.partial(log_and_exit, logger=log.critical,
-                                        status=exit_status.runtime_error),
+        RuntimeError: partial(log_exception, logger=log.critical,
+                              status=exit_status.runtime_error),
+        ConfigurationError: partial(log_exception, logger=log.critical,
+                                    status=exit_status.bad_config),
     }
 
     def run(self) -> None:
-        """Run init task."""
+        """Business logic for `config set`."""
 
-        config_path = get_site()['cfg']
-        for key in ('site', 'user', 'system'):
+        site = SITE
+        path = PATH[site].config
+        for key in ('local', 'user', 'system'):
             if getattr(self, key) is True:
-                init_config(key)
-                config_path = get_site(key)['cfg']
+                site = key
+                path = PATH[site].config
 
-        if not os.path.exists(config_path):
-            raise RuntimeError(f'{config_path} does not exist')
-
-        with open(config_path, mode='r') as config_file:
-            config = toml.load(config_file)
+        if not os.path.exists(path):
+            raise RuntimeError(f'{path} does not exist')
 
         # parse variable specification
         if '.' not in self.varpath:
@@ -128,9 +114,7 @@ class Set(Application):
 
         section, *subsections, variable = self.varpath.split('.')
 
-        if section not in config:
-            config[section] = dict()
-
+        config = {section: {}}
         config_section = config[section]
         for subsection in subsections:
             if subsection not in config_section:
@@ -138,5 +122,4 @@ class Set(Application):
             config_section = config_section[subsection]
 
         config_section[variable] = self.value
-        with open(config_path, mode='w') as config_file:
-            toml.dump(config, config_file)
+        update_config(site, config)

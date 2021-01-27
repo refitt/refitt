@@ -1,0 +1,46 @@
+[
+  {
+    "id": null,
+    "name": "Bourne_12in",
+    "latitude": 38.95,
+    "longitude": -77.14,
+    "elevation": 2,
+    "limiting_magnitude": 15.5,
+    "data": {
+      "telescope_design": "dobsonian"
+    }
+  },
+  {
+    "id": null,
+    "name": "Croft_1m",
+    "latitude": 51.25,
+    "longitude": -0.41,
+    "elevation": 294,
+    "limiting_magnitude": 17.1,
+    "data": {
+      "telescope_design": "reflector"
+    }
+  },
+  {
+    "id": null,
+    "name": "Croft_4m",
+    "latitude": -24.5,
+    "longitude": -69.25,
+    "elevation": 5050,
+    "limiting_magnitude": 17.5,
+    "data": {
+      "telescope_design": "reflector"
+    }
+  },
+  {
+    "id": null,
+    "name": "Newton_8in",
+    "latitude": 52.21,
+    "longitude": 0.12,
+    "elevation": 6,
+    "limiting_magnitude": 14.9,
+    "data": {
+      "telescope_design": "refractor"
+    }
+  }
+]

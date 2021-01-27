@@ -1,0 +1,30 @@
+[
+  {
+    "id": null,
+    "client_id": 1,
+    "expires": "2020-10-23 18:00:00-04:00",
+    "token": "ff518b0c939db8cf8dc3bcb18561c64257feb93ead87b7b2cc31b7a205a4a0ce",
+    "created": "2020-10-23 17:45:00-04:00"
+  },
+  {
+    "id": null,
+    "client_id": 2,
+    "expires": "2020-10-23 18:00:01-04:00",
+    "token": "c44d20d18e734aea40b30682a57162b53c18f676c1b752696dad5dc6586187fe",
+    "created": "2020-10-23 17:45:01-04:00"
+  },
+  {
+    "id": null,
+    "client_id": 3,
+    "expires": "2020-10-23 18:00:02-04:00",
+    "token": "9f76adddf6c7c283686671b6bb72ccd9b120ebcf6aaaa74a19dc0d6f6eb3edef",
+    "created": "2020-10-23 17:45:02-04:00"
+  },
+  {
+    "id": null,
+    "client_id": 4,
+    "expires": "2020-10-23 18:00:03-04:00",
+    "token": "c16acbf408fe53e7ca25463f547bba05c4e40031507bcf2a4a6e3037b747b379",
+    "created": "2020-10-23 17:45:03-04:00"
+  }
+]

@@ -10,40 +10,35 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Manage the REFITT daemon."""
+"""Refitt daemon controller."""
+
 
 # type annotations
 from __future__ import annotations
 
 # standard libs
 import sys
+import logging
 import functools
 import subprocess
 
 # internal libs
-from ..refittd.client import RefittDaemonClient
-from ...core.logging import Logger
-from ...core.exceptions import log_and_exit
-from ...__meta__ import (__appname__, __version__, __copyright__,
-                         __developer__, __contact__, __website__)
+from ...daemon.client import DaemonClient
+from ...core.exceptions import log_exception
+from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
-from cmdkit import logging as _cmdkit_logging
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
-from logalpha.colors import ANSI_RESET, Color
+from streamkit.core.logging import _ANSI_RESET, _ANSI_CODES  # noqa: protected-members
 
 
-PROGRAM = f'{__appname__}ctl'
-PADDING = ' ' * len(PROGRAM)
-
+PROGRAM = 'refittctl'
 ACTIONS = ['start', 'stop', 'status', 'restart', 'reload']
 ACTION_OPT = '{' + ' | '.join(ACTIONS) + '}'
 
 USAGE = f"""\
-usage: {PROGRAM} {ACTION_OPT}
-       {PADDING} [--help] [--version]
-
+usage: {PROGRAM} [-h] [-v] {ACTION_OPT}
 {__doc__}\
 """
 
@@ -52,7 +47,7 @@ Documentation and issue tracking at:
 {__website__}
 
 Copyright {__copyright__}
-{__developer__} {__contact__}.\
+{__developer__} <{__contact__}>\
 """
 
 HELP = f"""\
@@ -65,29 +60,31 @@ options:
 {EPILOG}
 """
 
-# initialize module level logger
-log = Logger(__name__)
+
+# initialize top-level controller logger
+log = logging.getLogger('refittctl')
 
 
-# inject logger back into cmdkit library
-_cmdkit_logging.log = log
-Application.log_error = log.critical
+# logging setup for command-line interface
+Application.log_critical = log.critical
+Application.log_exception = log.exception
 
 
 # colors
 ANSI_BOLD = '\033[1m'
-ANSI_GREEN = Color.from_name('green').foreground
-ANSI_RED = Color.from_name('red').foreground
+ANSI_GREEN = _ANSI_CODES['foreground']['green']
+ANSI_RED = _ANSI_CODES['foreground']['red']
+ANSI_RESET = _ANSI_RESET
 
 
-def daemon_unavailable(exc: Exception) -> int:
+def daemon_unavailable(exc: Exception) -> int:  # noqa: exception not used
     """The daemon refused the connection, likely not running."""
-    log.critical('daemon refused connection - is it running?')
+    log.critical('Daemon refused connection - is it running?')
     return exit_status.runtime_error
 
 
-class RefittController(Application):
-    """Application class for the refitt service daemon, `refittd`."""
+class RefittControllerApp(Application):
+    """Application class for the refitt daemon controller."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
     interface.add_argument('-v', '--version', version=__version__, action='version')
@@ -97,7 +94,7 @@ class RefittController(Application):
 
     exceptions = {
         RuntimeError:
-            functools.partial(log_and_exit, logger=log.critical,
+            functools.partial(log_exception, logger=log.critical,
                               status=exit_status.runtime_error),
         ConnectionRefusedError:
             daemon_unavailable,
@@ -121,7 +118,7 @@ class RefittController(Application):
         """Show the status of daemon services."""
 
         # retrieve status from daemon (returns dict)
-        with RefittDaemonClient() as daemon:
+        with DaemonClient() as daemon:
             info = daemon.status
 
         for service, status in info.items():
@@ -135,9 +132,10 @@ class RefittController(Application):
 
     def run_action(self) -> None:
         """Run the action."""
-        with RefittDaemonClient() as daemon:
+        with DaemonClient() as daemon:
             daemon.request(self.action)
+
 
 def main() -> int:
     """Entry-point for `refittctl` console application."""
-    return RefittController.main(sys.argv[1:])
+    return RefittControllerApp.main(sys.argv[1:])

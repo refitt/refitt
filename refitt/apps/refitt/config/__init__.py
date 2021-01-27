@@ -1,5 +1,3 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
 # This program is free software: you can redistribute it and/or modify it under the
 # terms of the Apache License (v2.0) as published by the Apache Software Foundation.
 #
@@ -10,55 +8,31 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Manage runtime configuration."""
+"""Manage configuration."""
 
-# standard libs
-import sys
-
-# internal libs
-from ....core.exceptions import CompletedCommand
-from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
-from cmdkit.app import Application
-from cmdkit.cli import Interface, ArgumentError
+from cmdkit.app import ApplicationGroup
+from cmdkit.cli import Interface
 
-# commands
-from .get import Get
-from .set import Set
-from .edit import Edit
+# internal libs
+from . import get, set, edit, which
 
 
-COMMANDS = {
-    'get': Get,
-    'set': Set,
-    'edit': Edit,
-}
-
-
-PROGRAM = f'{__appname__} config'
-PADDING = ' ' * len(PROGRAM)
-
+PROGRAM = 'refitt config'
 USAGE = f"""\
-usage: {PROGRAM} [--help] <command> [<args>...]
+usage: {PROGRAM} [-h] <command> [<args>...]
 {__doc__}\
-"""
-
-EPILOG = f"""\
-Documentation and issue tracking at:
-{__website__}
-
-Copyright {__copyright__}
-{__developer__} {__contact__}.\
 """
 
 HELP = f"""\
 {USAGE}
 
 commands:
-get                      {Get.__doc__}
-set                      {Set.__doc__}
-edit                     {Edit.__doc__}
+get                      {get.__doc__}
+set                      {set.__doc__}
+edit                     {edit.__doc__}
+which                    {which.__doc__}
 
 options:
 -h, --help               Show this message and exit.
@@ -68,30 +42,19 @@ files:
 ~/.refitt/config.toml    User configuration.
 ./.refitt/config.toml    Local configuration.
 
-Use the -h/--help flag with the above groups/commands to
-learn more about their usage.
-
-{EPILOG}\
+Use the -h/--help flag with the above commands to
+learn more about their usage.\
 """
 
 
-class ConfigGroup(Application):
-    """Manage runtime configuration."""
+class ConfigApp(ApplicationGroup):
+    """Application class for config command group."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
-
-    command: str = None
     interface.add_argument('command')
 
-    exceptions = {
-        CompletedCommand: (lambda exc: int(exc.args[0])),
-    }
-
-    def run(self) -> None:
-        """Show usage/help/version or defer to command."""
-
-        if self.command in COMMANDS:
-            status = COMMANDS[self.command].main(sys.argv[3:])
-            raise CompletedCommand(status)
-        else:
-            raise ArgumentError(f'"{self.command}" is not a command.')
+    command = None
+    commands = {'get': get.GetConfigApp,
+                'set': set.SetConfigApp,
+                'edit': edit.EditConfigApp,
+                'which': which.WhichConfigApp, }

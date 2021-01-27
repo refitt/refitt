@@ -1,0 +1,22 @@
+[
+  {
+    "id": null,
+    "name": "DEBUG"
+  },
+  {
+    "id": null,
+    "name": "INFO"
+  },
+  {
+    "id": null,
+    "name": "WARNING"
+  },
+  {
+    "id": null,
+    "name": "ERROR"
+  },
+  {
+    "id": null,
+    "name": "CRITICAL"
+  }
+]

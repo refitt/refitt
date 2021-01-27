@@ -12,28 +12,34 @@
 
 """Setup and installation script for refitt."""
 
+
 # standard libs
+import re
 from setuptools import setup, find_packages
 
-# metadata
-from refitt.__meta__ import (__appname__, __version__,
-                             __contact__, __license__, __description__,
-                             __keywords__, __website__, __developer__)
 
-
+# get long description from README.rst
 with open('README.rst', mode='r') as readme:
     long_description = readme.read()
 
 
+# get package metadata by parsing __meta__ module
+with open('refitt/__meta__.py', mode='r') as source:
+    content = source.read().strip()
+    metadata = {key: re.search(key + r'\s*=\s*[\'"]([^\'"]*)[\'"]', content).group(1)
+                for key in ['__version__', '__developer__', '__contact__',
+                            '__description__', '__license__', '__keywords__', '__website__']}
+
+
 setup(
-    name                 = __appname__,
-    version              = __version__,
-    author               = __developer__,
-    author_email         = __contact__,
-    description          = __description__,
-    license              = __license__,
-    keywords             = __keywords__,
-    url                  = __website__,
+    name                 = 'refitt',
+    version              = metadata['__version__'],
+    author               = metadata['__developer__'],
+    author_email         = metadata['__contact__'],
+    description          = metadata['__description__'],
+    license              = metadata['__license__'],
+    keywords             = metadata['__keywords__'],
+    url                  = metadata['__website__'],
     packages             = find_packages(),
     include_package_data = True,  # see MANIFEST.in
     long_description     = long_description,
@@ -43,19 +49,17 @@ setup(
                             'Programming Language :: Python :: 3',
                             'Programming Language :: Python :: 3.7',
                             'Programming Language :: Python :: 3.8',
+                            'Programming Language :: Python :: 3.9',
                             'Operating System :: POSIX :: Linux', ],
     entry_points         = {'console_scripts': ['refitt=refitt.apps.refitt:main',
                                                 'refittd=refitt.apps.refittd:main',
                                                 'refittctl=refitt.apps.refittctl:main']},
     install_requires     = [
-        'numpy>=1.18.5', 'scipy>=1.4.1', 'pandas>=1.1.0', 'h5py>=2.10.0', 'xlrd>=1.2.0', 'tabulate>=0.8.7',
-        'sqlalchemy>=1.3.19', 'psycopg2>=2.8.5', 'paramiko>=2.7.1', 'sshtunnel>=0.1.5',
-        'flask>=1.1.2', 'gunicorn>=20.0.4', 'requests>=2.24.0',
-        'cmdkit>=1.5.4', 'logalpha>=2.0.2', 'toml>=0.10.1',
+        'numpy>=1.18.5', 'scipy>=1.4.1', 'pandas>=1.1.0', 'pyarrow>=2.0.0',
+        'sqlalchemy>=1.3.19', 'psycopg2>=2.8.5',
+        'flask>=1.1.2', 'gunicorn>=20.0.4', 'requests>=2.24.0', 'cryptography>=3.2.1',
+        'cmdkit>=2.1.3', 'toml>=0.10.2', 'streamkit>=0.3.2', 'names_generator>=0.1.0',
         'astropy>=4.0.1', 'antares-client>=1.0.1', 'slackclient>=2.8.0',
-        'tensorflow>=2.3.0', 'keras>=2.4.3',
-        'pyarrow>=1.0.0', 'feather-format>=0.4.1'],
-    extras_require       = {
-        'dev': ['pytest>=6.0.1', 'pytest-cov>=2.10.1', 'hypothesis>=5.26.1', 'ipython>=7.17.0',
-                'pylint>=2.5.3', 'sphinx>=3.2.1', 'pydata-sphinx-theme>=0.3.1', 'twine>=3.2.0']},
+        'matplotlib>=3.3.2', 'seaborn>=0.11.0', 'rich>=9.4.0',
+    ],
 )

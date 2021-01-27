@@ -1,0 +1,796 @@
+[
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 1,
+    "source_id": 2,
+    "value": 18.10,
+    "error": 0.08,
+    "time": "2020-10-24 18:00:00-04:00",
+    "recorded": "2020-10-24 18:01:00-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 2,
+    "source_id": 2,
+    "value": 19.05,
+    "error": 0.09,
+    "time": "2020-10-24 18:00:05-04:00",
+    "recorded": "2020-10-24 18:01:05-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 3,
+    "source_id": 2,
+    "value": 18.30,
+    "error": 0.12,
+    "time": "2020-10-24 18:00:10-04:00",
+    "recorded": "2020-10-24 18:01:10-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 4,
+    "source_id": 2,
+    "value": 18.98,
+    "error": 0.04,
+    "time": "2020-10-24 18:00:15-04:00",
+    "recorded": "2020-10-24 18:01:15-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 5,
+    "source_id": 2,
+    "value": 19.01,
+    "error": 0.09,
+    "time": "2020-10-24 18:00:20-04:00",
+    "recorded": "2020-10-24 18:01:20-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 6,
+    "source_id": 2,
+    "value": 18.71,
+    "error": 0.04,
+    "time": "2020-10-24 18:00:25-04:00",
+    "recorded": "2020-10-24 18:01:25-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 7,
+    "source_id": 2,
+    "value": 20.09,
+    "error": 0.03,
+    "time": "2020-10-24 18:00:30-04:00",
+    "recorded": "2020-10-24 18:01:30-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 8,
+    "source_id": 2,
+    "value": 18.87,
+    "error": 0.02,
+    "time": "2020-10-24 18:00:35-04:00",
+    "recorded": "2020-10-24 18:01:35-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 9,
+    "source_id": 2,
+    "value": 19.31,
+    "error": 0.03,
+    "time": "2020-10-24 18:00:40-04:00",
+    "recorded": "2020-10-24 18:01:40-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 10,
+    "source_id": 2,
+    "value": 18.89,
+    "error": 0.02,
+    "time": "2020-10-24 18:00:45-04:00",
+    "recorded": "2020-10-24 18:01:45-04:00"
+  },
+
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 1,
+    "source_id": 1,
+    "value": 17.10,
+    "error": null,
+    "time": "2020-10-25 18:00:00-04:00",
+    "recorded": "2020-10-24 19:01:00-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 2,
+    "source_id": 1,
+    "value": 18.05,
+    "error": null,
+    "time": "2020-10-25 18:00:05-04:00",
+    "recorded": "2020-10-24 19:01:05-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 3,
+    "source_id": 1,
+    "value": 17.30,
+    "error": null,
+    "time": "2020-10-25 18:00:10-04:00",
+    "recorded": "2020-10-24 19:01:10-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 4,
+    "source_id": 1,
+    "value": 17.98,
+    "error": null,
+    "time": "2020-10-25 18:00:15-04:00",
+    "recorded": "2020-10-24 19:01:15-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 5,
+    "source_id": 1,
+    "value": 18.01,
+    "error": null,
+    "time": "2020-10-25 18:00:20-04:00",
+    "recorded": "2020-10-24 19:01:20-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 6,
+    "source_id": 1,
+    "value": 17.71,
+    "error": null,
+    "time": "2020-10-25 18:00:25-04:00",
+    "recorded": "2020-10-24 19:01:25-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 7,
+    "source_id": 1,
+    "value": 19.09,
+    "error": null,
+    "time": "2020-10-25 18:00:30-04:00",
+    "recorded": "2020-10-24 19:01:30-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 8,
+    "source_id": 1,
+    "value": 17.87,
+    "error": null,
+    "time": "2020-10-25 18:00:35-04:00",
+    "recorded": "2020-10-24 19:01:35-04:00"
+  },
+
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 1,
+    "source_id": 3,
+    "value": 17.10,
+    "error": null,
+    "time": "2020-10-25 18:00:00-04:00",
+    "recorded": "2020-10-26 18:01:00-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 2,
+    "source_id": 3,
+    "value": 18.05,
+    "error": null,
+    "time": "2020-10-25 18:00:05-04:00",
+    "recorded": "2020-10-26 18:01:05-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 3,
+    "source_id": 4,
+    "value": 17.30,
+    "error": null,
+    "time": "2020-10-25 18:00:10-04:00",
+    "recorded": "2020-10-26 18:01:10-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 4,
+    "source_id": 4,
+    "value": 17.98,
+    "error": null,
+    "time": "2020-10-25 18:00:15-04:00",
+    "recorded": "2020-10-26 18:01:15-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 5,
+    "source_id": 5,
+    "value": 18.01,
+    "error": null,
+    "time": "2020-10-25 18:00:20-04:00",
+    "recorded": "2020-10-26 18:01:20-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 6,
+    "source_id": 5,
+    "value": 17.71,
+    "error": null,
+    "time": "2020-10-25 18:00:25-04:00",
+    "recorded": "2020-10-26 18:01:25-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 7,
+    "source_id": 6,
+    "value": 19.09,
+    "error": null,
+    "time": "2020-10-25 18:00:30-04:00",
+    "recorded": "2020-10-26 18:01:30-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 8,
+    "source_id": 6,
+    "value": 17.87,
+    "error": null,
+    "time": "2020-10-25 18:00:35-04:00",
+    "recorded": "2020-10-26 18:01:35-04:00"
+  },
+
+
+
+
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 1,
+    "source_id": 2,
+    "value": 17.10,
+    "error": 0.08,
+    "time": "2020-10-25 18:00:00-04:00",
+    "recorded": "2020-10-25 18:01:00-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 2,
+    "source_id": 2,
+    "value": 18.05,
+    "error": 0.09,
+    "time": "2020-10-25 18:00:05-04:00",
+    "recorded": "2020-10-25 18:01:05-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 3,
+    "source_id": 2,
+    "value": 17.30,
+    "error": 0.12,
+    "time": "2020-10-25 18:00:10-04:00",
+    "recorded": "2020-10-25 18:01:10-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 4,
+    "source_id": 2,
+    "value": 17.98,
+    "error": 0.04,
+    "time": "2020-10-25 18:00:15-04:00",
+    "recorded": "2020-10-25 18:01:15-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 5,
+    "source_id": 2,
+    "value": 18.01,
+    "error": 0.09,
+    "time": "2020-10-25 18:00:20-04:00",
+    "recorded": "2020-10-25 18:01:20-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 6,
+    "source_id": 2,
+    "value": 17.71,
+    "error": 0.04,
+    "time": "2020-10-25 18:00:25-04:00",
+    "recorded": "2020-10-25 18:01:25-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 7,
+    "source_id": 2,
+    "value": 19.09,
+    "error": 0.03,
+    "time": "2020-10-25 18:00:30-04:00",
+    "recorded": "2020-10-25 18:01:30-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 8,
+    "source_id": 2,
+    "value": 17.87,
+    "error": 0.02,
+    "time": "2020-10-25 18:00:35-04:00",
+    "recorded": "2020-10-25 18:01:35-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 9,
+    "source_id": 2,
+    "value": 18.31,
+    "error": 0.03,
+    "time": "2020-10-25 18:00:40-04:00",
+    "recorded": "2020-10-25 18:01:40-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 10,
+    "source_id": 2,
+    "value": 17.89,
+    "error": 0.02,
+    "time": "2020-10-25 18:00:45-04:00",
+    "recorded": "2020-10-25 18:01:45-04:00"
+  },
+
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 1,
+    "source_id": 1,
+    "value": 16.10,
+    "error": null,
+    "time": "2020-10-26 18:00:00-04:00",
+    "recorded": "2020-10-25 19:01:00-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 2,
+    "source_id": 1,
+    "value": 17.05,
+    "error": null,
+    "time": "2020-10-26 18:00:05-04:00",
+    "recorded": "2020-10-25 19:01:05-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 3,
+    "source_id": 1,
+    "value": 16.30,
+    "error": null,
+    "time": "2020-10-26 18:00:10-04:00",
+    "recorded": "2020-10-25 19:01:10-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 4,
+    "source_id": 1,
+    "value": 16.98,
+    "error": null,
+    "time": "2020-10-26 18:00:15-04:00",
+    "recorded": "2020-10-25 19:01:15-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 5,
+    "source_id": 1,
+    "value": 17.01,
+    "error": null,
+    "time": "2020-10-26 18:00:20-04:00",
+    "recorded": "2020-10-25 19:01:20-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 6,
+    "source_id": 1,
+    "value": 16.71,
+    "error": null,
+    "time": "2020-10-26 18:00:25-04:00",
+    "recorded": "2020-10-25 19:01:25-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 7,
+    "source_id": 1,
+    "value": 18.09,
+    "error": null,
+    "time": "2020-10-26 18:00:30-04:00",
+    "recorded": "2020-10-25 19:01:30-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 8,
+    "source_id": 1,
+    "value": 16.87,
+    "error": null,
+    "time": "2020-10-26 18:00:35-04:00",
+    "recorded": "2020-10-25 19:01:35-04:00"
+  },
+
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 1,
+    "source_id": 3,
+    "value": 16.10,
+    "error": null,
+    "time": "2020-10-26 18:00:00-04:00",
+    "recorded": "2020-10-27 18:01:00-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 2,
+    "source_id": 3,
+    "value": 17.05,
+    "error": null,
+    "time": "2020-10-26 18:00:05-04:00",
+    "recorded": "2020-10-27 18:01:05-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 3,
+    "source_id": 4,
+    "value": 16.30,
+    "error": null,
+    "time": "2020-10-26 18:00:10-04:00",
+    "recorded": "2020-10-27 18:01:10-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 4,
+    "source_id": 4,
+    "value": 16.98,
+    "error": null,
+    "time": "2020-10-26 18:00:15-04:00",
+    "recorded": "2020-10-27 18:01:15-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 5,
+    "source_id": 5,
+    "value": 17.01,
+    "error": null,
+    "time": "2020-10-26 18:00:20-04:00",
+    "recorded": "2020-10-27 18:01:20-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 6,
+    "source_id": 5,
+    "value": 16.71,
+    "error": null,
+    "time": "2020-10-26 18:00:25-04:00",
+    "recorded": "2020-10-27 18:01:25-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 7,
+    "source_id": 6,
+    "value": 18.09,
+    "error": null,
+    "time": "2020-10-26 18:00:30-04:00",
+    "recorded": "2020-10-27 18:01:30-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 8,
+    "source_id": 6,
+    "value": 16.87,
+    "error": null,
+    "time": "2020-10-26 18:00:35-04:00",
+    "recorded": "2020-10-27 18:01:35-04:00"
+  },
+
+
+
+
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 1,
+    "source_id": 2,
+    "value": 16.10,
+    "error": 0.08,
+    "time": "2020-10-26 18:00:00-04:00",
+    "recorded": "2020-10-26 18:01:00-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 2,
+    "source_id": 2,
+    "value": 17.05,
+    "error": 0.09,
+    "time": "2020-10-26 18:00:05-04:00",
+    "recorded": "2020-10-26 18:01:05-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 3,
+    "source_id": 2,
+    "value": 16.30,
+    "error": 0.12,
+    "time": "2020-10-26 18:00:10-04:00",
+    "recorded": "2020-10-26 18:01:10-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 4,
+    "source_id": 2,
+    "value": 16.98,
+    "error": 0.04,
+    "time": "2020-10-26 18:00:15-04:00",
+    "recorded": "2020-10-26 18:01:15-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 5,
+    "source_id": 2,
+    "value": 17.01,
+    "error": 0.09,
+    "time": "2020-10-26 18:00:20-04:00",
+    "recorded": "2020-10-26 18:01:20-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 6,
+    "source_id": 2,
+    "value": 16.71,
+    "error": 0.04,
+    "time": "2020-10-26 18:00:25-04:00",
+    "recorded": "2020-10-26 18:01:25-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 7,
+    "source_id": 2,
+    "value": 18.09,
+    "error": 0.03,
+    "time": "2020-10-26 18:00:30-04:00",
+    "recorded": "2020-10-26 18:01:30-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 8,
+    "source_id": 2,
+    "value": 16.87,
+    "error": 0.02,
+    "time": "2020-10-26 18:00:35-04:00",
+    "recorded": "2020-10-26 18:01:35-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 9,
+    "source_id": 2,
+    "value": 17.31,
+    "error": 0.03,
+    "time": "2020-10-26 18:00:40-04:00",
+    "recorded": "2020-10-26 18:01:40-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 10,
+    "source_id": 2,
+    "value": 16.89,
+    "error": 0.02,
+    "time": "2020-10-26 18:00:45-04:00",
+    "recorded": "2020-10-26 18:01:45-04:00"
+  },
+
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 1,
+    "source_id": 1,
+    "value": 15.10,
+    "error": null,
+    "time": "2020-10-27 18:00:00-04:00",
+    "recorded": "2020-10-26 19:01:00-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 2,
+    "source_id": 1,
+    "value": 16.05,
+    "error": null,
+    "time": "2020-10-27 18:00:05-04:00",
+    "recorded": "2020-10-26 19:01:05-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 3,
+    "source_id": 1,
+    "value": 15.30,
+    "error": null,
+    "time": "2020-10-27 18:00:10-04:00",
+    "recorded": "2020-10-26 19:01:10-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 4,
+    "source_id": 1,
+    "value": 15.98,
+    "error": null,
+    "time": "2020-10-27 18:00:15-04:00",
+    "recorded": "2020-10-26 19:01:15-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 5,
+    "source_id": 1,
+    "value": 16.01,
+    "error": null,
+    "time": "2020-10-27 18:00:20-04:00",
+    "recorded": "2020-10-26 19:01:20-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 6,
+    "source_id": 1,
+    "value": 15.71,
+    "error": null,
+    "time": "2020-10-27 18:00:25-04:00",
+    "recorded": "2020-10-26 19:01:25-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "object_id": 7,
+    "source_id": 1,
+    "value": 17.09,
+    "error": null,
+    "time": "2020-10-27 18:00:30-04:00",
+    "recorded": "2020-10-26 19:01:30-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 2,
+    "object_id": 8,
+    "source_id": 1,
+    "value": 15.87,
+    "error": null,
+    "time": "2020-10-27 18:00:35-04:00",
+    "recorded": "2020-10-26 19:01:35-04:00"
+  },
+
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 1,
+    "source_id": 3,
+    "value": 15.10,
+    "error": null,
+    "time": "2020-10-27 18:00:00-04:00",
+    "recorded": "2020-10-28 18:01:00-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 2,
+    "source_id": 3,
+    "value": 16.05,
+    "error": null,
+    "time": "2020-10-27 18:00:05-04:00",
+    "recorded": "2020-10-28 18:01:05-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 3,
+    "source_id": 4,
+    "value": 15.30,
+    "error": null,
+    "time": "2020-10-27 18:00:10-04:00",
+    "recorded": "2020-10-28 18:01:10-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 4,
+    "source_id": 4,
+    "value": 15.98,
+    "error": null,
+    "time": "2020-10-27 18:00:15-04:00",
+    "recorded": "2020-10-28 18:01:15-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 5,
+    "source_id": 5,
+    "value": 16.01,
+    "error": null,
+    "time": "2020-10-27 18:00:20-04:00",
+    "recorded": "2020-10-28 18:01:20-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 6,
+    "source_id": 5,
+    "value": 15.71,
+    "error": null,
+    "time": "2020-10-27 18:00:25-04:00",
+    "recorded": "2020-10-28 18:01:25-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 7,
+    "source_id": 6,
+    "value": 17.09,
+    "error": null,
+    "time": "2020-10-27 18:00:30-04:00",
+    "recorded": "2020-10-28 18:01:30-04:00"
+  },
+  {
+    "id": null,
+    "type_id": 1,
+    "object_id": 8,
+    "source_id": 6,
+    "value": 15.87,
+    "error": null,
+    "time": "2020-10-27 18:00:35-04:00",
+    "recorded": "2020-10-28 18:01:35-04:00"
+  }
+]

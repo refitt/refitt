@@ -10,174 +10,147 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Runtime configuration for REFITT."""
+"""
+Runtime configuration for REFITT.
 
-# type annotations
-from typing import Dict, Mapping
+Files:
+         /etc/refitt.toml    System
+    ~/.refitt/config.toml    User
+      .refitt/config.toml    Local
+"""
+
 
 # standard libs
 import os
 import functools
-import subprocess
+import logging
 
 # external libs
-from cmdkit.config import Namespace, Configuration
-import toml
+from cmdkit.config import Namespace, Configuration, ConfigurationError  # noqa: unused
+from streamkit.core import config as _streamkit
 
-# internal libs
-from .logging import Logger
-from ..assets import load_asset
-from ..__meta__ import __appname__
 
 # module level logger
-log = Logger(__name__)
+log = logging.getLogger(__name__)
 
 
-# home directory
-HOME = os.getenv('HOME', None)
-if HOME is None:
-    raise ValueError('"HOME" environment variable not defined.')
-
-# global variables
-VARS = {
-    'SITE': os.getcwd(),
-    'DAEMON_PORT': '50000',
-    'DAEMON_KEY':  '__REFITT__DAEMON__KEY__',
-    'DAEMON_REFRESH_TIME': '10',   # seconds
-    'DAEMON_INTERRUPT_TIMEOUT': '4',  # seconds
-    'DATABASE_PROFILE': 'default',
-    'DATABASE': 'refitt',
-    'PLASMA_MEMORY': 1_000_000,
-    'PLASMA_SOCKET': '/tmp/plasma.sock',
-}
-
-# environment variables
-# ---------------------
-# Load any environment variable that begins with "{PREFIX}_".
-PREFIX = __appname__.upper()
-ENV_DEFAULTS = {f'{PREFIX}_{name}': value for name, value in VARS.items()}
-ENV = Namespace.from_env(prefix=f'{PREFIX}_', defaults=ENV_DEFAULTS)
-
-# update VARS to include ENV overrides
-for name, value in ENV.items():
-    VARS[name[len(PREFIX)+1:]] = value
-
-# runtime/configuration paths
-# ---------------------------
+CWD = os.getcwd()
+HOME = os.getenv('HOME')
 ROOT = os.getuid() == 0
 SITE = 'system' if ROOT else 'user'
-SITE = SITE if f'{PREFIX}_SITE' not in os.environ else 'site'
-LOCAL_SITE = ENV[f'{PREFIX}_SITE']
-SITEMAP = {
+PATH = Namespace({
     'system': {
-        'lib': f'/var/lib/{__appname__}',
-        'log': f'/var/log/{__appname__}',
-        'run': f'/var/run/{__appname__}',
-        'cfg': f'/etc/{__appname__}.toml'},
+        'lib': '/var/lib/refitt',
+        'log': '/var/log/refitt',
+        'run': '/var/run/refitt',
+        'config': '/etc/refitt.toml'},
     'user': {
-        'lib': f'{HOME}/.{__appname__}/lib',
-        'log': f'{HOME}/.{__appname__}/log',
-        'run': f'{HOME}/.{__appname__}/run',
-        'cfg': f'{HOME}/.{__appname__}/config.toml'},
-    'site': {
-        'lib': f'{LOCAL_SITE}/.{__appname__}/lib',
-        'log': f'{LOCAL_SITE}/.{__appname__}/log',
-        'run': f'{LOCAL_SITE}/.{__appname__}/run',
-        'cfg': f'{LOCAL_SITE}/.{__appname__}/config.toml'},
-}
+        'lib': f'{HOME}/.refitt/lib',
+        'log': f'{HOME}/.refitt/log',
+        'run': f'{HOME}/.refitt/run',
+        'config': f'{HOME}/.refitt/config.toml'},
+    'local': {
+        'lib': f'{CWD}/.refitt/lib',
+        'log': f'{CWD}/.refitt/log',
+        'run': f'{CWD}/.refitt/run',
+        'config': f'{CWD}/.refitt/config.toml'},
+})
 
 
-@functools.lru_cache(maxsize=1)
-def get_site(key: str = None) -> Dict[str, str]:
+# environment variables and configuration files are automatically
+# depth-first merged with defaults
+DEFAULT = Namespace({
+
+    'database': {
+            'backend': 'sqlite',
+            'database': ':memory:'
+    },
+
+    'logging': {
+        'level': 'warning',
+        'format': '%(asctime)s %(hostname)s %(levelname)-8s [%(name)s] %(msg)s',
+        'datefmt': '%Y-%m-%d %H:%M:%S',
+        'stream': {
+            'enabled': False,
+            'batchsize': 10,
+            'timeout': 5
+        }
+    },
+
+    'api': {
+        'site': 'https://api.refitt.org',
+        'port': None,
+        'login': 'https://refitt.org/profile/api_credentials'
+    },
+
+    'daemon': {
+        'port': 50000,
+        'key': '__REFITT__DAEMON__KEY__',  # this should be overridden
+        'refresh': 10,  # seconds to wait before issuing keep-alive to services
+        'timeout': 4,   # seconds to wait before hard kill services on interrupt
+    },
+
+    'plasma': {
+        'memory': 1_000_000,  # 1 MB
+        'socket': ''
+    }
+})
+
+
+@functools.lru_cache(maxsize=None)
+def get_site(key: str = None) -> Namespace:
     """
-    Return the runtime site.
+    Return the file-system structure based on `key`.
     Automatically creates directories if needed.
     """
-    site = SITEMAP[SITE] if key is None else SITEMAP[key]
+    site = PATH[SITE] if key is None else PATH[key]
     for folder in ['lib', 'log', 'run']:
         if not os.path.isdir(site[folder]):
-            log.info(f'creating directory {site[folder]}')
-            os.makedirs(site[folder])
+            log.debug(f'creating directory {site[folder]}')
+            os.makedirs(site[folder], exist_ok=True)
     return site
 
 
 def get_config() -> Configuration:
     """Load configuration."""
-    # configuration files
-    # -------------------
-    # Load the system, user, and site level configuration files as `Namespace`s
-    # if and only if that file path exists, otherwise making it empty.
-    namespaces = dict()
-    for site, paths in SITEMAP.items():
-        filepath = paths['cfg']
-        if os.path.exists(filepath):
-            namespaces[site] = Namespace.from_local(filepath)
-        else:
-            namespaces[site] = Namespace()
-
-    # runtime configuration
-    # ---------------------
-    # Merge each available namespace into a single `ChainMap` like structure.
-    # A call to __getitem__ returns in a reverse-order depth-first search.
-    return Configuration(**namespaces)
+    return Configuration.from_local(env=True,
+                                    prefix='REFITT',
+                                    default=DEFAULT,
+                                    system=PATH.system.config,
+                                    user=PATH.user.config,
+                                    local=PATH.local.config)
 
 
-def init_config(key: str = None) -> None:
-    """Initialize configuration with defaults if necessary."""
-    site = SITE if key is None else key
-    path = SITEMAP[site]['cfg']
-    if not os.path.exists(path):
-        default = toml.loads(load_asset('config/refitt.toml'))
-        with open(path, mode='w') as config_file:
-            toml.dump(default, config_file)
-
-
-# global instance
-# some uses may reload this
+# single global instance
 config = get_config()
 
 
-class ConfigurationError(Exception):
-    """Exception specif to configuration errors."""
-
-
-def expand_parameters(prefix: str, namespace: Namespace) -> str:
-    """Substitute values into namespace if `_env` or `_eval` present."""
-    value = None
-    count = 0
-    for key in filter(lambda _key: _key.startswith(prefix), namespace.keys()):
-        count += 1
-        if count > 1:
-            raise ValueError(f'more than one variant of "{prefix}" in configuration file')
-        if key.endswith('_env'):
-            value = os.getenv(namespace[key])
-            log.debug(f'expanded "{prefix}" from configuration as environment variable')
-        elif key.endswith('_eval'):
-            value = subprocess.check_output(namespace[key].split()).decode().strip()
-            log.debug(f'expanded "{prefix}" from configuration as shell command')
-        elif key == prefix:
-            value = namespace[key]
-        else:
-            raise ValueError(f'unrecognized variant of "{prefix}" ({key}) in configuration file')
-    return value
-
-
-def update_config(site: str, data: Mapping) -> None:
+def update_config(site: str, data: dict) -> None:
     """
     Extend the current configuration and commit it to disk.
 
-    Example
-    -------
-    >>> from refitt.core.config import update_config
-    >>> update_config('user', {
-        'api': {
-            'access_token': 'ABC123'
-        }
-    })
+    Args:
+        site (str):
+            Either "local", "user", or "system"
+        data (dict):
+            Sectioned mappable to update configuration file.
+
+    Example:
+        >>> update_config('user', {
+        ...    'database': {
+        ...        'user': 'ABC123'
+        ...    }
+        ... })
     """
-    get_site(site)  # ensure directories
-    init_config(site)  # ensure default exists
-    new_config = Configuration(old=get_config().namespaces[site],
-                               new=Namespace(data))
-    # commit to file
-    new_config._master.to_local(SITEMAP[site]['cfg'])
+    path = get_site(site).config
+    new_config = Namespace.from_local(path, ignore_if_missing=True)
+    new_config.update(data)
+    new_config.to_local(path)
+
+
+# inject configuration back into streamkit library
+# this needs to happen before streamkit is imported anywhere
+_streamkit.config.extend(refitt=Namespace({
+   'database': config.database,
+   'logging': config.logging
+}))
