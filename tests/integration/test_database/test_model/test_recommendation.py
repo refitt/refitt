@@ -19,8 +19,8 @@ from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database import config
-from refitt.database.model import (Recommendation, RecommendationGroup, User, Facility, Object,
-                                   Forecast, Observation, NotFound)
+from refitt.database.model import (Recommendation, RecommendationGroup, RecommendationTag,
+                                   User, Facility, Object, Forecast, Observation, NotFound)
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
@@ -57,6 +57,7 @@ class TestRecommendation:
         assert Recommendation.from_id(1).to_json(join=True) == {
             'id': 1,
             'group_id': 1,
+            'tag_id': 1,
             'time': '2020-10-24 20:02:00' + ('' if config.backend == 'sqlite' else '-04:00'),
             'priority': 1,
             'object_id': 1,
@@ -69,6 +70,7 @@ class TestRecommendation:
             'rejected': False,
             'data': {},
             'group': RecommendationGroup.from_id(1).to_json(join=True),
+            'tag': RecommendationTag.from_id(1).to_json(join=True),
             'user': User.from_id(2).to_json(join=True),
             'facility': Facility.from_id(1).to_json(join=True),
             'object': Object.from_id(1).to_json(join=True),
@@ -91,7 +93,7 @@ class TestRecommendation:
     def test_id_already_exists(self) -> None:
         """Test exception on recommendation `id` already exists."""
         with pytest.raises(IntegrityError):
-            Recommendation.add({'id': 1, 'group_id': 1, 'priority': 1, 'object_id': 1,
+            Recommendation.add({'id': 1, 'group_id': 1, 'tag_id': 1, 'priority': 1, 'object_id': 1,
                                 'facility_id': 1, 'user_id': 2})
 
     def test_relationship_group(self, testdata: TestData) -> None:

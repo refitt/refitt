@@ -18,12 +18,14 @@ from __future__ import annotations
 from typing import List, Tuple, Dict, Any, Type, Optional, Callable, TypeVar, Union
 
 # standard libs
+import random
 import logging
 from base64 import encodebytes as base64_encode, decodebytes as base64_decode
 from datetime import datetime, timedelta
+from functools import lru_cache
 
 # external libs
-from names_generator import generate_name
+from names_generator.names import LEFT, RIGHT
 from sqlalchemy import Column, ForeignKey, Index, func, type_coerce
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
@@ -643,7 +645,6 @@ class Object(Base, CoreMixin):
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(ObjectType.id), nullable=False)
-    name = Column('name', Text(), unique=True, nullable=True)
     aliases = Column('aliases', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     ra = Column('ra', Float(), nullable=False)
     dec = Column('dec', Float(), nullable=False)
@@ -656,7 +657,6 @@ class Object(Base, CoreMixin):
     columns = {
         'id': int,
         'type_id': int,
-        'name': str,
         'aliases': dict,
         'ra': float,
         'dec': float,
@@ -666,15 +666,6 @@ class Object(Base, CoreMixin):
 
     class NotFound(NotFound):
         """NotFound exception specific to ObjectType."""
-
-    @classmethod
-    def from_name(cls, name: str, session: _Session = None) -> Object:
-        """Query by unique object `name`."""
-        try:
-            session = session or _Session()
-            return session.query(cls).filter(cls.name == name).one()
-        except NoResultFound as error:
-            raise Object.NotFound(f'No object with name={name}') from error
 
     @classmethod
     def from_alias(cls, session: _Session = None, **alias: str) -> Object:
@@ -692,34 +683,20 @@ class Object(Base, CoreMixin):
             raise NotDistinct(f'Multiple objects with alias {provider}={name}') from error
 
     @classmethod
-    def add_alias(cls, object_id: int, **aliases: str) -> None:
+    def add_alias(cls, object_id: int, session: _Session = None, **aliases: str) -> None:
         """Add alias(es) to the given object."""
-        session = _Session()
+        session = session or _Session()
         try:
             obj = Object.from_id(object_id, session)
             for provider, name in aliases.items():
                 try:
-                    existing = Object.from_alias(session, **{provider: name, })
+                    existing = Object.from_alias(session=session, **{provider: name, })
                     if existing.id != object_id:
                         raise AlreadyExists(f'Object with alias {provider}={name} already exists')
                 except Object.NotFound:
                     obj.aliases[provider] = name
             session.commit()
         except (IntegrityError, AlreadyExists):
-            session.rollback()
-            raise
-
-    @classmethod
-    def add(cls, data: dict, session: _Session = None) -> Object:
-        """Custom add method for object to automatically initialize the name."""
-        session = session or _Session()
-        object = super().add(data, session)
-        try:
-            object.name = generate_name(style='underscore', seed=object.id)
-            object.aliases = {**object.aliases, 'refitt': object.name}
-            session.commit()
-            return object
-        except IntegrityError:
             session.rollback()
             raise
 
@@ -1059,30 +1036,106 @@ class RecommendationGroup(Base, CoreMixin):
             return query.limit(limit)
 
 
+class RecommendationTag(Base, CoreMixin):
+    """Recommendation tag table."""
+
+    __tablename__ = 'recommendation_tag'
+    __table_args__ = {'schema': schema}
+
+    id = Column('id', Integer(), primary_key=True, nullable=False)
+    object_id = Column('object_id', Integer(), ForeignKey(Object.id), unique=True, nullable=False)
+    name = Column('name', Text(), unique=True, nullable=True)
+
+    object = relationship(Object, backref='recommendation_tag')
+
+    relationships = {'object': Object, }
+    columns = {
+        'id': int,
+        'object_id': int,
+        'name': str,
+    }
+
+    class NotFound(NotFound):
+        """NotFound exception specific to RecommendationTag."""
+
+    @classmethod
+    def from_name(cls, name: str, session: _Session = None) -> RecommendationTag:
+        """Query by unique recommendation_tag `name`."""
+        try:
+            session = session or _Session()
+            return session.query(cls).filter(cls.name == name).one()
+        except NoResultFound as error:
+            raise RecommendationTag.NotFound(f'No recommendation_tag with name={name}') from error
+
+    @classmethod
+    def get_or_create(cls, object_id: int, session: _Session = None) -> RecommendationTag:
+        """Get or create recommendation tag for `object_id`."""
+        session = session or _Session()
+        try:
+            tag = session.query(cls).filter(cls.object_id == object_id).one()
+            return tag
+        except NoResultFound:
+            return cls.new(object_id, session=session)
+    
+    @classmethod
+    def new(cls, object_id: int, session: _Session = None) -> RecommendationTag:
+        """Create a new recommendation tag for `object_id`."""
+        session = session or _Session()
+        try:
+            tag = cls.add({'object_id': object_id}, session=session)
+            tag.name = cls.get_name(tag.id)
+            session.commit()
+            Object.add_alias(object_id, tag=tag.name, session=session)
+            return tag
+        except Exception:
+            session.rollback()
+            raise
+
+    # global stored value does not change
+    COUNT: int = len(LEFT) * len(LEFT) * len(RIGHT)
+
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def build_names(seed: int = 1) -> List[str]:
+        """Reproducibly generate shuffled list of names."""
+        names = [f'{a}_{b}_{c}' for a in LEFT for b in LEFT for c in RIGHT]
+        random.seed(seed)
+        random.shuffle(names)
+        return names
+
+    @classmethod
+    def get_name(cls, tag_id: int) -> str:
+        """Slice into ordered sequence of names."""
+        names = cls.build_names()
+        return names[tag_id]  # NOTE: will fail when we pass ~2.5M recommended objects
+
+
 class Recommendation(Base, CoreMixin):
     """Recommendation table."""
 
     __tablename__ = 'recommendation'
     __table_args__ = {'schema': schema}
 
-    id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
+    id = Column('id', BigInteger().with_variant(Integer(), 'sqlite'), primary_key=True, nullable=False)
     group_id = Column('group_id', Integer(), ForeignKey(RecommendationGroup.id), nullable=False)
+    tag_id = Column('tag_id', Integer(), ForeignKey(RecommendationTag.id), nullable=False)
     time = Column('time', DateTime(timezone=True), nullable=False, server_default=func.now())
     priority = Column('priority', Integer(), nullable=False)
     object_id = Column('object_id', Integer(), ForeignKey(Object.id), nullable=False)
     facility_id = Column('facility_id', Integer(), ForeignKey(Facility.id), nullable=False)
     user_id = Column('user_id', Integer(), ForeignKey(User.id), nullable=False)
-    forecast_id = Column('forecast_id', Integer().with_variant(BigInteger(), 'postgresql'),
+    forecast_id = Column('forecast_id', BigInteger().with_variant(Integer(), 'sqlite'),
                          ForeignKey(Forecast.id), nullable=True)
-    predicted_observation_id = Column('predicted_observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
+    predicted_observation_id = Column('predicted_observation_id', BigInteger().with_variant(Integer(), 'sqlite'),
                                       ForeignKey(Observation.id), nullable=True)
-    observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
+    observation_id = Column('observation_id', BigInteger().with_variant(Integer(), 'sqlite'),
                             ForeignKey(Observation.id), nullable=True)
     accepted = Column('accepted', Boolean(), nullable=False, default=False)
     rejected = Column('rejected', Boolean(), nullable=False, default=False)
     data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
 
     group = relationship(RecommendationGroup, backref='recommendation')
+    tag = relationship(RecommendationTag, backref='recommendation')
     user = relationship(User, backref='recommendation')
     facility = relationship(Facility, backref='recommendation')
     object = relationship(Object, backref='recommendation')
@@ -1090,11 +1143,13 @@ class Recommendation(Base, CoreMixin):
     predicted = relationship(Observation, foreign_keys=[predicted_observation_id, ])
     observed = relationship(Observation, foreign_keys=[observation_id, ])
 
-    relationships = {'group': RecommendationGroup, 'user': User, 'facility': Facility, 'object': Object,
-                     'forecast': Forecast, 'predicted': Observation, 'observed': Observation}
+    relationships = {'group': RecommendationGroup, 'tag': RecommendationTag, 'user': User, 
+                     'facility': Facility, 'object': Object, 'forecast': Forecast, 
+                     'predicted': Observation, 'observed': Observation}
     columns = {
         'id': int,
         'group_id': int,
+        'tag_id': int,
         'time': datetime,
         'priority': int,
         'object_id': int,
@@ -1117,7 +1172,7 @@ class Recommendation(Base, CoreMixin):
         session = session or _Session()
         group_id = group_id or RecommendationGroup.latest(session).id
         return (session.query(cls).order_by(cls.priority)
-                .filter(cls.group_id == group_id).filter(cls.user_id == user_id)).all()
+                .filter(cls.group_id == group_id, cls.user_id == user_id)).all()
 
     @classmethod
     def next(cls, user_id: int, group_id: int = None, limit: int = None,
@@ -1239,6 +1294,7 @@ tables: Dict[str, Base] = {
     'file_type': FileType,
     'file': File,
     'recommendation_group': RecommendationGroup,
+    'recommendation_tag': RecommendationTag,
     'recommendation': Recommendation,
     'model_type': ModelType,
     'model': Model,

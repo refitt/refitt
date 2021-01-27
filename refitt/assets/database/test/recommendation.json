@@ -2,6 +2,7 @@
   {
     "id": null,
     "group_id": 1,
+    "tag_id": 1,
     "time": "2020-10-24 20:02:00-04:00",
     "priority": 1,
     "object_id": 1,
@@ -17,6 +18,7 @@
   {
     "id": null,
     "group_id": 1,
+    "tag_id": 2,
     "time": "2020-10-24 20:02:00-04:00",
     "priority": 2,
     "object_id": 2,
@@ -32,6 +34,7 @@
   {
     "id": null,
     "group_id": 1,
+    "tag_id": 3,
     "time": "2020-10-24 20:02:00-04:00",
     "priority": 3,
     "object_id": 3,
@@ -47,6 +50,7 @@
   {
     "id": null,
     "group_id": 1,
+    "tag_id": 4,
     "time": "2020-10-24 20:02:00-04:00",
     "priority": 4,
     "object_id": 4,
@@ -62,6 +66,7 @@
   {
     "id": null,
     "group_id": 1,
+    "tag_id": 5,
     "time": "2020-10-24 20:02:00-04:00",
     "priority": 5,
     "object_id": 5,
@@ -77,6 +82,7 @@
   {
     "id": null,
     "group_id": 1,
+    "tag_id": 6,
     "time": "2020-10-24 20:02:00-04:00",
     "priority": 6,
     "object_id": 6,
@@ -92,6 +98,7 @@
   {
     "id": null,
     "group_id": 1,
+    "tag_id": 7,
     "time": "2020-10-24 20:02:00-04:00",
     "priority": 7,
     "object_id": 7,
@@ -107,6 +114,7 @@
   {
     "id": null,
     "group_id": 1,
+    "tag_id": 8,
     "time": "2020-10-24 20:02:00-04:00",
     "priority": 8,
     "object_id": 8,
@@ -123,6 +131,7 @@
   {
     "id": null,
     "group_id": 2,
+    "tag_id": 1,
     "time": "2020-10-25 20:02:00-04:00",
     "priority": 1,
     "object_id": 1,
@@ -138,6 +147,7 @@
   {
     "id": null,
     "group_id": 2,
+    "tag_id": 2,
     "time": "2020-10-25 20:02:00-04:00",
     "priority": 2,
     "object_id": 2,
@@ -153,6 +163,7 @@
   {
     "id": null,
     "group_id": 2,
+    "tag_id": 3,
     "time": "2020-10-25 20:02:00-04:00",
     "priority": 3,
     "object_id": 3,
@@ -168,6 +179,7 @@
   {
     "id": null,
     "group_id": 2,
+    "tag_id": 4,
     "time": "2020-10-25 20:02:00-04:00",
     "priority": 4,
     "object_id": 4,
@@ -183,6 +195,7 @@
   {
     "id": null,
     "group_id": 2,
+    "tag_id": 5,
     "time": "2020-10-25 20:02:00-04:00",
     "priority": 5,
     "object_id": 5,
@@ -198,6 +211,7 @@
   {
     "id": null,
     "group_id": 2,
+    "tag_id": 6,
     "time": "2020-10-25 20:02:00-04:00",
     "priority": 6,
     "object_id": 6,
@@ -213,6 +227,7 @@
   {
     "id": null,
     "group_id": 2,
+    "tag_id": 7,
     "time": "2020-10-25 20:02:00-04:00",
     "priority": 7,
     "object_id": 7,
@@ -228,6 +243,7 @@
   {
     "id": null,
     "group_id": 2,
+    "tag_id": 8,
     "time": "2020-10-25 20:02:00-04:00",
     "priority": 8,
     "object_id": 8,
@@ -244,6 +260,7 @@
   {
     "id": null,
     "group_id": 3,
+    "tag_id": 1,
     "time": "2020-10-26 20:02:00-04:00",
     "priority": 1,
     "object_id": 1,
@@ -259,6 +276,7 @@
   {
     "id": null,
     "group_id": 3,
+    "tag_id": 2,
     "time": "2020-10-26 20:02:00-04:00",
     "priority": 2,
     "object_id": 2,
@@ -274,6 +292,7 @@
   {
     "id": null,
     "group_id": 3,
+    "tag_id": 3,
     "time": "2020-10-26 20:02:00-04:00",
     "priority": 3,
     "object_id": 3,
@@ -289,6 +308,7 @@
   {
     "id": null,
     "group_id": 3,
+    "tag_id": 4,
     "time": "2020-10-26 20:02:00-04:00",
     "priority": 4,
     "object_id": 4,
@@ -304,6 +324,7 @@
   {
     "id": null,
     "group_id": 3,
+    "tag_id": 5,
     "time": "2020-10-26 20:02:00-04:00",
     "priority": 5,
     "object_id": 5,
@@ -319,6 +340,7 @@
   {
     "id": null,
     "group_id": 3,
+    "tag_id": 6,
     "time": "2020-10-26 20:02:00-04:00",
     "priority": 6,
     "object_id": 6,
@@ -334,6 +356,7 @@
   {
     "id": null,
     "group_id": 3,
+    "tag_id": 7,
     "time": "2020-10-26 20:02:00-04:00",
     "priority": 7,
     "object_id": 7,
@@ -349,6 +372,7 @@
   {
     "id": null,
     "group_id": 3,
+    "tag_id": 8,
     "time": "2020-10-26 20:02:00-04:00",
     "priority": 8,
     "object_id": 8,

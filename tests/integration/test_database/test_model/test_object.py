@@ -14,7 +14,6 @@
 
 # external libs
 import pytest
-from names_generator import generate_name
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
@@ -52,11 +51,10 @@ class TestObject:
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert Object.from_name('competent_mayer').to_json(join=True) == {
+        assert Object.from_id(1).to_json(join=True) == {
             'id': 1,
             'type_id': 1,
-            'name': 'competent_mayer',
-            'aliases': {'antares': 'ANT2020ae7t5xa', 'ztf': 'ZTF20actrfli', 'refitt': 'competent_mayer'},
+            'aliases': {'antares': 'ANT2020ae7t5xa', 'ztf': 'ZTF20actrfli', 'tag': 'determined_thirsty_cray'},
             'ra': 133.0164572,
             'dec': 44.80034109999999,
             'redshift': None,
@@ -72,7 +70,7 @@ class TestObject:
         """Test loading object from `id`."""
         # NOTE: `id` not set until after insert
         for i, record in enumerate(testdata['object']):
-            assert Object.from_id(i + 1).name == record['name']
+            assert Object.from_id(i + 1).aliases == record['aliases']
 
     def test_id_missing(self) -> None:
         """Test exception on missing object `id`."""
@@ -82,39 +80,17 @@ class TestObject:
     def test_id_already_exists(self) -> None:
         """Test exception on object `id` already exists."""
         with pytest.raises(IntegrityError):
-            Object.add({'id': 1, 'type_id': 5, 'name': 'Betelgeuse',
+            Object.add({'id': 1, 'type_id': 5,
                         'aliases': {'bayer': 'α Ori', 'flamsteed': '58 Ori', 'HR': 'HR 2061', 'BD': 'BD + 7°1055',
                                     'HD': 'HD 39801', 'FK5': 'FK5 224', 'HIP': 'HIP 27989', 'SAO': 'SAO 113271',
                                     'GC': 'GC 7451', 'CCDM': 'CCDM J05552+0724', 'AAVSO': 'AAVSO 0549+07'},
                         'ra': 88.7917, 'dec': 7.4069, 'redshift': 0.000073,
                         'data': {'parallax': 6.55, }})
 
-    def test_from_name(self, testdata: TestData) -> None:
-        """Test loading object from `name`."""
-        for record in testdata['object']:
-            assert Object.from_name(record['name']).name == record['name']
-
-    def test_name_missing(self) -> None:
-        """Test exception on missing object `name`."""
-        with pytest.raises(NotFound):
-            Object.from_name('Missing Object Name')
-
-    def test_name_already_exists(self) -> None:
-        """Test exception on object `name` already exists."""
-        with pytest.raises(IntegrityError):
-            Object.add({'type_id': 1, 'name': 'competent_mayer',
-                        'aliases': {'ztf': 'ZTF20actrfli', 'antares': 'ANT2020ae7t5xa'},
-                        'ra': 133.0164572, 'dec': 44.80034109999999, 'redshift': None, 'data': {}})
-
-    def test_name_generator(self, testdata: TestData) -> None:
-        """Test auto-generated names."""
-        for i, record in enumerate(testdata['object']):
-            assert Object.from_name(record['name']).name == generate_name(style='underscore', seed=i+1)
-
     def test_from_alias(self, testdata: TestData) -> None:
         """Test loading object from known `alias`."""
         for record in testdata['object']:
-            assert Object.from_alias(ztf=record['aliases']['ztf']).name == record['name']
+            assert Object.from_alias(ztf=record['aliases']['ztf']).aliases == record['aliases']
 
     def test_alias_missing(self) -> None:
         """Test exception on object `alias` not found."""

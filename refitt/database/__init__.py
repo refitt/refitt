@@ -53,7 +53,7 @@ __REFS: Dict[str, List[str]] = {
     'core': ['user', 'object_type', 'level', 'topic', ],
     'test': ['facility', 'user', 'facility_map', 'client', 'session', 'object_type', 'object', 'source_type',
              'source', 'observation_type', 'observation', 'forecast', 'alert', 'file_type', 'file',
-             'recommendation_group', 'recommendation', 'level', 'topic', ]
+             'recommendation_group', 'recommendation_tag', 'recommendation', 'level', 'topic', ]
 }
 
 def load_records(section: str) -> None:

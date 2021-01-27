@@ -69,11 +69,10 @@ class TestObservation:
             'object': {
                 'id': 1,
                 'type_id': 1,
-                'name': 'competent_mayer',
                 'aliases': {
                     'antares': 'ANT2020ae7t5xa',
                     'ztf': 'ZTF20actrfli',
-                    'refitt': 'competent_mayer',
+                    'tag': 'determined_thirsty_cray',
                 },
                 'ra': 133.0164572,
                 'dec': 44.80034109999999,
