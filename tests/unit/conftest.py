@@ -10,25 +10,21 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""
-The Recommender Engine for Intelligent Transient Tracking.
-
-This package provides access to the library of applications, tools, and
-services within the REFITT system.
-"""
+"""Fixtures for unit tests."""
 
 
-from .__meta__ import (__appname__, __version__, __authors__, __contact__, __license__,
-                       __copyright__, __description__)
+# standard libs
+import os
+from datetime import datetime
+
+# external libs
+import pytest
 
 
-# NOTE: forced logging import triggers configuration and logging setup
-from .core.config import config
-from .core import logging
-
-
-# NOTE: render uncaught exceptions with highlighting
-import sys
-if sys.stdout.isatty():
-    from rich.traceback import install
-    install()
+@pytest.fixture(scope='package')
+def tmpdir() -> str:
+    """Ensure a new temporary directory exists and return its path."""
+    date = datetime.now().strftime('%Y%m%d-%H%M%S')
+    path = f'/tmp/refitt/tests/{date}'
+    os.makedirs(path, exist_ok=True)
+    return path

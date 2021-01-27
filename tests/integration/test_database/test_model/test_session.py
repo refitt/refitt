@@ -86,7 +86,7 @@ class TestSession:
         """Test loading session from `id`."""
         # NOTE: `id` not set until after insert
         for id in range(1, 4):
-            assert Session.from_id(id).client.user.alias == testdata['user'][id-1]['alias']
+            assert Session.from_id(id).client.user.alias == testdata['user'][id - 1]['alias']
 
     def test_id_missing(self) -> None:
         """Test exception on missing session `id`."""

@@ -52,5 +52,14 @@
     "name": "sir_newton_newton_8in",
     "description": "Observer (alias=sir_newton, facility=Newton_8in).",
     "data": {}
+  },
+  {
+    "id": null,
+    "type_id": 3,
+    "facility_id": null,
+    "user_id": null,
+    "name": "test_broker",
+    "description": "Fake data broker using in systems tests.",
+    "data": {}
   }
 ]

@@ -11,3 +11,7 @@
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
 """Web integration tests."""
+
+
+# NOTE: local web server should be running for tests
+URL_BASE: str = 'http://localhost:5000'

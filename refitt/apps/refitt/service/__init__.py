@@ -18,7 +18,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import api, test
+from . import api, stream, test
 
 
 PROGRAM = 'refitt service'
@@ -31,10 +31,11 @@ HELP = f"""\
 {USAGE}
 
 commands:
-api                      {api.__doc__}
+api                 {api.__doc__}
+stream              {stream.__doc__}
 
 options:
--h, --help               Show this message and exit.
+-h, --help          Show this message and exit.
 
 Use the -h/--help flag with the above groups/commands to
 learn more about their usage.\
@@ -48,4 +49,5 @@ class ServiceApp(ApplicationGroup):
 
     command = None
     commands = {'api': api.WebApp,
+                'stream': stream.StreamApp,
                 'test': test.TestApp, }

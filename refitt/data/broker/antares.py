@@ -10,16 +10,17 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
+"""Define AntaresAlert and AntaresClient"""
 
-"""Connect to one of the Antares streams."""
 
 # type annotations
 from __future__ import annotations
-from functools import lru_cache
-from typing import Dict, Iterator, Union
+from typing import List, Dict, Iterator, Union, Optional
 
 # standard libs
+import logging
 from datetime import datetime
+from functools import cached_property
 
 # external libs
 from antares_client import StreamingClient as _AntaresClient
@@ -29,42 +30,70 @@ from astropy.time import Time
 # internal libs
 from .client import ClientInterface
 from .alert import AlertInterface
-from ..database.observation import ObservationTypeNotFound
+
+
+# initialize module level logger
+log = logging.getLogger(__name__)
 
 
 class AntaresAlert(AlertInterface):
     """An Antares Alert."""
 
     source_name = 'antares'
+    previous: List[AntaresAlert] = []
+
+    _needed_properties: List[str] = [
+        'ztf_fid',
+        'ztf_magpsf',
+        'ztf_sigmapsf',
+    ]
 
     @classmethod
     def from_locus(cls, locus: Locus) -> AntaresAlert:
         """Extract new pseudo-schema from existing `locus`."""
-        data = {'locus_id': locus.locus_id,
+
+        def has_needed_props(data: dict) -> bool:
+            for name in cls._needed_properties:
+                if name not in data:
+                    return False
+            else:
+                return True
+
+        base = {'locus_id': locus.locus_id,
                 'ra': locus.ra,
                 'dec': locus.dec,
-                'properties': locus.properties,
-                'alert_history': [{'alert_id': alert.alert_id,
-                                   'mjd': alert.mjd,
-                                   'ra': locus.ra,
-                                   'dec': locus.dec,
-                                   'properties': alert.properties}
-                                  for alert in reversed(sorted(locus.alerts, key=(lambda alert: alert.mjd)))]}
-        data['new_alert'] = data['alert_history'][0]  # NOTE: sorting is most recent first
-        return cls.from_dict(data)
+                'properties': locus.properties}
 
-    @property
-    def object_name(self) -> str:
-        return self.data['locus_id']
+        # NOTE: we pre-filter prior history to check that we have necessary properties
+        #       e.g., missing `ztf_magpsf` indicates a upper/lower limit event (so we throw it out)
+        previous = [{'alert_id': alert.alert_id, 'mjd': alert.mjd,
+                     'ra': locus.ra, 'dec': locus.dec,
+                     'properties': alert.properties}
+                    for alert in reversed(sorted(locus.alerts, key=(lambda alert: alert.mjd)))
+                    if has_needed_props(alert.properties)]
+
+        if not previous:
+            raise ValueError('Missing necessary properties in all alerts')
+
+        self = cls.from_dict({**base, 'new_alert': previous[0]})
+        if len(previous) > 1:
+            self.previous = [cls.from_dict({**base, 'new_alert': alert}) for alert in previous[1:]]
+        else:
+            self.previous = []
+        return self
 
     @property
     def object_aliases(self) -> Dict[str, Union[int, str]]:
-        return {'antares': self.object_name,
+        return {'antares': self.data['locus_id'],
                 'ztf': self.data['properties']['ztf_object_id']}
 
     @property
+    def id(self) -> str:
+        return self.object_aliases['antares']
+
+    @property
     def object_type_name(self) -> str:
-        return 'UNKNOWN'
+        return 'Unknown'
 
     @property
     def object_ra(self) -> float:
@@ -75,8 +104,8 @@ class AntaresAlert(AlertInterface):
         return float(self.data['dec'])
 
     @property
-    def object_redshift(self) -> float:
-        return 99.99  # FIXME: not available?
+    def object_redshift(self) -> Optional[float]:
+        return None  # FIXME: not available?
 
     # ztf_fid property map
     obs_types: dict = {
@@ -85,44 +114,27 @@ class AntaresAlert(AlertInterface):
     }
 
     @property
-    @lru_cache(maxsize=None)
-    def newest_alert_id(self) -> str:
-        return self.data['properties']['newest_alert_id']
-
-    @property
-    @lru_cache(maxsize=None)
-    def newest_alert(self) -> dict:
-        # FIXME: this implementation reflects the old dictionary structure,
-        #        we can have this just pull the first item from the list instead
-        for alert_data in self.data['alert_history']:
-            if alert_data['alert_id'] == self.newest_alert_id:
-                return alert_data
-        else:
-            raise KeyError(f'{self.newest_alert_id} not found in alert history')
-
-    @property
-    @lru_cache(maxsize=None)
     def ztf_fid(self) -> int:
-        return int(self.newest_alert['properties']['ztf_fid'])
+        return int(self.data['new_alert']['properties']['ztf_fid'])
 
     @property
     def observation_type_name(self) -> str:
         try:
             return self.obs_types[self.ztf_fid]
         except KeyError as error:
-            raise ObservationTypeNotFound(f'{error} not in AntaresAlert.obs_types') from error
+            raise KeyError(f'Missing \'{error}\' in AntaresAlert.obs_types') from error
 
     @property
     def observation_value(self) -> float:
-        return float(self.newest_alert['properties']['ztf_magpsf'])
+        return float(self.data['new_alert']['properties']['ztf_magpsf'])
 
     @property
     def observation_error(self) -> float:
-        return float(self.newest_alert['properties']['ztf_sigmapsf'])
+        return float(self.data['new_alert']['properties']['ztf_sigmapsf'])
 
     @property
     def observation_time(self) -> datetime:
-        mjd = self.data['properties']['newest_alert_observation_time']
+        mjd = self.data['new_alert']['mjd']
         return Time(mjd, format='mjd', scale='utc').datetime
 
 
@@ -152,5 +164,10 @@ class AntaresClient(ClientInterface):
         Rejects all "ztf_distpsnr1 > 2 & ztf_ssdistnr = -999.0".
         Approximates possible SN candidates.
         """
-        properties = alert['new_alert']['properties']
-        return properties['ztf_distpsnr1'] > 2 and properties['ztf_ssdistnr'] == -999.0
+        try:
+            properties = alert['new_alert']['properties']
+            return properties['ztf_distpsnr1'] > 2 and properties['ztf_ssdistnr'] == -999.0
+        except KeyError:
+            log.warning(f'Missing necessary data for filter=not_extragalactic_sso')
+            return False
+

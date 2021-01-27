@@ -10,48 +10,38 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Subscribe to remote data brokers and stream alerts."""
+"""Subscribe to remote data broker."""
+
 
 # type annotations
 from __future__ import annotations
-from typing import Optional
+from typing import Dict, Type, Callable
 
 # standard libs
 import os
+import logging
 import functools
 
 # internal libs
-from .... import database
-from ....core.config import config
-from ....core.exceptions import log_and_exit
-from ....core.logging import Logger, cli_setup
-from ....broker.antares import AntaresClient
-from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
+from ....core.config import config, ConfigurationError
+from ....core.exceptions import log_exception
+from ....data.broker.alert import AlertInterface
+from ....data.broker.client import ClientInterface
+from ....data.broker.antares import AntaresClient
 
 # external libs
 from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface
+from cmdkit.cli import Interface, ArgumentError
 
 
-# program name is constructed from module file name
-PROGRAM = f'{__appname__} service stream'
+PROGRAM = f'refitt service stream'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <broker> <topic> [--output-directory DIR] [--filter NAME]
-       {PADDING} [--key KEY] [--token TOKEN] [--profile NAME] [--local-only]
-       {PADDING} [--debug | --verbose] [--syslog]
-       {PADDING} [--help]
+usage: {PROGRAM} <broker> <topic> [--filter NAME] [--backfill] ...
+       {PADDING} [--local-only [--output-directory DIR] | --database-only]
 
 {__doc__}\
-"""
-
-EPILOG = f"""\
-Documentation and issue tracking at:
-{__website__}
-
-Copyright {__copyright__}
-{__developer__} {__contact__}.\
 """
 
 HELP = f"""\
@@ -63,34 +53,31 @@ arguments:
 
 options:
 --key                   STR    API key for broker.
---token                 STR    API token for broker.
-    --profile           NAME   Name of database profile (e.g., "test").
+--secret                STR    API secret for broker.
 -o, --output-directory  DIR    Path to directory for alert files (default $CWD).
     --local-only               Do not write alerts to the database.
+    --database-only            Do not write alerts to local files.
+    --backfill                 Enable backfill for alert stream.
 -f, --filter            NAME   Name of filter to reject alerts.
--d, --debug                    Show debugging messages.
--v, --verbose                  Show information messages.
-    --syslog                   Use syslog style messages.
--h, --help                     Show this message and exit.
-
-{EPILOG}
+-h, --help                     Show this message and exit.\
 """
 
-# initialize module level logger
-log = Logger(__name__)
 
-# available streams
-client = {
+# application logger
+log = logging.getLogger('refitt')
+
+
+# available broker clients
+broker_map: Dict[str, Type[ClientInterface]] = {
     'antares': AntaresClient,
 }
 
 
-class Stream(Application):
+class StreamApp(Application):
     """Subscribe to remote data brokers and stream alerts."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
-    # input file containing list of candidates/alerts
     broker: str = None
     interface.add_argument('broker')
 
@@ -100,11 +87,8 @@ class Stream(Application):
     key: str = None
     interface.add_argument('--key', default=key)
 
-    token: str = None
-    interface.add_argument('--token', default=token)
-
-    profile: Optional[str] = None
-    interface.add_argument('--profile', default=profile)
+    secret: str = None
+    interface.add_argument('--secret', default=secret)
 
     filter_name: str = 'none'
     interface.add_argument('--filter', dest='filter_name', default=filter_name)
@@ -113,80 +97,84 @@ class Stream(Application):
     interface.add_argument('-o', '--output-directory', default=output_directory)
 
     local_only: bool = False
-    interface.add_argument('--local-only', action='store_true')
+    database_only: bool = False
+    output_interface = interface.add_mutually_exclusive_group()
+    output_interface.add_argument('--local-only', action='store_true')
+    output_interface.add_argument('--database-only', action='store_true')
 
-    debug: bool = False
-    verbose: bool = False
-    logging_interface = interface.add_mutually_exclusive_group()
-    logging_interface.add_argument('-d', '--debug', action='store_true')
-    logging_interface.add_argument('-v', '--verbose', action='store_true')
-
-    syslog: bool = False
-    interface.add_argument('--syslog', action='store_true')
+    enable_backfill: bool = False
+    interface.add_argument('--backfill', action='store_true', dest='enable_backfill')
 
     exceptions = {
-        RuntimeError: functools.partial(log_and_exit, logger=log.critical,
+        RuntimeError: functools.partial(log_exception, logger=log.critical,
                                         status=exit_status.runtime_error),
+        ConfigurationError: functools.partial(log_exception, logger=log.critical,
+                                              status=exit_status.bad_config),
     }
 
     def run(self) -> None:
-        """Run Refitt pipeline."""
-
-        if self.broker not in client:
-            log.critical(f'"{self.broker}" is not an available broker.')
-            return
-
-        if self.key is None:
-            try:
-                self.key = config['stream'][self.broker]['key']
-                log.debug('loaded api key from configuration file')
-            except KeyError:
-                log.critical(f'No `--key` given and "stream.{self.broker}.key" not found in config.')
-                return
-
-        if self.token is None:
-            try:
-                self.token = config['stream'][self.broker]['token']
-                log.debug('loaded api token from configuration file')
-            except KeyError:
-                log.critical(f'No `--token` given and "stream.{self.broker}.token" not found in config.')
-                return
-
-        Client = client[self.broker]
-        filter_name = f'filter_{self.filter_name}'
-        if not hasattr(Client, filter_name):
-            log.critical(f'Local filter "{self.filter_name}" does not exist for {self.broker}.')
-            return
-
-        local_filter = getattr(Client, filter_name)
-
-        log.info(f'connecting to {self.broker}')
-        with Client(self.topic, (self.key, self.token)) as stream:
-            log.info(f'initiating stream (broker={self.broker} topic={self.topic} filter={self.filter_name})')
+        """Connect to broker and stream alerts."""
+        key = self.get_credential('key')
+        secret = self.get_credential('secret')
+        client = self.get_client()
+        filter_alert = self.get_filter(client)
+        log.info(f'Connecting to {self.broker} (topic={self.topic}, filter={self.filter_name})')
+        with client(self.topic, (key, secret)) as stream:
             for alert in stream:
-                log.info(f'received {self.broker}:{alert.object_name}')
-                if local_filter(alert) is False:
-                    log.info(f'{self.broker}:{alert.object_name} rejected by {filter_name}')
-                else:
-                    log.info(f'{self.broker}:{alert.object_name} accepted by {filter_name}')
-                    filepath = os.path.join(self.output_directory, f'{alert.object_name}.json')
-                    alert.to_file(filepath)
-                    log.info(f'{self.broker}:{alert.object_name} written to {filepath}')
-                    if not self.local_only:
-                        try:
-                            obs_id, alert_id = alert.to_database()
-                            log.info(f'{self.broker}:{alert.object_name} written to database: alert_id={alert_id}')
-                        except Exception as error:
-                            log.error(f'{self.broker}:{alert.object_name} database error')
-                            log.error(error)
+                self.process_alert(alert, filter_alert)
 
-    def __enter__(self) -> Stream:
-        """Initialize resources."""
-        cli_setup(self)
-        database.connect(profile=self.profile)
-        os.makedirs(self.output_directory, exist_ok=True)
-        return self
+    def get_credential(self, name: str) -> str:
+        """Fetch from command-line argument or configuration file."""
+        cred = getattr(self, name)
+        if cred is not None:
+            return cred
+        try:
+            cred = getattr(config['broker'][self.broker], name)  # NOTE: getattr for auto expansion
+            log.debug(f'Loaded {self.broker} {name} from configuration')
+            return cred
+        except (KeyError, AttributeError) as error:
+            raise ConfigurationError(f'Option --{name} not given and \'broker.{self.broker}.{name}\' '
+                                     'not found in configuration') from error
 
-    def __exit__(self, *exc) -> None:
-        """Release resources."""
-        database.disconnect()
+    def get_client(self) -> Type[ClientInterface]:
+        """Check for client interface based on name."""
+        try:
+            return broker_map[self.broker]
+        except KeyError as error:
+            raise ArgumentError(f'No broker with name \'{self.broker}\'') from error
+
+    def get_filter(self, client: Type[ClientInterface]) -> Callable[[AlertInterface], bool]:
+        """Return bound method of `client` for requested local filter by name."""
+        try:
+            return getattr(client, f'filter_{self.filter_name}')
+        except AttributeError as error:
+            raise RuntimeError(f'Local filter \'{self.filter_name}\' not implemented for {self.broker}') from error
+
+    def process_alert(self, alert: AlertInterface, filter_alert: Callable[[AlertInterface], bool]) -> None:
+        """Process incoming `alert`, optionally persist to disk and/or database."""
+        name = f'{self.broker}::{alert.id})'
+        log.info(f'Received ({name})')
+        if filter_alert(alert) is False:
+            log.info(f'Rejected by filter \'{self.filter_name}\' ({name})')
+        else:
+            log.info(f'Accepted by filter \'{self.filter_name}\' ({name})')
+            self.persist(alert)
+
+    def persist(self, alert: AlertInterface) -> None:
+        """Save `alert` to file and/or database."""
+        if not self.database_only:
+            self.persist_to_disk(alert)
+        if not self.local_only:
+            self.persist_to_database(alert)
+
+    def persist_to_disk(self, alert: AlertInterface) -> None:
+        """Save `alert` to local file."""
+        filepath = os.path.join(self.output_directory, f'{alert.id}.json')
+        alert.to_local(filepath)
+        log.info(f'Written to file ({filepath})')
+
+    def persist_to_database(self, alert: AlertInterface) -> None:
+        """Save `alert` to database (backfill if requested)."""
+        alert.to_database()
+        if self.enable_backfill:
+            alert.backfill_database()
