@@ -14,7 +14,7 @@
 
 
 # internal libs
-from ....database.model import Client, Session, User, NotFound
+from ....database.model import Client, Session
 from ..app import application
 from ..response import endpoint
 from ..auth import authenticate, authenticated, authorization
