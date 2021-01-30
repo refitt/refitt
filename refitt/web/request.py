@@ -157,6 +157,11 @@ def authenticated(func: Callable) -> Callable:
     return method
 
 
+def format_request(endpoint: str) -> str:
+    """Build URL for request."""
+    return __join_site(endpoint.lstrip('/'))
+
+
 @authenticated
 def request(action: str, endpoint: str, **kwargs) -> Dict[str, Any]:
     """
