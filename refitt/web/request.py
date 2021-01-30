@@ -29,6 +29,7 @@ from typing import Tuple, Dict, Any, Callable, Optional, Type, TypeVar
 # standard libs
 import re
 from urllib.request import urljoin  # noqa: missing stub for urllib
+from contextlib import contextmanager
 import logging
 import functools
 import webbrowser
@@ -186,3 +187,15 @@ get = functools.partial(request, 'get')
 put = functools.partial(request, 'put')
 post = functools.partial(request, 'post')
 delete = functools.partial(request, 'delete')
+
+
+@contextmanager
+def context(token: Token) -> None:
+    """Temporarily set `request.TOKEN` in context manager."""
+    global TOKEN
+    old_token = TOKEN
+    try:
+        TOKEN = token
+        yield
+    finally:
+        TOKEN = old_token
