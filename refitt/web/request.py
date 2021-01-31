@@ -195,12 +195,24 @@ delete = functools.partial(request, 'delete')
 
 
 @contextmanager
-def context(token: Token) -> None:
+def use_auth(key: str, secret: str) -> None:
+    """Temporarily set `request.KEY` and `request.SECRET` in context manager."""
+    global KEY, SECRET
+    old_key, old_secret = KEY, SECRET
+    try:
+        KEY, SECRET = Key(key), Secret(secret)
+        yield
+    finally:
+        KEY, SECRET = old_key, old_secret
+
+
+@contextmanager
+def use_token(token: str) -> None:
     """Temporarily set `request.TOKEN` in context manager."""
     global TOKEN
     old_token = TOKEN
     try:
-        TOKEN = token
+        TOKEN = Token(token)
         yield
     finally:
         TOKEN = old_token
