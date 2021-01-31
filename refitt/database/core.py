@@ -109,6 +109,7 @@ class URL(dict):
 # mapping translates from name to library/package name (actual)
 backends = {
     'sqlite': 'sqlite',
+    'postgres': 'postgresql',
     'postgresql': 'postgresql',
     'timescaledb': 'postgresql',
 }
