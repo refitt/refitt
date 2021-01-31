@@ -10,4 +10,24 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Web API integration tests."""
+"""Integration tests for API."""
+
+
+# standard libs
+from contextlib import contextmanager
+
+# internal libs
+from refitt.web.token import Secret
+from refitt.database.model import Client
+
+
+@contextmanager
+def temp_secret(client_id: int) -> Secret:
+    """Generate a new secret for testing, but re-insert old secret hash."""
+    old = Client.from_id(client_id)
+    old_secret, user_id = old.secret, old.user_id
+    try:
+        key, secret = Client.new_secret(user_id)
+        yield secret
+    finally:
+        Client.update(client_id, secret=old_secret)
