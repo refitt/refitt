@@ -27,7 +27,7 @@ from tests.integration.test_web.test_api.test_endpoint import LoginEndpoint, End
 import requests
 
 
-TOKEN_PATTERN: re.Pattern = re.compile(r'[a-zA-Z0-9_=]+')
+TOKEN_PATTERN: re.Pattern = re.compile(r'^[a-zA-Z0-9_=-]+$')
 
 
 class TestToken(LoginEndpoint):
