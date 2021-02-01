@@ -123,13 +123,14 @@ def endpoint(content_type: str) -> Callable[..., EndpointDecorator]:
             try:
                 response['Response'] = route(*args, **kwargs)
             except Exception as error:
-                if type(error) in RESPONSE_MAP:
-                    response['Status'] = 'Error'
-                    response['Message'] = str(error)
-                    status = RESPONSE_MAP[type(error)]
+                response['Message'] = str(error)
+                for exc_type, status_code in RESPONSE_MAP.items():
+                    if isinstance(error, exc_type):
+                        status = status_code
+                        response['Status'] = 'Error'
+                        break
                 else:
                     response['Status'] = 'Critical'
-                    response['Message'] = str(error)
                     status = STATUS['Internal Server Error']
             finally:
                 log.info(f'{request.method} {request.path} {status}')
@@ -146,9 +147,11 @@ def endpoint(content_type: str) -> Callable[..., EndpointDecorator]:
                     response.headers[key] = value
             except Exception as error:
                 response = dict()
-                if type(error) in RESPONSE_MAP:
-                    status = RESPONSE_MAP[type(error)]
-                    response['Status'] = 'Error'
+                for exc_type, status_code in RESPONSE_MAP.items():
+                    if isinstance(error, exc_type):
+                        status = status_code
+                        response['Status'] = 'Error'
+                        break
                 else:
                     status = STATUS['Internal Server Error']
                     response['Status'] = 'Critical'
