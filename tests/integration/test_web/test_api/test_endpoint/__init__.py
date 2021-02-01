@@ -52,8 +52,8 @@ class EndpointBase(ABC):
     def create_token(client_id: int) -> str:
         return JWT(sub=client_id, exp=timedelta(minutes=15)).encrypt()
 
-    @lru_cache(maxsize=None)
-    def get_client(self, user_alias: str) -> Client:
+    @staticmethod
+    def get_client(user_alias: str) -> Client:
         return Client.from_user(User.from_alias(user_alias).id)
 
     methods: Dict[str, Callable[..., requests.Response]] = {
