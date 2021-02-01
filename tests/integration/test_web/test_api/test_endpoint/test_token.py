@@ -15,68 +15,63 @@
 
 # standard libs
 import re
-from contextlib import contextmanager
+from functools import cached_property
 
 # internal libs
-from refitt.web import request
-from refitt.web.token import JWT
+from refitt.web.request import format_request
 from refitt.web.api.response import RESPONSE_MAP, PermissionDenied
-from refitt.database.model import Client, Session, User
-from tests.integration.test_web.test_api import temp_secret
+from tests.integration.test_web.test_api import temp_secret, restore_session
+from tests.integration.test_web.test_api.test_endpoint import LoginEndpoint, Endpoint
 
 # external libs
 import requests
 
 
-@contextmanager
-def restore_session(client_id: int) -> None:
-    """Force restore token for session for given client."""
-    client = Client.from_id(client_id)
-    session = Session.from_client(client.id)
-    try:
-        yield
-    finally:
-        Session.update(session.id, token=session.token,
-                       expires=session.expires, created=session.created)
-
-
 TOKEN_PATTERN: re.Pattern = re.compile(r'[a-zA-Z0-9_=]+')
 
 
-class TestTokenEndpoint:
+class TestToken(LoginEndpoint):
     """Integration tests for /token endpoints."""
 
+    route: str = '/token'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
     def test_get_token(self) -> None:
-        user = User.from_alias('tomb_raider')
-        client = Client.from_user(user.id)
-        with temp_secret(client.id) as secret:
-            with restore_session(client.id):
-                url = request.format_request('/token')
-                response = requests.get(url, auth=(client.key, secret.value))
+        client = self.get_client(self.user)
+        with restore_session(client.id):
+            with temp_secret(client.id) as secret:
+                response = requests.get(format_request(self.route), auth=(client.key, secret.value))
                 assert response.status_code == 200
                 content = response.json()
                 assert content['Status'] == 'Success'
                 assert TOKEN_PATTERN.match(content['Response']['token'])
 
-    def test_get_token_by_admin(self) -> None:
-        admin = Client.from_user(User.from_alias('superman').id)
-        token = JWT(sub=admin.id, exp=None).encrypt()
-        client = Client.from_user(User.from_alias('tomb_raider').id)
-        with restore_session(client.id):
-            url = request.format_request(f'/token/{client.user_id}')
-            response = requests.get(url, headers={'Authorization': f'Bearer {token}'})
-            assert response.status_code == 200
-            content = response.json()
-            assert content['Status'] == 'Success'
-            assert TOKEN_PATTERN.match(content['Response']['token'])
 
-    def test_get_token_by_admin_permission_denied(self) -> None:
-        client = Client.from_user(User.from_alias('tomb_raider').id)
-        token = JWT(sub=client.id, exp=None).encrypt()
-        url = request.format_request(f'/token/{client.user_id}')
-        response = requests.get(url, headers={'Authorization': f'Bearer {token}'})
-        assert response.status_code == RESPONSE_MAP[PermissionDenied]
-        content = response.json()
-        assert content['Status'] == 'Error'
-        assert content['Message'] == 'Authorization level insufficient'
+class TestTokenAdmin(Endpoint):
+    """Integration tests for /token/<user_id> endpoints."""
+
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    @cached_property
+    def route(self) -> str:
+        user_id = self.get_client(self.user).user_id
+        return f'/token/{user_id}'
+
+    def test_get_token(self) -> None:
+        admin = self.get_client(self.admin)
+        client = self.get_client(self.user)
+        with restore_session(client.id):
+            status, payload = self.get(self.route, client_id=admin.id)
+            assert status == 200
+            assert payload['Status'] == 'Success'
+            assert TOKEN_PATTERN.match(payload['Response']['token'])
+
+    def test_permission_denied(self) -> None:
+        client = self.get_client(self.user)
+        status, payload = self.get(self.route, client_id=client.id)
+        assert status == RESPONSE_MAP[PermissionDenied]
+        assert payload['Status'] == 'Error'
+        assert payload['Message'] == 'Authorization level insufficient'
 
