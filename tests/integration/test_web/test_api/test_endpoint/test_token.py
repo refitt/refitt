@@ -70,8 +70,10 @@ class TestTokenAdmin(Endpoint):
 
     def test_permission_denied(self) -> None:
         client = self.get_client(self.user)
-        status, payload = self.get(self.route, client_id=client.id)
-        assert status == RESPONSE_MAP[PermissionDenied]
-        assert payload['Status'] == 'Error'
-        assert payload['Message'] == 'Authorization level insufficient'
+        assert self.get(self.route, client_id=client.id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'Authorization level insufficient'
+            }
+        )
 
