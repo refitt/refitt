@@ -60,18 +60,18 @@ def temp_expired_token(client_id: int) -> str:
 def restore_session(client_id: int) -> None:
     """Force restore token for session for given client."""
     client = Client.from_id(client_id)
-    session = Session.from_client(client.id)
+    session = Session.from_client(client.id).to_dict()
     try:
         yield
     finally:
-        Session.update(session.id, token=session.token, expires=session.expires, created=session.created)
+        Session.update(session['id'], token=session['token'], expires=session['expires'], created=session['created'])
 
 
 @contextmanager
 def restore_client(client_id: int) -> None:
     """Force restore token for session for given client."""
-    client = Client.from_id(client_id)
+    client = Client.from_id(client_id).to_dict()
     try:
         yield
     finally:
-        Client.update(client.id, key=client.key, secret=client.secret, created=client.created)
+        Client.update(client['id'], key=client['key'], secret=client['secret'], created=client['created'])
