@@ -65,3 +65,30 @@ def get_token_for_user(admin: Client, user_id: int) -> dict:  # noqa: client not
     except Client.NotFound:
         Client.new(user_id)
         return {'token': Session.new(user_id).encrypt()}
+
+
+info['Endpoints']['/token/<user_id>']['GET'] = {
+    'Description': 'Request new token on behalf of user',
+    'Permissions': 'Admin (level 0)',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'user_id': {
+                'Description': 'Unique ID for user',
+                'Type': 'Integer',
+            }
+        }
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'New token',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access level insufficient, revoked, or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'User does not exist'},
+    }
+}
