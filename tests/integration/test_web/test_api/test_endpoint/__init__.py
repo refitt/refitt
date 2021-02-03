@@ -19,7 +19,6 @@ from typing import Tuple, Dict, Callable
 # standard libs
 from abc import ABC, abstractproperty
 from datetime import timedelta
-from functools import lru_cache
 
 # internal libs
 from refitt.web.request import format_request
@@ -56,6 +55,7 @@ class EndpointBase(ABC):
     def get_client(user_alias: str) -> Client:
         return Client.from_user(User.from_alias(user_alias).id)
 
+    method: str = 'get'
     methods: Dict[str, Callable[..., requests.Response]] = {
         'get': requests.get,
         'put': requests.put,
@@ -63,23 +63,24 @@ class EndpointBase(ABC):
         'delete': requests.delete,
     }
 
-    def make_request(self, method: str, route: str, client_id: int, data: dict = None, **params) -> Tuple[int, dict]:
+    def make_request(self, method: str, route: str, client_id: int, data: bytes = None,
+                     json: dict = None, **params) -> Tuple[int, dict]:
         token = self.create_token(client_id)
-        response = self.methods[method](format_request(route), params=params, json=data,
+        response = self.methods[method](format_request(route), params=params, data=data, json=json,
                                         headers={'Authorization': f'Bearer {token}'})
         return response.status_code, response.json()
 
-    def get(self, route: str, client_id: int, data: dict = None, **params) -> Tuple[int, dict]:
-        return self.make_request('get', route, client_id, data=data, params=params)
+    def get(self, route: str, client_id: int, data: bytes = None, json: dict = None, **params) -> Tuple[int, dict]:
+        return self.make_request('get', route, client_id, data=data, json=json, **params)
 
-    def put(self, route: str, client_id: int, data: dict = None, **params) -> Tuple[int, dict]:
-        return self.make_request('put', route, client_id, data=data, params=params)
+    def put(self, route: str, client_id: int, data: bytes = None, json: dict = None, **params) -> Tuple[int, dict]:
+        return self.make_request('put', route, client_id, data=data, json=json, **params)
 
-    def post(self, route: str, client_id: int, data: dict = None, **params) -> Tuple[int, dict]:
-        return self.make_request('post', route, client_id, data=data, params=params)
+    def post(self, route: str, client_id: int, data: bytes = None, json: dict = None, **params) -> Tuple[int, dict]:
+        return self.make_request('post', route, client_id, data=data, json=json, **params)
 
-    def delete(self, route: str, client_id: int, data: dict = None, **params) -> Tuple[int, dict]:
-        return self.make_request('delete', route, client_id, data=data, params=params)
+    def delete(self, route: str, client_id: int, data: bytes = None, json: dict = None, **params) -> Tuple[int, dict]:
+        return self.make_request('delete', route, client_id, data=data, json=json, **params)
 
 
 class LoginEndpoint(EndpointBase, ABC):
@@ -126,13 +127,14 @@ class Endpoint(EndpointBase, ABC):
     """Automatically test authentication and authorization."""
 
     def test_token_missing(self) -> None:
-        response = requests.get(format_request(self.route))
+        response = self.methods[self.method](format_request(self.route))
         assert response.status_code == RESPONSE_MAP[TokenNotFound]
         assert response.json() == {'Status': 'Error',
                                    'Message': 'Expected "Authorization: Bearer <token>" in header'}
 
     def test_token_invalid(self) -> None:
-        response = requests.get(format_request(self.route), headers={'Authorization': 'Bearer bad-token'})
+        response = self.methods[self.method](format_request(self.route),
+                                             headers={'Authorization': 'Bearer bad-token'})
         content = response.json()
         assert response.status_code == RESPONSE_MAP[TokenInvalid]
         assert content['Status'] == 'Error'
@@ -141,7 +143,8 @@ class Endpoint(EndpointBase, ABC):
     def test_token_expired(self) -> None:
         client = self.get_client('tomb_raider')
         token = JWT(sub=client.id, exp=timedelta(minutes=-15)).encrypt()
-        response = requests.get(url = format_request(self.route), headers={'Authorization': f'Bearer {token}'})
+        response = self.methods[self.method](format_request(self.route),
+                                             headers={'Authorization': f'Bearer {token}'})
         content = response.json()
         assert response.status_code == RESPONSE_MAP[TokenExpired]
         assert content['Status'] == 'Error'
@@ -150,7 +153,7 @@ class Endpoint(EndpointBase, ABC):
     def test_access_revoked(self) -> None:
         client = self.get_client(self.user)
         with temp_revoke_access(client.id):
-            status, payload = self.get(self.route, client_id=client.id)
+            status, payload = self.make_request(self.method, self.route, client_id=client.id)
             assert status == RESPONSE_MAP[PermissionDenied]
             assert payload == {'Status': 'Error',
                                'Message': 'Access has been revoked'}
