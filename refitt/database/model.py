@@ -287,29 +287,27 @@ class User(Base, CoreMixin):
         session = session or _Session()
         return session.query(Facility).join(FacilityMap).filter(FacilityMap.user_id == self.id).all()
 
-    def add_facility(self, facility_id: int) -> None:
-        """Associate `facility` with this user."""
-        session = _Session()
+    def add_facility(self, facility_id: int, session: _Session = None) -> None:
+        """Associate `facility_id` with this user."""
+        session = session or _Session()
+        facility = Facility.from_id(facility_id, session)  # checks for Facility.NotFound
         try:
-            facility = Facility.from_id(facility_id, session)
-        except NoResultFound as error:
-            raise Facility.NotFound(f'No facility with id={facility_id}') from error
-        session.add(FacilityMap(user_id=self.id, facility_id=facility.id))
-        session.commit()
-        log.info(f'Associated facility ({facility.id}) with user ({self.id})')
+            session.query(FacilityMap).filter(FacilityMap.user_id == self.id,
+                                              FacilityMap.facility_id == facility_id).one()
+        except NoResultFound:
+            session.add(FacilityMap(user_id=self.id, facility_id=facility.id))
+            session.commit()
+            log.info(f'Associated facility ({facility.id}) with user ({self.id})')
 
     def delete_facility(self, facility_id: int) -> None:
         """Dissociate facility with this user."""
         session = _Session()
-        try:
-            facility = Facility.from_id(facility_id, session)
-        except NoResultFound as error:
-            raise Facility.NotFound(f'No facility with id={facility_id}') from error
+        facility = Facility.from_id(facility_id, session)  # checks for Facility.NotFound
         for mapping in session.query(FacilityMap).filter(FacilityMap.user_id == self.id,
                                                          FacilityMap.facility_id == facility.id):
             session.delete(mapping)
-        session.commit()
-        log.info(f'Dissociated facility ({facility.id}) from user ({self.id})')
+            session.commit()
+            log.info(f'Dissociated facility ({facility.id}) from user ({self.id})')
 
     @classmethod
     def delete(cls, user_id: int, session: _Session = None) -> None:
@@ -377,26 +375,24 @@ class Facility(Base, CoreMixin):
     def add_user(self, user_id: int) -> None:
         """Associate user with this facility."""
         session = _Session()
+        user = User.from_id(user_id, session)  # checks for User.NotFound
         try:
-            user = User.from_id(user_id, session)
-        except NoResultFound as error:
-            raise User.NotFound(f'No user with id={user_id}') from error
-        session.add(FacilityMap(user_id=user.id, facility_id=self.id))
-        session.commit()
-        log.info(f'Associated facility ({self.id}) with user ({user.id})')
+            session.query(FacilityMap).filter(FacilityMap.user_id == user_id,
+                                              FacilityMap.facility_id == self.id).one()
+        except NoResultFound:
+            session.add(FacilityMap(user_id=user.id, facility_id=self.id))
+            session.commit()
+            log.info(f'Associated facility ({self.id}) with user ({user.id})')
 
     def delete_user(self, user_id: int) -> None:
         """Dissociate `user` with this facility."""
         session = _Session()
-        try:
-            user = User.from_id(user_id, session)
-        except NoResultFound as error:
-            raise User.NotFound(f'No user with id={user_id}') from error
+        user = User.from_id(user_id, session)  # checks for User.NotFound
         for mapping in session.query(FacilityMap).filter(FacilityMap.user_id == user.id,
                                                          FacilityMap.facility_id == self.id):
             session.delete(mapping)
-        session.commit()
-        log.info(f'Dissociated facility ({self.id}) from user ({user.id})')
+            session.commit()
+            log.info(f'Dissociated facility ({self.id}) from user ({user.id})')
 
     @classmethod
     def delete(cls, facility_id: int, session: _Session = None) -> None:
