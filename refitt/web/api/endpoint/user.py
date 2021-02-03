@@ -61,7 +61,7 @@ def add_user(admin: Client) -> dict:  # noqa: unused client
     try:
         user_id = profile.pop('id', None)
         if not user_id:
-            user_id = User.add(profile)
+            user_id = User.add(profile).id
         else:
             User.update(user_id, **profile)
     except IntegrityError as error:
@@ -362,7 +362,7 @@ info['Endpoints']['/user/<user_id>/facility/<facility_id>']['PUT'] = {
 @authenticated
 @authorization(level=0)
 def delete_user_facility_association(admin: Client, user_id: int, facility_id: int) -> dict:  # noqa: unused client
-    """Query for facilities related to the given user."""
+    """Dissociate the user with the given facility."""
     User.from_id(user_id).delete_facility(facility_id)
     return {}
 
