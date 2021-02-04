@@ -71,7 +71,7 @@ info['Endpoints']['/user']['POST'] = {
         200: {
             'Description': 'Success',
             'Payload': {
-                'Description': 'New user profile including ID',
+                'Description': 'New user ID',
                 'Type': 'application/json'
             },
         },
@@ -88,8 +88,8 @@ info['Endpoints']['/user']['POST'] = {
 @authorization(level=0)
 def get_user(admin: Client, id_or_alias: Union[int, str]) -> dict:  # noqa: unused client
     """Query for existing user profile."""
+    disallow_parameters(request)
     try:
-        disallow_parameters(request)
         user_id = int(id_or_alias)
         return {'user': User.from_id(user_id).to_json()}
     except ValueError:
