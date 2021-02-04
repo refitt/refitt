@@ -223,7 +223,7 @@ class TestAlterUser(Endpoint):
 
 
 class TestDeleteUser(Endpoint):
-    """Tests for POST /user endpoint."""
+    """Tests for DELETE /user endpoint."""
 
     route: str = '/user/0'  # NOTE: user_id not important because Endpoint tests don't get to it
     method: str = 'delete'
@@ -485,7 +485,7 @@ class TestAddUserFacility(Endpoint):
 
 
 class TestRemoveUserFacility(Endpoint):
-    """Tests for PUT /user/<id>/facility/<id> endpoints."""
+    """Tests for DELETE /user/<id>/facility/<id> endpoints."""
 
     method: str = 'delete'
     admin: str = 'superman'
@@ -498,7 +498,7 @@ class TestRemoveUserFacility(Endpoint):
 
     def test_permission_denied(self) -> None:
         client = self.get_client(self.user)
-        assert self.put(self.route, client_id=client.id) == (
+        assert self.delete(self.route, client_id=client.id) == (
             RESPONSE_MAP[PermissionDenied], {
                 'Status': 'Error',
                 'Message': 'Authorization level insufficient',
