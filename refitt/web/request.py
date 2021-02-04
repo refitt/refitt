@@ -28,12 +28,11 @@ from typing import Tuple, Dict, Any, Callable, Optional, Type, TypeVar
 
 # standard libs
 import re
-from urllib.request import urljoin  # noqa: missing stub for urllib
 from contextlib import contextmanager
 import logging
 import functools
 import webbrowser
-
+from urllib.request import urljoin  # noqa: missing stub for urllib
 
 # external libs
 import requests as __requests
@@ -148,7 +147,7 @@ def authenticated(func: Callable) -> Callable:
             return func(*args, **kwargs)
         except APIError as error:
             status, message = error.args
-            if status == STATUS['Unauthorized'] and message == 'Token expired':
+            if status == STATUS['Forbidden'] and message == 'Token expired':
                 refresh_token(force=True)
                 return func(*args, **kwargs)
             else:
