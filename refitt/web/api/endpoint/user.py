@@ -16,18 +16,15 @@
 # type annotations
 from typing import Union
 
-# standard libs
-import json
+# external libs
+from flask import request
 
 # internal libs
-from ....core import typing
 from ....database.model import Client, User, IntegrityError, NotFound
 from ..app import application
 from ..auth import authenticated, authorization
-from ..response import endpoint, PayloadNotFound, PayloadMalformed, PayloadInvalid, ConstraintViolation
-
-# external libs
-from flask import request
+from ..response import endpoint, ConstraintViolation
+from ..tools import require_data, collect_parameters, disallow_parameters
 
 
 info: dict = {
@@ -47,17 +44,8 @@ info: dict = {
 @authorization(level=0)
 def add_user(admin: Client) -> dict:  # noqa: unused client
     """Add new user profile."""
-    payload = request.data
-    if not payload:
-        raise PayloadNotFound('Missing JSON data')
-    try:
-        profile = json.loads(payload.decode())
-    except json.JSONDecodeError as error:
-        raise PayloadMalformed('Invalid JSON data') from error
-    try:
-        User(**profile)
-    except TypeError as error:
-        raise PayloadInvalid('Invalid parameters in JSON data') from error
+    disallow_parameters(request)
+    profile = require_data(request, data_format='json', validate=(lambda data: User(**data)))
     try:
         user_id = profile.pop('id', None)
         if not user_id:
@@ -101,6 +89,7 @@ info['Endpoints']['/user']['POST'] = {
 def get_user(admin: Client, id_or_alias: Union[int, str]) -> dict:  # noqa: unused client
     """Query for existing user profile."""
     try:
+        disallow_parameters(request)
         user_id = int(id_or_alias)
         return {'user': User.from_id(user_id).to_json()}
     except ValueError:
@@ -142,10 +131,7 @@ info['Endpoints']['/user/<user_id>']['GET'] = {
 def update_user(admin: Client, user_id: int) -> dict:  # noqa: unused client
     """Update user profile attributes."""
     try:
-        profile = User.update(user_id, **{
-            field: typing.coerce(value)
-            for field, value in dict(request.args).items()
-        })
+        profile = User.update(user_id, **collect_parameters(request, allow_any=True))
     except IntegrityError as error:
         raise ConstraintViolation(str(error.args[0])) from error
     return {'user': profile.to_json()}
@@ -208,6 +194,7 @@ info['Endpoints']['/user/<user_id>']['PUT'] = {
 @authorization(level=0)
 def delete_user(admin: Client, user_id: int) -> dict:  # noqa: unused client
     """Delete a user profile (assuming no existing relationships)."""
+    disallow_parameters(request)
     try:
         User.delete(user_id)
     except IntegrityError as error:
@@ -242,6 +229,7 @@ info['Endpoints']['/user/<user_id>']['DELETE'] = {
 @authorization(level=0)
 def get_all_user_facilities(admin: Client, user_id: int) -> dict:  # noqa: unused client
     """Query for facilities related to the given user."""
+    disallow_parameters(request)
     return {
         'facility': [
             facility.to_json()
@@ -283,8 +271,8 @@ info['Endpoints']['/user/<user_id>/facility']['GET'] = {
 @authorization(level=0)
 def get_user_facility(admin: Client, user_id: int, facility_id: int) -> dict:  # noqa: unused client
     """Query for a facility related to the given user."""
-    facilities = [facility.to_json() for facility in User.from_id(user_id).facilities()
-                  if facility.id == facility_id]
+    disallow_parameters(request)
+    facilities = [facility.to_json() for facility in User.from_id(user_id).facilities() if facility.id == facility_id]
     if not facilities:
         raise NotFound(f'Facility ({facility_id}) not associated with user ({user_id})')
     else:
@@ -328,6 +316,7 @@ info['Endpoints']['/user/<user_id>/facility/<facility_id>']['GET'] = {
 @authorization(level=0)
 def add_user_facility_association(admin: Client, user_id: int, facility_id: int) -> dict:  # noqa: unused client
     """Associate the user with the given facility."""
+    disallow_parameters(request)
     User.from_id(user_id).add_facility(facility_id)
     return {}
 
@@ -363,6 +352,7 @@ info['Endpoints']['/user/<user_id>/facility/<facility_id>']['PUT'] = {
 @authorization(level=0)
 def delete_user_facility_association(admin: Client, user_id: int, facility_id: int) -> dict:  # noqa: unused client
     """Dissociate the user with the given facility."""
+    disallow_parameters(request)
     User.from_id(user_id).delete_facility(facility_id)
     return {}
 

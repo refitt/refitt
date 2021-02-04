@@ -19,7 +19,7 @@ import pytest
 # internal libs
 from refitt.database.model import User
 from refitt.web.api.response import (STATUS, RESPONSE_MAP, NotFound, ConstraintViolation, PermissionDenied,
-                                     PayloadNotFound, PayloadMalformed, PayloadInvalid)
+                                     PayloadNotFound, PayloadMalformed, PayloadInvalid, ParameterInvalid)
 from tests.integration.test_web.test_api.test_endpoint import Endpoint
 
 
@@ -45,7 +45,7 @@ class TestAddUser(Endpoint):
         assert self.post(self.route, client_id=client.id) == (
             RESPONSE_MAP[PayloadNotFound], {
                 'Status': 'Error',
-                'Message': 'Missing JSON data',
+                'Message': 'Missing data in request',
             }
         )
 
@@ -63,7 +63,7 @@ class TestAddUser(Endpoint):
         assert self.post(self.route, client_id=client.id, json={'foo': 42}) == (
             RESPONSE_MAP[PayloadInvalid], {
                 'Status': 'Error',
-                'Message': 'Invalid parameters in JSON data',
+                'Message': 'Payload content invalid: (\'foo\' is an invalid keyword argument for User)',
             }
         )
 
@@ -103,6 +103,17 @@ class TestAddUser(Endpoint):
         assert payload['Status'] == 'Error'
         assert 'alias' in payload['Message'] and 'tomb_raider' in payload['Message']
         # NOTE: exact message depends on backend database error message formatting
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        data = {'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
+                'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}}
+        assert self.post(self.route, client_id=admin.id, json=data, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
 
 
 class TestGetUser(Endpoint):
@@ -150,6 +161,15 @@ class TestGetUser(Endpoint):
             RESPONSE_MAP[NotFound], {
                 'Status': 'Error',
                 'Message': 'No user with id=10',
+            }
+        )
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
             }
         )
 
@@ -248,6 +268,15 @@ class TestDeleteUser(Endpoint):
             }
         )
 
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.delete('/user/0', client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
 
 class TestGetAllUserFacility(Endpoint):
     """Tests for GET /user/<id>/facility endpoints."""
@@ -287,6 +316,15 @@ class TestGetAllUserFacility(Endpoint):
                 'Response': {
                     'facility': [
                         {
+                            'id': 2,
+                            'name': 'Croft_1m',
+                            'latitude': 51.25,
+                            'longitude': -0.41,
+                            'elevation': 294.0,
+                            'limiting_magnitude': 17.1,
+                            'data': {'telescope_design': 'reflector'},
+                        },
+                        {
                             'id': 3,
                             'name': 'Croft_4m',
                             'latitude': -24.5,
@@ -295,17 +333,17 @@ class TestGetAllUserFacility(Endpoint):
                             'limiting_magnitude': 17.5,
                             'data': {'telescope_design': 'reflector'},
                         },
-                        {
-                            'id': 2,
-                            'name': 'Croft_1m',
-                            'latitude': 51.25,
-                            'longitude': -0.41,
-                            'elevation': 294.0,
-                            'limiting_magnitude': 17.1,
-                            'data': {'telescope_design': 'reflector'},
-                        }
                     ]
                 }
+            }
+        )
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
             }
         )
 
@@ -368,6 +406,15 @@ class TestGetOneUserFacility(Endpoint):
             }
         )
 
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
 
 class TestAddUserFacility(Endpoint):
     """Tests for PUT /user/<id>/facility/<id> endpoints."""
@@ -427,6 +474,15 @@ class TestAddUserFacility(Endpoint):
             }
         )
 
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.put(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
 
 class TestRemoveUserFacility(Endpoint):
     """Tests for PUT /user/<id>/facility/<id> endpoints."""
@@ -466,5 +522,14 @@ class TestRemoveUserFacility(Endpoint):
             RESPONSE_MAP[NotFound], {
                 'Status': 'Error',
                 'Message': 'No facility with id=0',
+            }
+        )
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.delete(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
             }
         )

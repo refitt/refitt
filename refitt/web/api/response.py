@@ -83,6 +83,10 @@ class ConstraintViolation(WebException):
     """The request violated some constraint or integrity within the data model."""
 
 
+class ParameterNotFound(WebException):
+    """The URL parameter was not provided but was required."""
+
+
 class ParameterInvalid(WebException):
     """The URL parameter is not valid for the requested endpoint."""
 
@@ -100,6 +104,7 @@ RESPONSE_MAP: Dict[Type[Exception], int] = {
     PayloadMalformed:         STATUS['Bad Request'],
     PayloadInvalid:           STATUS['Bad Request'],
     ConstraintViolation:      STATUS['Bad Request'],
+    ParameterNotFound:        STATUS['Bad Request'],
     ParameterInvalid:         STATUS['Bad Request'],
     NotImplementedError:      STATUS['Not Implemented'],
     PayloadTooLarge:          STATUS['Payload Too Large'],
