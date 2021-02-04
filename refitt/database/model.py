@@ -285,7 +285,8 @@ class User(Base, CoreMixin):
     def facilities(self, session: _Session = None) -> List[Facility]:
         """Facilities associated with this user (queries `facility_map`)."""
         session = session or _Session()
-        return session.query(Facility).join(FacilityMap).filter(FacilityMap.user_id == self.id).all()
+        return (session.query(Facility).join(FacilityMap).filter(FacilityMap.user_id == self.id)
+                .order_by(FacilityMap.facility_id).all())
 
     def add_facility(self, facility_id: int, session: _Session = None) -> None:
         """Associate `facility_id` with this user."""
@@ -370,7 +371,8 @@ class Facility(Base, CoreMixin):
     def users(self, session: _Session = None) -> List[User]:
         """Users associated with this facility (queries `facility_map`)."""
         session = session or _Session()
-        return session.query(User).join(FacilityMap).filter(FacilityMap.facility_id == self.id).all()
+        return (session.query(User).join(FacilityMap).filter(FacilityMap.facility_id == self.id)
+                .order_by(FacilityMap.user_id).all())
 
     def add_user(self, user_id: int) -> None:
         """Associate user with this facility."""
