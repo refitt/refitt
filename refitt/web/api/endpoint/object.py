@@ -13,15 +13,15 @@
 """Object endpoints."""
 
 
+# external libs
+from flask import request
+
 # internal libs
 from ....database.model import Client, Object, ObjectType
 from ..app import application
 from ..response import endpoint
 from ..auth import authenticated, authorization
 from ..tools import collect_parameters, disallow_parameters
-
-# external libs
-from flask import request
 
 
 info: dict = {
@@ -34,14 +34,14 @@ info: dict = {
 }
 
 
-@application.route('/object/<int:object_id>', methods=['GET'])
+@application.route('/object/<int:id>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_object(client: Client, object_id: int) -> dict:  # noqa: unused client
-    """Query for object data by id or tag name."""
+def get_object(client: Client, id: int) -> dict:  # noqa: unused client
+    """Query for object data by `id`."""
     params = collect_parameters(request, optional=['join'], defaults={'join': False})
-    return {'object': Object.from_id(object_id).to_json(**params)}
+    return {'object': Object.from_id(id).to_json(**params)}
 
 
 info['Endpoints']['/object/<id>']['GET'] = {
@@ -53,6 +53,14 @@ info['Endpoints']['/object/<id>']['GET'] = {
             'id': {
                 'Description': 'Unique ID for object',
                 'Type': 'Integer',
+            }
+        },
+    },
+    'Optional': {
+        'Parameters': {
+            'join': {
+                'Description': 'Return related data',
+                'Type': 'Boolean'
             }
         },
     },

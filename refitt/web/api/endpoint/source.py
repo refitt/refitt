@@ -13,18 +13,15 @@
 """Source endpoints."""
 
 
-# type annotations
-from typing import Union
+# external libs
+from flask import request
 
 # internal libs
 from ....database.model import Client, Source, SourceType
 from ..app import application
-from ..response import endpoint, ParameterInvalid, NotFound, PermissionDenied
+from ..response import endpoint, NotFound, PermissionDenied
 from ..auth import authenticated, authorization
 from ..tools import collect_parameters, disallow_parameters
-
-# external libs
-from flask import request
 
 
 info: dict = {
@@ -39,38 +36,42 @@ info: dict = {
 }
 
 
-def _get_source(id_or_name: str, user_id: int, client_level: int) -> Source:
-    """Query for source."""
-    try:
-        source = Source.from_id(int(id_or_name))
-    except ValueError:
-        source = Source.from_name(id_or_name)
-    if source.user_id and source.user_id != user_id and client_level != 0:
+def _get_source(id: int, client: Client) -> Source:
+    """Query for source by `id`."""
+    source = Source.from_id(id)
+    if source.user_id and source.user_id != client.user_id and client.level > 1:
         raise PermissionDenied(f'Source is not public')
     else:
         return source
 
 
-@application.route('/source/<id_or_name>', methods=['GET'])
+@application.route('/source/<int:id>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_source(client: Client, id_or_name: str) -> dict:  # noqa: unused client
-    """Query for source data."""
+def get_source(client: Client, id: int) -> dict:  # noqa: unused client
+    """Query for source by `id`."""
     params = collect_parameters(request, optional=['join'], defaults={'join': False})
-    source = _get_source(id_or_name, client.user_id, client.level)
-    return {'source': source.to_json(join=params['join'])}
+    return {'source': _get_source(id, client).to_json(join=params['join'])}
 
 
 info['Endpoints']['/source/<id>']['GET'] = {
-    'Description': 'Request source by ID or name',
+    'Description': 'Request source by ID',
     'Permissions': 'Public/Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
             'id': {
-                'Description': 'Unique ID for source (or name)',
+                'Description': 'Unique ID for source',
                 'Type': 'Integer',
+            }
+        },
+    },
+    'Optional': {
+        'Parameters': {
+            'join': {
+                'Description': 'Return related data',
+                'Type': 'Boolean'
             }
         },
     },
@@ -89,15 +90,14 @@ info['Endpoints']['/source/<id>']['GET'] = {
 }
 
 
-@application.route('/source/<id_or_name>/type', methods=['GET'])
+@application.route('/source/<int:id>/type', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_type_of_source(client: Client, id_or_name: str) -> dict:  # noqa: unused client
-    """Get source type for specific source by ID or name."""
+def get_type_of_source(client: Client, id: int) -> dict:  # noqa: unused client
+    """Get source type for specific source by `id`."""
     disallow_parameters(request)
-    source = _get_source(id_or_name, client.user_id, client.level)
-    return {'source_type': source.type.to_json()}
+    return {'source_type': _get_source(id, client).type.to_json()}
 
 
 info['Endpoints']['/source/<id>/type']['GET'] = {
@@ -127,14 +127,14 @@ info['Endpoints']['/source/<id>/type']['GET'] = {
 }
 
 
-@application.route('/source/<id_or_name>/user', methods=['GET'])
+@application.route('/source/<int:id>/user', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_user_of_source(client: Client, id_or_name: str) -> dict:  # noqa: unused client
-    """Get user for specific source by ID or name."""
+def get_user_of_source(client: Client, id: int) -> dict:  # noqa: unused client
+    """Get user for specific source by ID."""
     disallow_parameters(request)
-    source = _get_source(id_or_name, client.user_id, client.level)
+    source = _get_source(id, client)
     if source.user_id is None:
         raise NotFound(f'No user for source ({source.id})')
     else:
@@ -142,13 +142,13 @@ def get_user_of_source(client: Client, id_or_name: str) -> dict:  # noqa: unused
 
 
 info['Endpoints']['/source/<id>/user']['GET'] = {
-    'Description': 'Request user of specified source by ID or name',
+    'Description': 'Request user of specified source by ID',
     'Permissions': 'Public/Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
             'id': {
-                'Description': 'Unique ID for source (or name)',
+                'Description': 'Unique ID for source',
                 'Type': 'Integer',
             }
         },
@@ -168,14 +168,14 @@ info['Endpoints']['/source/<id>/user']['GET'] = {
 }
 
 
-@application.route('/source/<id_or_name>/facility', methods=['GET'])
+@application.route('/source/<int:id>/facility', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_facility_of_source(client: Client, id_or_name: str) -> dict:  # noqa: unused client
-    """Get facility for specific source by ID or name."""
+def get_facility_of_source(client: Client, id: int) -> dict:  # noqa: unused client
+    """Get facility for specific source by ID."""
     disallow_parameters(request)
-    source = _get_source(id_or_name, client.user_id, client.level)
+    source = _get_source(id, client)
     if source.facility_id is None:
         raise NotFound(f'No facility for source ({source.id})')
     else:
@@ -183,13 +183,13 @@ def get_facility_of_source(client: Client, id_or_name: str) -> dict:  # noqa: un
 
 
 info['Endpoints']['/source/<id>/facility']['GET'] = {
-    'Description': 'Request facility of specified source by ID or name',
+    'Description': 'Request facility of specified source by ID',
     'Permissions': 'Public/Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
             'id': {
-                'Description': 'Unique ID for source (or name)',
+                'Description': 'Unique ID for source',
                 'Type': 'Integer',
             }
         },
@@ -209,29 +209,24 @@ info['Endpoints']['/source/<id>/facility']['GET'] = {
 }
 
 
-@application.route('/source/type/<id_or_name>', methods=['GET'])
+@application.route('/source/type/<int:id>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_source_type(client: Client, id_or_name: Union[int, str]) -> dict:  # noqa: unused client
-    """Get for source type by ID or name."""
+def get_source_type(client: Client, id: int) -> dict:  # noqa: unused client
+    """Get source type by ID."""
     disallow_parameters(request)
-    try:
-        id = int(id_or_name)
-        return {'source_type': SourceType.from_id(id).to_json()}
-    except ValueError:
-        name = str(id_or_name)
-        return {'source_type': SourceType.from_name(name).to_json()}
+    return {'source_type': SourceType.from_id(id).to_json()}
 
 
 info['Endpoints']['/source/type/<id>']['GET'] = {
-    'Description': 'Request source type by ID or name',
+    'Description': 'Request source type by ID',
     'Permissions': 'Public',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
             'id': {
-                'Description': 'Unique ID for source type (or name)',
+                'Description': 'Unique ID for source type',
                 'Type': 'Integer',
             }
         },

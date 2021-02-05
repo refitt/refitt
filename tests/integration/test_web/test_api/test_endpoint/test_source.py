@@ -56,16 +56,6 @@ class TestGetSource(Endpoint):
             }
         )
 
-    def test_get_by_name(self) -> None:
-        client = self.get_client(self.user)
-        source = Source.from_name('tomb_raider_croft_4m')
-        assert self.get(f'/source/tomb_raider_croft_4m', client_id=client.id) == (
-            STATUS['OK'], {
-                'Status': 'Success',
-                'Response': {'source': source.to_json(join=False)},
-            }
-        )
-
     def test_get_with_join(self) -> None:
         client = self.get_client(self.user)
         source = Source.from_name('tomb_raider_croft_4m')
@@ -107,16 +97,6 @@ class TestGetSourceType(Endpoint):
         client = self.get_client(self.user)
         source_type = SourceType.from_id(2)
         assert self.get(self.route, client_id=client.id) == (
-            STATUS['OK'], {
-                'Status': 'Success',
-                'Response': {'source_type': source_type.to_json(join=False)},
-            }
-        )
-
-    def test_get_by_name(self) -> None:
-        client = self.get_client(self.user)
-        source_type = SourceType.from_name('broker')
-        assert self.get('/source/type/broker', client_id=client.id) == (
             STATUS['OK'], {
                 'Status': 'Success',
                 'Response': {'source_type': source_type.to_json(join=False)},
