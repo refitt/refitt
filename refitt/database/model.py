@@ -228,6 +228,10 @@ class CoreMixin:
         session = session or _Session()
         return session.query(cls).count()
 
+    @classmethod
+    def query(cls: Type[Base]) -> Query:
+        return _Session.query(cls)
+
 
 # NOTE: patch existing table definitions.
 # This is a hack and will be redone at a later point (likely improvement to StreamKit).
