@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Integration tests for /source endpoints."""
+"""Integration tests for /object endpoints."""
 
 
 # internal libs

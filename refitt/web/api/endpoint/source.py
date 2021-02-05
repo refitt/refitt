@@ -70,7 +70,7 @@ info['Endpoints']['/source/<id>']['GET'] = {
     'Optional': {
         'Parameters': {
             'join': {
-                'Description': 'Return related data',
+                'Description': 'Include related data',
                 'Type': 'Boolean'
             }
         },
