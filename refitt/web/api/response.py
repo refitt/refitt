@@ -45,7 +45,7 @@ STATUS = {
     'Forbidden':                     403,
     'Not Found':                     404,
     'Method Not Allowed':            405,
-    'Payload Too Large':             413,  # TODO: limit allowed response size?
+    'Payload Too Large':             413,
     'I\'m a teapot':                 418,  # TODO: awesome Easter egg potential?
     'Too Many Requests':             429,  # TODO: rate limiting?
     'Unavailable For Legal Reasons': 451,  # um... what?

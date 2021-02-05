@@ -17,16 +17,17 @@ from ....database.model import Client
 from ..app import application
 from ..response import endpoint, NotFound
 from ..auth import authenticated, authorization
-from . import client, token, facility, user, object, source
+from . import client, token, facility, user, object, source, observation
 
 
 INFO = {
-    'client': client.info,
     'token': token.info,
+    'client': client.info,
     'user': user.info,
     'facility': facility.info,
     'object': object.info,
     'source': source.info,
+    'observation': observation.info,
 }
 
 
