@@ -85,7 +85,11 @@ def collect_parameters(request: Request, required: List[str] = None, optional: L
     for field in provided:
         if field not in required and field not in optional and not allow_any:
             raise ParameterInvalid(f'Unexpected parameter: {field}')
-    return {**defaults, **coerce_types(provided)}
+    params = {**defaults, **coerce_types(provided)}
+    for field, value in defaults.items():
+        if not isinstance(params[field], type(value)):
+            raise ParameterInvalid(f'Expected type \'{value.__class__.__name__}\' for parameter \'{field}\'')
+    return params
 
 
 def disallow_parameters(request: Request) -> None:
