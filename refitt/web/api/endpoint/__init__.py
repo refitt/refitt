@@ -17,7 +17,7 @@ from ....database.model import Client
 from ..app import application
 from ..response import endpoint, NotFound
 from ..auth import authenticated, authorization
-from . import client, token, facility, user, object, source, observation
+from . import client, token, facility, user, object, source, observation, recommendation
 
 
 INFO = {
@@ -28,6 +28,7 @@ INFO = {
     'object': object.info,
     'source': source.info,
     'observation': observation.info,
+    'recommendation': recommendation.info,
 }
 
 

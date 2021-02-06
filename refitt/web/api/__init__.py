@@ -15,4 +15,4 @@
 
 # internal libs
 from .app import application
-from .endpoint import token, client, user, facility, object, source, observation
+from .endpoint import token, client, user, facility, object, source, observation, recommendation

@@ -28,7 +28,7 @@ from functools import lru_cache
 from names_generator.names import LEFT, RIGHT
 from sqlalchemy import Column, ForeignKey, Index, func, type_coerce
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, aliased, Query
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.types import Integer, BigInteger, DateTime, Float, Text, String, JSON, Boolean, LargeBinary
 from sqlalchemy.dialects.postgresql import JSONB
@@ -1180,16 +1180,16 @@ class Recommendation(Base, CoreMixin):
     def next(cls, user_id: int, group_id: int = None, limit: int = None,
              facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
         """
-        Select next recommendation(s) for the given user and group, with the highest priority
+        Select next recommendation(s) for the given user and group, in priority order,
         that has neither been 'accepted' nor 'rejected', up to some `limit`.
 
         If `facility_id` is provided, only recommendations for the given facility are returned.
         If `limiting_magnitude` is provided, only recommendations with a 'predicted' magnitude
         brighter than this value are returned.
         """
-        # TODO: use `joinedload` to make query more efficient for API queries?
         session = _Session()
-        query = session.query(cls)
+        predicted = aliased(Observation)
+        query = session.query(cls).join(predicted, cls.predicted_observation_id == predicted.id)
         query = query.order_by(cls.priority)
         query = query.filter(cls.user_id == user_id)
         query = query.filter(cls.group_id == (group_id or RecommendationGroup.latest(session).id))
@@ -1199,12 +1199,12 @@ class Recommendation(Base, CoreMixin):
             query = query.filter(cls.facility_id == facility_id)
 
         if limiting_magnitude is not None:
-            query = query.filter(cls.predicted.value <= limiting_magnitude)
+            query = query.filter(predicted.value <= limiting_magnitude)
 
         if limit:
-            return query.limit(limit)
-        else:
-            return query.all()
+            query = query.limit(limit)
+
+        return query.all()
 
 
 class ModelType(Base, CoreMixin):
