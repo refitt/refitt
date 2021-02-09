@@ -28,11 +28,11 @@ from typing import Tuple, Dict, Any, Callable, Optional, Type, TypeVar
 
 # standard libs
 import re
-from urllib.request import urljoin  # noqa: missing stub for urllib
+from contextlib import contextmanager
 import logging
 import functools
 import webbrowser
-
+from urllib.request import urljoin  # noqa: missing stub for urllib
 
 # external libs
 import requests as __requests
@@ -147,13 +147,18 @@ def authenticated(func: Callable) -> Callable:
             return func(*args, **kwargs)
         except APIError as error:
             status, message = error.args
-            if status == STATUS['Unauthorized'] and message == 'Token expired':
+            if status == STATUS['Forbidden'] and message == 'Token expired':
                 refresh_token(force=True)
                 return func(*args, **kwargs)
             else:
                 raise
 
     return method
+
+
+def format_request(endpoint: str) -> str:
+    """Build URL for request."""
+    return __join_site(endpoint.lstrip('/'))
 
 
 @authenticated
@@ -186,3 +191,27 @@ get = functools.partial(request, 'get')
 put = functools.partial(request, 'put')
 post = functools.partial(request, 'post')
 delete = functools.partial(request, 'delete')
+
+
+@contextmanager
+def use_auth(key: str, secret: str) -> None:
+    """Temporarily set `request.KEY` and `request.SECRET` in context manager."""
+    global KEY, SECRET
+    old_key, old_secret = KEY, SECRET
+    try:
+        KEY, SECRET = Key(key), Secret(secret)
+        yield
+    finally:
+        KEY, SECRET = old_key, old_secret
+
+
+@contextmanager
+def use_token(token: str) -> None:
+    """Temporarily set `request.TOKEN` in context manager."""
+    global TOKEN
+    old_token = TOKEN
+    try:
+        TOKEN = Token(token)
+        yield
+    finally:
+        TOKEN = old_token

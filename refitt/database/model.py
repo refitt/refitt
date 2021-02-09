@@ -26,9 +26,9 @@ from functools import lru_cache
 
 # external libs
 from names_generator.names import LEFT, RIGHT
-from sqlalchemy import Column, ForeignKey, Index, func, type_coerce
+from sqlalchemy import Column, ForeignKey, Index, func, type_coerce, or_
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, aliased, Query
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.types import Integer, BigInteger, DateTime, Float, Text, String, JSON, Boolean, LargeBinary
 from sqlalchemy.dialects.postgresql import JSONB
@@ -228,6 +228,10 @@ class CoreMixin:
         session = session or _Session()
         return session.query(cls).count()
 
+    @classmethod
+    def query(cls: Type[Base]) -> Query:
+        return _Session.query(cls)
+
 
 # NOTE: patch existing table definitions.
 # This is a hack and will be redone at a later point (likely improvement to StreamKit).
@@ -237,6 +241,24 @@ Host.from_json = lambda data: Host(**{k: _load(v) for k, v in data.items()})
 Message.from_json = lambda data: Message(**{k: _load(v) for k, v in data.items()})
 Subscriber.from_json = lambda data: Subscriber(**{k: _load(v) for k, v in data.items()})
 Access.from_json = lambda data: Access(**{k: _load(v) for k, v in data.items()})
+Level.to_tuple = Level.values
+Topic.to_tuple = Topic.values
+Host.to_tuple = Host.values
+Message.to_tuple = Message.values
+Subscriber.to_tuple = Subscriber.values
+Access.to_json = Access.values
+Level.columns = {'id': int, 'name': str}
+Level.relationships = {}
+Topic.columns = {'id': int, 'name': str}
+Topic.relationships = {}
+Host.columns = {'id': int, 'name': str}
+Host.relationships = {}
+Subscriber.columns = {'id': int, 'name': str}
+Subscriber.relationships = {}
+Access.columns = {'subscriber_id': int, 'topic_id': int, 'time': datetime}
+Access.relationships = {'subscriber': Subscriber, 'topic': Topic}
+Message.columns = {'id': int, 'time': datetime, 'topic_id': int, 'level_id': int, 'host_id': int, 'text': str}
+Message.relationships = {'topic': Topic, 'level': Level, 'host': Host}
 
 
 class User(Base, CoreMixin):
@@ -285,31 +307,30 @@ class User(Base, CoreMixin):
     def facilities(self, session: _Session = None) -> List[Facility]:
         """Facilities associated with this user (queries `facility_map`)."""
         session = session or _Session()
-        return session.query(Facility).join(FacilityMap).filter(FacilityMap.user_id == self.id).all()
+        return (session.query(Facility).join(FacilityMap).filter(FacilityMap.user_id == self.id)
+                .order_by(FacilityMap.facility_id).all())
 
-    def add_facility(self, facility_id: int) -> None:
-        """Associate `facility` with this user."""
-        session = _Session()
+    def add_facility(self, facility_id: int, session: _Session = None) -> None:
+        """Associate `facility_id` with this user."""
+        session = session or _Session()
+        facility = Facility.from_id(facility_id, session)  # checks for Facility.NotFound
         try:
-            facility = Facility.from_id(facility_id, session)
-        except NoResultFound as error:
-            raise Facility.NotFound(f'No facility with id={facility_id}') from error
-        session.add(FacilityMap(user_id=self.id, facility_id=facility.id))
-        session.commit()
-        log.info(f'Associated facility ({facility.id}) with user ({self.id})')
+            session.query(FacilityMap).filter(FacilityMap.user_id == self.id,
+                                              FacilityMap.facility_id == facility_id).one()
+        except NoResultFound:
+            session.add(FacilityMap(user_id=self.id, facility_id=facility.id))
+            session.commit()
+            log.info(f'Associated facility ({facility.id}) with user ({self.id})')
 
     def delete_facility(self, facility_id: int) -> None:
         """Dissociate facility with this user."""
         session = _Session()
-        try:
-            facility = Facility.from_id(facility_id, session)
-        except NoResultFound as error:
-            raise Facility.NotFound(f'No facility with id={facility_id}') from error
+        facility = Facility.from_id(facility_id, session)  # checks for Facility.NotFound
         for mapping in session.query(FacilityMap).filter(FacilityMap.user_id == self.id,
                                                          FacilityMap.facility_id == facility.id):
             session.delete(mapping)
-        session.commit()
-        log.info(f'Dissociated facility ({facility.id}) from user ({self.id})')
+            session.commit()
+            log.info(f'Dissociated facility ({facility.id}) from user ({self.id})')
 
     @classmethod
     def delete(cls, user_id: int, session: _Session = None) -> None:
@@ -372,31 +393,30 @@ class Facility(Base, CoreMixin):
     def users(self, session: _Session = None) -> List[User]:
         """Users associated with this facility (queries `facility_map`)."""
         session = session or _Session()
-        return session.query(User).join(FacilityMap).filter(FacilityMap.facility_id == self.id).all()
+        return (session.query(User).join(FacilityMap).filter(FacilityMap.facility_id == self.id)
+                .order_by(FacilityMap.user_id).all())
 
     def add_user(self, user_id: int) -> None:
         """Associate user with this facility."""
         session = _Session()
+        user = User.from_id(user_id, session)  # checks for User.NotFound
         try:
-            user = User.from_id(user_id, session)
-        except NoResultFound as error:
-            raise User.NotFound(f'No user with id={user_id}') from error
-        session.add(FacilityMap(user_id=user.id, facility_id=self.id))
-        session.commit()
-        log.info(f'Associated facility ({self.id}) with user ({user.id})')
+            session.query(FacilityMap).filter(FacilityMap.user_id == user_id,
+                                              FacilityMap.facility_id == self.id).one()
+        except NoResultFound:
+            session.add(FacilityMap(user_id=user.id, facility_id=self.id))
+            session.commit()
+            log.info(f'Associated facility ({self.id}) with user ({user.id})')
 
     def delete_user(self, user_id: int) -> None:
         """Dissociate `user` with this facility."""
         session = _Session()
-        try:
-            user = User.from_id(user_id, session)
-        except NoResultFound as error:
-            raise User.NotFound(f'No user with id={user_id}') from error
+        user = User.from_id(user_id, session)  # checks for User.NotFound
         for mapping in session.query(FacilityMap).filter(FacilityMap.user_id == user.id,
                                                          FacilityMap.facility_id == self.id):
             session.delete(mapping)
-        session.commit()
-        log.info(f'Dissociated facility ({self.id}) from user ({user.id})')
+            session.commit()
+            log.info(f'Dissociated facility ({self.id}) from user ({user.id})')
 
     @classmethod
     def delete(cls, facility_id: int, session: _Session = None) -> None:
@@ -814,6 +834,25 @@ class Source(Base, CoreMixin):
         session = session or _Session()
         return session.query(cls).filter(cls.user_id == user_id).all()
 
+    @classmethod
+    def get_or_create(cls, user_id: int, facility_id: int) -> Source:
+        """Fetch or create a new source for a `user_id`, `facility_id` pair."""
+        user = User.from_id(user_id)
+        facility = Facility.from_id(facility_id)
+        user_name = user.alias.lower().replace(' ', '_').replace('-', '_')
+        facility_name = facility.name.lower().replace(' ', '_').replace('-', '_')
+        source_name = f'{user_name}_{facility_name}'
+        try:
+            FacilityMap.query().filter_by(user_id=user_id, facility_id=facility_id).one()
+        except NoResultFound:
+            log.warning(f'Facility ({facility_id}) not associated with user ({user_id})')
+        try:
+            return Source.from_name(source_name)
+        except Source.NotFound:
+            return Source.add({'type_id': SourceType.from_name('Observer').id,
+                               'user_id': user_id, 'facility_id': facility_id, 'name': source_name,
+                               'description': f'Observer (alias={user.alias}, facility={facility.name})'})
+
 
 class Observation(Base, CoreMixin):
     """Observation table."""
@@ -860,6 +899,13 @@ class Observation(Base, CoreMixin):
         """All observations with `source_id`."""
         session = session or _Session()
         return session.query(cls).filter(cls.source_id == source_id).all()
+
+
+# indices for observation table
+observation_object_index = Index('observation_object_index', Observation.object_id)
+observation_source_object_index = Index('observation_source_object_index', Observation.source_id, Observation.object_id)
+observation_time_index = Index('observation_time_index', Observation.time)
+observation_recorded_index = Index('observation_recorded_index', Observation.recorded)
 
 
 class Alert(Base, CoreMixin):
@@ -1023,17 +1069,12 @@ class RecommendationGroup(Base, CoreMixin):
     def latest(cls, session: _Session = None) -> RecommendationGroup:
         """Get the most recent recommendation group."""
         session = session or _Session()
-        return session.query(cls).order_by(cls.created.desc()).first()
+        return session.query(cls).order_by(cls.id.desc()).first()
 
     @classmethod
-    def select(cls, limit: int, offset: int = None, session: _Session = None) -> List[RecommendationGroup]:
+    def select(cls, limit: int, offset: int = 0) -> List[RecommendationGroup]:
         """Select a range of recommendation groups."""
-        session = session or _Session()
-        query = session.query(cls).order_by(cls.id.desc())
-        if offset:
-            return query[offset:offset+limit]
-        else:
-            return query.limit(limit)
+        return cls.query().order_by(cls.id.desc()).filter(cls.id <= cls.latest().id - offset).limit(limit).all()
 
 
 class RecommendationTag(Base, CoreMixin):
@@ -1072,8 +1113,7 @@ class RecommendationTag(Base, CoreMixin):
         """Get or create recommendation tag for `object_id`."""
         session = session or _Session()
         try:
-            tag = session.query(cls).filter(cls.object_id == object_id).one()
-            return tag
+            return session.query(cls).filter(cls.object_id == object_id).one()
         except NoResultFound:
             return cls.new(object_id, session=session)
     
@@ -1178,31 +1218,45 @@ class Recommendation(Base, CoreMixin):
     def next(cls, user_id: int, group_id: int = None, limit: int = None,
              facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
         """
-        Select next recommendation(s) for the given user and group, with the highest priority
+        Select next recommendation(s) for the given user and group, in priority order,
         that has neither been 'accepted' nor 'rejected', up to some `limit`.
 
         If `facility_id` is provided, only recommendations for the given facility are returned.
         If `limiting_magnitude` is provided, only recommendations with a 'predicted' magnitude
         brighter than this value are returned.
         """
-        # TODO: use `joinedload` to make query more efficient for API queries?
         session = _Session()
-        query = session.query(cls)
+        predicted = aliased(Observation)
+        query = session.query(cls).join(predicted, cls.predicted_observation_id == predicted.id)
         query = query.order_by(cls.priority)
         query = query.filter(cls.user_id == user_id)
         query = query.filter(cls.group_id == (group_id or RecommendationGroup.latest(session).id))
         query = query.filter(cls.accepted == False).filter(cls.rejected == False)
-
         if facility_id is not None:
             query = query.filter(cls.facility_id == facility_id)
-
         if limiting_magnitude is not None:
-            query = query.filter(cls.predicted.value <= limiting_magnitude)
-
+            query = query.filter(predicted.value <= limiting_magnitude)
         if limit:
-            return query.limit(limit)
-        else:
-            return query.all()
+            query = query.limit(limit)
+        return query.all()
+
+    @classmethod
+    def history(cls, user_id: int, group_id: int) -> List[Recommendation]:
+        """
+        Select previous recommendations that the user has either affirmatively
+        accepted OR rejected.
+        """
+        return (cls.query().order_by(cls.id)
+                .filter(cls.user_id == user_id).filter(cls.group_id == group_id)
+                .filter(or_(cls.accepted == True, cls.rejected == True))).all()
+
+
+# indices for recommendation table
+recommendation_object_index = Index('recommendation_object_index', Recommendation.object_id)
+recommendation_user_facility_index = Index('recommendation_user_facility_index',
+                                           Recommendation.user_id, Recommendation.facility_id)
+recommendation_group_user_index = Index('recommendation_group_user_index',
+                                        Recommendation.group_id, Recommendation.user_id)
 
 
 class ModelType(Base, CoreMixin):

@@ -10,4 +10,4 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Web related functionality within REFITT."""
+"""Support for external data systems and catalogs."""

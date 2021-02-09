@@ -41,7 +41,7 @@ from rich.table import Table
 
 PROGRAM = 'refitt database query'
 USAGE = f"""\
-usage: {PROGRAM} [-h] TABLE[.RELATION]... [COND...] [--count] [--limit NUM]
+usage: {PROGRAM} [-h] TABLE[.RELATION]... [COND...] [--count | --limit NUM]
 {__doc__}\
 """
 
@@ -49,11 +49,12 @@ HELP = f"""\
 {USAGE}
 
 arguments:
-TBL...                 Names of tables to check.
+TABLE[.RELATION ...]   Table name with relationship path.
+COND...                Filters (e.g., `name==foo`).
 
 options:
--a, --all              Check all tables.
--c, --count            Display row count with table check.
+-c, --count            Display row count.
+-l, --limit            Limit number of returned rows.
 -h, --help             Show this message and exit.\
 """
 

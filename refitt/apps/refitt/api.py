@@ -14,7 +14,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, Dict, TypeVar, Callable
+from typing import List, Callable
 
 # standard libs
 import sys

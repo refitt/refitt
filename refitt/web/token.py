@@ -230,7 +230,7 @@ class Token(CryptoDigits):
 
 # value types for JWT claims
 Claim = TypeVar('Claim', int, str)
-ExpTime = TypeVar('ExpTime', datetime, timedelta, float, int)
+ExpTime = TypeVar('ExpTime', datetime, timedelta, float, int, type(None))
 
 
 class JWT:

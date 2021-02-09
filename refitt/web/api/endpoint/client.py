@@ -14,7 +14,7 @@
 
 
 # internal libs
-from ....database.model import Client, NotFound
+from ....database.model import Client
 from ..app import application
 from ..response import endpoint
 from ..auth import authenticated, authorization
@@ -36,7 +36,7 @@ info: dict = {
 def get_client(admin: Client, user_id: int) -> dict:  # noqa: admin client not used
     try:
         key, secret = Client.new_key(user_id)
-    except NotFound:
+    except Client.NotFound:
         key, secret, client = Client.new(user_id)
     return {'client': {'key': key.value, 'secret': secret.value}}
 
@@ -75,7 +75,7 @@ info['Endpoints']['/client/<user_id>']['GET'] = {
 def get_client_secret(admin: Client, user_id: int) -> dict:  # noqa: admin client not used
     try:
         key, secret = Client.new_secret(user_id)
-    except NotFound:
+    except Client.NotFound:
         key, secret, client = Client.new(user_id)
     return {'client': {'key': key.value, 'secret': secret.value}}
 

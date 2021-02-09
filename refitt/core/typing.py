@@ -28,7 +28,7 @@ def coerce(value: str) -> ValueType:
         return float(value)
     except ValueError:
         pass
-    if value.lower() in ('null', ):
+    if value.lower() in ('null', 'none', ):
         return None
     elif value.lower() in ('true', ):
         return True

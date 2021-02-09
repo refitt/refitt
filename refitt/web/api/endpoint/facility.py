@@ -16,19 +16,15 @@
 # type annotations
 from typing import Union
 
-# standard libs
-import json
+# external libs
+from flask import request
 
 # internal libs
-from ....core import typing
 from ....database.model import Client, Facility, IntegrityError, NotFound
 from ..app import application
 from ..auth import authenticated, authorization
-from ..response import endpoint, PayloadNotFound, PayloadMalformed, PayloadInvalid, ConstraintViolation
-
-
-# external libs
-from flask import request
+from ..response import endpoint, ConstraintViolation
+from ..tools import require_data, collect_parameters, disallow_parameters
 
 
 info: dict = {
@@ -48,26 +44,17 @@ info: dict = {
 @authorization(level=0)
 def add_facility(admin: Client) -> dict:  # noqa: unused client
     """Add new facility profile."""
-    payload = request.data
-    if not payload:
-        raise PayloadNotFound('Missing JSON data')
-    try:
-        profile = json.loads(payload.decode())
-    except json.JSONDecodeError as error:
-        raise PayloadMalformed('Invalid JSON data') from error
-    try:
-        Facility(**profile)
-    except TypeError as error:
-        raise PayloadInvalid('Invalid parameters in JSON data') from error
+    disallow_parameters(request)
+    profile = require_data(request, data_format='json', validate=(lambda data: Facility(**data)))
     try:
         facility_id = profile.pop('id', None)
         if not facility_id:
-            facility_id = Facility.add(profile)
+            facility_id = Facility.add(profile).id
         else:
             Facility.update(facility_id, **profile)
     except IntegrityError as error:
         raise ConstraintViolation(str(error.args[0])) from error
-    return {'facility': Facility.from_id(facility_id).to_json()}
+    return {'facility': {'id': facility_id}}
 
 
 info['Endpoints']['/facility']['POST'] = {
@@ -84,7 +71,7 @@ info['Endpoints']['/facility']['POST'] = {
         200: {
             'Description': 'Success',
             'Payload': {
-                'Description': 'New facility profile including ID',
+                'Description': 'New facility ID',
                 'Type': 'application/json'
             },
         },
@@ -101,6 +88,7 @@ info['Endpoints']['/facility']['POST'] = {
 @authorization(level=0)
 def get_facility(admin: Client, id_or_name: Union[int, str]) -> dict:  # noqa: unused client
     """Query for existing facility profile."""
+    disallow_parameters(request)
     try:
         facility_id = int(id_or_name)
         return {'facility': Facility.from_id(facility_id).to_json()}
@@ -143,10 +131,7 @@ info['Endpoints']['/facility/<facility_id>']['GET'] = {
 def update_facility(admin: Client, facility_id: int) -> dict:  # noqa: unused client
     """Update facility profile attributes."""
     try:
-        profile = Facility.update(facility_id, **{
-            field: typing.coerce(value)
-            for field, value in dict(request.args).items()
-        })
+        profile = Facility.update(facility_id, **collect_parameters(request, allow_any=True))
     except IntegrityError as error:
         raise ConstraintViolation(str(error.args[0])) from error
     return {'facility': profile.to_json()}
@@ -213,6 +198,7 @@ info['Endpoints']['/facility/<facility_id>']['PUT'] = {
 @authorization(level=0)
 def delete_facility(admin: Client, facility_id: int) -> dict:  # noqa: unused client
     """Delete a facility profile (assuming no existing relationships)."""
+    disallow_parameters(request)
     try:
         Facility.delete(facility_id)
     except IntegrityError as error:
@@ -247,6 +233,7 @@ info['Endpoints']['/facility/<facility_id>']['DELETE'] = {
 @authorization(level=0)
 def get_all_facility_users(admin: Client, facility_id: int) -> dict:  # noqa: unused client
     """Query for users related to the given facility."""
+    disallow_parameters(request)
     return {
         'user': [
             user.to_json()
@@ -288,6 +275,7 @@ info['Endpoints']['/facility/<facility_id>/user']['GET'] = {
 @authorization(level=0)
 def get_facility_user(admin: Client, facility_id: int, user_id: int) -> dict:  # noqa: unused client
     """Query for a user related to the given facility."""
+    disallow_parameters(request)
     users = [user.to_json() for user in Facility.from_id(facility_id).users() if user.id == user_id]
     if not users:
         raise NotFound(f'User ({user_id}) not associated with facility ({facility_id})')
@@ -332,6 +320,7 @@ info['Endpoints']['/facility/<facility_id>/user/<user_id>']['GET'] = {
 @authorization(level=0)
 def add_facility_user_association(admin: Client, facility_id: int, user_id: int) -> dict:  # noqa: unused client
     """Associate facility with the given user."""
+    disallow_parameters(request)
     Facility.from_id(facility_id).add_user(user_id)
     return {}
 
@@ -366,7 +355,8 @@ info['Endpoints']['/facility/<facility_id>/user/<user_id>']['PUT'] = {
 @authenticated
 @authorization(level=0)
 def delete_facility_user_association(admin: Client, facility_id: int, user_id: int) -> dict:  # noqa: unused client
-    """Query for facilities related to the given user."""
+    """Dissociate the facility for the given user."""
+    disallow_parameters(request)
     Facility.from_id(facility_id).delete_user(user_id)
     return {}
 
