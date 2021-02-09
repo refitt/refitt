@@ -834,6 +834,25 @@ class Source(Base, CoreMixin):
         session = session or _Session()
         return session.query(cls).filter(cls.user_id == user_id).all()
 
+    @classmethod
+    def get_or_create(cls, user_id: int, facility_id: int) -> Source:
+        """Fetch or create a new source for a `user_id`, `facility_id` pair."""
+        user = User.from_id(user_id)
+        facility = Facility.from_id(facility_id)
+        user_name = user.alias.lower().replace(' ', '_').replace('-', '_')
+        facility_name = facility.name.lower().replace(' ', '_').replace('-', '_')
+        source_name = f'{user_name}_{facility_name}'
+        try:
+            FacilityMap.query().filter_by(user_id=user_id, facility_id=facility_id).one()
+        except NoResultFound:
+            log.warning(f'Facility ({facility_id}) not associated with user ({user_id})')
+        try:
+            return Source.from_name(source_name)
+        except Source.NotFound:
+            return Source.add({'type_id': SourceType.from_name('Observer').id,
+                               'user_id': user_id, 'facility_id': facility_id, 'name': source_name,
+                               'description': f'Observer (alias={user.alias}, facility={facility.name})'})
+
 
 class Observation(Base, CoreMixin):
     """Observation table."""
