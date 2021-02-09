@@ -241,6 +241,24 @@ Host.from_json = lambda data: Host(**{k: _load(v) for k, v in data.items()})
 Message.from_json = lambda data: Message(**{k: _load(v) for k, v in data.items()})
 Subscriber.from_json = lambda data: Subscriber(**{k: _load(v) for k, v in data.items()})
 Access.from_json = lambda data: Access(**{k: _load(v) for k, v in data.items()})
+Level.to_tuple = Level.values
+Topic.to_tuple = Topic.values
+Host.to_tuple = Host.values
+Message.to_tuple = Message.values
+Subscriber.to_tuple = Subscriber.values
+Access.to_json = Access.values
+Level.columns = {'id': int, 'name': str}
+Level.relationships = {}
+Topic.columns = {'id': int, 'name': str}
+Topic.relationships = {}
+Host.columns = {'id': int, 'name': str}
+Host.relationships = {}
+Subscriber.columns = {'id': int, 'name': str}
+Subscriber.relationships = {}
+Access.columns = {'subscriber_id': int, 'topic_id': int, 'time': datetime}
+Access.relationships = {'subscriber': Subscriber, 'topic': Topic}
+Message.columns = {'id': int, 'time': datetime, 'topic_id': int, 'level_id': int, 'host_id': int, 'text': str}
+Message.relationships = {'topic': Topic, 'level': Level, 'host': Host}
 
 
 class User(Base, CoreMixin):
