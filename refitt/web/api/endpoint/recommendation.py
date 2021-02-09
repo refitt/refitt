@@ -339,7 +339,6 @@ info['Endpoints']['/recommendation/group']['GET'] = {
         },
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
-        404: {'Description': 'Recommendation group not found'}
     }
 }
 
@@ -390,22 +389,27 @@ def get_recommendation_history(client: Client) -> dict:
     ]}
 
 
-info['Endpoints']['/recommendation/group/<id>']['GET'] = {
-    'Description': 'Request recommendation group by id',
+info['Endpoints']['/recommendation/history']['GET'] = {
+    'Description': 'Request recommendation history',
     'Permissions': 'Public',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
+        'Parameters': {
+            'group_id': {
+                'Description': 'The recommendation group ID',
+                'Type': 'Integer'
+            }
+        }
     },
     'Responses': {
         200: {
             'Description': 'Success',
             'Payload': {
-                'Description': 'Recommendation group data',
+                'Description': 'Recommendation set',
                 'Type': 'application/json'
             },
         },
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
-        404: {'Description': 'Recommendation group not found'}
     }
 }
