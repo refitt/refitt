@@ -901,6 +901,13 @@ class Observation(Base, CoreMixin):
         return session.query(cls).filter(cls.source_id == source_id).all()
 
 
+# indices for observation table
+observation_object_index = Index('observation_object_index', Observation.object_id)
+observation_source_object_index = Index('observation_source_object_index', Observation.source_id, Observation.object_id)
+observation_time_index = Index('observation_time_index', Observation.time)
+observation_recorded_index = Index('observation_recorded_index', Observation.recorded)
+
+
 class Alert(Base, CoreMixin):
     """Alert table."""
 
