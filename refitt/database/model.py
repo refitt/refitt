@@ -26,7 +26,7 @@ from functools import lru_cache
 
 # external libs
 from names_generator.names import LEFT, RIGHT
-from sqlalchemy import Column, ForeignKey, Index, func, type_coerce
+from sqlalchemy import Column, ForeignKey, Index, func, type_coerce, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship, aliased, Query
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
@@ -1025,17 +1025,12 @@ class RecommendationGroup(Base, CoreMixin):
     def latest(cls, session: _Session = None) -> RecommendationGroup:
         """Get the most recent recommendation group."""
         session = session or _Session()
-        return session.query(cls).order_by(cls.created.desc()).first()
+        return session.query(cls).order_by(cls.id.desc()).first()
 
     @classmethod
-    def select(cls, limit: int, offset: int = None, session: _Session = None) -> List[RecommendationGroup]:
+    def select(cls, limit: int, offset: int = 0) -> List[RecommendationGroup]:
         """Select a range of recommendation groups."""
-        session = session or _Session()
-        query = session.query(cls).order_by(cls.id.desc())
-        if offset:
-            return query[offset:offset+limit]
-        else:
-            return query.limit(limit)
+        return cls.query().order_by(cls.id.desc()).filter(cls.id <= cls.latest().id - offset).limit(limit).all()
 
 
 class RecommendationTag(Base, CoreMixin):
@@ -1074,8 +1069,7 @@ class RecommendationTag(Base, CoreMixin):
         """Get or create recommendation tag for `object_id`."""
         session = session or _Session()
         try:
-            tag = session.query(cls).filter(cls.object_id == object_id).one()
-            return tag
+            return session.query(cls).filter(cls.object_id == object_id).one()
         except NoResultFound:
             return cls.new(object_id, session=session)
     
@@ -1194,17 +1188,31 @@ class Recommendation(Base, CoreMixin):
         query = query.filter(cls.user_id == user_id)
         query = query.filter(cls.group_id == (group_id or RecommendationGroup.latest(session).id))
         query = query.filter(cls.accepted == False).filter(cls.rejected == False)
-
         if facility_id is not None:
             query = query.filter(cls.facility_id == facility_id)
-
         if limiting_magnitude is not None:
             query = query.filter(predicted.value <= limiting_magnitude)
-
         if limit:
             query = query.limit(limit)
-
         return query.all()
+
+    @classmethod
+    def history(cls, user_id: int, group_id: int) -> List[Recommendation]:
+        """
+        Select previous recommendations that the user has either affirmatively
+        accepted OR rejected.
+        """
+        return (cls.query().order_by(cls.id)
+                .filter(cls.user_id == user_id).filter(cls.group_id == group_id)
+                .filter(or_(cls.accepted == True, cls.rejected == True))).all()
+
+
+# indices for recommendation table
+recommendation_object_index = Index('recommendation_object_index', Recommendation.object_id)
+recommendation_user_facility_index = Index('recommendation_user_facility_index',
+                                           Recommendation.user_id, Recommendation.facility_id)
+recommendation_group_user_index = Index('recommendation_group_user_index',
+                                        Recommendation.group_id, Recommendation.user_id)
 
 
 class ModelType(Base, CoreMixin):

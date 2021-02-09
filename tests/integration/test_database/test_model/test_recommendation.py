@@ -174,3 +174,25 @@ class TestRecommendation:
         Recommendation.update(rec_id, accepted=True)
         response = Recommendation.next(user_id=user_id)
         assert len(response) == 0
+
+    def test_history(self) -> None:
+        """Test query for previously interacted with recommendations."""
+
+        user_id = User.from_alias('tomb_raider').id
+        records = Recommendation.history(user_id=user_id, group_id=3)
+        assert all(isinstance(r, Recommendation) for r in records)
+        assert len(records) == 4  # NOTE: all accepted already
+        assert all(r.accepted for r in records)
+
+        rec_id = Recommendation.for_user(user_id)[0].id
+        Recommendation.update(rec_id, accepted=False)
+
+        records = Recommendation.history(user_id=user_id, group_id=3)
+        assert len(records) == 3
+        assert all(r.accepted for r in records)
+
+        # restore state of database
+        Recommendation.update(rec_id, accepted=True)
+        records = Recommendation.history(user_id=user_id, group_id=3)
+        assert len(records) == 4
+        assert all(r.accepted for r in records)
