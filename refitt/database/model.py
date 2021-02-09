@@ -849,7 +849,7 @@ class Source(Base, CoreMixin):
         try:
             return Source.from_name(source_name)
         except Source.NotFound:
-            return Source.add({'type_id': SourceType.from_name('Observer').id,
+            return Source.add({'type_id': SourceType.from_name('observer').id,
                                'user_id': user_id, 'facility_id': facility_id, 'name': source_name,
                                'description': f'Observer (alias={user.alias}, facility={facility.name})'})
 
