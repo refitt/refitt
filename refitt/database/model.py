@@ -1359,3 +1359,15 @@ tables: Dict[str, Base] = {
     'subscriber': Subscriber,
     'access': Access,
 }
+
+
+# global registry of indices
+indices: Dict[str, Index] = {
+    'recommendation_object_index': recommendation_object_index,
+    'recommendation_group_user_index': recommendation_group_user_index,
+    'recommendation_user_facility_index': recommendation_user_facility_index,
+    'observation_time_index': observation_time_index,
+    'observation_object_index': observation_object_index,
+    'observation_recorded_index': observation_recorded_index,
+    'observation_source_object_index': observation_source_object_index,
+}
