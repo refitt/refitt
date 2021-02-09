@@ -35,7 +35,7 @@ import toml
 
 PROGRAM = 'refitt config get'
 USAGE = f"""\
-usage: {PROGRAM} [-h] SECTION[...].VAR [--system | --user | --local]
+usage: {PROGRAM} [-h] [-x] SECTION[...].VAR [--system | --user | --local]
 {__doc__}\
 """
 
@@ -49,6 +49,7 @@ options:
     --system              Load from system configuration.
     --user                Load from user configuration.
     --local               Load from local configuration.
+-x, --expand              Expand variable.
 -h, --help                Show this message and exit.\
 """
 
