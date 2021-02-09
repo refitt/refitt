@@ -246,7 +246,7 @@ Topic.to_tuple = Topic.values
 Host.to_tuple = Host.values
 Message.to_tuple = Message.values
 Subscriber.to_tuple = Subscriber.values
-Access.to_json = Access.values
+Access.to_tuple = Access.values
 Level.columns = {'id': int, 'name': str}
 Level.relationships = {}
 Topic.columns = {'id': int, 'name': str}
@@ -1358,4 +1358,16 @@ tables: Dict[str, Base] = {
     'message': Message,
     'subscriber': Subscriber,
     'access': Access,
+}
+
+
+# global registry of indices
+indices: Dict[str, Index] = {
+    'recommendation_object_index': recommendation_object_index,
+    'recommendation_group_user_index': recommendation_group_user_index,
+    'recommendation_user_facility_index': recommendation_user_facility_index,
+    'observation_time_index': observation_time_index,
+    'observation_object_index': observation_object_index,
+    'observation_recorded_index': observation_recorded_index,
+    'observation_source_object_index': observation_source_object_index,
 }
