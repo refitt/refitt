@@ -38,17 +38,14 @@ from sqlalchemy.exc import IntegrityError
 PROGRAM = 'refitt recommendation create'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} --group
-       {PROGRAM} --user ID [--group ID] [--facility ID] --object ID --forecast ID --priority NUM 
-       {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]]
+usage: {PROGRAM} --group [--print]
+       {PROGRAM} --user ID [--group ID] [--facility ID] --object ID --forecast ID --priority NUM [--print]
+       {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]] [--group ID] [--print]
 {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
-
-arguments:
-USER                  ID or alias for user.
 
 options:
     --group     ID    Group ID for recommendation(s).
@@ -58,7 +55,7 @@ options:
     --priority  NUM   Priority value for recommendation.
     --forecast  ID    Forecast ID for recommendation.
     --print           Write ID of generated resources to <stdout>.
--h, --help            Show this message and exit.\
+-h, --help            Show this message and exit.
 
 If invoked with only --group, a new recommendation group will be created.
 The output will be the new recommendation group ID.
@@ -72,8 +69,7 @@ and only one facility is registered for that user it will be used.
 Create a set of recommendations at once by using --from-file. If no PATH is 
 specified, read from standard input. Format is derived from file name extension, 
 unless reading from standard input for which a format specifier (e.g., --csv) 
-is required. The --group can be omitted for which that latest will be used, 
-otherwise specify a group for all recommendations in the file.
+is required.\
 """
 
 
