@@ -377,6 +377,10 @@ class TestGetForecast(RecommendationEndpoint):
     relation = 'forecast'
 
 
+class TestGetPredicted(RecommendationEndpoint):
+    relation = 'predicted'
+
+
 class TestGetPredictedType(RecommendationEndpoint):
     relation = 'predicted/type'
 
@@ -399,6 +403,10 @@ class TestGetPredictedSourceType(RecommendationEndpoint):
 
 class TestGetPredictedUser(RecommendationEndpoint):
     relation = 'predicted/source/user'
+
+
+class TestGetObserved(RecommendationEndpoint):
+    relation = 'observed'
 
 
 class TestGetObservedType(RecommendationEndpoint):

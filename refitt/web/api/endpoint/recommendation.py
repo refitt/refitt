@@ -94,6 +94,7 @@ recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], Base]]] =
     'object/type':               ('object_type',          lambda r: r.object.type),
     'forecast':                  ('forecast',             lambda r: r.forecast),
 
+    'predicted':                 ('observation',          lambda r: r.predicted),
     'predicted/type':            ('observation_type',     lambda r: r.predicted.type),
     'predicted/object':          ('object',               lambda r: r.predicted.object),
     'predicted/object/type':     ('object_type',          lambda r: r.predicted.object.type),
@@ -101,6 +102,7 @@ recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], Base]]] =
     'predicted/source/type':     ('source_type',          lambda r: r.predicted.source.type),
     'predicted/source/user':     ('user',                 lambda r: r.predicted.source.user),
 
+    'observed':                  ('observation',          lambda r: r.observed),
     'observed/type':             ('observation_type',     lambda r: r.observed.type),
     'observed/object':           ('object',               lambda r: r.observed.object),
     'observed/object/type':      ('object_type',          lambda r: r.observed.object.type),
@@ -261,7 +263,11 @@ def get_recommendation_partial(client: Client, id: int, relation: str) -> dict:
     except KeyError:
         raise NotFound(f'/recommendation/{id}/{relation}')
     params = collect_parameters(request, optional=['join', ], defaults={'join': False})
-    return {name: get_member(get(id, client)).to_json(**params)}
+    member = get_member(get(id, client))
+    if member is not None:
+        return {name: member.to_json(**params)}
+    else:
+        raise NotFound(f'Member \'{relation}\' not available for recommendation ({id})')
 
 
 for path in recommendation_slices:
