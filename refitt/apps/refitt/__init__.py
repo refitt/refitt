@@ -21,7 +21,7 @@ import logging
 from ...__meta__ import (__version__, __description__,
                          __copyright__, __developer__, __contact__,
                          __website__, __ascii_art__)
-from . import config, database, service, auth, login, api
+from . import config, database, service, auth, login, api, recommendation
 
 # external libs
 from cmdkit.app import Application, ApplicationGroup
@@ -52,6 +52,7 @@ config                 {config.__doc__}
 database               {database.__doc__}
 service                {service.__doc__}
 api                    {api.__doc__}
+recommendation         {recommendation.__doc__}
 pipeline               ...
 notify                 ...
 
@@ -90,6 +91,7 @@ class RefittApp(ApplicationGroup):
                 'database': database.DatabaseApp,
                 'service': service.ServiceApp,
                 'api': api.WebApp,
+                'recommendation': recommendation.RecommendationApp,
                 }
 
 

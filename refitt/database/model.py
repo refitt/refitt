@@ -184,13 +184,20 @@ class CoreMixin:
     @classmethod
     def add(cls: Type[Base], data: dict, session: _Session = None) -> Base:
         """Add record from existing `data`, return constructed record."""
+        record, = cls.add_all([data, ], session=session)
+        return record
+
+    @classmethod
+    def add_all(cls: Type[Base], data: List[dict], session: _Session = None) -> List[Base]:
+        """Add list of new records to the database and return constructed records."""
         session = session or _Session()
         try:
-            record = cls.from_dict(data)
-            session.add(record)
+            records = [cls.from_dict(record) for record in data]
+            session.add_all(records)
             session.commit()
-            log.info(f'Added {cls.__tablename__} ({record.id})')
-            return record
+            for record in records:
+                log.info(f'Added {cls.__tablename__} ({record.id})')
+            return records
         except (IntegrityError, DatabaseError):
             session.rollback()
             raise
@@ -1059,11 +1066,7 @@ class RecommendationGroup(Base, CoreMixin):
     @classmethod
     def new(cls, session: _Session = None) -> RecommendationGroup:
         """Create and return a new recommendation group."""
-        session = session or _Session()
-        group = cls()
-        session.add(group)
-        session.commit()
-        return group
+        return cls.add({}, session=session)
 
     @classmethod
     def latest(cls, session: _Session = None) -> RecommendationGroup:
