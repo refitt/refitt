@@ -306,7 +306,10 @@ class RecommendationCreateApp(Application):
 
     def load_from_local(self, filepath: str) -> DataFrame:
         """Load recommendation data from local `filepath`."""
-        return self.loaders[self.file_format](filepath)
+        if os.path.exists(filepath):
+            return self.loaders[self.file_format](filepath)
+        else:
+            raise FileNotFoundError(f'File does not exist: {filepath}')
 
     @cached_property
     def loaders(self) -> Dict[str, Loader]:
