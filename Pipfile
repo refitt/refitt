@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+refitt = {editable = true, path = "."}
+
+[dev-packages]
+pytest = "*"
+pytest-cov = "*"
+hypothesis = "*"
+ipython = "*"
+twine = "*"
+sphinx = "*"
+pydata-sphinx-theme = "*"
+
+[requires]
+python_version = "3.8"
