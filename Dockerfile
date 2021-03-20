@@ -21,7 +21,7 @@ RUN cd /app && pipenv install --system
 RUN touch /etc/refitt.toml
 RUN mkdir -p /var/lib/refitt
 ENV REFITT_DATABASE_BACKEND=sqlite \
-    REFITT_DATABASE_DATABASE=/var/lib/refitt/main.db \
+    REFITT_DATABASE_FILE=/var/lib/refitt/main.db \
     REFITT_LOGGING_LEVEL=INFO
 
 RUN refitt database init --core

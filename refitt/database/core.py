@@ -34,54 +34,117 @@ from ..core.config import config, Namespace, ConfigurationError
 log = logging.getLogger(__name__)
 
 
-class URL(dict):
+class DatabaseURL(dict):
     """
-    Dictionary-like structure for representing a connection string.
+    Dataclass-like representation for database URL.
+    Standard arguments apply. Extra arguments are encoded as URL parameters.
 
-    Something like:
-        backend://[[user[:password]@]host[:port]]/[database][?params...]
+    Example:
+        >>> url = DatabaseURL(provider='postgresql', database='mine')
+        >>> url.encode()
+        'postgresql://localhost/mine'
     """
 
-    def __init__(self, backend: str, database: str, user: str = None, password: str = None,
-                 host: str = None, port: int = None, **parameters) -> None:
-        super().__init__(backend=backend, database=database, user=user, password=password,
-                         host=host, port=port, parameters=parameters)
+    def __init__(self, **fields) -> None:
+        """Initialize fields."""
+        try:
+            super().__init__(backend=fields.pop('backend'),
+                             database=fields.pop('database', None),
+                             file=fields.pop('file', None),
+                             user=fields.pop('user', None),
+                             password=fields.pop('password', None),
+                             host=fields.pop('host', None),
+                             port=fields.pop('port', None),
+                             parameters=fields)
+        except KeyError as _error:
+            raise AttributeError('Missing \'backend\'') from _error
+        self._validate()
+
+    def __getattr__(self, field: str) -> Any:
+        return self.get(field)
 
     def __repr__(self) -> str:
-        masked = repr({key: value if key != 'password' else ('***' if self.password else None)
-                       for key, value in self.items()})
-        return f'<URL({masked})>'
+        """Interactive representation."""
+        masked = self.__class__(**self)
+        masked['password'] = None if self.password is None else '****'
+        value = '<DatabaseURL('
+        value += ', '.join([field + '=' + repr(masked.get(field))
+                            for field in ('backend', 'database', 'file', 'user', 'password', 'host', 'port')
+                            if masked.get(field) is not None])
+        if self.parameters:
+            value += ', ' + ', '.join([field + '=' + repr(value)
+                                       for field, value in self.parameters.items()])
+        return value + ')>'
 
-    def __getattr__(self, item: str) -> Any:
-        return self.get(item)
+    def _validate(self) -> None:
+        """Validate provided arguments."""
+        if self.backend == 'sqlite':
+            self._validate_for_sqlite()
+        else:
+            self._validate_database()
+            self._validate_user_and_password()
+
+    def _validate_user_and_password(self) -> None:
+        if self.user is not None and self.password is None:
+            raise AttributeError('Must provide \'password\' if \'user\' provided')
+        if self.user is None and self.password is not None:
+            raise AttributeError('Must provide \'user\' if \'password\' provided')
+
+    def _validate_for_sqlite(self) -> None:
+        if self.file is None:
+            raise AttributeError('Must provide \'file\' for SQLite')
+        if self.database is not None:
+            raise AttributeError('Must provide \'file\' not \'database\' for SQLite')
+        for field in ('user', 'password', 'host', 'port'):
+            if self.get(field) is not None:
+                raise AttributeError(f'Cannot provide \'{field}\' for SQLite')
+
+    def _validate_database(self) -> None:
+        if self.file:
+            raise AttributeError('Cannot provide \'file\' if not SQLite')
+        if not self.database:
+            raise AttributeError('Must provide \'database\' if not SQLite')
 
     def encode(self) -> str:
         """Construct URL string with encoded parameters."""
+        return ''.join([
+            f'{self.backend}://',
+            self._format_user_and_password(),
+            self._format_host_and_port(),
+            self._format_database_or_file(),
+            self._format_parameters(),
+        ])
 
-        url = f'{self.backend}://'
-
-        if self.user and self.password:
-            url += f'{self.user}:{self.password}@'
-        elif self.user and not self.password:
-            url += f'{self.user}@'
-        elif self.password and not self.user:
-            raise ConfigurationError('Missing \'password\' for \'user\'')
-
-        if self.host and self.port:
-            url += f'{self.host}:{self.port}'
-        elif self.host and not self.port:
-            url += f'{self.host}'
-        elif self.port and not self.host:
-            url += f'localhost:{self.port}'
-
-        if self.database:
-            url += f'/{self.database}'
-
+    def _format_parameters(self) -> str:
         if self.parameters:
-            encoded_params = urlencode(self.parameters)
-            url += f'?{encoded_params}'
+            return '?' + urlencode(self.parameters)
+        else:
+            return ''
 
-        return url
+    def _format_database_or_file(self) -> str:
+        if self.database:
+            return f'/{self.database}'
+        else:
+            return f'/{self.file}'
+
+    def _format_host_and_port(self) -> str:
+        if self.host and self.port:
+            return f'{self.host}:{self.port}'
+        elif self.host and not self.port:
+            return f'{self.host}'
+        elif self.port and not self.host:
+            return f'localhost:{self.port}'
+        else:
+            if self.user or self.password:
+                return 'localhost'
+            else:
+                return ''
+
+    def _format_user_and_password(self) -> str:
+        if self.user and self.password:
+            return f'{self.user}:{self.password}@'
+        else:
+            return ''
 
     def __str__(self) -> str:
         return self.encode()
@@ -97,7 +160,7 @@ class URL(dict):
         return r
 
     @classmethod
-    def from_namespace(cls, ns: Namespace) -> URL:
+    def from_namespace(cls, ns: Namespace) -> DatabaseURL:
         fields = {}
         for key in ns.keys():
             key_ = cls._strip_endings(key, '_env', '_eval')
@@ -111,26 +174,29 @@ backends = {
     'sqlite': 'sqlite',
     'postgres': 'postgresql',
     'postgresql': 'postgresql',
-    'timescaledb': 'postgresql',
 }
 
 
-config = config.database
+config = Namespace(config.database.copy())
 schema = config.pop('schema', None)
 connect_args = config.pop('connect_args', {})
 
 
-if config.backend not in backends:
-    raise ConfigurationError(f'Unsupported backend \'{config.backend}\'')
-
-
-# NOTE: TimescaleDB is actually PostgreSQL
-_url_params = Namespace(**{**config.copy(), **{'backend': backends[config.backend]}})
-_url = URL.from_namespace(_url_params)
 try:
-    engine = create_engine(_url.encode(), connect_args=connect_args)
+    params = Namespace(**{**config.copy(), **{'backend': backends[config.backend]}})
+    url = DatabaseURL.from_namespace(params)
+except AttributeError as error:
+    raise ConfigurationError(str(error)) from error
+
+
+if config.backend not in backends:
+    raise ConfigurationError(f'Unsupported database \'{config.provider}\'')
+
+
+try:
+    engine = create_engine(url.encode(), connect_args=connect_args)
 except ArgumentError as error:
-    raise ConfigurationError(f'Backend config: {repr(_url)}') from error
+    raise ConfigurationError(f'Database URL: {repr(url)}') from error
 
 
 # create thread-local sessions
