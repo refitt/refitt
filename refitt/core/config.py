@@ -63,7 +63,6 @@ DEFAULT = Namespace({
 
     'database': {
             'backend': 'sqlite',
-            'database': ':memory:'
     },
 
     'logging': {
