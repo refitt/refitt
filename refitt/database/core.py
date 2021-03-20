@@ -48,7 +48,7 @@ class DatabaseURL(dict):
     def __init__(self, **fields) -> None:
         """Initialize fields."""
         try:
-            super().__init__(provider=fields.pop('provider'),
+            super().__init__(backend=fields.pop('backend'),
                              database=fields.pop('database', None),
                              file=fields.pop('file', None),
                              user=fields.pop('user', None),
@@ -57,7 +57,7 @@ class DatabaseURL(dict):
                              port=fields.pop('port', None),
                              parameters=fields)
         except KeyError as _error:
-            raise AttributeError('Missing \'provider\'') from _error
+            raise AttributeError('Missing \'backend\'') from _error
         self._validate()
 
     def __getattr__(self, field: str) -> Any:
@@ -69,7 +69,7 @@ class DatabaseURL(dict):
         masked['password'] = None if self.password is None else '****'
         value = '<DatabaseURL('
         value += ', '.join([field + '=' + repr(masked.get(field))
-                            for field in ('provider', 'database', 'file', 'user', 'password', 'host', 'port')
+                            for field in ('backend', 'database', 'file', 'user', 'password', 'host', 'port')
                             if masked.get(field) is not None])
         if self.parameters:
             value += ', ' + ', '.join([field + '=' + repr(value)
@@ -78,7 +78,7 @@ class DatabaseURL(dict):
 
     def _validate(self) -> None:
         """Validate provided arguments."""
-        if self.provider == 'sqlite':
+        if self.backend == 'sqlite':
             self._validate_for_sqlite()
         else:
             self._validate_database()
@@ -108,7 +108,7 @@ class DatabaseURL(dict):
     def encode(self) -> str:
         """Construct URL string with encoded parameters."""
         return ''.join([
-            f'{self.provider}://',
+            f'{self.backend}://',
             self._format_user_and_password(),
             self._format_host_and_port(),
             self._format_database_or_file(),
@@ -170,7 +170,7 @@ class DatabaseURL(dict):
 
 # allowed database backends
 # mapping translates from name to library/package name (actual)
-providers = {
+backends = {
     'sqlite': 'sqlite',
     'postgres': 'postgresql',
     'postgresql': 'postgresql',
@@ -182,12 +182,17 @@ schema = config.pop('schema', None)
 connect_args = config.pop('connect_args', {})
 
 
-if config.provider not in providers:
+try:
+    params = Namespace(**{**config.copy(), **{'backend': backends[config.backend]}})
+    url = DatabaseURL.from_namespace(params)
+except AttributeError as error:
+    raise ConfigurationError(str(error)) from error
+
+
+if config.backend not in backends:
     raise ConfigurationError(f'Unsupported database \'{config.provider}\'')
 
 
-params = Namespace(**{**config.copy(), **{'provider': providers[config.provider]}})
-url = DatabaseURL.from_namespace(params)
 try:
     engine = create_engine(url.encode(), connect_args=connect_args)
 except ArgumentError as error:
