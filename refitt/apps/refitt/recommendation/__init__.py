@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Manage recommendations."""
+"""Create and manage recommendations."""
 
 
 # external libs
@@ -18,7 +18,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import create
+from . import publish
 
 
 PROGRAM = 'refitt recommendation'
@@ -31,7 +31,7 @@ HELP = f"""\
 {USAGE}
 
 commands:
-create                   {create.__doc__}
+publish                  {publish.__doc__}
 
 options:
 -h, --help               Show this message and exit.
@@ -49,5 +49,5 @@ class RecommendationApp(ApplicationGroup):
 
     command = None
     commands = {
-        'create': create.RecommendationCreateApp,
+        'publish': publish.RecommendationPublishApp,
     }

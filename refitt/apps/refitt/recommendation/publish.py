@@ -35,7 +35,7 @@ from pandas import DataFrame, read_csv, read_json, read_hdf
 from sqlalchemy.exc import IntegrityError
 
 
-PROGRAM = 'refitt recommendation create'
+PROGRAM = 'refitt recommendation publish'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 usage: {PROGRAM} --group [--print]
@@ -110,7 +110,7 @@ def check_schema(loader: Loader) -> Loader:
     return wrapped_loader
 
 
-class RecommendationCreateApp(Application):
+class RecommendationPublishApp(Application):
     """Application class for recommendation and group creation."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
