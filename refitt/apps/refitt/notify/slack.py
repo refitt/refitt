@@ -12,43 +12,27 @@
 
 """Post slack messages and files."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import List
 
 # standard libs
+import logging
 import functools
 
 # internal libs
-from ....core.exceptions import log_and_exit
-from ....core.logging import Logger, cli_setup
-from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
+from ....core.exceptions import log_exception
 
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 
 
-# program name is constructed from module file name
-PROGRAM = f'{__appname__} notify slack'
-PADDING = ' ' * len(PROGRAM)
-
+PROGRAM = f'refitt notify slack'
 USAGE = f"""\
-usage: {PROGRAM} CHANNEL [MESSAGE] [--from BOT]
-       {PADDING} [--attach FILE]
-       {PADDING} [--debug | --verbose] [--syslog]
-       {PADDING} [--help]
-
-{__doc__}
-If no message/file is given it will be read from standard input.\
-"""
-
-EPILOG = f"""\
-Documentation and issue tracking at:
-{__website__}
-
-Copyright {__copyright__}
-{__developer__} {__contact__}.\
+usage: {PROGRAM} [-h] CHANNEL [MESSAGE] [--from BOT] [--attach FILE]
+{__doc__}\
 """
 
 HELP = f"""\
@@ -61,21 +45,16 @@ MESSAGE                  A message or @FILE.
 options:
 -f, --from      NAME     Name of bot account to use.
 -a, --attach    FILE     Path to file for attachment.
--d, --debug              Show debugging messages.
--v, --verbose            Show information messages.
-    --syslog             Use syslog style messages.
--h, --help               Show this message and exit.
-
-{EPILOG}
+-h, --help               Show this message and exit.\
 """
 
 
-# initialize module level logger
-log = Logger(__name__)
+# application logger
+log = logging.getLogger('refitt')
 
 
-class Slack(Application):
-    """Post slack messages and files."""
+class SlackApp(Application):
+    """Application class for slack notifications."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
@@ -91,28 +70,11 @@ class Slack(Application):
     attachment: List[str] = None
     interface.add_argument('-a', '--attach', dest='attachment')
 
-    debug: bool = False
-    verbose: bool = False
-    logging_interface = interface.add_mutually_exclusive_group()
-    logging_interface.add_argument('-d', '--debug', action='store_true')
-    logging_interface.add_argument('-v', '--verbose', action='store_true')
-
-    syslog: bool = False
-    interface.add_argument('--syslog', action='store_true')
-
     exceptions = {
-        RuntimeError: functools.partial(log_and_exit, logger=log.critical,
+        RuntimeError: functools.partial(log_exception, logger=log.critical,
                                         status=exit_status.runtime_error),
     }
 
     def run(self) -> None:
-        """Create and send email."""
-        raise RuntimeError('slack integration is not implemented')
-
-    def __enter__(self) -> Slack:
-        """Initialize resources."""
-        cli_setup(self)
-        return self
-
-    def __exit__(self, *exc) -> None:
-        """Release resources."""
+        """Business logic for application class."""
+        raise RuntimeError('Slack integration is not implemented')

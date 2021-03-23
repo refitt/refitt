@@ -10,80 +10,43 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Send notifications to recipients."""
+"""Send notifications."""
 
-# standard libs
-import sys
-
-# internal libs
-from ....core.logging import Logger
-from ....core.exceptions import CompletedCommand
-from ....__meta__ import __appname__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
-from cmdkit.app import Application
-from cmdkit.cli import Interface, ArgumentError
+from cmdkit.app import ApplicationGroup
+from cmdkit.cli import Interface
 
-# commands
-from .email import Email
-from .slack import Slack
+# internal libs
+from . import mail, slack
 
-
-COMMANDS = {
-    'email': Email,
-    'slack': Slack,
-}
-
-PROGRAM = f'{__appname__} notify'
-PADDING = ' ' * len(PROGRAM)
-
+PROGRAM = f'refitt notify'
 USAGE = f"""\
-usage: {PROGRAM} [--help] <platform> [<args>...] [--help]
+usage: {PROGRAM} [-h] <command> [<args>...]
 {__doc__}\
-"""
-
-EPILOG = f"""\
-Documentation and issue tracking at:
-{__website__}
-
-Copyright {__copyright__}
-{__developer__} {__contact__}.\
 """
 
 HELP = f"""\
 {USAGE}
 
-platforms:
-email                 {Email.__doc__}
-slack                 {Slack.__doc__}
+commands:
+mail                     {mail.__doc__}
+slack                    {slack.__doc__}
 
 options:
--h, --help            Show this message and exit.
+-h, --help               Show this message and exit.
 
 Use the -h/--help flag with the above groups/commands to
-learn more about their usage.
-
-{EPILOG}\
+learn more about their usage.\
 """
 
-
-class NotifyGroup(Application):
-    """Send notifications to platforms."""
+class NotifyApp(ApplicationGroup):
+    """Application class for database command group."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
-
-    command: str = None
     interface.add_argument('command')
 
-    exceptions = {
-        CompletedCommand: (lambda exc: int(exc.args[0])),
-    }
-
-    def run(self) -> None:
-        """Show usage/help/version or defer to command."""
-
-        if self.command in COMMANDS:
-            status = COMMANDS[self.command].main(sys.argv[3:])
-            raise CompletedCommand(status)
-        else:
-            raise ArgumentError(f'"{self.command}" is not a command.')
+    command = None
+    commands = {'mail': mail.MailApp,
+                'slack': slack.SlackApp,
+                }
