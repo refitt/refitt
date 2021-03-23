@@ -11,7 +11,7 @@
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
 """
-Send emails.
+Send electronic mail.
 """
 
 # type annotations
@@ -25,6 +25,7 @@ import logging
 from abc import abstractproperty
 from datetime import datetime
 from smtplib import SMTP
+from dataclasses import dataclass
 from ssl import SSLContext, create_default_context
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -39,40 +40,22 @@ from pandas import read_csv
 log = logging.getLogger(__name__)
 
 
+@dataclass
 class UserAuth:
     """
-    A username and password.
+    A username and password combination.
 
     Example:
-    >>> auth = UserAuth('me', 'my-password')
-    >>> auth
-    UserAuth(username="me", password="****")
-
-    >>> auth.username
-    "me"
+        >>> UserAuth('me', 'my-password')
+        UserAuth(username="me", password="****")
     """
 
-    _username: str
-    _password: str
-
-    def __init__(self, username: str, password: str) -> None:
-        """Specify location of mail server."""
-        self._username = str(username)
-        self._password = str(password)
-
-    @property
-    def username(self) -> str:
-        """The username."""
-        return self._username
-
-    @property
-    def password(self) -> str:
-        """The password."""
-        return self._password
+    username: str
+    password: str
 
     def __str__(self) -> str:
         """String representation."""
-        return f'{self.__class__.__name__}(username="{self.username}", password="****")'
+        return f'<UserAuth(username=\'{self.username}\', password=\'****\')>'
 
     def __repr__(self) -> str:
         """Interactive representation."""
@@ -102,22 +85,58 @@ class Mail:
     All the message properties can be dynamically altered and the
     underlying MIME document will be modified inplace.
 
-    Example:
-        >>> mail = Mail('me@mail.com', 'you@mail.com',
-        ...             subject='Hello!', text='Hello, world!')
+    Examples:
 
-    Send an html email with plain text alternative.
-    >>> mail = Mail('me@mail.com', ['you@mail.com', 'you2@mail.com'],
-    ...             subject='Hello', text='Hello, world!', subtype='alternative')
-    >>> mail.text = 'Hello, other!'
-    >>> mail.html = '''
-    ... <html>
-    ...     <head></head>
-    ...     <body>
-    ...         <p>Hello, world!</p>
-    ...     </body>
-    ... </html>
-    ... '''
+        Initialize with the sender and recipient addresses.
+        Specify a 'subject' and either 'text' or 'html' for the body.
+        >>> mail = Mail('me@mail.com', 'you@mail.com',
+        ...             subject='Test', text='Hello, world!')
+
+
+        A list of multiple recipients is acceptable.
+        If both 'text' and 'html' are provided, the 'text' can be an "alternative".
+        All attributes can be modified safely with assigment.
+        >>> mail = Mail('me@mail.com', ['you@mail.com', 'you2@mail.com'],
+        ...             subject='Hello', text='Hello, world!', subtype='alternative')
+        >>> mail.text = 'Hello, other!'
+        >>> mail.html = '''
+        ... <html>
+        ...     <head></head>
+        ...     <body>
+        ...         <p>Hello, world!</p>
+        ...     </body>
+        ... </html>
+        ... '''
+
+        Preview the constructed MIME text by viewing the repr/str.
+        >>> Mail('me@mail.com', 'you@mail.com', subject='Test', text='Hello, world!')
+        Content-Type: multipart/mixed; boundary="===============5061703618243507416=="
+        MIME-Version: 1.0
+        From: me@mail.com
+        To: you@mail.com
+        Subject: Test
+        Date: Tue, 23 Mar 2021 16:21:31 -0400
+
+        --===============5061703618243507416==
+        Content-Type: text/plain; charset="us-ascii"
+        MIME-Version: 1.0
+        Content-Transfer-Encoding: 7bit
+
+        Hello, world!
+        --===============5061703618243507416==--
+
+        Each of 'cc', 'bcc', and 'attach' can be a single string or a list as well.
+        Attachments should be local file paths.
+        >>> mail = Mail('me@mail.com', 'you@mail.com', subject='Test', text='Hello, world!',
+        ...             cc='foo@mail.com', bcc=['bar@mail.com', ], attach='some_file.txt')
+
+        Attachments can be a dictionary of alternative names for each file.
+        >>> mail = Mail('me@mail.com', 'you@mail.com', subject='Test', text='Hello, world!',
+        ...             attach={'alternate_name.csv': 'real/file/path.csv', })
+
+    See Also:
+        MailServer: Connect to local or remote SMTP server to send mail.
+        MailTemplate: Special purpose Mail with default/required and/or pre-formatted attributes.
     """
 
     _mime: MIMEMultipart = None
@@ -358,22 +377,35 @@ class Mail:
         """String representation."""
         return str(self)
 
+    def send(self, *args, **kwargs) -> None:
+        """Automatically construct MailServer to send mail."""
+        with MailServer(*args, **kwargs) as server:
+            server.send(self)
 
-class Server:
+
+class MailServer:
     """
     A mail server.
 
-    Example:
-        >>> server = Server('smtp.mail.com', 587)
-        >>> server
-        Server('smtp.gmail.com', 587)
+    Examples:
 
-        >>> mail = Mail('me@mail.com', 'you@mail.com',
-        ...             subject='Hello!', text='Hello, world!')
+        Use the local system without authentication.
+        >>> MailServer()
+        MailServer(host='localhost', port=0, auth=None)
 
-        >>> auth = UserAuth('me', 'my-password')
-        >>> with Server('smtp.mail.com', 587, auth) as server:
-    ...     server.send(mail)
+        Otherwise, provide a constructed UserAuth instance.
+        >>> MailServer('smtp.mail.com', 587, UserAuth('me', 'my-password'))
+        MailServer(host='smtp.mail.com', port=587, auth=<UserAuth(username='me', password='****')>)
+
+        Send mail by calling 'connect' on the MailServer and then 'send'.
+        You  must call 'disconnect' after, or just use a context manager.
+        >>> mail = Mail('me@mail.com', 'you@mail.com', subject='Test', text='Hello, world!')
+        >>> with MailServer('smtp.mail.com', 587, UserAuth('me', 'my-password')) as server:
+        ...     server.send(mail)
+
+        Mail has a send method for individual messages.
+        >>> mail = Mail('me@mail.com', 'you@mail.com', subject='Test', text='Hello, world!')
+        >>> mail.send('smtp.mail.com', 587, UserAuth('me', 'my-password'))
     """
 
     _host: str
@@ -383,7 +415,7 @@ class Server:
     _ssl: SSLContext = None
     _server: SMTP = None
 
-    def __init__(self, host: str = 'localhost', port: int = 587, auth: UserAuth = None) -> None:
+    def __init__(self, host: str = 'localhost', port: int = 0, auth: UserAuth = None) -> None:
         """Specify location of mail server."""
         self._host = str(host)
         self._port = int(port)
@@ -404,15 +436,9 @@ class Server:
         """User authentication."""
         return self._auth
 
-    @property
-    def server(self) -> SMTP:
-        """The mail server SMTP connection."""
-        return self._server
-
     def __str__(self) -> str:
         """String representation."""
-        return (f'Server(host="{self.host}", port={self.port}, '
-                f'auth={self.auth})')
+        return f'MailServer(host=\'{self.host}\', port={self.port}, auth={self.auth})'
 
     def __repr__(self) -> str:
         """Interactive representation."""
@@ -434,9 +460,9 @@ class Server:
     def send(self, mail: Mail) -> None:
         """Send email using mail server."""
         outgoing = mail.recipients + mail.cc + mail.bcc
-        self.server.sendmail(mail.address, outgoing, str(mail))
+        self._server.sendmail(mail.address, outgoing, str(mail))
 
-    def __enter__(self) -> Server:
+    def __enter__(self) -> MailServer:
         """Connect to mail server."""
         self.connect()
         return self
@@ -446,16 +472,16 @@ class Server:
         self.disconnect()
 
 
-class Template(Mail):
-    """An email message with a specifically formatted template."""
+class MailTemplate(Mail):
+    """Special purpose Mail with a custom formatted body."""
 
     @abstractproperty
     def required(self) -> int:
         """The number of required positional arguments."""
 
 
-class TestMail(Template):
-    """Basic test email."""
+class TestMail(MailTemplate):
+    """Simple mail for testing purposes."""
 
     message = "This is a test of REFITT's automated messaging system."
     required = 0
@@ -463,21 +489,10 @@ class TestMail(Template):
     def __init__(self, *args, **kwargs) -> None:
         """No attachments or subject allowed."""
 
-        attachments = kwargs.pop('attach', None)
-        if attachments:
-            log.warning('ignore attachments for test message')
-
-        text = kwargs.pop('text', None)
-        if text is not None:
-            log.warning('ignoring text body for test message')
-
-        html = kwargs.pop('html', None)
-        if html is not None:
-            log.warning('ignoring html body for test message')
-
-        subject = kwargs.pop('subject', None)
-        if subject is not None:
-            log.warning('ignore subject for test message')
+        for field in ('attach', 'text', 'html', 'subject'):
+            value = kwargs.pop(field, None)
+            if value is not None:
+                raise AttributeError(f'Cannot specify \'{field}\' for TestMail')
 
         super().__init__(*args, **{'text': self.message, **kwargs})
         self.subject = f'REFITT Test ({self.date})'
@@ -514,8 +529,8 @@ RECOMMENDATION_TEMPLATE = """\
 """
 
 
-class RecommendationMail(Template):
-    """Recommendation email with a CSV of targets attached."""
+class RecommendationMail(MailTemplate):
+    """Recommendation mail with a CSV of targets attached."""
 
     required = 1
 
@@ -525,11 +540,11 @@ class RecommendationMail(Template):
         A single attachment is required to be a CSV file.
         """
 
-        subject = kwargs.pop('subject', None)
-        if subject is not None:
-            raise ValueError('RecommendationMail already defines the subject line.')
+        for field in ('text', 'html', 'subject'):
+            value = kwargs.pop(field, None)
+            if value is not None:
+                raise AttributeError(f'Cannot specify \'{field}\' for RecommendationMail')
 
-        # check attachments
         attachment = kwargs.pop('attach', None)
         if not attachment or len(attachment) != 1:
             raise ValueError('RecommendationMail requires a single file attachment.')
