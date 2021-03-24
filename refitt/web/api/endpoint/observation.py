@@ -13,7 +13,11 @@
 """Observation endpoints."""
 
 
+# type annotations
+from typing import Tuple, IO
+
 # standard libs
+from io import BytesIO
 from functools import partial
 
 # external libs
@@ -42,13 +46,13 @@ info: dict = {
         '/observation/<id>/source/facility': {},
         '/observation/<id>/alert': {},
         '/observation/<id>/forecast': {},
-        '/observation/<id>/file': {},  # TODO: GET, POST
-        '/observation/<id>/file/type': {},  # TODO: GET
+        '/observation/<id>/file/type': {},
         '/observation/type/<id>': {},
         '/observation/alert/<id>': {},
         '/observation/forecast/<id>': {},
-        '/observation/file/<id>': {},  # TODO: GET
-        '/observation/file/type/<id>': {},  # TODO: GET
+        '/observation/file/<id>': {},
+        '/observation/file/<id>/type': {},
+        '/observation/file/type/<id>': {},
     }
 }
 
@@ -532,6 +536,89 @@ info['Endpoints']['/observation/<id>/forecast']['GET'] = {
 }
 
 
+@application.route('/observation/<int:id>/file', methods=['GET'])
+@endpoint('application/octet-stream')
+@authenticated
+@authorization(level=None)
+def get_observation_file(client: Client, id: int) -> Tuple[IO, dict]:
+    """Query for file related to observation by `id`."""
+    disallow_parameters(request)
+    file = File.from_observation(id)
+    if file.observation.source.user_id != client.user_id and client.level > 1:
+        raise PermissionDenied('File is not public')
+    return BytesIO(file.data), {
+        'as_attachment': True, 'attachment_filename': f'observation_{id}.{file.type.name}',
+        'conditional': True,
+    }
+
+
+info['Endpoints']['/observation/<id>/file']['GET'] = {
+    'Description': 'Request file related to observation by ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for observation',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'File attachment',
+                'Type': 'application/octet-stream'
+            },
+        },
+        401: {'Description': 'Access revoked, token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Observation or file does not exist'},
+    }
+}
+
+
+@application.route('/observation/<int:id>/file/type', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_observation_file_type(client: Client, id: int) -> dict:
+    """Query for file type of file related to observation by `id`."""
+    disallow_parameters(request)
+    file = File.from_observation(id)
+    if file.observation.source.user_id != client.user_id and client.level > 1:
+        raise PermissionDenied('File is not public')
+    return {'file_type': file.type.to_json(), }
+
+
+info['Endpoints']['/observation/<id>/file/type']['GET'] = {
+    'Description': 'Request type for file related to observation by ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for observation',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'File type data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked, token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Observation or file does not exist'},
+    }
+}
+
+
 @application.route('/observation/type/<int:id>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
@@ -642,3 +729,122 @@ info['Endpoints']['/observation/forecast/<id>']['GET'] = {
     }
 }
 
+
+@application.route('/observation/file/<int:id>', methods=['GET'])
+@endpoint('application/octet-stream')
+@authenticated
+@authorization(level=None)
+def get_file(client: Client, id: int) -> Tuple[IO, dict]:
+    """Query for observation file by `id`."""
+    disallow_parameters(request)
+    file = File.from_id(id)
+    if file.observation.source.user_id != client.user_id and client.level > 1:
+        raise PermissionDenied('File is not public')
+    return BytesIO(file.data), {
+        'as_attachment': True, 'attachment_filename': f'observation_{file.observation_id}.{file.type.name}',
+        'conditional': True,
+    }
+
+
+info['Endpoints']['/observation/file/<id>']['GET'] = {
+    'Description': 'Request observation file by ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for file',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'File attachment',
+                'Type': 'application/octet-stream'
+            },
+        },
+        401: {'Description': 'Access revoked, token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'File does not exist'},
+    }
+}
+
+
+@application.route('/observation/file/<int:id>/type', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_type_for_file(client: Client, id: int) -> dict:
+    """Query for file type of observation file by file `id`."""
+    disallow_parameters(request)
+    file = File.from_id(id)
+    if file.observation.source.user_id != client.user_id and client.level > 1:
+        raise PermissionDenied('File is not public')
+    return {'file_type': file.type.to_json(), }
+
+
+info['Endpoints']['/observation/file/<id>/type']['GET'] = {
+    'Description': 'Request file type for observation file by file ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for file',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'File type data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked, token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'File does not exist'},
+    }
+}
+
+
+@application.route('/observation/file/type/<int:id>', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_file_type(client: Client, id: int) -> dict:  # noqa: unused client
+    """Query for file type by `id`."""
+    disallow_parameters(request)
+    return {'file_type': FileType.from_id(id).to_json(), }
+
+
+info['Endpoints']['/observation/file/type/<id>']['GET'] = {
+    'Description': 'Request file type by ID',
+    'Permissions': 'Public',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for file type',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'File type data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked, token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'File type does not exist'},
+    }
+}
