@@ -46,6 +46,7 @@ info: dict = {
         '/observation/<id>/source/facility': {},
         '/observation/<id>/alert': {},
         '/observation/<id>/forecast': {},
+        '/observation/<id>/file': {},
         '/observation/<id>/file/type': {},
         '/observation/type/<id>': {},
         '/observation/alert/<id>': {},
