@@ -103,7 +103,7 @@ class TestAddFacility(Endpoint):
         status, payload = self.post(self.route, client_id=admin.id, json=data)
         assert status == RESPONSE_MAP[ConstraintViolation]
         assert payload['Status'] == 'Error'
-        assert 'name' in payload['Message'] and 'Croft_4m' in payload['Message']
+        assert 'facility' in payload['Message'] and 'name' in payload['Message']
         # NOTE: exact message depends on backend database error message formatting
 
     def test_invalid_parameter(self) -> None:

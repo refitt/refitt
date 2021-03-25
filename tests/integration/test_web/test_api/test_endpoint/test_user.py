@@ -101,7 +101,7 @@ class TestAddUser(Endpoint):
         status, payload = self.post(self.route, client_id=admin.id, json=data)
         assert status == RESPONSE_MAP[ConstraintViolation]
         assert payload['Status'] == 'Error'
-        assert 'alias' in payload['Message'] and 'tomb_raider' in payload['Message']
+        assert 'user' in payload['Message'] and 'alias' in payload['Message']
         # NOTE: exact message depends on backend database error message formatting
 
     def test_invalid_parameter(self) -> None:

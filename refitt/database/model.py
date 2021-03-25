@@ -899,13 +899,13 @@ class Observation(Base, CoreMixin):
     def with_object(cls, object_id: int, session: _Session = None) -> List[Observation]:
         """All observations with `object_id`."""
         session = session or _Session()
-        return session.query(cls).filter(cls.object_id == object_id).all()
+        return session.query(cls).order_by(cls.id).filter(cls.object_id == object_id).all()
 
     @classmethod
     def with_source(cls, source_id: int, session: _Session = None) -> List[Observation]:
         """All observations with `source_id`."""
         session = session or _Session()
-        return session.query(cls).filter(cls.source_id == source_id).all()
+        return session.query(cls).order_by(cls.id).filter(cls.source_id == source_id).all()
 
 
 # indices for observation table
