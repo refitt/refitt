@@ -22,6 +22,7 @@ import sys
 import socket
 import logging
 import functools
+import subprocess
 
 # internal libs
 from ....web.api import application as api
@@ -30,7 +31,6 @@ from ....core.exceptions import log_exception
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
-from gunicorn.app.wsgiapp import run as _run_gunicorn
 
 
 PROGRAM = 'service api'
@@ -121,5 +121,4 @@ class WebApp(Application):
         cmd = [path, '--bind', f'0.0.0.0:{self.port}',
                '--workers', f'{self.workers}', '--timeout', f'{self.timeout}']
         cmd += cert_ops + ['refitt.web.api']
-        sys.argv = cmd
-        _run_gunicorn()
+        subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
