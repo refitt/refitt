@@ -84,8 +84,8 @@ class WebApp(Application):
     keyfile: str = None
     interface.add_argument('--keyfile', default=None)
 
-    timeout: float = 60.0  # seconds
-    interface.add_argument('-t', '--timeout', type=float, default=timeout)
+    timeout: int = 60  # seconds
+    interface.add_argument('-t', '--timeout', type=int, default=timeout)
 
     dev_mode: bool = False
     interface.add_argument('--dev', action='store_true', dest='dev_mode')
