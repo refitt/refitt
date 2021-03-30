@@ -45,7 +45,7 @@ info: dict = {
 def add_user(admin: Client) -> dict:  # noqa: unused client
     """Add new user profile."""
     disallow_parameters(request)
-    profile = require_data(request, data_format='json', validate=(lambda data: User(**data)))
+    profile = require_data(request, data_format='json', validate=(lambda data: User.from_dict(data)))
     try:
         user_id = profile.pop('id', None)
         if not user_id:
