@@ -14,7 +14,7 @@
 
 
 # internal libs
-from refitt.database.model import User, Source, Observation, ObservationType, Alert, Forecast, File, FileType
+from refitt.database.model import Source, Observation, ObservationType, Alert, Forecast, File, FileType
 from refitt.web.api.response import STATUS, RESPONSE_MAP, NotFound, ParameterInvalid, PermissionDenied, PayloadTooLarge
 from tests.integration.test_web.test_api.test_endpoint import Endpoint
 
@@ -108,6 +108,7 @@ class TestGetObservations(Endpoint):
                 'Response': {'observation': [obs.to_json() for obs in observations
                                              if obs.source_id == source.id]}},
         )
+
 
 class TestGetObservation(Endpoint):
     """Tests for GET /observation/<id> endpoint."""
@@ -638,6 +639,117 @@ class TestGetObservationForecast(Endpoint):
         )
 
 
+class TestGetObservationFile(Endpoint):
+    """Tests for GET /observation/<id>/file endpoint."""
+
+    route: str = '/observation/21/file'  # NOTE: first file in test suite for tomb_raider
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_permission_denied(self) -> None:
+        source = Source.from_name('delta_one_bourne_12in')
+        observation = Observation.with_source(source.id)[0]
+        assert self.get(f'/observation/{observation.id}/file',
+                        client_id=self.get_client('tomb_raider').id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'File is not public'
+            }
+        )
+
+    def test_observation_not_found(self) -> None:
+        client = self.get_client(self.user)
+        assert self.get(f'/observation/0/file', client_id=client.id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No file with observation_id=0',
+            }
+        )
+
+    def test_file_not_found(self) -> None:
+        client = self.get_client(self.user)
+        assert self.get(f'/observation/1/file', client_id=client.id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No file with observation_id=1',
+            }
+        )
+
+    def test_get_by_id(self) -> None:
+        client = self.get_client(self.user)
+        observation = Observation.from_id(21)
+        assert self.get(f'/observation/{observation.id}/file', client_id=client.id, response_type='bytes') == (
+            STATUS['OK'], File.from_observation(observation.id).data
+        )
+
+
+class TestGetObservationFileType(Endpoint):
+    """Tests for GET /observation/<id>/file endpoint."""
+
+    route: str = '/observation/21/file/type'  # NOTE: first file in test suite for tomb_raider
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_permission_denied(self) -> None:
+        source = Source.from_name('delta_one_bourne_12in')
+        observation = Observation.with_source(source.id)[0]
+        assert self.get(f'/observation/{observation.id}/file/type',
+                        client_id=self.get_client('tomb_raider').id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'File is not public'
+            }
+        )
+
+    def test_observation_not_found(self) -> None:
+        client = self.get_client(self.user)
+        assert self.get(f'/observation/0/file/type', client_id=client.id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No file with observation_id=0',
+            }
+        )
+
+    def test_file_not_found(self) -> None:
+        client = self.get_client(self.user)
+        assert self.get(f'/observation/1/file/type', client_id=client.id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No file with observation_id=1',
+            }
+        )
+
+    def test_get_by_id(self) -> None:
+        client = self.get_client(self.user)
+        observation = Observation.from_id(21)
+        file_type = File.from_observation(observation.id).type
+        assert self.get(f'/observation/{observation.id}/file/type', client_id=client.id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'file_type': file_type.to_json()}}
+        )
+
+
 class TestGetType(Endpoint):
     """Tests for GET /observation/type/<id> endpoint."""
 
@@ -743,4 +855,136 @@ class TestGetForecast(Endpoint):
                 'Status': 'Success',
                 'Response': {'forecast': forecast.data},
             }
+        )
+
+
+class TestGetFileType(Endpoint):
+    """Tests for GET /observation/file/type/<id> endpoint."""
+
+    route: str = '/observation/file/type/1'
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_not_found(self) -> None:
+        client = self.get_client(self.user)
+        assert self.get(f'/observation/file/type/0', client_id=client.id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No file_type with id=0',
+            }
+        )
+
+    def test_get_by_id(self) -> None:
+        client = self.get_client(self.user)
+        file_type = FileType.from_id(1)
+        assert self.get(self.route, client_id=client.id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'file_type': file_type.to_json()}}
+        )
+
+
+class TestGetFile(Endpoint):
+    """Tests for GET /observation/file/<id> endpoint."""
+
+    route: str = '/observation/file/3'  # NOTE: first file in test suite for tomb_raider
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_permission_denied(self) -> None:
+        source = Source.from_name('delta_one_bourne_12in')  # NOTE: not tomb_raider
+        observation = Observation.with_source(source.id)[0]
+        file = File.from_observation(observation.id)
+        assert self.get(f'/observation/file/{file.id}',
+                        client_id=self.get_client('tomb_raider').id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'File is not public'
+            }
+        )
+
+    def test_file_not_found(self) -> None:
+        client = self.get_client(self.user)
+        assert self.get(f'/observation/file/0', client_id=client.id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No file with id=0',
+            }
+        )
+
+    def test_get_by_id(self) -> None:
+        client = self.get_client(self.user)
+        file_id = int(self.route.split('/')[-1])
+        file = File.from_id(file_id).to_dict()
+        obs_id = file['observation_id']
+        assert self.get(self.route, client_id=client.id, response_type='file') == (
+            STATUS['OK'], {f'observation_{obs_id}.fits.gz': file['data']}
+        )
+
+
+class TestGetFileTypeForFile(Endpoint):
+    """Tests for GET /observation/file/<id>/type endpoint."""
+
+    route: str = '/observation/file/3/type'  # NOTE: first file in test suite for tomb_raider
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_permission_denied(self) -> None:
+        source = Source.from_name('delta_one_bourne_12in')  # NOTE: not tomb_raider
+        observation = Observation.with_source(source.id)[0]
+        file = File.from_observation(observation.id)
+        assert self.get(f'/observation/file/{file.id}/type',
+                        client_id=self.get_client('tomb_raider').id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'File is not public'
+            }
+        )
+
+    def test_file_not_found(self) -> None:
+        client = self.get_client(self.user)
+        assert self.get(f'/observation/file/0/type', client_id=client.id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No file with id=0',
+            }
+        )
+
+    def test_get_by_id(self) -> None:
+        client = self.get_client(self.user)
+        file_id = int(self.route.split('/')[-2])
+        assert self.get(self.route, client_id=client.id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'file_type': File.from_id(file_id).type.to_json()}}
         )
