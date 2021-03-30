@@ -146,13 +146,18 @@ def endpoint(content_type: str) -> Callable[..., EndpointDecorator]:
                 stream, options = route(*args, **kwargs)
                 return send_file(stream, mimetype='application/octet-stream', **options)
             except Exception as error:
+                response = dict()
                 for exc_type, status_code in RESPONSE_MAP.items():
                     if isinstance(error, exc_type):
                         status = status_code
+                        response['Status'] = 'Error'
                         break
                 else:
                     status = STATUS['Internal Server Error']
-                return Response(b'', status=status, mimetype='application/octet-stream')
+                    response['Status'] = 'Critical'
+                response['Message'] = str(error)
+                return Response(json.dumps(response), status=status,
+                                mimetype='application/json')
             finally:
                 log.info(f'{request.method} {request.path} {status}')
 
