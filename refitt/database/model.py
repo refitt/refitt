@@ -976,6 +976,11 @@ class FileType(Base, CoreMixin):
         except NoResultFound as error:
             raise FileType.NotFound(f'No file_type with name={name}') from error
 
+    @classmethod
+    def all_names(cls) -> List[str]:
+        """All names of currently available file_type.name values."""
+        return [file_type.name for file_type in cls.query().all()]
+
 
 class File(Base, CoreMixin):
     """File table."""
