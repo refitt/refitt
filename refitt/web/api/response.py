@@ -55,6 +55,10 @@ STATUS = {
 }
 
 
+# reversed mapping
+STATUS_CODE = {code: name for name, code in STATUS.items()}
+
+
 class WebException(Exception):
     """Generic to miscellaneous web exceptions."""
 
