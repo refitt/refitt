@@ -444,8 +444,9 @@ def get_recommendation_observed_file(client: Client, id: int) -> Tuple[IO, dict]
     disallow_parameters(request)
     file = File.from_observation(recommendation.observation_id)
     return BytesIO(file.data), {
-        'as_attachment': True, 'attachment_filename': f'observation_{file.observation_id}.{file.type.name}',
-        'conditional': True,
+        'as_attachment': True,
+        'attachment_filename': f'observation_{file.observation_id}.{file.type.name}',
+        'conditional': False,
     }
 
 

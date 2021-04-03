@@ -548,8 +548,9 @@ def get_observation_file(client: Client, id: int) -> Tuple[IO, dict]:
     if file.observation.source.user_id != client.user_id and client.level > 1:
         raise PermissionDenied('File is not public')
     return BytesIO(file.data), {
-        'as_attachment': True, 'attachment_filename': f'observation_{id}.{file.type.name}',
-        'conditional': True,
+        'as_attachment': True,
+        'attachment_filename': f'observation_{id}.{file.type.name}',
+        'conditional': False,
     }
 
 
@@ -742,8 +743,9 @@ def get_file(client: Client, id: int) -> Tuple[IO, dict]:
     if file.observation.source.user_id != client.user_id and client.level > 1:
         raise PermissionDenied('File is not public')
     return BytesIO(file.data), {
-        'as_attachment': True, 'attachment_filename': f'observation_{file.observation_id}.{file.type.name}',
-        'conditional': True,
+        'as_attachment': True,
+        'attachment_filename': f'observation_{file.observation_id}.{file.type.name}',
+        'conditional': False,
     }
 
 
