@@ -159,9 +159,12 @@ class CoreMixin:
         """Build record from JSON data (already loaded as dictionary)."""
         return cls.from_dict({k: _load(v) for k, v in data.items()})
 
-    def to_json(self, join: bool = False) -> Dict[str, __VT]:
+    def to_json(self, pop: List[str] = None, join: bool = False) -> Dict[str, __VT]:
         """Convert record values into JSON formatted types."""
         data = {k: _dump(v) for k, v in self.to_dict().items()}
+        if pop is not None:
+            for field in pop:
+                data.pop(field)
         if join is True:
             for name in self.relationships:
                 record = getattr(self, name)

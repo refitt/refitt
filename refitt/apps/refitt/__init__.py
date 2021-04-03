@@ -21,7 +21,7 @@ import logging
 from ...__meta__ import (__version__, __description__,
                          __copyright__, __developer__, __contact__,
                          __website__, __ascii_art__)
-from . import config, database, service, auth, login, api, notify, recommendation, forecast
+from . import config, database, service, auth, login, whoami, api, notify, recommendation, forecast
 
 # external libs
 from cmdkit.app import Application, ApplicationGroup
@@ -48,10 +48,11 @@ HELP = f"""\
 commands:
 auth                   {auth.__doc__}
 login                  {login.__doc__}
+whoami                 {whoami.__doc__}
+api                    {api.__doc__}
 config                 {config.__doc__}
 database               {database.__doc__}
 service                {service.__doc__}
-api                    {api.__doc__}
 notify                 {notify.__doc__}
 forecast               {forecast.__doc__}
 recommendation         {recommendation.__doc__}
@@ -88,10 +89,11 @@ class RefittApp(ApplicationGroup):
     command = None
     commands = {'auth': auth.AuthApp,
                 'login': login.LoginApp,
+                'whoami': whoami.WhoAmIApp,
+                'api': api.WebApp,
                 'config': config.ConfigApp,
                 'database': database.DatabaseApp,
                 'service': service.ServiceApp,
-                'api': api.WebApp,
                 'notify': notify.NotifyApp,
                 'forecast': forecast.ForecastApp,
                 'recommendation': recommendation.RecommendationApp,
