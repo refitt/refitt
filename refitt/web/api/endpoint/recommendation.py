@@ -18,16 +18,19 @@ from typing import Dict, Tuple, Callable, IO
 
 # standard libs
 from io import BytesIO
+from datetime import datetime
 
 # external libs
 from flask import request
 
 # internal libs
-from ....database.model import Client, Recommendation, RecommendationGroup, File, FileType, Base
+from ....database.model import (Client, Recommendation, RecommendationGroup, File, FileType, Observation,
+                                Source, Base)
 from ..app import application
-from ..response import endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid, PayloadTooLarge, NotFound
+from ..response import (endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid,
+                        PayloadMalformed, PayloadTooLarge, NotFound)
 from ..auth import authenticated, authorization
-from ..tools import collect_parameters, disallow_parameters, require_file
+from ..tools import collect_parameters, disallow_parameters, require_file, require_data
 
 
 info: dict = {
@@ -565,5 +568,85 @@ info['Endpoints']['/recommendation/<id>/observed/file/type']['GET'] = {
         401: {'Description': 'Access level insufficient, revoked, or token expired'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Recommendation, observation, or file does not exist'},
+    }
+}
+
+
+@application.route('/recommendation/<id>/observed', methods=['POST'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def add_recommendation_observed(client: Client, id: int) -> dict:
+    """Upload new observation associated with recommendation by ID."""
+    disallow_parameters(request)
+    recommendation = Recommendation.from_id(id)
+    if recommendation.user_id != client.user_id:
+        raise PermissionDenied('Recommendation is not public')
+    data = require_data(request, data_format='json', validate=Observation.from_dict,
+                        required_fields=['type_id', 'value', 'error', 'time'])
+    known_fields = {
+        'object_id': recommendation.object_id,
+        'source_id': Source.get_or_create(recommendation.user_id, recommendation.facility_id).id
+    }
+    try:
+        time = datetime.fromisoformat(data.pop('time'))
+    except ValueError as error:
+        raise PayloadMalformed(str(error)) from error
+    if recommendation.observation_id is None:
+        observation = Observation.add({**known_fields, 'time': time, **data})
+        Recommendation.update(recommendation.id, observation_id=observation.id)
+        return {'observation': observation.to_json()}
+    else:
+        Observation.update(recommendation.observation_id,
+                           **{'time': time, 'recorded': datetime.now().astimezone(), **data})
+        return {'observation': recommendation.observed.to_json()}
+
+
+info['Endpoints']['/recommendation/<id>/observed']['POST'] = {
+    'Description': 'Upload observation associated with recommendation by ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            }
+        },
+        'Payload': {
+            'Description': 'Observation data',
+            'Type': 'application/json',
+            'Fields': {
+                'type_id': {
+                    'Description': 'Observation type ID',
+                    'Type': 'Integer'
+                },
+                'value': {
+                    'Description': 'Observed magnitude',
+                    'Type': 'Float'
+                },
+                'error': {
+                    'Description': 'Uncertainty in magnitude (can be null)',
+                    'Type': 'Float'
+                },
+                'time': {
+                    'Description': 'Precise time of observation (yyyy-mm-dd HH:MM:SS-ZZZZ)',
+                    'Type': 'String'
+                }
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'New observation with ID',
+                'Type': 'application/json'
+            },
+        },
+        400: {'Description': 'Payload missing, malformed, or invalid'},
+        401: {'Description': 'Access level insufficient, revoked, or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Recommendation not found'}
     }
 }

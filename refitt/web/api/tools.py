@@ -52,7 +52,7 @@ data_formats: Dict[str, Callable[[bytes], ContentType]] = {
 }
 
 
-def require_data(request: Request, data_format: str = 'json',
+def require_data(request: Request, data_format: str = 'json', required_fields: List[str] = None,
                  validate: Callable[[ContentType], Any] = None) -> ContentType:
     """Check for data and parse appropriately, optionally pass to `validate` callback."""
 
@@ -62,6 +62,16 @@ def require_data(request: Request, data_format: str = 'json',
 
     parser = data_formats[data_format]
     data = parser(payload)
+
+    if required_fields is not None:
+        if data_format != 'json':
+            raise NotImplementedError(f'Cannot check fields for non-JSON data formats')
+        for field in required_fields:
+            if field not in data:
+                raise PayloadMalformed(f'Missing required field \'{field}\'')
+        for field in data:
+            if field not in required_fields:
+                raise PayloadMalformed(f'Unexpected field \'{field}\'')
 
     if validate:
         try:

@@ -15,6 +15,7 @@
 
 # standard libs
 from io import BytesIO
+from datetime import datetime
 from abc import ABC, abstractproperty
 from contextlib import contextmanager
 
@@ -887,4 +888,173 @@ class TestGetRecommendationObservedFileType(Endpoint):
             STATUS['OK'],
             {'Status': 'Success',
              'Response': {'file_type': file.type.to_json()}}
+        )
+
+
+class TestPostRecommendationObserved(Endpoint):
+    """Tests for POST /recommendation/<id>/observed endpoint."""
+
+    route: str = '/recommendation/22/observed'  # NOTE: last returned by tomb_raider
+    method: str = 'post'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    @property
+    def recommendation_id(self) -> int:
+        """Recommendation ID from `route`."""
+        return int(self.route.split('/')[2])
+
+    def test_invalid_parameter(self) -> None:
+        assert self.post(self.route, client_id=self.get_client(self.user).id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_permission_denied(self) -> None:
+        rec = Recommendation.for_user(User.from_alias('delta_one').id)[-1]  # NOTE: not tomb_raider
+        assert self.post(f'/recommendation/{rec.id}/observed/file',
+                         client_id=self.get_client('tomb_raider').id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'Recommendation is not public'
+            }
+        )
+
+    def test_recommendation_not_found(self) -> None:
+        client = self.get_client(self.user)
+        assert self.post(f'/recommendation/0/observed', client_id=client.id,
+                         json={'type_id': 1, 'value': 3.14, 'error': None,
+                               'time': str(datetime.now().astimezone())}) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No recommendation with id=0',
+            }
+        )
+
+    def test_missing_payload(self) -> None:
+        client = self.get_client(self.user)
+        assert self.post(self.route, client_id=client.id, ) == (
+            RESPONSE_MAP[PayloadMalformed], {
+                'Status': 'Error',
+                'Message': 'Missing data in request',
+            }
+        )
+
+    def test_malformed_payload(self) -> None:
+        client = self.get_client(self.user)
+        assert self.post(self.route, client_id=client.id, data=b'abc') == (
+            RESPONSE_MAP[PayloadMalformed], {
+                'Status': 'Error',
+                'Message': 'Invalid JSON data',
+            }
+        )
+
+    def test_missing_type_id(self) -> None:
+        client = self.get_client(self.user)
+        assert self.post(self.route, client_id=client.id,
+                         json={'value': 3.14, 'error': None, 'time': str(datetime.now().astimezone())}) == (
+            RESPONSE_MAP[PayloadMalformed], {
+                'Status': 'Error',
+                'Message': 'Missing required field \'type_id\'',
+            }
+        )
+
+    def test_missing_value(self) -> None:
+        client = self.get_client(self.user)
+        assert self.post(self.route, client_id=client.id,
+                         json={'type_id': 1, 'error': None, 'time': str(datetime.now().astimezone())}) == (
+            RESPONSE_MAP[PayloadMalformed], {
+                'Status': 'Error',
+                'Message': 'Missing required field \'value\'',
+            }
+        )
+
+    def test_missing_error(self) -> None:
+        client = self.get_client(self.user)
+        assert self.post(self.route, client_id=client.id,
+                         json={'type_id': 1, 'value': 3.14, 'time': str(datetime.now().astimezone())}) == (
+            RESPONSE_MAP[PayloadMalformed], {
+                'Status': 'Error',
+                'Message': 'Missing required field \'error\'',
+            }
+        )
+
+    def test_missing_time(self) -> None:
+        client = self.get_client(self.user)
+        assert self.post(self.route, client_id=client.id,
+                         json={'type_id': 1, 'value': 3.14, 'error': None, }) == (
+            RESPONSE_MAP[PayloadMalformed], {
+                'Status': 'Error',
+                'Message': 'Missing required field \'time\'',
+            }
+        )
+
+    def test_malformed_time(self) -> None:
+        client = self.get_client(self.user)
+        assert self.post(self.route, client_id=client.id,
+                         json={'type_id': 1, 'value': 3.14, 'error': None, 'time': 'abc'}) == (
+            RESPONSE_MAP[PayloadMalformed], {
+                'Status': 'Error',
+                'Message': 'Invalid isoformat string: \'abc\'',
+            }
+        )
+
+    def test_unexpected_field(self) -> None:
+        client = self.get_client(self.user)
+        assert self.post(self.route, client_id=client.id,
+                         json={'type_id': 1, 'value': 3.14, 'error': None, 'foo': True,
+                               'time': str(datetime.now().astimezone())}) == (
+            RESPONSE_MAP[PayloadMalformed], {
+                'Status': 'Error',
+                'Message': 'Unexpected field \'foo\'',
+            }
+        )
+
+    def test_successful_update_observation(self) -> None:
+        rec = Recommendation.from_id(self.recommendation_id)
+        original = rec.observed.to_json()
+        new_data = {'type_id': 1, 'value': 3.14, 'error': None,
+                    'time': str(datetime.now().astimezone())}
+        client = self.get_client(self.user)
+        # update data
+        just_prior = str(datetime.now().astimezone())  # ISO format
+        status, payload = self.post(self.route, client_id=client.id, json=new_data)
+        assert status == STATUS['OK']
+        for field, value in new_data.items():
+            assert payload.get('Response').get('observation').get(field) == value
+        assert just_prior < payload.get('Response').get('observation').get('recorded')
+        # restore original data
+        original_id = original.pop('id')
+        Observation.update(original_id, **original)  # NOTE: 'value' is updated but then reverts on commit?!
+        Observation.update(original_id, value=original['value'])  # FIXME: WTF SQLAlchemy?
+        assert self.get(self.route, client_id=client.id) == (
+            STATUS['OK'], {'Status': 'Success', 'Response': {'observation': {'id': original_id, **original}}}
+        )
+
+    def test_new_observation(self) -> None:
+        # temporarily remove existing file to simulate adding "new" observation
+        rec = Recommendation.from_id(self.recommendation_id)
+        original = rec.observed.to_json()
+        new_data = {'type_id': 1, 'value': 3.14, 'error': None,
+                    'time': str(datetime.now().astimezone())}
+        file_id = File.from_observation(rec.observation_id).id
+        client = self.get_client(self.user)
+        with temp_remove_observation_and_file(file_id):
+            status, response = self.post(self.route, client_id=client.id, json=new_data)
+            assert status == STATUS['OK']
+            new_id = response['Response']['observation']['id']
+            # check new data is persisted (NOTE: not easy to test 'recorded' timestamp
+            status, payload = self.get(self.route, client_id=client.id)
+            assert status == STATUS['OK']
+            for field, value in new_data.items():
+                assert payload['Response']['observation'][field] == value
+            # delete new observation
+            Recommendation.update(rec.id, observation_id=None)
+            Observation.delete(new_id)
+        # check old data is restored
+        assert self.get(self.route, client_id=client.id) == (
+            STATUS['OK'], {'Status': 'Success',
+                           'Response': {'observation': original}}
         )
