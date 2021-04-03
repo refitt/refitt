@@ -23,17 +23,50 @@ from flask import request
 from ....database.model import Client, User, IntegrityError, NotFound
 from ..app import application
 from ..auth import authenticated, authorization
-from ..response import endpoint, ConstraintViolation
+from ..response import endpoint, ConstraintViolation, PermissionDenied
 from ..tools import require_data, collect_parameters, disallow_parameters
 
 
 info: dict = {
     'Description': 'Request, add, update user profiles',
     'Endpoints': {
+        '/whoami': {},
         '/user': {},
         '/user/<user_id>': {},
         '/user/<user_id>/facility': {},
         '/user/<user_id>/facility/<facility_id>': {},
+    }
+}
+
+
+@application.route('/whoami', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_profile(client: Client) -> dict:
+    """Get user profile for authenticated `client`."""
+    disallow_parameters(request)
+
+    return {'user': client.user.to_json(),
+            'client': client.to_json(pop=['user_id', 'secret', 'valid'])}
+
+
+info['Endpoints']['/whoami']['GET'] = {
+    'Description': 'Validate token and return user profile',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'User profile',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked or token expired'},
+        403: {'Description': 'Token not found or invalid'},
     }
 }
 
@@ -45,7 +78,7 @@ info: dict = {
 def add_user(admin: Client) -> dict:  # noqa: unused client
     """Add new user profile."""
     disallow_parameters(request)
-    profile = require_data(request, data_format='json', validate=(lambda data: User(**data)))
+    profile = require_data(request, data_format='json', validate=(lambda data: User.from_dict(data)))
     try:
         user_id = profile.pop('id', None)
         if not user_id:
@@ -89,12 +122,11 @@ info['Endpoints']['/user']['POST'] = {
 def get_user(admin: Client, id_or_alias: Union[int, str]) -> dict:  # noqa: unused client
     """Query for existing user profile."""
     disallow_parameters(request)
-    try:
-        user_id = int(id_or_alias)
-        return {'user': User.from_id(user_id).to_json()}
-    except ValueError:
-        user_alias = str(id_or_alias)
-        return {'user': User.from_alias(user_alias).to_json()}
+    if id_or_alias.isdigit():
+        user = User.from_id(id_or_alias)
+    else:
+        user = User.from_alias(id_or_alias)
+    return {'user': user.to_json()}
 
 
 info['Endpoints']['/user/<user_id>']['GET'] = {

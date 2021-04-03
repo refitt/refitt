@@ -159,9 +159,12 @@ class CoreMixin:
         """Build record from JSON data (already loaded as dictionary)."""
         return cls.from_dict({k: _load(v) for k, v in data.items()})
 
-    def to_json(self, join: bool = False) -> Dict[str, __VT]:
+    def to_json(self, pop: List[str] = None, join: bool = False) -> Dict[str, __VT]:
         """Convert record values into JSON formatted types."""
         data = {k: _dump(v) for k, v in self.to_dict().items()}
+        if pop is not None:
+            for field in pop:
+                data.pop(field)
         if join is True:
             for name in self.relationships:
                 record = getattr(self, name)
@@ -899,13 +902,13 @@ class Observation(Base, CoreMixin):
     def with_object(cls, object_id: int, session: _Session = None) -> List[Observation]:
         """All observations with `object_id`."""
         session = session or _Session()
-        return session.query(cls).filter(cls.object_id == object_id).all()
+        return session.query(cls).order_by(cls.id).filter(cls.object_id == object_id).all()
 
     @classmethod
     def with_source(cls, source_id: int, session: _Session = None) -> List[Observation]:
         """All observations with `source_id`."""
         session = session or _Session()
-        return session.query(cls).filter(cls.source_id == source_id).all()
+        return session.query(cls).order_by(cls.id).filter(cls.source_id == source_id).all()
 
 
 # indices for observation table
@@ -975,6 +978,11 @@ class FileType(Base, CoreMixin):
             return session.query(cls).filter(cls.name == name).one()
         except NoResultFound as error:
             raise FileType.NotFound(f'No file_type with name={name}') from error
+
+    @classmethod
+    def all_names(cls) -> List[str]:
+        """All names of currently available file_type.name values."""
+        return [file_type.name for file_type in cls.query().all()]
 
 
 class File(Base, CoreMixin):

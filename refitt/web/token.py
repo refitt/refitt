@@ -241,9 +241,7 @@ class JWT:
     _sub: int
     _exp: Optional[datetime]
 
-    # NOTE: we get the behavior we want from Record
-    # but we don't have a primary key so we override
-    def __init__(self, sub: int, exp: ExpTime) -> None:  # noqa
+    def __init__(self, sub: int, exp: ExpTime) -> None:
         """Initialize from `sub` and `exp`."""
         self.sub = sub
         self.exp = exp

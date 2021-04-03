@@ -14,11 +14,13 @@
 
 
 # type annotations
-from typing import Tuple, Dict, Callable
+from typing import Tuple, Dict, Callable, Union, IO
 
 # standard libs
+import re
 from abc import ABC, abstractproperty
 from datetime import timedelta
+from functools import cached_property
 
 # internal libs
 from refitt.web.request import format_request
@@ -30,6 +32,15 @@ from tests.integration.test_web.test_api import temp_secret, temp_revoke_access
 
 # external libs
 import requests
+
+
+# type defs
+Request = requests.Request
+Response = requests.Response
+
+
+# find information from headers
+FILENAME_PATTERN: re.Pattern = re.compile(r'^attachment; filename=(.*)$')
 
 
 class EndpointBase(ABC):
@@ -63,24 +74,58 @@ class EndpointBase(ABC):
         'delete': requests.delete,
     }
 
+    @staticmethod
+    def get_bytes(response: Response) -> bytes:
+        """Return raw bytes content of the `response`."""
+        return response.content
+
+    @staticmethod
+    def get_json(response: Response) -> dict:
+        """Return parsed JSON content of the `response`."""
+        return response.json()
+
+    @staticmethod
+    def get_file(response: Response) -> dict:
+        """Return parsed file attachment of the `response`."""
+        data = response.content
+        info = response.headers.get('Content-Disposition', '')
+        name, = FILENAME_PATTERN.match(info).groups()
+        return {name: data}
+
+    @cached_property
+    def content_map(self) -> Dict[str, Callable[[Response], Union[bytes, dict]]]:
+        return {'bytes': self.get_bytes, 'json': self.get_json, 'file': self.get_file}
+
+    def get_content(self, response_type: str, response: Response) -> Union[bytes, dict]:
+        return self.content_map[response_type](response)
+
     def make_request(self, method: str, route: str, client_id: int, data: bytes = None,
-                     json: dict = None, **params) -> Tuple[int, dict]:
+                     json: dict = None, response_type: str = 'json',
+                     files: Dict[str, IO] = None, **params) -> Tuple[int, Union[dict, bytes]]:
         token = self.create_token(client_id)
-        response = self.methods[method](format_request(route), params=params, data=data, json=json,
+        response = self.methods[method](format_request(route), params=params, data=data, json=json, files=files,
                                         headers={'Authorization': f'Bearer {token}'})
-        return response.status_code, response.json()
+        return response.status_code, self.get_content(response_type, response)
 
-    def get(self, route: str, client_id: int, data: bytes = None, json: dict = None, **params) -> Tuple[int, dict]:
-        return self.make_request('get', route, client_id, data=data, json=json, **params)
+    def get(self, route: str, client_id: int, data: bytes = None, json: dict = None,
+            response_type: str = 'json', **params) -> Tuple[int, dict]:
+        return self.make_request('get', route, client_id, data=data, json=json,
+                                 response_type=response_type, **params)
 
-    def put(self, route: str, client_id: int, data: bytes = None, json: dict = None, **params) -> Tuple[int, dict]:
-        return self.make_request('put', route, client_id, data=data, json=json, **params)
+    def put(self, route: str, client_id: int, data: bytes = None, json: dict = None,
+            response_type: str = 'json', **params) -> Tuple[int, dict]:
+        return self.make_request('put', route, client_id, data=data, json=json,
+                                 response_type=response_type, **params)
 
-    def post(self, route: str, client_id: int, data: bytes = None, json: dict = None, **params) -> Tuple[int, dict]:
-        return self.make_request('post', route, client_id, data=data, json=json, **params)
+    def post(self, route: str, client_id: int, data: bytes = None, json: dict = None,
+             files: Dict[str, IO] = None, response_type: str = 'json', **params) -> Tuple[int, dict]:
+        return self.make_request('post', route, client_id, data=data, json=json,
+                                 response_type=response_type, files=files, **params)
 
-    def delete(self, route: str, client_id: int, data: bytes = None, json: dict = None, **params) -> Tuple[int, dict]:
-        return self.make_request('delete', route, client_id, data=data, json=json, **params)
+    def delete(self, route: str, client_id: int, data: bytes = None, json: dict = None,
+               response_type: str = 'json', **params) -> Tuple[int, dict]:
+        return self.make_request('delete', route, client_id, data=data, json=json,
+                                 response_type=response_type, **params)
 
 
 class LoginEndpoint(EndpointBase, ABC):

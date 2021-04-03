@@ -14,17 +14,23 @@
 
 
 # type annotations
-from typing import Dict, Tuple, Callable
+from typing import Dict, Tuple, Callable, IO
+
+# standard libs
+from io import BytesIO
+from datetime import datetime
 
 # external libs
 from flask import request
 
 # internal libs
-from ....database.model import Client, Recommendation, RecommendationGroup, Base
+from ....database.model import (Client, Recommendation, RecommendationGroup, File, FileType, Observation,
+                                Source, Base)
 from ..app import application
-from ..response import endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid, PayloadTooLarge, NotFound
+from ..response import (endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid,
+                        PayloadMalformed, PayloadTooLarge, NotFound)
 from ..auth import authenticated, authorization
-from ..tools import collect_parameters, disallow_parameters
+from ..tools import collect_parameters, disallow_parameters, require_file, require_data
 
 
 info: dict = {
@@ -51,7 +57,7 @@ info: dict = {
         '/recommendation/<id>/predicted/source/user': {},
         '/recommendation/<id>/predicted/forecast': {},
 
-        '/recommendation/<id>/observed': {},
+        '/recommendation/<id>/observed': {},                  # TODO: POST
         '/recommendation/<id>/observed/type': {},
         '/recommendation/<id>/observed/object': {},
         '/recommendation/<id>/observed/object/type': {},
@@ -59,8 +65,8 @@ info: dict = {
         '/recommendation/<id>/observed/source/type': {},
         '/recommendation/<id>/observed/source/user': {},
         '/recommendation/<id>/observed/source/facility': {},
-        '/recommendation/<id>/observed/file': {},             # TODO: GET, PUT
-        '/recommendation/<id>/observed/file/type': {},        # TODO: GET
+        '/recommendation/<id>/observed/file': {},
+        '/recommendation/<id>/observed/file/type': {},
 
         '/recommendation/history': {},
 
@@ -417,5 +423,230 @@ info['Endpoints']['/recommendation/history']['GET'] = {
         },
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
+    }
+}
+
+
+# limit on allowed file upload size
+FILE_SIZE_LIMIT: int = 8 * 1024**2
+# NOTE: 800M file allows single 10k-square CCD w/ 64-bit Integers
+# Larger collections in size and number can be included if compressed
+
+
+@application.route('/recommendation/<id>/observed/file', methods=['GET'])
+@endpoint('application/octet-stream')
+@authenticated
+@authorization(level=None)
+def get_recommendation_observed_file(client: Client, id: int) -> Tuple[IO, dict]:
+    """Query for observation file by recommendation `id`."""
+    recommendation = Recommendation.from_id(id)
+    if recommendation.user_id != client.user_id:
+        raise PermissionDenied('Recommendation is not public')
+    if recommendation.observation_id is None:
+        raise NotFound('Missing observation record, cannot get file')
+    disallow_parameters(request)
+    file = File.from_observation(recommendation.observation_id)
+    return BytesIO(file.data), {
+        'as_attachment': True,
+        'attachment_filename': f'observation_{file.observation_id}.{file.type.name}',
+        'conditional': False,
+    }
+
+
+info['Endpoints']['/recommendation/<id>/observed/file']['GET'] = {
+    'Description': 'Request observation file by recommendation ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'File attachment',
+                'Type': 'application/octet-stream'
+            },
+        },
+        401: {'Description': 'Access level insufficient, revoked, or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Recommendation, observation, or file does not exist'},
+    }
+}
+
+
+@application.route('/recommendation/<id>/observed/file', methods=['POST'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def add_recommendation_observed_file(client: Client, id: int) -> dict:
+    """Upload file associated with recommendation."""
+    recommendation = Recommendation.from_id(id)
+    if recommendation.user_id != client.user_id:
+        raise PermissionDenied('Recommendation is not public')
+    if recommendation.observation_id is None:
+        raise NotFound('Missing observation record, cannot upload file')
+    disallow_parameters(request)
+    file_type, file_data = require_file(request, allowed_extensions=FileType.all_names(), size_limit=FILE_SIZE_LIMIT)
+    type_id = FileType.from_name(file_type).id
+    try:
+        file = File.from_observation(recommendation.observation_id)
+        File.update(file.id, type_id=type_id, data=file_data)
+    except File.NotFound:
+        file = File.add({'observation_id': recommendation.observation_id,
+                         'type_id': type_id, 'data': file_data})
+    return {'file': {'id': file.id}}
+
+
+info['Endpoints']['/recommendation/<id>/observed/file']['POST'] = {
+    'Description': 'Upload file for observation associated with recommendation by ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Attachment': {
+            'Description': 'File',
+            'Type': 'application/octet-stream',
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'New file ID',
+                'Type': 'application/json'
+            },
+        },
+        400: {'Description': 'File attachment missing, malformed, or invalid'},
+        401: {'Description': 'Access level insufficient, revoked, or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Recommendation or observation not found'}
+    }
+}
+
+
+@application.route('/recommendation/<id>/observed/file/type', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_recommendation_observed_file_type(client: Client, id: int) -> dict:
+    """Query for observation file type by recommendation `id`."""
+    recommendation = Recommendation.from_id(id)
+    if recommendation.user_id != client.user_id:
+        raise PermissionDenied('Recommendation is not public')
+    if recommendation.observation_id is None:
+        raise NotFound('Missing observation record, cannot get file')
+    disallow_parameters(request)
+    file = File.from_observation(recommendation.observation_id)
+    return {'file_type': file.type.to_json()}
+
+
+info['Endpoints']['/recommendation/<id>/observed/file/type']['GET'] = {
+    'Description': 'Request observation file type by recommendation ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'File type data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access level insufficient, revoked, or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Recommendation, observation, or file does not exist'},
+    }
+}
+
+
+@application.route('/recommendation/<id>/observed', methods=['POST'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def add_recommendation_observed(client: Client, id: int) -> dict:
+    """Upload new observation associated with recommendation by ID."""
+    disallow_parameters(request)
+    recommendation = Recommendation.from_id(id)
+    if recommendation.user_id != client.user_id:
+        raise PermissionDenied('Recommendation is not public')
+    data = require_data(request, data_format='json', validate=Observation.from_dict,
+                        required_fields=['type_id', 'value', 'error', 'time'])
+    known_fields = {
+        'object_id': recommendation.object_id,
+        'source_id': Source.get_or_create(recommendation.user_id, recommendation.facility_id).id
+    }
+    try:
+        time = datetime.fromisoformat(data.pop('time'))
+    except ValueError as error:
+        raise PayloadMalformed(str(error)) from error
+    if recommendation.observation_id is None:
+        observation = Observation.add({**known_fields, 'time': time, **data})
+        Recommendation.update(recommendation.id, observation_id=observation.id)
+        return {'observation': observation.to_json()}
+    else:
+        Observation.update(recommendation.observation_id,
+                           **{'time': time, 'recorded': datetime.now().astimezone(), **data})
+        return {'observation': recommendation.observed.to_json()}
+
+
+info['Endpoints']['/recommendation/<id>/observed']['POST'] = {
+    'Description': 'Upload observation associated with recommendation by ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            }
+        },
+        'Payload': {
+            'Description': 'Observation data',
+            'Type': 'application/json',
+            'Fields': {
+                'type_id': {
+                    'Description': 'Observation type ID',
+                    'Type': 'Integer'
+                },
+                'value': {
+                    'Description': 'Observed magnitude',
+                    'Type': 'Float'
+                },
+                'error': {
+                    'Description': 'Uncertainty in magnitude (can be null)',
+                    'Type': 'Float'
+                },
+                'time': {
+                    'Description': 'Precise time of observation (yyyy-mm-dd HH:MM:SS-ZZZZ)',
+                    'Type': 'String'
+                }
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'New observation with ID',
+                'Type': 'application/json'
+            },
+        },
+        400: {'Description': 'Payload missing, malformed, or invalid'},
+        401: {'Description': 'Access level insufficient, revoked, or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Recommendation not found'}
     }
 }

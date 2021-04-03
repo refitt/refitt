@@ -179,8 +179,11 @@ backends = {
 
 config = Namespace(config.database.copy())
 schema = config.pop('schema', None)
+echo   = config.pop('echo', False)
 connect_args = config.pop('connect_args', {})
 
+if not isinstance(echo, bool):
+    raise ConfigurationError('\'database.echo\' must be true or false')
 
 try:
     params = Namespace(**{**config.copy(), **{'backend': backends[config.backend]}})
@@ -195,6 +198,7 @@ if config.backend not in backends:
 
 try:
     engine = create_engine(url.encode(), connect_args=connect_args)
+    engine.echo = echo
 except ArgumentError as error:
     raise ConfigurationError(f'Database URL: {repr(url)}') from error
 

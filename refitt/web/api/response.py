@@ -14,7 +14,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Tuple, Dict, Type, Callable, Union, Generator
+from typing import Tuple, Dict, Type, Callable, Union, IO
 
 # standard libs
 import json
@@ -22,7 +22,7 @@ import logging
 from functools import wraps
 
 # external libs
-from flask import Response, request, stream_with_context
+from flask import Response, request, send_file
 
 # internal libs
 from ...database.model import NotFound as RecordNotFound
@@ -53,6 +53,10 @@ STATUS = {
     'Not Implemented':               501,  # future routes
     'Service Unavailable':           503,  # TODO: keep api up but disable actions?
 }
+
+
+# reversed mapping
+STATUS_CODE = {code: name for name, code in STATUS.items()}
 
 
 class WebException(Exception):
@@ -111,14 +115,11 @@ RESPONSE_MAP: Dict[Type[Exception], int] = {
 }
 
 
-ByteGenerator = Tuple[dict, Generator[None, bytes, None]]
 EndpointDecorator = Callable[..., Response]
-
-
 def endpoint(content_type: str) -> Callable[..., EndpointDecorator]:
     """Correctly format the response based on content-type."""
 
-    def format_response(route: Callable[..., Union[dict, ByteGenerator]]) -> EndpointDecorator:
+    def format_response(route: Callable[..., Union[dict, Tuple[IO, dict]]]) -> EndpointDecorator:
         """Dispatch based on content-type."""
 
         @wraps(route)
@@ -146,10 +147,8 @@ def endpoint(content_type: str) -> Callable[..., EndpointDecorator]:
         def format_stream(*args, **kwargs) -> Response:
             status = STATUS['OK']
             try:
-                headers, stream = route(*args, **kwargs)
-                response = Response(stream, status=status, mimetype='application/octet-stream')
-                for key, value in headers.items():
-                    response.headers[key] = value
+                stream, options = route(*args, **kwargs)
+                return send_file(stream, mimetype='application/octet-stream', **options)
             except Exception as error:
                 response = dict()
                 for exc_type, status_code in RESPONSE_MAP.items():

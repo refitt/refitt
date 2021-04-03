@@ -45,7 +45,7 @@ info: dict = {
 def add_facility(admin: Client) -> dict:  # noqa: unused client
     """Add new facility profile."""
     disallow_parameters(request)
-    profile = require_data(request, data_format='json', validate=(lambda data: Facility(**data)))
+    profile = require_data(request, data_format='json', validate=(lambda data: Facility.from_dict(data)))
     try:
         facility_id = profile.pop('id', None)
         if not facility_id:

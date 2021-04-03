@@ -22,6 +22,7 @@ import sys
 import socket
 import logging
 import functools
+import subprocess
 
 # internal libs
 from ....web.api import application as api
@@ -30,12 +31,11 @@ from ....core.exceptions import log_exception
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
-from gunicorn.app.wsgiapp import run as _run_gunicorn
 
 
 PROGRAM = 'service api'
 USAGE = f"""\
-usage: {PROGRAM} [-h] {{start}} [-p NUM] [-w NUM] [--dev] [...]\
+usage: {PROGRAM} [-h] {{start}} [-p PORT] [-w NUM] [-t SECONDS] [--dev] [...]\
 {__doc__}\
 """
 
@@ -43,15 +43,16 @@ HELP = f"""\
 {USAGE}
 
 arguments:
-start                   Start the server.
+start                    Start the server.
 
 options:
--p, --port      NUM     Port number for server (default: 5000).
--w, --workers   NUM     Number of concurrent workers.
-    --certfile  PATH    SSL certificate file.
-    --keyfile   PATH    SSL key file.
-    --dev               Run in development mode.
--h, --help              Show this message and exit.\
+-p, --port      NUM      Port number for server (default: 5000).
+-w, --workers   NUM      Number of concurrent workers.
+    --certfile  PATH     SSL certificate file.
+    --keyfile   PATH     SSL key file.
+-t, --timeout   SECONDS  Number of seconds for worker timeouts.
+    --dev                Run in development mode.
+-h, --help               Show this message and exit.\
 """
 
 
@@ -82,6 +83,9 @@ class WebApp(Application):
 
     keyfile: str = None
     interface.add_argument('--keyfile', default=None)
+
+    timeout: int = 60  # seconds
+    interface.add_argument('-t', '--timeout', type=int, default=timeout)
 
     dev_mode: bool = False
     interface.add_argument('--dev', action='store_true', dest='dev_mode')
@@ -114,7 +118,7 @@ class WebApp(Application):
             cert_ops = ['--certfile', self.certfile, '--keyfile', self.keyfile]
 
         path = os.path.join(os.path.dirname(sys.executable), 'gunicorn')
-        cmd = [path, '--bind', f'0.0.0.0:{self.port}', '--workers', f'{self.workers}']
+        cmd = [path, '--bind', f'0.0.0.0:{self.port}',
+               '--workers', f'{self.workers}', '--timeout', f'{self.timeout}']
         cmd += cert_ops + ['refitt.web.api']
-        sys.argv = cmd
-        _run_gunicorn()
+        subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
