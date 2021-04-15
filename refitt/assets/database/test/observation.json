@@ -1,7 +1,7 @@
 [
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 1,
     "source_id": 2,
     "value": 18.10,
@@ -11,7 +11,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 2,
     "source_id": 2,
     "value": 19.05,
@@ -21,7 +21,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 3,
     "source_id": 2,
     "value": 18.30,
@@ -31,7 +31,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 4,
     "source_id": 2,
     "value": 18.98,
@@ -41,7 +41,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 5,
     "source_id": 2,
     "value": 19.01,
@@ -51,7 +51,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 6,
     "source_id": 2,
     "value": 18.71,
@@ -61,7 +61,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 7,
     "source_id": 2,
     "value": 20.09,
@@ -71,7 +71,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 8,
     "source_id": 2,
     "value": 18.87,
@@ -81,7 +81,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 9,
     "source_id": 2,
     "value": 19.31,
@@ -91,7 +91,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 10,
     "source_id": 2,
     "value": 18.89,
@@ -102,7 +102,7 @@
 
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 1,
     "source_id": 1,
     "value": 17.10,
@@ -112,7 +112,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 2,
     "source_id": 1,
     "value": 18.05,
@@ -122,7 +122,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 3,
     "source_id": 1,
     "value": 17.30,
@@ -132,7 +132,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 4,
     "source_id": 1,
     "value": 17.98,
@@ -142,7 +142,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 5,
     "source_id": 1,
     "value": 18.01,
@@ -152,7 +152,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 6,
     "source_id": 1,
     "value": 17.71,
@@ -162,7 +162,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 7,
     "source_id": 1,
     "value": 19.09,
@@ -172,7 +172,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 8,
     "source_id": 1,
     "value": 17.87,
@@ -267,7 +267,7 @@
 
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 1,
     "source_id": 2,
     "value": 17.10,
@@ -277,7 +277,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 2,
     "source_id": 2,
     "value": 18.05,
@@ -287,7 +287,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 3,
     "source_id": 2,
     "value": 17.30,
@@ -297,7 +297,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 4,
     "source_id": 2,
     "value": 17.98,
@@ -307,7 +307,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 5,
     "source_id": 2,
     "value": 18.01,
@@ -317,7 +317,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 6,
     "source_id": 2,
     "value": 17.71,
@@ -327,7 +327,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 7,
     "source_id": 2,
     "value": 19.09,
@@ -337,7 +337,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 8,
     "source_id": 2,
     "value": 17.87,
@@ -347,7 +347,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 9,
     "source_id": 2,
     "value": 18.31,
@@ -357,7 +357,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 10,
     "source_id": 2,
     "value": 17.89,
@@ -368,7 +368,7 @@
 
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 1,
     "source_id": 1,
     "value": 16.10,
@@ -378,7 +378,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 2,
     "source_id": 1,
     "value": 17.05,
@@ -388,7 +388,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 3,
     "source_id": 1,
     "value": 16.30,
@@ -398,7 +398,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 4,
     "source_id": 1,
     "value": 16.98,
@@ -408,7 +408,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 5,
     "source_id": 1,
     "value": 17.01,
@@ -418,7 +418,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 6,
     "source_id": 1,
     "value": 16.71,
@@ -428,7 +428,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 7,
     "source_id": 1,
     "value": 18.09,
@@ -438,7 +438,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 8,
     "source_id": 1,
     "value": 16.87,
@@ -533,7 +533,7 @@
 
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 1,
     "source_id": 2,
     "value": 16.10,
@@ -543,7 +543,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 2,
     "source_id": 2,
     "value": 17.05,
@@ -553,7 +553,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 3,
     "source_id": 2,
     "value": 16.30,
@@ -563,7 +563,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 4,
     "source_id": 2,
     "value": 16.98,
@@ -573,7 +573,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 5,
     "source_id": 2,
     "value": 17.01,
@@ -583,7 +583,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 6,
     "source_id": 2,
     "value": 16.71,
@@ -593,7 +593,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 7,
     "source_id": 2,
     "value": 18.09,
@@ -603,7 +603,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 8,
     "source_id": 2,
     "value": 16.87,
@@ -613,7 +613,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 9,
     "source_id": 2,
     "value": 17.31,
@@ -623,7 +623,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 10,
     "source_id": 2,
     "value": 16.89,
@@ -634,7 +634,7 @@
 
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 1,
     "source_id": 1,
     "value": 15.10,
@@ -644,7 +644,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 2,
     "source_id": 1,
     "value": 16.05,
@@ -654,7 +654,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 3,
     "source_id": 1,
     "value": 15.30,
@@ -664,7 +664,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 4,
     "source_id": 1,
     "value": 15.98,
@@ -674,7 +674,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 5,
     "source_id": 1,
     "value": 16.01,
@@ -684,7 +684,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 6,
     "source_id": 1,
     "value": 15.71,
@@ -694,7 +694,7 @@
   },
   {
     "id": null,
-    "type_id": 3,
+    "type_id": 4,
     "object_id": 7,
     "source_id": 1,
     "value": 17.09,
@@ -704,7 +704,7 @@
   },
   {
     "id": null,
-    "type_id": 2,
+    "type_id": 3,
     "object_id": 8,
     "source_id": 1,
     "value": 15.87,
