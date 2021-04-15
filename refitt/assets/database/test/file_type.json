@@ -3,5 +3,15 @@
     "id": null,
     "name": "fits.gz",
     "description": "Gzip compressed FITS file."
+  },
+  {
+    "id": null,
+    "name": "fits",
+    "description": "Flexible Image Transport System."
+  },
+  {
+    "id": null,
+    "name": "fit",
+    "description": "Alias of 'fits' for compatibility."
   }
 ]
