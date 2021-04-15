@@ -24,7 +24,7 @@ import subprocess
 
 # internal libs
 from ...daemon.client import DaemonClient
-from ...core.exceptions import log_exception
+from ...core.exceptions import log_exception, handle_exception
 from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
@@ -65,11 +65,6 @@ options:
 log = logging.getLogger('refittctl')
 
 
-# logging setup for command-line interface
-Application.log_critical = log.critical
-Application.log_exception = log.exception
-
-
 # colors
 ANSI_BOLD = '\033[1m'
 ANSI_GREEN = _ANSI_CODES['foreground']['green']
@@ -81,6 +76,11 @@ def daemon_unavailable(exc: Exception) -> int:  # noqa: exception not used
     """The daemon refused the connection, likely not running."""
     log.critical('Daemon refused connection - is it running?')
     return exit_status.runtime_error
+
+
+# logging setup for command-line interface
+Application.log_critical = log.critical
+Application.log_exception = log.critical
 
 
 class RefittControllerApp(Application):
@@ -96,8 +96,8 @@ class RefittControllerApp(Application):
         RuntimeError:
             functools.partial(log_exception, logger=log.critical,
                               status=exit_status.runtime_error),
-        ConnectionRefusedError:
-            daemon_unavailable,
+        ConnectionRefusedError: daemon_unavailable,
+        Exception: functools.partial(handle_exception, log),
     }
 
     def run(self) -> None:

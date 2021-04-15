@@ -20,17 +20,18 @@ from typing import Mapping, Any
 # standard libs
 import os
 import logging
-from functools import partial
+
+# external libs
+from cmdkit.app import Application
+from cmdkit.cli import Interface
+from cmdkit.config import Namespace
+import toml
 
 # internal libs
 from ....core.config import SITE, PATH
-from ....core.exceptions import log_exception
 
-# external libs
-from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface
-from cmdkit.config import Namespace, ConfigurationError
-import toml
+# public interface
+__all__ = ['GetConfigApp', ]
 
 
 PROGRAM = 'refitt config get'
@@ -76,13 +77,6 @@ class GetConfigApp(Application):
 
     expand: bool = False
     interface.add_argument('-x', '--expand', action='store_true')
-
-    exceptions = {
-        RuntimeError: partial(log_exception, logger=log.critical,
-                              status=exit_status.runtime_error),
-        ConfigurationError: partial(log_exception, logger=log.critical,
-                                    status=exit_status.bad_config),
-    }
 
     def run(self) -> None:
         """Business logic for `refitt config get`."""

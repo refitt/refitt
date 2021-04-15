@@ -61,7 +61,7 @@ class TestObservation:
             'id': 1,
             'time': '2020-10-24 18:00:00' + ('' if config.backend == 'sqlite' else '-04:00'),
             'object_id': 1,
-            'type_id': 3,
+            'type_id': 4,
             'source_id': 2,
             'value': 18.1,
             'error': 0.08,
@@ -85,10 +85,10 @@ class TestObservation:
                 },
             },
             'type': {
-                'id': 3,
+                'id': 4,
                 'name': 'r-ztf',
                 'units': 'mag',
-                'description': 'R-band apparent magnitude (ZTF).'
+                'description': 'r-band apparent magnitude (ZTF).'
             },
             'source': {
                 'id': 2,

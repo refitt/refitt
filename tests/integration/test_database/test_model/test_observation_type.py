@@ -53,10 +53,10 @@ class TestObservationType:
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
         assert ObservationType.from_name('g-ztf').to_json(join=True) == {
-            'id': 2,
+            'id': 3,
             'name': 'g-ztf',
             'units': 'mag',
-            'description': 'G-band apparent magnitude (ZTF).'
+            'description': 'g-band apparent magnitude (ZTF).'
         }
 
     def test_from_id(self, testdata: TestData) -> None:

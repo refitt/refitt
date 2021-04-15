@@ -14,17 +14,18 @@
 
 
 # standard libs
-import functools
 import logging
+
+# external libs
+from cmdkit.app import Application
+from cmdkit.cli import Interface
 
 # internal libs
 from ...web import request
 from ...core.config import config
-from ...core.exceptions import log_exception
 
-# external libs
-from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface
+# public interface
+__all__ = ['LoginApp', ]
 
 
 PROGRAM = 'refitt login'
@@ -54,11 +55,6 @@ class LoginApp(Application):
 
     force: bool = False
     interface.add_argument('--force', action='store_true')
-
-    exceptions = {
-        RuntimeError: functools.partial(log_exception, logger=log.critical,
-                                        status=exit_status.runtime_error),
-    }
 
     def run(self) -> None:
         """Run login method."""

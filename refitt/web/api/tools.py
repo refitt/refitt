@@ -94,11 +94,11 @@ def require_file(request: Request, allowed_extensions: List[str] = None, size_li
     if '.' not in name:
         raise PayloadMalformed('Missing file extension for name')
     file_basename, file_type = os.path.splitext(os.path.basename(name))
-    file_type = file_type.strip('.')
+    file_type = file_type.lower().strip('.')
     if allowed_extensions is not None:
         # FIXME: better support for compound types (e.g., '.fits.gz')
         for extension in allowed_extensions:
-            if name.endswith('.' + extension.strip('.')):
+            if name.lower().endswith('.' + extension.strip('.')):
                 file_type = extension
                 break
         else:

@@ -54,6 +54,7 @@ info: dict = {
         '/observation/file/<id>': {},
         '/observation/file/<id>/type': {},
         '/observation/file/type/<id>': {},
+        '/observation/file/type': {},
     }
 }
 
@@ -849,5 +850,35 @@ info['Endpoints']['/observation/file/type/<id>']['GET'] = {
         401: {'Description': 'Access revoked, token expired'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'File type does not exist'},
+    }
+}
+
+
+@application.route('/observation/file/type', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_file_types(client: Client) -> dict:  # noqa: unused client
+    """Query for list of all file types."""
+    disallow_parameters(request)
+    return {'file_type': [record.to_json() for record in FileType.query().all()]}
+
+
+info['Endpoints']['/observation/file/type']['GET'] = {
+    'Description': 'Request list of all file types',
+    'Permissions': 'Public',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'File type data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked, token expired'},
+        403: {'Description': 'Token not found or invalid'},
     }
 }

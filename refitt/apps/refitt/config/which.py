@@ -15,15 +15,16 @@
 
 # standard libs
 import logging
-from functools import partial
-
-# internal libs
-from ....core.config import PATH, config, ConfigurationError
-from ....core.exceptions import log_exception
 
 # external libs
-from cmdkit.app import Application, exit_status
+from cmdkit.app import Application
 from cmdkit.cli import Interface
+
+# internal libs
+from ....core.config import PATH, config
+
+# public interface
+__all__ = ['WhichConfigApp', ]
 
 
 PROGRAM = 'refitt config which'
@@ -54,13 +55,6 @@ class WhichConfigApp(Application):
 
     varpath: str = None
     interface.add_argument('varpath', metavar='VAR')
-
-    exceptions = {
-        RuntimeError: partial(log_exception, logger=log.critical,
-                              status=exit_status.runtime_error),
-        ConfigurationError: partial(log_exception, logger=log.critical,
-                                    status=exit_status.bad_config),
-    }
 
     def run(self) -> None:
         """Business logic for `config which`."""

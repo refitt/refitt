@@ -19,17 +19,17 @@ from __future__ import annotations
 # standard libs
 import os
 import logging
-from functools import partial
 from subprocess import run
 
-
 # external libs
-from cmdkit.app import Application, exit_status
+from cmdkit.app import Application
 from cmdkit.cli import Interface
 
 # internal libs
-from ....core.config import SITE, PATH, ConfigurationError
-from ....core.exceptions import log_exception
+from ....core.config import SITE, PATH
+
+# public interface
+__all__ = ['EditConfigApp', ]
 
 
 PROGRAM = 'refitt config edit'
@@ -67,13 +67,6 @@ class EditConfigApp(Application):
     site_interface.add_argument('--local', action='store_true')
     site_interface.add_argument('--user', action='store_true')
     site_interface.add_argument('--system', action='store_true')
-
-    exceptions = {
-        RuntimeError: partial(log_exception, logger=log.critical,
-                              status=exit_status.runtime_error),
-        ConfigurationError: partial(log_exception, logger=log.critical,
-                                    status=exit_status.bad_config),
-    }
 
     def run(self) -> None:
         """Open editor for configuration."""

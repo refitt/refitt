@@ -20,18 +20,19 @@ from typing import Dict, Type, Callable
 # standard libs
 import os
 import logging
-import functools
+
+# external libs
+from cmdkit.app import Application
+from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
 from ....core.config import config, ConfigurationError
-from ....core.exceptions import log_exception
 from ....data.broker.alert import AlertInterface
 from ....data.broker.client import ClientInterface
 from ....data.broker.antares import AntaresClient
 
-# external libs
-from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface, ArgumentError
+# public interface
+__all__ = ['StreamApp', ]
 
 
 PROGRAM = f'refitt service stream'
@@ -104,13 +105,6 @@ class StreamApp(Application):
 
     enable_backfill: bool = False
     interface.add_argument('--backfill', action='store_true', dest='enable_backfill')
-
-    exceptions = {
-        RuntimeError: functools.partial(log_exception, logger=log.critical,
-                                        status=exit_status.runtime_error),
-        ConfigurationError: functools.partial(log_exception, logger=log.critical,
-                                              status=exit_status.bad_config),
-    }
 
     def run(self) -> None:
         """Connect to broker and stream alerts."""

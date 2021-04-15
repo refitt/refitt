@@ -20,6 +20,9 @@ from cmdkit.cli import Interface
 # internal libs
 from . import init, check, query
 
+# public interface
+__all__ = ['DatabaseApp', ]
+
 
 PROGRAM = 'refitt database'
 USAGE = f"""\

@@ -12,6 +12,7 @@
 
 """Generate/update credentials for a user."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import Dict, Optional, Union, Callable
@@ -22,15 +23,18 @@ import json
 import functools
 import logging
 
-# internal libs
-from ...database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
-from ...core.exceptions import log_exception
-
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
 from rich.console import Console
 from rich.syntax import Syntax
+
+# internal libs
+from ...database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
+from ...core.exceptions import log_exception
+
+# public interface
+__all__ = ['AuthApp', ]
 
 
 PROGRAM = 'refitt auth'
@@ -92,10 +96,8 @@ class AuthApp(Application):
     interface.add_argument('--json', action='store_true', dest='format_json')
 
     exceptions = {
-        RuntimeError: functools.partial(log_exception, logger=log.critical,
-                                        status=exit_status.runtime_error),
-        NotFound: functools.partial(log_exception, logger=log.critical,
-                                    status=exit_status.runtime_error),
+        NotFound: functools.partial(log_exception, logger=log.critical, status=exit_status.runtime_error),
+        **Application.exceptions,
     }
 
     def run(self) -> None:

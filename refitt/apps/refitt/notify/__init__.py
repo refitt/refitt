@@ -20,6 +20,10 @@ from cmdkit.cli import Interface
 # internal libs
 from . import mail, slack
 
+# public interface
+__all__ = ['NotifyApp', ]
+
+
 PROGRAM = f'refitt notify'
 USAGE = f"""\
 usage: {PROGRAM} [-h] <command> [<args>...]

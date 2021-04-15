@@ -20,13 +20,9 @@ from __future__ import annotations
 import time
 import random
 import logging
-import functools
-
-# internal libs
-from ....core.exceptions import log_exception
 
 # external libs
-from cmdkit.app import Application, exit_status
+from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 
@@ -64,11 +60,6 @@ class TestApp(Application):
 
     failure: float = 0.1
     interface.add_argument('-f', '--failure', type=float, default=failure)
-
-    exceptions = {
-        RuntimeError: functools.partial(log_exception, logger=log.critical,
-                                        status=exit_status.runtime_error),
-    }
 
     def run(self) -> None:
         """Simulate failures."""

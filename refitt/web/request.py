@@ -152,7 +152,7 @@ def authenticated(func: Callable) -> Callable:
         except APIError as error:
             response, = error.args
             response_status = response.status_code
-            response_message = response.json().get('Response').get('Message')
+            response_message = response.json().get('Message')
             if response_status == STATUS['Forbidden'] and response_message == 'Token expired':
                 refresh_token(force=True)
                 return func(*args, **kwargs)

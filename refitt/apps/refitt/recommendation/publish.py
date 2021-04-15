@@ -10,7 +10,7 @@
 # You should have received a copy of the Apache License along with this program.
 # If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
 
-"""Create recommendations and groups."""
+"""Publish recommendations and groups."""
 
 
 # type annotations
@@ -23,16 +23,19 @@ import sys
 import logging
 from functools import partial, cached_property, wraps
 
-# internal libs
-from ....core.exceptions import log_exception
-from ....database.model import (Recommendation, RecommendationGroup, RecommendationTag,
-                                User, Facility, Forecast, Object, NotFound, )
-
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
 from pandas import DataFrame, read_csv, read_json, read_hdf
 from sqlalchemy.exc import IntegrityError
+
+# internal libs
+from ....core.exceptions import log_exception
+from ....database.model import (Recommendation, RecommendationGroup, RecommendationTag,
+                                User, Facility, Forecast, Object, NotFound, )
+
+# public interface
+__all__ = ['RecommendationPublishApp', ]
 
 
 PROGRAM = 'refitt recommendation publish'
@@ -148,18 +151,15 @@ class RecommendationPublishApp(Application):
     interface.add_argument('--print', action='store_true', dest='verbose')
 
     exceptions = {
-        ArgumentError: partial(log_exception, logger=log.critical,
-                               status=exit_status.bad_argument),
         FileNotFoundError: partial(log_exception, logger=log.critical,
                                    status=exit_status.bad_argument),
         IOError: partial(log_exception, logger=log.critical,
                          status=exit_status.bad_argument),
         NotFound: partial(log_exception, logger=log.critical,
                           status=exit_status.runtime_error),
-        RuntimeError: partial(log_exception, logger=log.critical,
-                              status=exit_status.runtime_error),
         IntegrityError: partial(log_exception, logger=log.critical,
                                 status=exit_status.runtime_error),
+        **Application.exceptions,
     }
 
     def run(self) -> None:

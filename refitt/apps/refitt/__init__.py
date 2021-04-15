@@ -16,16 +16,39 @@
 # standard libs
 import sys
 import logging
-
-# internal libs
-from ...__meta__ import (__version__, __description__,
-                         __copyright__, __developer__, __contact__,
-                         __website__, __ascii_art__)
-from . import config, database, service, auth, login, whoami, api, notify, recommendation, forecast
+import functools
 
 # external libs
-from cmdkit.app import Application, ApplicationGroup
+from cmdkit.app import Application, ApplicationGroup, exit_status
 from cmdkit.cli import Interface
+from cmdkit.config import ConfigurationError
+
+# internal libs
+from ...core.exceptions import log_exception, handle_exception
+from ...__meta__ import (__version__, __description__, __copyright__, __developer__,
+                         __contact__, __website__, __ascii_art__)
+
+# public interface
+__all__ = ['RefittApp', 'main', ]
+
+
+# initialize application logger
+log = logging.getLogger('refitt')
+
+
+# logging setup for command-line interface
+Application.log_critical = log.critical
+Application.log_exception = log.exception
+Application.exceptions = {
+    **Application.exceptions,
+    ConfigurationError: functools.partial(log_exception, logger=log.critical, status=exit_status.bad_config),
+    RuntimeError: functools.partial(log_exception, logger=log.error, status=exit_status.runtime_error),
+    Exception: functools.partial(handle_exception, log),
+}
+
+
+# NOTE: delayed imports to allow Application class modifications
+from . import config, database, service, auth, login, whoami, api, notify, recommendation, forecast  # noqa
 
 
 PROGRAM = 'refitt'
@@ -67,15 +90,6 @@ learn more about their usage.
 
 {EPILOG}\
 """
-
-
-# initialize application logger
-log = logging.getLogger('refitt')
-
-
-# logging setup for command-line interface
-Application.log_critical = log.critical
-Application.log_exception = log.exception
 
 
 class RefittApp(ApplicationGroup):

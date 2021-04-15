@@ -3,24 +3,84 @@
     "id": null,
     "name": "clear",
     "units": "mag",
-    "description": "Un-filtered apparent magnitude."
+    "description": "Clear apparent magnitude (glass in front of optics - some filtering)."
+  },
+  {
+    "id": null,
+    "name": "unfiltered",
+    "units": "mag",
+    "description": "Unfiltered apparent magnitude (no glass in front of optics)."
   },
   {
     "id": null,
     "name": "g-ztf",
     "units": "mag",
-    "description": "G-band apparent magnitude (ZTF)."
+    "description": "g-band apparent magnitude (ZTF)."
   },
   {
     "id": null,
     "name": "r-ztf",
     "units": "mag",
-    "description": "R-band apparent magnitude (ZTF)."
+    "description": "r-band apparent magnitude (ZTF)."
   },
   {
     "id": null,
     "name": "i-ztf",
     "units": "mag",
-    "description": "I-band apparent magnitude (ZTF)."
+    "description": "i-band apparent magnitude (ZTF)."
+  },
+  {
+    "id": null,
+    "name": "b-johnson",
+    "units": "mag",
+    "description": "B-band apparent magnitude (Johnson)."
+  },
+  {
+    "id": null,
+    "name": "v-johnson",
+    "units": "mag",
+    "description": "V-band apparent magnitude (Johnson)."
+  },
+  {
+    "id": null,
+    "name": "r-johnson",
+    "units": "mag",
+    "description": "R-band apparent magnitude (Johnson)."
+  },
+  {
+    "id": null,
+    "name": "i-johnson",
+    "units": "mag",
+    "description": "I-band apparent magnitude (Johnson)."
+  },
+  {
+    "id": null,
+    "name": "u-sdss",
+    "units": "mag",
+    "description": "u-band apparent magnitude (Sloan)."
+  },
+  {
+    "id": null,
+    "name": "g-sdss",
+    "units": "mag",
+    "description": "g-band apparent magnitude (Sloan)."
+  },
+  {
+    "id": null,
+    "name": "r-sdss",
+    "units": "mag",
+    "description": "r-band apparent magnitude (Sloan)."
+  },
+  {
+    "id": null,
+    "name": "i-sdss",
+    "units": "mag",
+    "description": "i-band apparent magnitude (Sloan)."
+  },
+  {
+    "id": null,
+    "name": "z-sdss",
+    "units": "mag",
+    "description": "z-band apparent magnitude (Sloan)."
   }
 ]

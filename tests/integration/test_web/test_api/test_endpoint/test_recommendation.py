@@ -794,6 +794,23 @@ class TestPostRecommendationObservedFile(Endpoint):
             with pytest.raises(File.NotFound):
                 File.from_id(new_file_id)
 
+    def test_successful_post_file_with_uppercase_extension(self) -> None:
+        rec = Recommendation.from_id(self.recommendation_id)
+        file_id = File.from_observation(rec.observation_id).id
+        with temp_remove_file(file_id):
+            client = self.get_client(self.user)
+            status, payload = self.post(f'/recommendation/{self.recommendation_id}/observed/file', client_id=client.id,
+                                        files={'obs.FIT': BytesIO(b'abc'), })
+            assert status == STATUS['OK']
+            assert 'Status' in payload and payload['Status'] == 'Success'
+            assert 'Response' in payload and 'file' in payload['Response'] and 'id' in payload['Response']['file']
+            assert isinstance(payload['Response']['file']['id'], int)
+            assert list(payload['Response']['file'].keys()) == ['id', ]
+            new_file_id = int(payload['Response']['file']['id'])
+            File.delete(new_file_id)  # NOTE: remove "new" file
+            with pytest.raises(File.NotFound):
+                File.from_id(new_file_id)
+
     def test_successful_update_file(self) -> None:
         rec = Recommendation.from_id(self.recommendation_id)
         file = File.from_observation(rec.observation_id)
