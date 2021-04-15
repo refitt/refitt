@@ -1,15 +1,15 @@
 [
   {
     "id": null,
-    "name": "unfiltered",
-    "units": "mag",
-    "description": "Unfiltered apparent magnitude (no glass in front of optics)."
-  },
-  {
-    "id": null,
     "name": "clear",
     "units": "mag",
     "description": "Clear apparent magnitude (glass in front of optics - some filtering)."
+  },
+  {
+    "id": null,
+    "name": "unfiltered",
+    "units": "mag",
+    "description": "Unfiltered apparent magnitude (no glass in front of optics)."
   },
   {
     "id": null,
