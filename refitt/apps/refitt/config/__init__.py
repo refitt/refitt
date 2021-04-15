@@ -18,6 +18,9 @@ from cmdkit.cli import Interface
 # internal libs
 from . import get, set, edit, which
 
+# public interface
+__all__ = ['ConfigApp', ]
+
 
 PROGRAM = 'refitt config'
 USAGE = f"""\

@@ -23,13 +23,16 @@ import sys
 import logging
 from functools import partial, cached_property
 
-# internal libs
-from ....core.exceptions import log_exception
-
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
 from sqlalchemy.exc import IntegrityError
+
+# internal libs
+from ....core.exceptions import log_exception
+
+# public interface
+__all__ = ['ForecastCreateApp', ]
 
 
 PROGRAM = 'refitt forecast create'
@@ -67,10 +70,6 @@ class ForecastCreateApp(Application):
     interface.add_argument('--print', action='store_true', dest='verbose')
 
     exceptions = {
-        ArgumentError: partial(log_exception, logger=log.critical,
-                               status=exit_status.bad_argument),
-        RuntimeError: partial(log_exception, logger=log.critical,
-                              status=exit_status.runtime_error),
         IntegrityError: partial(log_exception, logger=log.critical,
                                 status=exit_status.runtime_error),
     }

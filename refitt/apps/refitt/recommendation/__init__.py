@@ -20,6 +20,9 @@ from cmdkit.cli import Interface
 # internal libs
 from . import publish
 
+# public interface
+__all__ = ['RecommendationApp']
+
 
 PROGRAM = 'refitt recommendation'
 USAGE = f"""\

@@ -22,6 +22,7 @@ import os
 import sys
 import logging
 import subprocess
+import functools
 from queue import Empty
 
 # external libs
@@ -31,6 +32,7 @@ from cmdkit.cli import Interface, ArgumentError
 # internal libs
 from ...daemon import Daemon, DaemonService, DaemonServer
 from ...core.config import config as base_config, get_site, get_config, ConfigurationError, Namespace
+from ...core.exceptions import handle_exception
 from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
 
 
@@ -96,6 +98,10 @@ class RefittDaemonApp(Application, Daemon):
 
     # allowed action requests
     actions: Tuple[str] = ('restart', 'reload', 'flush')
+
+    exceptions = {
+        Exception: functools.partial(handle_exception, log),
+    }
 
     def run(self) -> None:
         """Start the refitt service daemon."""

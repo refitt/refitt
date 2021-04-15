@@ -20,15 +20,16 @@ from typing import TypeVar
 # standard libs
 import os
 import logging
-from functools import partial
-
-# internal libs
-from ....core.config import SITE, PATH, update_config, ConfigurationError
-from ....core.exceptions import log_exception
 
 # external libs
-from cmdkit.app import Application, exit_status
+from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
+
+# internal libs
+from ....core.config import SITE, PATH, update_config
+
+# public interface
+__all__ = ['SetConfigApp', ]
 
 
 PROGRAM = 'refitt config set'
@@ -87,13 +88,6 @@ class SetConfigApp(Application):
     site_interface.add_argument('--local', action='store_true')
     site_interface.add_argument('--user', action='store_true')
     site_interface.add_argument('--system', action='store_true')
-
-    exceptions = {
-        RuntimeError: partial(log_exception, logger=log.critical,
-                              status=exit_status.runtime_error),
-        ConfigurationError: partial(log_exception, logger=log.critical,
-                                    status=exit_status.bad_config),
-    }
 
     def run(self) -> None:
         """Business logic for `config set`."""

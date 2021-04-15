@@ -17,15 +17,17 @@
 import logging
 from functools import partial
 
-# internal libs
-from ....core.config import ConfigurationError
-from ....core.exceptions import log_exception
-from ....database import init_database, drop_database, load_records
-
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 from sqlalchemy.exc import DatabaseError
+
+# internal libs
+from ....core.exceptions import log_exception
+from ....database import init_database, drop_database, load_records
+
+# public interface
+__all__ = ['InitDatabaseApp', ]
 
 
 PROGRAM = 'refitt database init'
@@ -65,12 +67,9 @@ class InitDatabaseApp(Application):
     load_interface.add_argument('--test', action='store_true', dest='load_test')
 
     exceptions = {
-        RuntimeError: partial(log_exception, logger=log.critical,
-                              status=exit_status.runtime_error),
         DatabaseError: partial(log_exception, logger=log.critical,
                                status=exit_status.runtime_error),
-        ConfigurationError: partial(log_exception, logger=log.critical,
-                                    status=exit_status.bad_config),
+        **Application.exceptions
     }
 
     def run(self) -> None:

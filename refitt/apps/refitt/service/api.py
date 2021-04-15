@@ -21,16 +21,17 @@ import os
 import sys
 import socket
 import logging
-import functools
 import subprocess
+
+# external libs
+from cmdkit.app import Application
+from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
 from ....web.api import application as api
-from ....core.exceptions import log_exception
 
-# external libs
-from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface, ArgumentError
+# public interface
+__all__ = ['WebApp', ]
 
 
 PROGRAM = 'service api'
@@ -89,11 +90,6 @@ class WebApp(Application):
 
     dev_mode: bool = False
     interface.add_argument('--dev', action='store_true', dest='dev_mode')
-
-    exceptions = {
-        RuntimeError: functools.partial(log_exception, logger=log.critical,
-                                        status=exit_status.runtime_error),
-    }
 
     def run(self) -> None:
         """Start REFITT Web-API server."""

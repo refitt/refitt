@@ -22,18 +22,21 @@ import json
 import functools
 import logging
 
-# internal libs
-from ...web import request
-from ...web.api.response import STATUS_CODE
-from ...core.exceptions import log_exception
-from ...core import ansi
-
 # external libs
 from requests.exceptions import ConnectionError
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 from rich.console import Console
 from rich.syntax import Syntax
+
+# internal libs
+from ...web import request
+from ...web.api.response import STATUS_CODE
+from ...core.exceptions import log_exception
+from ...core import ansi
+
+# public interface
+__all__ = ['WhoAmIApp', ]
 
 
 PROGRAM = 'refitt whoami'
@@ -61,15 +64,15 @@ class WhoAmIApp(Application):
     ALLOW_NOARGS = True
 
     exceptions = {
-        RuntimeError: functools.partial(log_exception, logger=log.error,
-                                        status=exit_status.runtime_error),
         ConnectionError: functools.partial(log_exception, logger=log.error,
                                            status=exit_status.runtime_error),
+        **Application.exceptions,
     }
 
     def run(self) -> None:
         """Make web request."""
         try:
+            self.apply_settings()
             self.format_output(**self.make_request())
         except request.APIError as error:
             response, = error.args
@@ -84,7 +87,7 @@ class WhoAmIApp(Application):
     @staticmethod
     def make_request() -> dict:
         """Issue web request."""
-        return request.get('whoami', extract_response=False, raise_on_error=False)
+        return request.get('whoami', extract_response=False, raise_on_error=True)
 
     def format_output(self, status: int, headers: dict, content: dict) -> None:
         """Format and print response data from request."""
@@ -107,3 +110,8 @@ class WhoAmIApp(Application):
               f'{ansi.cyan(STATUS_CODE[status])}')
         for field, value in headers.items():
             print(f'{ansi.cyan(field)}: {value}')
+
+    @staticmethod
+    def apply_settings() -> None:
+        """Additional setup requirements before making web request."""
+        request.PERSIST_TOKEN = True

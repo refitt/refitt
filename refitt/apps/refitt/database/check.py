@@ -19,17 +19,18 @@ from typing import List, Dict
 
 # standard libs
 import logging
-from functools import partial, lru_cache
+import functools
+
+# external libs
+from cmdkit.app import Application
+from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ....core.config import ConfigurationError
-from ....core.exceptions import log_exception
 from ....database.model import Base
 from ....database.core import engine, schema, Session
 
-# external libs
-from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface, ArgumentError
+# public interface
+__all__ = ['CheckDatabaseApp', ]
 
 
 PROGRAM = 'refitt database check'
@@ -55,7 +56,7 @@ options:
 log = logging.getLogger('refitt')
 
 
-@lru_cache(maxsize=None)
+@functools.lru_cache(maxsize=None)
 def tables() -> Dict[str, Base]:
     """Associate in-database table names with ORM tables."""
     return {table.name: table for table in Base.metadata.sorted_tables}
@@ -74,15 +75,6 @@ class CheckDatabaseApp(Application):
 
     show_count: bool = False
     interface.add_argument('-c', '--count', dest='show_count', action='store_true')
-
-    exceptions = {
-        ArgumentError: partial(log_exception, logger=log.critical,
-                               status=exit_status.bad_argument),
-        RuntimeError: partial(log_exception, logger=log.critical,
-                              status=exit_status.runtime_error),
-        ConfigurationError: partial(log_exception, logger=log.critical,
-                                    status=exit_status.bad_config),
-    }
 
     session: Session = None
 

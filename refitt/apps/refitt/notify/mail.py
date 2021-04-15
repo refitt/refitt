@@ -12,6 +12,7 @@
 
 """Send mail."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import Tuple, List, Optional
@@ -22,14 +23,16 @@ import logging
 import functools
 from smtplib import SMTPAuthenticationError
 
-# internal libs
-from ....comm.mail import UserAuth, Mail, MailServer, templates, TEMPLATES
-from ....core.exceptions import log_exception
-from ....core.config import config, ConfigurationError
-
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
+
+# internal libs
+from ....comm.mail import UserAuth, Mail, MailServer, templates, TEMPLATES
+from ....core.config import config, ConfigurationError
+
+# public interface
+__all__ = ['MailApp', ]
 
 
 PROGRAM = f'refitt notify mail'
@@ -147,13 +150,10 @@ class MailApp(Application):
     server: MailServer = None
 
     exceptions = {
-        RuntimeError: functools.partial(log_exception, logger=log.critical,
-                                        status=exit_status.runtime_error),
-        ConfigurationError: functools.partial(log_exception, logger=log.critical,
-                                              status=exit_status.bad_config),
         SMTPAuthenticationError: authentication_failed,
         TimeoutError: connection_timeout,
         ConnectionRefusedError: connection_refused,
+        **Application.exceptions,
     }
 
     def run(self) -> None:

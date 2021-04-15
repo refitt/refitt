@@ -33,9 +33,16 @@ from streamkit.contrib.logging import StreamKitHandler
 config = config.logging
 
 
-# base logger
+# top-level loggers
 refitt_logger = _std.getLogger('refitt')
+refittd_logger = _std.getLogger('refittd')
+refittctl_logger = _std.getLogger('refittctl')
+
+
+# level set to logger (applies to all handlers)
 refitt_logger.setLevel(getattr(_std, config.level.upper()))
+refittd_logger.setLevel(getattr(_std, config.level.upper()))
+refittctl_logger.setLevel(getattr(_std, config.level.upper()))
 
 
 # enable streaming records to the database
@@ -45,7 +52,9 @@ if config.stream.enabled:
     refitt_logger.addHandler(stream_handler)
 
 
-# log messages to stderr
+# write to stderr
 console_handler = _std.StreamHandler()
 console_handler.setFormatter(_std.Formatter(config.format, datefmt=config.datefmt))
 refitt_logger.addHandler(console_handler)
+refittd_logger.addHandler(console_handler)
+refittctl_logger.addHandler(console_handler)

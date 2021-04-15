@@ -19,14 +19,13 @@ from typing import List
 
 # standard libs
 import logging
-import functools
-
-# internal libs
-from ....core.exceptions import log_exception
 
 # external libs
-from cmdkit.app import Application, exit_status
+from cmdkit.app import Application
 from cmdkit.cli import Interface
+
+# public interface
+__all__ = ['SlackApp', ]
 
 
 PROGRAM = f'refitt notify slack'
@@ -69,11 +68,6 @@ class SlackApp(Application):
 
     attachment: List[str] = None
     interface.add_argument('-a', '--attach', dest='attachment')
-
-    exceptions = {
-        RuntimeError: functools.partial(log_exception, logger=log.critical,
-                                        status=exit_status.runtime_error),
-    }
 
     def run(self) -> None:
         """Business logic for application class."""

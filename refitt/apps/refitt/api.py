@@ -12,6 +12,7 @@
 
 """Make authenticate requests to the API."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import List, Dict, Callable, Optional, IO, Any, Union
@@ -25,18 +26,21 @@ import logging
 from io import BytesIO
 from functools import cached_property
 
-# internal libs
-from ...web import request
-from ...web.api.response import STATUS_CODE
-from ...core.exceptions import log_exception
-from ...core import typing, ansi
-
 # external libs
 from requests.exceptions import ConnectionError
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
 from rich.console import Console
 from rich.syntax import Syntax
+
+# internal libs
+from ...web import request
+from ...web.api.response import STATUS_CODE
+from ...core.exceptions import log_exception
+from ...core import typing, ansi
+
+# public interface
+__all__ = ['WebApp', ]
 
 
 PROGRAM = 'refitt api'
@@ -116,10 +120,8 @@ class WebApp(Application):
     interface.add_argument('-r', '--raw', action='store_true', dest='display_raw')
 
     exceptions = {
-        RuntimeError: functools.partial(log_exception, logger=log.error,
-                                        status=exit_status.runtime_error),
-        ConnectionError: functools.partial(log_exception, logger=log.error,
-                                           status=exit_status.runtime_error),
+        ConnectionError: functools.partial(log_exception, logger=log.error, status=exit_status.runtime_error),
+        **Application.exceptions,
     }
 
     def run(self) -> None:

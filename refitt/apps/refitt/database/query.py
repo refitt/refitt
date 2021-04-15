@@ -24,12 +24,6 @@ import logging
 from datetime import datetime
 from functools import partial
 
-# internal libs
-from ....core.config import ConfigurationError
-from ....core.exceptions import log_exception
-from ....database.model import Base, Column, tables
-from ....database.core import Session
-
 # external libs
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError, DataError
 from cmdkit.app import Application, exit_status
@@ -37,6 +31,14 @@ from cmdkit.cli import Interface, ArgumentError
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
+
+# internal libs
+from ....core.exceptions import log_exception
+from ....database.model import Base, Column, tables
+from ....database.core import Session
+
+# public interface
+__all__ = ['QueryDatabaseApp', ]
 
 
 PROGRAM = 'refitt database query'
@@ -143,19 +145,14 @@ class QueryDatabaseApp(Application):
     interface.add_argument('--json', action='store_true', dest='format_json')
 
     exceptions = {
-        ArgumentError: partial(log_exception, logger=log.critical,
-                               status=exit_status.bad_argument),
         InvalidRequestError: partial(log_exception, logger=log.critical,
                                      status=exit_status.bad_argument),
         ProgrammingError: partial(log_exception, logger=log.critical,
                                   status=exit_status.bad_argument),
         DataError: partial(log_exception, logger=log.critical,
                            status=exit_status.bad_argument),
-        ConfigurationError: partial(log_exception, logger=log.critical,
-                                    status=exit_status.bad_config),
+        **Application.exceptions,
     }
-
-    session: Session = None
 
     def run(self) -> None:
         """Business logic of command."""
