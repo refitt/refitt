@@ -1,27 +1,31 @@
 FROM ubuntu:20.04
 LABEL maintainer="glentner@purdue.edu"
 
+# minimal necessary packages
+RUN apt-get update -y && apt-get upgrade -y && apt-get install wget -y
 
-RUN apt-get update -y && apt-get upgrade -y
-RUN apt-get install -y \
-    build-essential \
-    python3-dev python3-pip python3-setuptools
-
-RUN DEBIAN_FRONTEND=noninteractive \
-    apt-get install -y --force-yes \
-    libpq-dev \
-    postgresql-12 postgresql-client-12 postgresql-contrib-12
+# anaconda for cross-platform performance
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+RUN bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && rm -f Miniconda3-latest-Linux-x86_64.sh
+RUN /opt/conda/bin/conda update -n base -c defaults conda && \
+    /opt/conda/bin/conda install python=3.8 && \
+    /opt/conda/bin/conda install numpy scipy "pyarrow>=3" "tensorflow>=2.4" "blas=*=blis" -c conda-forge && \
+    /opt/conda/bin/conda install pandas numba astropy sqlalchemy psycopg2 requests flask gunicorn \
+                                 matplotlib seaborn h5py pytables -c conda-forge
+RUN /opt/conda/bin/pip install cryptography cmdkit toml streamkit names_generator \
+                               antares-client slackclient rich
 
 RUN mkdir -p /app
 COPY . /app
+RUN /opt/conda/bin/pip install /app --no-deps
+RUN mkdir -p /var/lib/refitt /var/run/refitt /var/log/refitt
 
-RUN python3 -m pip install pytest pipenv
-RUN cd /app && pipenv install --system
+# purdue specific elements
+RUN mkdir -p /depot /scratch /apps
 
-RUN touch /etc/refitt.toml
-RUN mkdir -p /var/lib/refitt
-ENV REFITT_DATABASE_BACKEND=sqlite \
-    REFITT_DATABASE_FILE=/var/lib/refitt/main.db \
-    REFITT_LOGGING_LEVEL=INFO
+# environment for interactive user
+RUN echo 'source /opt/conda/etc/profile.d/conda.sh' >> ~/.bashrc
 
-RUN refitt database init --core
+# set refitt as default application
+ENTRYPOINT ["/opt/conda/bin/refitt"]
+CMD ["--ascii-art"]
