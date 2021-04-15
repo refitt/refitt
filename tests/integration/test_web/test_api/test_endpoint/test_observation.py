@@ -786,6 +786,33 @@ class TestGetType(Endpoint):
         )
 
 
+class TestGetTypes(Endpoint):
+    """Tests for GET /observation/type endpoint."""
+
+    route: str = '/observation/type'
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_get_all(self) -> None:
+        client = self.get_client(self.user)
+        types = ObservationType.query().all()
+        assert self.get(self.route, client_id=client.id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'observation_type': [record.to_json() for record in types]}}
+        )
+
+
 class TestGetAlert(Endpoint):
     """Tests for GET /observation/alert/<id> endpoint."""
 

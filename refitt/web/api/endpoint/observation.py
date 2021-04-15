@@ -48,13 +48,14 @@ info: dict = {
         '/observation/<id>/forecast': {},
         '/observation/<id>/file': {},
         '/observation/<id>/file/type': {},
+        '/observation/type': {},
         '/observation/type/<id>': {},
         '/observation/alert/<id>': {},
         '/observation/forecast/<id>': {},
         '/observation/file/<id>': {},
         '/observation/file/<id>/type': {},
-        '/observation/file/type/<id>': {},
         '/observation/file/type': {},
+        '/observation/file/type/<id>': {},
     }
 }
 
@@ -655,6 +656,36 @@ info['Endpoints']['/observation/type/<id>']['GET'] = {
         401: {'Description': 'Access revoked, token expired'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Observation type does not exist'},
+    }
+}
+
+
+@application.route('/observation/type', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_observation_types(client: Client) -> dict:  # noqa: unused client
+    """Query for list of all observation types."""
+    disallow_parameters(request)
+    return {'observation_type': [record.to_json() for record in ObservationType.query().all()]}
+
+
+info['Endpoints']['/observation/type']['GET'] = {
+    'Description': 'Request list of all observation types',
+    'Permissions': 'Public',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'Observation type data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked, token expired'},
+        403: {'Description': 'Token not found or invalid'},
     }
 }
 
