@@ -198,7 +198,7 @@ class WebApp(Application):
 
     def make_request(self) -> dict:
         """Issue web request."""
-        return self.endpoint(extract_response=False, raise_on_error=False,
+        return self.endpoint(extract_response=False, raise_on_error=True,
                              **self.payload, **self.structured_options)
 
     @property
