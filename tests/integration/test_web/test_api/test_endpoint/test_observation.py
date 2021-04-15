@@ -894,6 +894,33 @@ class TestGetFileType(Endpoint):
         )
 
 
+class TestGetFileTypes(Endpoint):
+    """Tests for GET /observation/file/type endpoint."""
+
+    route: str = '/observation/file/type'
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_get_all(self) -> None:
+        client = self.get_client(self.user)
+        file_types = FileType.query().all()
+        assert self.get(self.route, client_id=client.id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'file_type': [record.to_json() for record in file_types]}}
+        )
+
+
 class TestGetFile(Endpoint):
     """Tests for GET /observation/file/<id> endpoint."""
 
