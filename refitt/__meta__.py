@@ -14,7 +14,7 @@
 
 
 __appname__     = 'refitt'
-__version__     = '0.15.0'
+__version__     = '0.16.0'
 __authors__     = ['Dan Milisavljevic, Ph.D. <dmilisav@purdue.edu>',
                    'Niharika Sravan, Ph.D. <nsravan@purdue.edu>',
                    'Geoffrey Lentner, M.Sc. <glentner@purdue.edu>',
