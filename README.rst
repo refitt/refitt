@@ -9,6 +9,14 @@ Recommender Engine For Intelligent Transient Tracking
     :target: https://refitt.readthedocs.io
     :alt: Documentation
 
+.. image:: https://img.shields.io/pypi/v/refitt.svg?style=flat&color=blue
+    :target: https://pypi.org/project/refitt
+    :alt: PyPI Version
+
+.. image:: https://github.com/refitt/refitt/workflows/tests/badge.svg
+    :target: https://github.com/refitt/refitt/actions
+    :alt: Pytest
+
 |
 
 `REFITT <https://www.refitt.org>`_ is an autonomous machine learning system that yields optimal

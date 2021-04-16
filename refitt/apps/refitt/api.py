@@ -215,43 +215,9 @@ class WebApp(Application):
         if sys.stdout.isatty() and self.show_headers:
             self.format_headers(status, headers)
         if headers['Content-Type'] == 'application/octet-stream':
-            if not self.download:
-                if sys.stdout.isatty():
-                    print('---')
-                    print(f'{ansi.red("Content-Disabled")}: use --download to save file')
-                else:
-                    (filename, data), = content.items()
-                    sys.stdout.buffer.write(data)
-            else:
-                (filename, data), = content.items()
-                self.save_local(filename, data)
+            self.format_octet_stream(content)
         else:
-            if self.extraction_path is not None:
-                content = self.extract_partial(content, self.extraction_path)
-            if isinstance(content, (dict, list)):
-                content = json.dumps(content, indent=4)
-                if sys.stdout.isatty():
-                    Console().print(Syntax(content, 'json',
-                                           word_wrap=True, theme='solarized-dark',
-                                           background_color='default'))
-                else:
-                    print(content)
-            else:
-                content = json.dumps(content, indent=4)  # formats special types
-                if self.display_raw:
-                    content = content.strip('"')
-                print(content)
-
-    @staticmethod
-    def extract_partial(content: dict, path: str) -> Any:
-        """Pull sections or values out of nested `content`."""
-        result = dict(content)
-        for section in path.strip('.').split('.'):
-            try:
-                result = result[section]
-            except KeyError as error:
-                raise RuntimeError(f'Element not found \'{path}\'') from error
-        return result
+            self.format_json(content)
 
     @staticmethod
     def format_headers(status: int, headers: dict) -> None:
@@ -263,6 +229,48 @@ class WebApp(Application):
               f'{ansi.cyan(STATUS_CODE[status])}')
         for field, value in headers.items():
             print(f'{ansi.cyan(field)}: {value}')
+
+    def format_octet_stream(self, content: dict) -> None:
+        """Format output and save file to local disk if needed."""
+        if not self.download:
+            if sys.stdout.isatty():
+                print('---')
+                print(f'{ansi.red("Content-Disabled")}: use --download to save file')
+            else:
+                (filename, data), = content.items()
+                sys.stdout.buffer.write(data)
+        else:
+            (filename, data), = content.items()
+            self.save_local(filename, data)
+
+    def format_json(self, content: dict) -> None:
+        """Format output for JSON content."""
+        if self.extraction_path is not None:
+            content = self.extract_partial(content, self.extraction_path)
+        if isinstance(content, (dict, list)):
+            content = json.dumps(content, indent=4)
+            if sys.stdout.isatty():
+                Console().print(Syntax(content, 'json',
+                                       word_wrap=True, theme='solarized-dark',
+                                       background_color='default'))
+            else:
+                print(content)
+        else:
+            content = json.dumps(content, indent=4)  # formats special types
+            if self.display_raw:
+                content = content.strip('"')
+            print(content)
+
+    @staticmethod
+    def extract_partial(content: dict, path: str) -> Any:
+        """Pull sections or values out of nested `content`."""
+        result = dict(content)
+        for section in path.strip('.').split('.'):
+            try:
+                result = result[section]
+            except KeyError as error:
+                raise RuntimeError(f'Element not found \'{path}\'') from error
+        return result
 
     @staticmethod
     def save_local(filename: str, data: bytes) -> None:

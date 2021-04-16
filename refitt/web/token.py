@@ -72,10 +72,10 @@ class Cipher:
             api_config = config['api']
         except KeyError:
             raise ConfigurationError('Missing "api" section')
-        root_key = api_config.root_key
-        if root_key is None:
-            raise ConfigurationError('No "api.root_key" found')
-        return cls(root_key.encode())
+        rootkey = api_config.rootkey
+        if rootkey is None:
+            raise ConfigurationError('No "api.rootkey" found')
+        return cls(rootkey.encode())
 
     def encrypt(self, data: bytes) -> bytes:
         """Encrypt `data` with the Cipher."""
@@ -84,6 +84,11 @@ class Cipher:
     def decrypt(self, data: bytes) -> bytes:
         """Decrypt `data` with the Cipher."""
         return self._fernet.decrypt(data)
+
+    @classmethod
+    def new_rootkey(cls) -> RootKey:
+        """Generate a new cryptography 'rootkey' for deployments."""
+        return RootKey(Fernet.generate_key().decode())
 
 
 class CryptoDigits:
@@ -211,6 +216,11 @@ class CryptoDigits:
     def __ne__(self, other: CryptoDigits) -> bool:
         """The underlying digits are different."""
         return not self == other
+
+
+class RootKey(CryptoDigits):
+    """A 44-digit key."""
+    _size = 44
 
 
 class Key(CryptoDigits):

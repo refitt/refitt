@@ -23,6 +23,7 @@ from contextlib import contextmanager
 import pytest
 
 # internal libs
+from refitt.database import config
 from refitt.database.model import Recommendation, RecommendationGroup, User, Facility, Observation, File
 from refitt.web.api.response import (STATUS, RESPONSE_MAP, NotFound, ParameterInvalid, ParameterNotFound,
                                      PermissionDenied, PayloadTooLarge, PayloadMalformed)
@@ -1032,11 +1033,11 @@ class TestPostRecommendationObserved(Endpoint):
     def test_successful_update_observation(self) -> None:
         rec = Recommendation.from_id(self.recommendation_id)
         original = rec.observed.to_json()
-        new_data = {'type_id': 1, 'value': 3.14, 'error': None,
-                    'time': str(datetime.now().astimezone())}
+        timestamp = datetime.now() if config.backend == 'sqlite' else datetime.now().astimezone()
+        new_data = {'type_id': 1, 'value': 3.14, 'error': None, 'time': str(timestamp)}
         client = self.get_client(self.user)
         # update data
-        just_prior = str(datetime.now().astimezone())  # ISO format
+        just_prior = str(datetime.now() if config.backend == 'sqlite' else datetime.now().astimezone())  # ISO format
         status, payload = self.post(self.route, client_id=client.id, json=new_data)
         assert status == STATUS['OK']
         for field, value in new_data.items():
@@ -1044,8 +1045,11 @@ class TestPostRecommendationObserved(Endpoint):
         assert just_prior < payload.get('Response').get('observation').get('recorded')
         # restore original data
         original_id = original.pop('id')
-        Observation.update(original_id, **original)  # NOTE: 'value' is updated but then reverts on commit?!
-        Observation.update(original_id, value=original['value'])  # FIXME: WTF SQLAlchemy?
+        original_data = original.copy()
+        original_data['time'] = datetime.fromisoformat(original['time'])
+        original_data['recorded'] = datetime.fromisoformat(original['recorded'])
+        Observation.update(original_id, **original_data)  # NOTE: 'value' is updated but then reverts on commit?!
+        Observation.update(original_id, **original_data)  # FIXME: WTF SQLAlchemy?
         assert self.get(self.route, client_id=client.id) == (
             STATUS['OK'], {'Status': 'Success', 'Response': {'observation': {'id': original_id, **original}}}
         )
@@ -1054,8 +1058,8 @@ class TestPostRecommendationObserved(Endpoint):
         # temporarily remove existing file to simulate adding "new" observation
         rec = Recommendation.from_id(self.recommendation_id)
         original = rec.observed.to_json()
-        new_data = {'type_id': 1, 'value': 3.14, 'error': None,
-                    'time': str(datetime.now().astimezone())}
+        timestamp = datetime.now() if config.backend == 'sqlite' else datetime.now().astimezone()
+        new_data = {'type_id': 1, 'value': 3.14, 'error': None, 'time': str(timestamp)}
         file_id = File.from_observation(rec.observation_id).id
         client = self.get_client(self.user)
         with temp_remove_observation_and_file(file_id):

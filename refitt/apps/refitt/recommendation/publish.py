@@ -165,12 +165,12 @@ class RecommendationPublishApp(Application):
     def run(self) -> None:
         """Business logic of command."""
         if self.group_mode:
-            return self.create_group()
-        if self.file_mode:
-            return self.create_from_file()
+            self.create_group()
+        elif self.file_mode:
+            self.create_from_file()
         else:
             self.check_missing_values()
-            return self.create_from_values()
+            self.create_from_values()
 
     @cached_property
     def group_mode(self) -> True:
