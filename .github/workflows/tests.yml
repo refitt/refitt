@@ -25,12 +25,11 @@ jobs:
       env:
         REFITT_LOGGING_LEVEL: DEBUG
         REFITT_DATABASE_BACKEND: sqlite
-        REFITT_DATABASE_FILE: /var/lib/refitt/database.sqlite
+        REFITT_DATABASE_FILE: database.sqlite
         REFITT_API_SITE: localhost
         REFITT_API_PORT: 5000
         REFITT_API_ROOTKEY: ${{ secrets.API_ROOTKEY_FAKE }}
       run: |
-        mkdir -p /var/lib/refitt
         refitt database init --drop --test
         refitt service api start --workers 1 --port 5000 &
         sleep 5
