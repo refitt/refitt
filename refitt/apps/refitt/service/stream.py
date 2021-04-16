@@ -15,21 +15,16 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Dict, Type, Callable
 
 # standard libs
 import os
-import logging
 
 # external libs
 from cmdkit.app import Application
-from cmdkit.cli import Interface, ArgumentError
+from cmdkit.cli import Interface
 
 # internal libs
-from ....core.config import config, ConfigurationError
-from ....data.broker.alert import AlertInterface
-from ....data.broker.client import ClientInterface
-from ....data.broker.antares import AntaresClient
+from ....data.broker import BrokerService
 
 # public interface
 __all__ = ['StreamApp', ]
@@ -62,16 +57,6 @@ options:
 -f, --filter            NAME   Name of filter to reject alerts.
 -h, --help                     Show this message and exit.\
 """
-
-
-# application logger
-log = logging.getLogger('refitt')
-
-
-# available broker clients
-broker_map: Dict[str, Type[ClientInterface]] = {
-    'antares': AntaresClient,
-}
 
 
 class StreamApp(Application):
@@ -108,67 +93,7 @@ class StreamApp(Application):
 
     def run(self) -> None:
         """Connect to broker and stream alerts."""
-        key = self.get_credential('key')
-        secret = self.get_credential('secret')
-        client = self.get_client()
-        filter_alert = self.get_filter(client)
-        log.info(f'Connecting to {self.broker} (topic={self.topic}, filter={self.filter_name})')
-        with client(self.topic, (key, secret)) as stream:
-            for alert in stream:
-                self.process_alert(alert, filter_alert)
-
-    def get_credential(self, name: str) -> str:
-        """Fetch from command-line argument or configuration file."""
-        cred = getattr(self, name)
-        if cred is not None:
-            return cred
-        try:
-            cred = getattr(config['broker'][self.broker], name)  # NOTE: getattr for auto expansion
-            log.debug(f'Loaded {self.broker} {name} from configuration')
-            return cred
-        except (KeyError, AttributeError) as error:
-            raise ConfigurationError(f'Option --{name} not given and \'broker.{self.broker}.{name}\' '
-                                     'not found in configuration') from error
-
-    def get_client(self) -> Type[ClientInterface]:
-        """Check for client interface based on name."""
-        try:
-            return broker_map[self.broker]
-        except KeyError as error:
-            raise ArgumentError(f'No broker with name \'{self.broker}\'') from error
-
-    def get_filter(self, client: Type[ClientInterface]) -> Callable[[AlertInterface], bool]:
-        """Return bound method of `client` for requested local filter by name."""
-        try:
-            return getattr(client, f'filter_{self.filter_name}')
-        except AttributeError as error:
-            raise RuntimeError(f'Local filter \'{self.filter_name}\' not implemented for {self.broker}') from error
-
-    def process_alert(self, alert: AlertInterface, filter_alert: Callable[[AlertInterface], bool]) -> None:
-        """Process incoming `alert`, optionally persist to disk and/or database."""
-        name = f'{self.broker}::{alert.id})'
-        log.info(f'Received ({name})')
-        if filter_alert(alert) is False:
-            log.info(f'Rejected by filter \'{self.filter_name}\' ({name})')
-        else:
-            log.info(f'Accepted by filter \'{self.filter_name}\' ({name})')
-            self.persist(alert)
-
-    def persist(self, alert: AlertInterface) -> None:
-        """Save `alert` to file and/or database."""
-        if not self.database_only:
-            self.persist_to_disk(alert)
-        if not self.local_only:
-            self.persist_to_database(alert)
-
-    def persist_to_disk(self, alert: AlertInterface) -> None:
-        """Save `alert` to local file."""
-        filepath = os.path.join(self.output_directory, f'{alert.id}.json')
-        alert.to_local(filepath)
-        log.info(f'Written to file ({filepath})')
-
-    def persist_to_database(self, alert: AlertInterface) -> None:
-        """Save `alert` to database (backfill if requested)."""
-        alert.to_database()
-        if self.enable_backfill:
-            alert.backfill_database()
+        service = BrokerService(self.broker, self.topic, (self.key, self.secret),
+                                self.filter_name, self.output_directory, self.local_only,
+                                self.database_only, self.enable_backfill)
+        service.run()
