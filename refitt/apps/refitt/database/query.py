@@ -191,7 +191,7 @@ class QueryDatabaseApp(Application):
             data = results
         if sys.stdout.isatty():
             Console().print(Syntax(json.dumps(data, indent=4), 'json',
-                                   word_wrap=True, theme='monokai',
+                                   word_wrap=True, theme='solarized-dark',
                                    background_color='default'))
         else:
             print(json.dumps(data, indent=4), file=sys.stdout, flush=True)

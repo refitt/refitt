@@ -118,7 +118,7 @@ class AuthApp(Application):
         """Format and print credentials."""
         if self.format_json:
             if sys.stdout.isatty():
-                Console().print(Syntax(json.dumps(data, indent=4), 'json',
+                Console().print(Syntax(json.dumps(data, indent=4), 'json', theme='solarized-dark',
                                        word_wrap=True, background_color='default'))
             else:
                 print(json.dumps(data, indent=4), file=sys.stdout, flush=True)
