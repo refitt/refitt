@@ -25,7 +25,7 @@ from .alert import AlertInterface
 
 
 class ClientInterface(ABC):
-    """Table class for all stream clients."""
+    """Generic interface for all stream client implementations."""
 
     topic: str = None
     credentials: Tuple[str, str] = None

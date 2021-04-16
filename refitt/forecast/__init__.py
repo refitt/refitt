@@ -33,6 +33,7 @@ from ..database.model import Object, Source, ObservationType, Observation, Forec
 # public interface
 __all__ = ['Forecast', ]
 
+
 # initialize module level logger
 log = logging.getLogger(__name__)
 
