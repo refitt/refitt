@@ -32,6 +32,7 @@ from rich.syntax import Syntax
 # internal libs
 from ...database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
 from ...core.exceptions import log_exception
+from ...web.token import Cipher
 
 # public interface
 __all__ = ['AuthApp', ]
@@ -40,7 +41,8 @@ __all__ = ['AuthApp', ]
 PROGRAM = 'refitt auth'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} [-h] <user> <action> [<options>...]
+usage: {PROGRAM} <user> {{--gen-key [--level NUM] | --gen-secret | --gen-token [--expires SECONDS]}}
+       {PROGRAM} [-h] --gen-rootkey
 {__doc__}\
 """
 
@@ -55,11 +57,12 @@ actions:
     --gen-key                Generate all new credentials.
     --gen-secret             Generate new client secret.
     --gen-token              Generate new session token.
+    --gen-rootkey            Generate new rootkey.
     --revoke                 Revoke credentials.
     
 options:
-    --expires     SEC        Seconds until token expires (default: {DEFAULT_EXPIRE_TIME}).
-    --level       NUM        Apply specific authorization level (default: {DEFAULT_CLIENT_LEVEL}).
+-e, --expires     SEC        Seconds until token expires (default: {DEFAULT_EXPIRE_TIME}).
+-l, --level       NUM        Apply specific authorization level (default: {DEFAULT_CLIENT_LEVEL}).
 -h, --help                   Show this message and exit.\
 """
 
@@ -74,16 +77,18 @@ class AuthApp(Application):
     interface = Interface(PROGRAM, USAGE, HELP)
 
     user: Union[int, str] = None
-    interface.add_argument('user')
+    interface.add_argument('user', nargs='?', default=None)
 
     gen_key: bool = False
     gen_secret: bool = False
     gen_token: bool = False
     revoke_all: bool = False
+    gen_rootkey: bool = False
     action_interface = interface.add_mutually_exclusive_group()
     action_interface.add_argument('--gen-key', action='store_true')
     action_interface.add_argument('--gen-secret', action='store_true')
     action_interface.add_argument('--gen-token', action='store_true')
+    action_interface.add_argument('--gen-rootkey', action='store_true')
     action_interface.add_argument('--revoke', action='store_true', dest='revoke_all')
 
     level: Optional[int] = DEFAULT_CLIENT_LEVEL
@@ -109,10 +114,12 @@ class AuthApp(Application):
 
     def check_arguments(self) -> None:
         """Additional logical validation of arguments."""
-        actions = 'gen_key', 'gen_secret', 'gen_token', 'revoke_all'
-        actions_specified = map(functools.partial(getattr, self), actions)  # noqa: typing?
+        actions = 'gen_key', 'gen_secret', 'gen_token', 'gen_rootkey', 'revoke_all'
+        actions_specified = map(functools.partial(getattr, self), actions)
         if not any(actions_specified):
             raise ArgumentError(f'Must specify action')
+        if not self.gen_rootkey and not self.user:
+            raise ArgumentError('Must specify <user>')
 
     def format_output(self, data: Dict[str, str]):
         """Format and print credentials."""
@@ -134,6 +141,7 @@ class AuthApp(Application):
             'gen_key': self.update_key,
             'gen_secret': self.update_secret,
             'gen_token': self.update_token,
+            'gen_rootkey': self.create_rootkey,
             'revoke_all': self.revoke_credentials
         }
 
@@ -171,6 +179,11 @@ class AuthApp(Application):
         """Only generate a new session token for existing client."""
         token = Session.new(self.user_id, expires=self.expires)
         return {'token': token.encrypt()}
+
+    @staticmethod
+    def create_rootkey() -> Dict[str, str]:
+        """Generate a new rootkey."""
+        return {'rootkey': Cipher.new_rootkey().value, }
 
     @property
     def user_id(self) -> int:
