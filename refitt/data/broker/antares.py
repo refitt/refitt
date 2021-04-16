@@ -20,7 +20,6 @@ from typing import List, Dict, Iterator, Union, Optional
 # standard libs
 import logging
 from datetime import datetime
-from functools import cached_property
 
 # external libs
 from antares_client import StreamingClient as _AntaresClient
