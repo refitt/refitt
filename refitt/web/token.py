@@ -234,7 +234,7 @@ class Secret(CryptoDigits):
 
 
 class Token(CryptoDigits):
-    """A 64-digit secret."""
+    """A variable-length token."""
     _size = None  # depends on JWT data
 
 

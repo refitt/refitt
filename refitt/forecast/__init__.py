@@ -60,7 +60,7 @@ class Forecast:
         "time_since_trigger": float,
         "current_time": float,
         "num_obs": int,
-        "filter": str,  # e.g., "ztf-g"
+        "filter": str,  # e.g., "g-ztf"
         "class": ListSchema.any(),  # FIXME: we should use a different structure here
         "phase": str,
         "next_mag_mean": float,
@@ -112,10 +112,6 @@ class Forecast:
         """Create forecast from raw `data` (JSON)."""
         return cls(data)
 
-    def to_dict(self) -> dict:
-        """Dump forecast to dictionary."""
-        return self.data.copy()
-
     @classmethod
     def from_str(cls, text: str, **options) -> Forecast:
         """Create forecast from raw `text` data."""
@@ -131,6 +127,10 @@ class Forecast:
         """Load forecast from local `filepath`."""
         with open(filepath, mode='r', **options) as stream:
             return cls.from_io(stream)
+
+    def to_dict(self) -> dict:
+        """Dump forecast to dictionary."""
+        return self.data.copy()
 
     def to_local(self, filepath: str, indent: int = 4, **options) -> None:
         """Write forecast to local `filepath`."""
