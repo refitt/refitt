@@ -30,6 +30,7 @@ from pandas import DataFrame, read_csv, read_json, read_hdf
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
+from ....core.typing import coerce
 from ....core.exceptions import log_exception
 from ....database.model import (Recommendation, RecommendationGroup, RecommendationTag,
                                 User, Facility, Forecast, Object, NotFound, )
@@ -43,7 +44,7 @@ PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 usage: {PROGRAM} --group [--print]
        {PROGRAM} --user ID [--group ID] [--facility ID] --object ID --forecast ID --priority NUM [--print]
-       {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]] [--group ID] [--print]
+       {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]] [--group ID] [--print] ...
 {__doc__}\
 """
 
@@ -58,6 +59,10 @@ options:
     --priority  NUM   Priority value for recommendation.
     --forecast  ID    Forecast ID for recommendation.
     --print           Write ID of generated resources to <stdout>.
+
+    --extra-fields  NAME[:TYPE][,NAME[:TYPE]...]
+                      Extra fields to pull in as 'data'.
+
 -h, --help            Show this message and exit.
 
 If invoked with only --group, a new recommendation group will be created.
@@ -72,7 +77,12 @@ and only one facility is registered for that user it will be used.
 Create a set of recommendations at once by using --from-file. If no PATH is 
 specified, read from standard input. Format is derived from file name extension, 
 unless reading from standard input for which a format specifier (e.g., --csv) 
-is required.\
+is required.
+
+The --extra-fields option allows a comma-separated list of named fields to
+include with the recommendation(s). When used with a single recommendation the
+values (specified with a colon suffix) are interpreted as literals. For file mode,
+the color suffix is to be the name of a type (e.g., 'int').\
 """
 
 
@@ -80,33 +90,29 @@ is required.\
 log = logging.getLogger('refitt')
 
 
-FILE_SCHEMA: Dict[str, type] = {
-    'object_id': int,
-    'user_id': int,
-    'facility_id': int,
-    'forecast_id': int,
-    'priority': int,
-}
+REQUIRED_FIELDS = ['object_id', 'user_id', 'facility_id', 'forecast_id', 'priority']
+FILE_SCHEMA = {field: 'int' for field in REQUIRED_FIELDS}
 
-
-Loader = Callable[[Union[str, IO]], DataFrame]
-def check_schema(loader: Loader) -> Loader:
+LoaderImpl = Callable[[Union[str, IO], Optional[Dict[str, str]]], DataFrame]
+def check_schema(loader_impl: LoaderImpl) -> LoaderImpl:
     """Wrapper method to check column names and types."""
 
-    @wraps(loader)
-    def wrapped_loader(file: Union[str, IO]) -> DataFrame:
-        name = file if isinstance(file, str) else file.name
-        data = loader(file)
-        for column in data.columns:
-            if column not in FILE_SCHEMA:
-                raise RuntimeError(f'From file ({name}): unexpected column \'{column}\' in data file')
-        for column, dtype in FILE_SCHEMA.items():
+    @wraps(loader_impl)
+    def wrapped_loader(fp: Union[str, IO], extra_fields: Dict[str, str] = None) -> DataFrame:
+        name = fp if isinstance(fp, str) else fp.name
+        data = loader_impl(fp, extra_fields)
+        schema = FILE_SCHEMA if not extra_fields else {**FILE_SCHEMA, **extra_fields}
+        for column in list(data.columns):
+            if column not in schema:
+                log.info(f'From file ({name}): ignoring column \'{column}\'')
+                data.drop([column], axis=1, inplace=True)
+        for column, dtype in schema.items():
             if column not in data.columns:
-                raise RuntimeError(f'From file ({name}): expected column \'{column}\' in data file')
+                raise RuntimeError(f'From file ({name}): missing column \'{column}\'')
             else:
                 try:
                     data[column] = data[column].astype(dtype)
-                except ValueError as error:
+                except (TypeError, ValueError) as error:
                     raise RuntimeError(f'From file ({name}), column \'{column}\': {error}') from error
         return data
 
@@ -147,6 +153,10 @@ class RecommendationPublishApp(Application):
     io_interface.add_argument('--json', action='store_true', dest='format_json')
     io_interface.add_argument('--hdf5', action='store_true', dest='format_hdf5')
 
+    extra_fields_spec: str = ''
+    extra_fields: Optional[Dict[str, str]] = None
+    interface.add_argument('--extra-fields', default=extra_fields_spec, dest='extra_fields_spec')
+
     verbose: bool = False
     interface.add_argument('--print', action='store_true', dest='verbose')
 
@@ -164,6 +174,7 @@ class RecommendationPublishApp(Application):
 
     def run(self) -> None:
         """Business logic of command."""
+        self.check_args()
         if self.group_mode:
             self.create_group()
         elif self.file_mode:
@@ -171,6 +182,33 @@ class RecommendationPublishApp(Application):
         else:
             self.check_missing_values()
             self.create_from_values()
+
+    def check_args(self) -> None:
+        """Check arguments and build attributes."""
+        if self.group_mode and self.extra_fields_spec:
+            raise ArgumentError('Cannot specify extra fields for file with --group mode')
+        if self.file_mode:
+            self.extra_fields = self.parse_extra_fields_for_file()
+        else:
+            self.extra_fields = self.parse_extra_fields_values()
+
+    def parse_extra_fields_for_file(self) -> Dict[str, str]:
+        """Build extra fields dictionary with type names for values."""
+        if not self.extra_fields_spec:
+            return {}
+        fields = self.extra_fields_spec.split(',')
+        extra_fields = {}
+        for field in fields:
+            if ':' in field:
+                name, value = field.split(':')
+                extra_fields[name] = value
+            else:
+                extra_fields[field] = 'str'
+        return extra_fields
+
+    def parse_extra_fields_values(self) -> Dict[str, str]:
+        """Build extra fields dictionary with fixed values."""
+        return {field: coerce(value) for field, value in self.parse_extra_fields_for_file().items()}
 
     @cached_property
     def group_mode(self) -> True:
@@ -207,19 +245,20 @@ class RecommendationPublishApp(Application):
 
     def create_from_values(self) -> None:
         """Create a new recommendation with the given inputs and print its new ID."""
-        data = self.build_recommendation(group_id=self.group_id, object_id=self.object_id, priority=self.priority,
-                                         user_id=self.user_id, facility_id=self.facility_id,
-                                         forecast_id=self.forecast_id)
-        recommendation, = self.add_recommendations([data, ])
+        rec = self.build_recommendation(group_id=self.group_id, object_id=self.object_id, priority=self.priority,
+                                        user_id=self.user_id, facility_id=self.facility_id,
+                                        forecast_id=self.forecast_id, **self.extra_fields)
+        recommendation, = self.add_recommendations([rec, ])
         self.write(recommendation.id)
 
     @staticmethod
-    def build_recommendation(group_id: int, object_id: int, priority: int,
-                             user_id: int, facility_id: int, forecast_id: int) -> Recommendation:
+    def build_recommendation(group_id: int, object_id: int, priority: int, user_id: int, facility_id: int,
+                             forecast_id: int, **data) -> Recommendation:
         return Recommendation.from_dict({
             'group_id': group_id, 'tag_id': RecommendationTag.get_or_create(object_id).id,
             'priority': priority, 'object_id': object_id, 'user_id': user_id, 'facility_id': facility_id,
             'forecast_id': forecast_id, 'predicted_observation_id': Forecast.from_id(forecast_id).observation.id,
+            'data': data
         })
 
     @staticmethod
@@ -300,19 +339,19 @@ class RecommendationPublishApp(Application):
     def load_from_stdin(self) -> DataFrame:
         """Load recommendation data from standard input."""
         if self.file_format in ('csv', 'json', ):
-            return self.loaders[self.file_format](sys.stdin)
+            return self.loaders[self.file_format](sys.stdin, self.extra_fields)
         else:
             raise IOError(f'Standard input not supported for \'{self.file_format}\' files')
 
     def load_from_local(self, filepath: str) -> DataFrame:
         """Load recommendation data from local `filepath`."""
         if os.path.exists(filepath):
-            return self.loaders[self.file_format](filepath)
+            return self.loaders[self.file_format](filepath, self.extra_fields)
         else:
             raise FileNotFoundError(f'File does not exist: {filepath}')
 
     @cached_property
-    def loaders(self) -> Dict[str, Loader]:
+    def loaders(self) -> Dict[str, LoaderImpl]:
         """File load methods."""
         return {
             'csv': self.load_csv,
@@ -322,21 +361,21 @@ class RecommendationPublishApp(Application):
 
     @staticmethod
     @check_schema
-    def load_csv(filepath: str) -> DataFrame:
-        """Load recommendation data from CSV filepath."""
-        return read_csv(filepath)
+    def load_csv(fp: Union[str, IO], extra_fields: Dict[str, str] = None) -> DataFrame:  # noqa: extra_fields unused
+        """Load recommendation data from CSV filepath/descriptor."""
+        return read_csv(fp)
 
     @staticmethod
     @check_schema
-    def load_json(filepath: str) -> DataFrame:
-        """Load recommendation data from JSON filepath."""
-        return read_json(filepath, orient='records')
+    def load_json(fp: Union[str, IO], extra_fields: Dict[str, str] = None) -> DataFrame:  # noqa: extra_fields unused
+        """Load recommendation data from JSON filepath/descriptor."""
+        return read_json(fp, orient='records')
 
     @staticmethod
     @check_schema
-    def load_hdf5(filepath: str) -> DataFrame:
+    def load_hdf5(filepath: str, extra_fields: Dict[str, str] = None) -> DataFrame:  # noqa: extra_fields unused
         """Load recommendation data from HDF5 filepath."""
-        return DataFrame(read_hdf(filepath))  # coerce type
+        return DataFrame(read_hdf(filepath))  # NOTE: coerce type
 
     @cached_property
     def file_formats(self) -> Dict[str, Tuple[bool, List[str]]]:
