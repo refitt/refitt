@@ -34,9 +34,9 @@ from ....web.api import application as api
 __all__ = ['WebApp', ]
 
 
-PROGRAM = 'service api'
+PROGRAM = 'refitt service api'
 USAGE = f"""\
-usage: {PROGRAM} [-h] {{start}} [-p PORT] [-w NUM] [-t SECONDS] [--dev] [...]\
+usage: {PROGRAM} [-h] {{start}} [-p PORT] [-w NUM] [-t SECONDS] [--dev] [...]
 {__doc__}\
 """
 
@@ -110,11 +110,12 @@ class WebApp(Application):
 
         cert_ops = []
         if self.keyfile and self.certfile:
-            log.info(f'cert={self.certfile} key={self.keyfile}')
+            log.info(f'cert={self.certfile}')
+            log.info(f'key={self.keyfile}')
             cert_ops = ['--certfile', self.certfile, '--keyfile', self.keyfile]
 
         path = os.path.join(os.path.dirname(sys.executable), 'gunicorn')
-        cmd = [path, '--bind', f'0.0.0.0:{self.port}',
-               '--workers', f'{self.workers}', '--timeout', f'{self.timeout}']
+        cmd = [path, '--bind', f'0.0.0.0:{self.port}', '--workers', f'{self.workers}',
+               '--timeout', f'{self.timeout}', '--log-level', 'warning']
         cmd += cert_ops + ['refitt.web.api']
         subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
