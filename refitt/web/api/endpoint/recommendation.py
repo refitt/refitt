@@ -39,10 +39,8 @@ __all__ = []
 info: dict = {
     'Description': 'Request recommendations',
     'Endpoints': {
-
         '/recommendation': {},
         '/recommendation/<id>': {},
-
         '/recommendation/<id>/group': {},
         '/recommendation/<id>/tag': {},
         '/recommendation/<id>/user': {},
@@ -50,7 +48,6 @@ info: dict = {
         '/recommendation/<id>/object': {},
         '/recommendation/<id>/object/type': {},
         '/recommendation/<id>/forecast': {},
-
         '/recommendation/<id>/predicted': {},
         '/recommendation/<id>/predicted/type': {},
         '/recommendation/<id>/predicted/object': {},
@@ -59,8 +56,7 @@ info: dict = {
         '/recommendation/<id>/predicted/source/type': {},
         '/recommendation/<id>/predicted/source/user': {},
         '/recommendation/<id>/predicted/forecast': {},
-
-        '/recommendation/<id>/observed': {},                  # TODO: POST
+        '/recommendation/<id>/observed': {},
         '/recommendation/<id>/observed/type': {},
         '/recommendation/<id>/observed/object': {},
         '/recommendation/<id>/observed/object/type': {},
@@ -70,9 +66,7 @@ info: dict = {
         '/recommendation/<id>/observed/source/facility': {},
         '/recommendation/<id>/observed/file': {},
         '/recommendation/<id>/observed/file/type': {},
-
         '/recommendation/history': {},
-
         '/recommendation/group': {},
         '/recommendation/group/<id>': {},
     }
