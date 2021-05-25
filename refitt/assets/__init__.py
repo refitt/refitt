@@ -1,16 +1,8 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """Assets/templates required by REFITT."""
+
 
 # type annotations
 from typing import List, Dict, IO, Union, Generator
@@ -21,6 +13,9 @@ import re
 import fnmatch
 import functools
 import logging
+
+# public interface
+__all__ = ['find_files', 'open_asset', 'load_asset', 'load_assets', ]
 
 
 # initialize module level logger
@@ -71,25 +66,7 @@ def find_files(pattern: str, regex: bool = False) -> List[str]:
 
 
 def open_asset(relative_path: str, mode: str = 'r', **kwargs) -> IO:
-    """
-    Open a file from the /assets subpackage.
-
-    Arguments
-    ---------
-    relative_path: str
-        The relative file path below /assets directory.
-
-    mode: str (default: 'r')
-        The mode to open the file with.
-
-    **kwargs:
-        Additional keyword arguments are passed to open.
-
-    Returns
-    -------
-    file: IO
-        The file descriptor for the open file asset.
-    """
+    """Open a file from the /assets subpackage."""
     dirname = os.path.dirname(__file__)
     filepath = os.path.join(dirname, relative_path)
     try:
@@ -101,25 +78,7 @@ def open_asset(relative_path: str, mode: str = 'r', **kwargs) -> IO:
 
 @functools.lru_cache(maxsize=None)
 def load_asset(relative_path: str, mode: str = 'r', **kwargs) -> FileData:
-    """
-    Load an asset from its `relative_path` below /assets.
-
-    Arguments
-    ---------
-    relative_path: str
-        The relative file path below /assets directory.
-
-    mode: str (default: 'r')
-        The mode to open the file with.
-
-    **kwargs:
-        Additional keyword arguments are passed to open.
-
-    Returns
-    -------
-    content: Union[str, bytes]
-        The content of the file (depends on the mode).
-    """
+    """Load an asset from its `relative_path` below /assets."""
     with open_asset(relative_path, mode=mode, **kwargs) as source:
         content = source.read()
         log.debug(f'Loaded /assets/{relative_path}')
@@ -127,21 +86,5 @@ def load_asset(relative_path: str, mode: str = 'r', **kwargs) -> FileData:
 
 
 def load_assets(pattern: str, regex: bool = False, **kwargs) -> Dict[str, FileData]:
-    """
-    Load all files matching `pattern`.
-
-    Arguments
-    ---------
-    pattern: str
-        Either a glob pattern or regular expression for the files to include.
-
-    regex: bool (default: False)
-        Whether to interpret the `pattern` as a regular expression.
-
-    Returns
-    -------
-    file_data: Dict[str, Union[str, bytes]]
-        A dictionary of the file data, indexed by the relative file path within
-        the /assets directory. Use `mode='rb'` to return raw bytes data.
-    """
+    """Load all files matching `pattern`."""
     return {path: load_asset(path, **kwargs) for path in find_files(pattern, regex=regex)}

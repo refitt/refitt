@@ -1,14 +1,5 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """
 REFITT based web requests.
@@ -42,6 +33,10 @@ from ..core.config import config, update_config
 from .token import Key, Secret, Token
 from .api.response import STATUS
 
+# public interface
+__all__ = ['APIError', 'KEY', 'SECRET', 'TOKEN', 'login', 'format_request', 'refresh_token',
+           'authenticated', 'get_content', 'get_protocol', 'get_protocol_version',
+           'request', 'get', 'put', 'post', 'delete', 'use_auth', 'use_token', ]
 
 # type defs
 Request = __requests.Request

@@ -1,14 +1,5 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """
 Runtime configuration for REFITT.
@@ -28,6 +19,10 @@ import logging
 # external libs
 from cmdkit.config import Namespace, Configuration, ConfigurationError  # noqa: unused
 from streamkit.core import config as _streamkit
+
+# public interface
+__all__ = ['config', 'get_config', 'get_site', 'update_config', 'PATH', 'DEFAULT', 'ConfigurationError',
+           'Namespace', ]
 
 
 # module level logger

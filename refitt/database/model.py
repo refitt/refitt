@@ -1,14 +1,5 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """Core database ORM definitions."""
 
@@ -42,6 +33,14 @@ from ..web.token import Key, Secret, Token, JWT
 # It helps to have them share a base with our tables for initialization.
 from streamkit.database.core.orm import Table as Base
 from streamkit.database.core.orm import Level, Topic, Host, Message, Subscriber, Access
+
+# public interface
+__all__ = ['Base', 'DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'IntegrityError',
+           'Level', 'Topic', 'Host', 'Subscriber', 'Message', 'Access',
+           'User', 'Facility', 'FacilityMap', 'ObjectType', 'Object', 'SourceType',
+           'Source', 'ObservationType', 'Observation', 'Forecast', 'Alert', 'FileType', 'File',
+           'RecommendationTag', 'RecommendationGroup', 'Recommendation', 'ModelType', 'Model',
+           'Client', 'Session', 'tables', 'indices', ]
 
 
 # initialize module level logger

@@ -1,14 +1,5 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """Recommendation endpoints."""
 
@@ -32,14 +23,15 @@ from ..response import (endpoint, PermissionDenied, ParameterNotFound, Parameter
 from ..auth import authenticated, authorization
 from ..tools import collect_parameters, disallow_parameters, require_file, require_data
 
+# public interface
+__all__ = []
+
 
 info: dict = {
     'Description': 'Request recommendations',
     'Endpoints': {
-
         '/recommendation': {},
         '/recommendation/<id>': {},
-
         '/recommendation/<id>/group': {},
         '/recommendation/<id>/tag': {},
         '/recommendation/<id>/user': {},
@@ -47,7 +39,6 @@ info: dict = {
         '/recommendation/<id>/object': {},
         '/recommendation/<id>/object/type': {},
         '/recommendation/<id>/forecast': {},
-
         '/recommendation/<id>/predicted': {},
         '/recommendation/<id>/predicted/type': {},
         '/recommendation/<id>/predicted/object': {},
@@ -56,8 +47,7 @@ info: dict = {
         '/recommendation/<id>/predicted/source/type': {},
         '/recommendation/<id>/predicted/source/user': {},
         '/recommendation/<id>/predicted/forecast': {},
-
-        '/recommendation/<id>/observed': {},                  # TODO: POST
+        '/recommendation/<id>/observed': {},
         '/recommendation/<id>/observed/type': {},
         '/recommendation/<id>/observed/object': {},
         '/recommendation/<id>/observed/object/type': {},
@@ -67,9 +57,7 @@ info: dict = {
         '/recommendation/<id>/observed/source/facility': {},
         '/recommendation/<id>/observed/file': {},
         '/recommendation/<id>/observed/file/type': {},
-
         '/recommendation/history': {},
-
         '/recommendation/group': {},
         '/recommendation/group/<id>': {},
     }

@@ -1,14 +1,5 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """Subscribe to remote data brokers/streams."""
 
@@ -25,6 +16,9 @@ from ...core.config import config, ConfigurationError
 from .alert import AlertInterface
 from .client import ClientInterface
 from .antares import AntaresClient
+
+# public interface
+__all__ = ['BrokerService', 'broker_map', ]
 
 
 # initialize module level logger

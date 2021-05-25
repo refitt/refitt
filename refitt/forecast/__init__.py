@@ -1,14 +1,5 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """Forecast data structure."""
 
@@ -60,7 +51,7 @@ class Forecast:
         "time_since_trigger": float,
         "current_time": float,
         "num_obs": int,
-        "filter": str,  # e.g., "ztf-g"
+        "filter": str,  # e.g., "g-ztf"
         "class": ListSchema.any(),  # FIXME: we should use a different structure here
         "phase": str,
         "next_mag_mean": float,
@@ -112,10 +103,6 @@ class Forecast:
         """Create forecast from raw `data` (JSON)."""
         return cls(data)
 
-    def to_dict(self) -> dict:
-        """Dump forecast to dictionary."""
-        return self.data.copy()
-
     @classmethod
     def from_str(cls, text: str, **options) -> Forecast:
         """Create forecast from raw `text` data."""
@@ -131,6 +118,10 @@ class Forecast:
         """Load forecast from local `filepath`."""
         with open(filepath, mode='r', **options) as stream:
             return cls.from_io(stream)
+
+    def to_dict(self) -> dict:
+        """Dump forecast to dictionary."""
+        return self.data.copy()
 
     def to_local(self, filepath: str, indent: int = 4, **options) -> None:
         """Write forecast to local `filepath`."""

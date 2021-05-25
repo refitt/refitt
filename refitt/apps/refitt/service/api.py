@@ -1,14 +1,5 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """Start API server."""
 
@@ -34,9 +25,9 @@ from ....web.api import application as api
 __all__ = ['WebApp', ]
 
 
-PROGRAM = 'service api'
+PROGRAM = 'refitt service api'
 USAGE = f"""\
-usage: {PROGRAM} [-h] {{start}} [-p PORT] [-w NUM] [-t SECONDS] [--dev] [...]\
+usage: {PROGRAM} [-h] {{start}} [-p PORT] [-w NUM] [-t SECONDS] [--dev] [...]
 {__doc__}\
 """
 
@@ -110,11 +101,12 @@ class WebApp(Application):
 
         cert_ops = []
         if self.keyfile and self.certfile:
-            log.info(f'cert={self.certfile} key={self.keyfile}')
+            log.info(f'cert={self.certfile}')
+            log.info(f'key={self.keyfile}')
             cert_ops = ['--certfile', self.certfile, '--keyfile', self.keyfile]
 
         path = os.path.join(os.path.dirname(sys.executable), 'gunicorn')
-        cmd = [path, '--bind', f'0.0.0.0:{self.port}',
-               '--workers', f'{self.workers}', '--timeout', f'{self.timeout}']
+        cmd = [path, '--bind', f'0.0.0.0:{self.port}', '--workers', f'{self.workers}',
+               '--timeout', f'{self.timeout}', '--log-level', 'warning']
         cmd += cert_ops + ['refitt.web.api']
         subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)

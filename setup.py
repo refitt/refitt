@@ -1,14 +1,5 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """Setup and installation script for refitt."""
 
@@ -55,12 +46,13 @@ setup(
                                                 'refittd=refitt.apps.refittd:main',
                                                 'refittctl=refitt.apps.refittctl:main']},
     install_requires     = [
-        'numpy', 'scipy', 'pandas', 'h5py', 'pytables', 'pyarrow>=3.0.0',
+        'numpy', 'scipy', 'pandas', 'h5py', 'tables', 'pyarrow>=3.0.0',
         'sqlalchemy', 'psycopg2',
         'flask', 'gunicorn', 'requests', 'cryptography>=3.2.1',
         'cmdkit>=2.1.3', 'toml', 'streamkit>=0.3.2', 'names_generator>=0.1.0',
         'astropy>=4.0.1', 'antares-client>=1.0.1', 'slackclient>=2.8.0',
         'matplotlib', 'seaborn', 'rich',
-        'tensorflow>=2.4'
+        'tensorflow>=2.4.1',
+        'parsl', 'astroplan', 'timezonefinder', 'pytz', 'bs4', 'jinja2',
     ],
 )

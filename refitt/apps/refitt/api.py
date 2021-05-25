@@ -1,14 +1,5 @@
-# Copyright REFITT Team 2019. All rights reserved.
-#
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
 """Make authenticate requests to the API."""
 
@@ -40,7 +31,7 @@ from ...core.exceptions import log_exception
 from ...core import typing, ansi
 
 # public interface
-__all__ = ['WebApp', ]
+__all__ = ['APIClientApp', ]
 
 
 PROGRAM = 'refitt api'
@@ -87,7 +78,7 @@ options:
 log = logging.getLogger('refitt')
 
 
-class WebApp(Application):
+class APIClientApp(Application):
     """Application class for requests module."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
