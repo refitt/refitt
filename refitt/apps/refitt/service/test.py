@@ -25,6 +25,9 @@ import logging
 from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
+# public interface
+__all__ = ['TestApp', ]
+
 
 PROGRAM = 'refitt service test'
 USAGE = f"""\

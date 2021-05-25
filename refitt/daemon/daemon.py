@@ -23,9 +23,11 @@ import sys
 import atexit
 import logging
 
-
 # internal libs
 from ..core.config import get_site
+
+# public interface
+__all__ = ['Daemon', ]
 
 
 # initialize module level logger

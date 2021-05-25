@@ -32,6 +32,9 @@ from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 from streamkit.core.logging import _ANSI_RESET, _ANSI_CODES  # noqa: protected-members
 
+# public interface
+__all__ = ['RefittControllerApp', ]
+
 
 PROGRAM = 'refittctl'
 ACTIONS = ['start', 'stop', 'status', 'restart', 'reload']

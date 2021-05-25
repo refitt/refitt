@@ -28,6 +28,9 @@ from .config import config
 from streamkit.core import logging as _streamkit  # noqa: unused, but needs to execute
 from streamkit.contrib.logging import StreamKitHandler
 
+# public interface
+__all__ = []
+
 
 # isolate logging section from configuration
 config = config.logging

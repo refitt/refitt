@@ -25,6 +25,9 @@ from abc import ABC, abstractmethod
 from ...database.model import ObjectType, Object, Source, ObservationType, Observation, Alert
 from ...database.core import Session
 
+# public interface
+__all__ = ['AlertInterface', ]
+
 
 # JSON-dict
 AlertJSON = Dict[str, Any]

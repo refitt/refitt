@@ -22,6 +22,9 @@ import fnmatch
 import functools
 import logging
 
+# public interface
+__all__ = ['find_files', 'open_asset', 'load_asset', 'load_assets', ]
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

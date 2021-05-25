@@ -42,6 +42,10 @@ from ..core.config import config, update_config
 from .token import Key, Secret, Token
 from .api.response import STATUS
 
+# public interface
+__all__ = ['APIError', 'KEY', 'SECRET', 'TOKEN', 'login', 'format_request', 'refresh_token',
+           'authenticated', 'get_content', 'get_protocol', 'get_protocol_version',
+           'request', 'get', 'put', 'post', 'delete', 'use_auth', 'use_token', ]
 
 # type defs
 Request = __requests.Request

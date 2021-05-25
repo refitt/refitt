@@ -19,6 +19,9 @@ from ..app import application
 from ..response import endpoint
 from ..auth import authenticate, authenticated, authorization
 
+# public interface
+__all__ = []
+
 
 info: dict = {
     'Description': 'Requests for session token',

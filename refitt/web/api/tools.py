@@ -28,6 +28,9 @@ from .response import (PayloadNotFound, PayloadMalformed, PayloadInvalid, Payloa
                        ParameterNotFound, ParameterInvalid)
 from ...core import typing
 
+# public interface
+__all__ = ['require_data', 'require_file', 'collect_parameters', 'disallow_parameters', ]
+
 
 # type defs
 ContentType = Union[bytes, dict]

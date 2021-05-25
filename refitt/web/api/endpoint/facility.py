@@ -26,6 +26,9 @@ from ..auth import authenticated, authorization
 from ..response import endpoint, ConstraintViolation
 from ..tools import require_data, collect_parameters, disallow_parameters
 
+# public interface
+__all__ = []
+
 
 info: dict = {
     'Description': 'Request, add, update facility profiles',

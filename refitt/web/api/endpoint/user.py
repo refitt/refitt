@@ -23,8 +23,11 @@ from flask import request
 from ....database.model import Client, User, IntegrityError, NotFound
 from ..app import application
 from ..auth import authenticated, authorization
-from ..response import endpoint, ConstraintViolation, PermissionDenied
+from ..response import endpoint, ConstraintViolation
 from ..tools import require_data, collect_parameters, disallow_parameters
+
+# public interface
+__all__ = []
 
 
 info: dict = {

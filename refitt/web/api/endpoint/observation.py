@@ -31,6 +31,9 @@ from ..response import endpoint, PermissionDenied, PayloadTooLarge
 from ..auth import authenticated, authorization
 from ..tools import collect_parameters, disallow_parameters
 
+# public interface
+__all__ = []
+
 
 info: dict = {
     'Description': 'Request observations',

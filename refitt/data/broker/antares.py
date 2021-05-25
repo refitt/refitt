@@ -30,6 +30,9 @@ from astropy.time import Time
 from .client import ClientInterface
 from .alert import AlertInterface
 
+# public interface
+__all__ = ['AntaresAlert', 'AntaresClient', ]
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

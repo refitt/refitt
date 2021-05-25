@@ -32,6 +32,9 @@ from ..response import (endpoint, PermissionDenied, ParameterNotFound, Parameter
 from ..auth import authenticated, authorization
 from ..tools import collect_parameters, disallow_parameters, require_file, require_data
 
+# public interface
+__all__ = []
+
 
 info: dict = {
     'Description': 'Request recommendations',

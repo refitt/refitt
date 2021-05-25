@@ -23,6 +23,9 @@ from typing import Tuple, Iterator
 # internal libs
 from .alert import AlertInterface
 
+# public interface
+__all__ = ['ClientInterface', ]
+
 
 class ClientInterface(ABC):
     """Generic interface for all stream client implementations."""

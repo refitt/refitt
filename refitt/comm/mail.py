@@ -35,6 +35,10 @@ from email.utils import formatdate
 # external libs
 from pandas import read_csv
 
+# public interface
+__all__ = ['UserAuth', 'Mail', 'MailServer', 'MailTemplate', 'TestMail', 'RecommendationMail',
+           'templates', 'TEMPLATES', ]
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

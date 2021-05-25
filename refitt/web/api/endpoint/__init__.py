@@ -19,6 +19,9 @@ from ..response import endpoint, NotFound
 from ..auth import authenticated, authorization
 from . import client, token, facility, user, object, source, observation, recommendation
 
+# public interface
+__all__ = []
+
 
 INFO = {
     'token': token.info,

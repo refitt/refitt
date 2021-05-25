@@ -29,6 +29,11 @@ from ...database.model import NotFound as RecordNotFound
 from ..token import TokenNotFound, TokenInvalid, TokenExpired
 from .auth import AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
 
+# public interface
+__all__ = ['STATUS', 'STATUS_CODE', 'WebException', 'NotFound', 'PayloadTooLarge', 'PayloadInvalid',
+           'PermissionDenied', 'PayloadMalformed', 'PayloadNotFound', 'ConstraintViolation',
+           'ParameterNotFound', 'ParameterInvalid', 'RESPONSE_MAP', 'endpoint', ]
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

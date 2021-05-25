@@ -33,6 +33,10 @@ from cryptography.fernet import Fernet, InvalidToken
 # internal libs
 from ..core.config import config, ConfigurationError
 
+# public interface
+__all__ = ['AuthError', 'TokenNotFound', 'TokenInvalid', 'TokenExpired', 'Cipher',
+           'CryptoDigits', 'RootKey', 'Key', 'Secret', 'Token', 'JWT', ]
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

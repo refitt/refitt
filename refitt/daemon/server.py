@@ -24,6 +24,9 @@ from multiprocessing.managers import BaseManager
 # internal libs
 from ..core.config import config
 
+# public interface
+__all__ = ['DaemonServer', ]
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

@@ -26,6 +26,9 @@ from .. import assets
 from .core import engine, Session, config
 from .model import Base, tables
 
+# public interface
+__all__ = ['init_database', 'drop_database', 'load_records', ]
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

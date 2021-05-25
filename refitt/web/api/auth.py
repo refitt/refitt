@@ -29,6 +29,10 @@ from flask import request
 from ...database.model import Client
 from ..token import Secret, JWT, AuthError, TokenNotFound, TokenExpired
 
+# public interface
+__all__ = ['ClientInvalid', 'ClientInsufficient', 'AuthenticationNotFound', 'AuthenticationInvalid',
+           'PermissionDenied', 'authenticated', 'authenticate', 'authorization']
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

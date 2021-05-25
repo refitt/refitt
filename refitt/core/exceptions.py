@@ -28,6 +28,9 @@ from cmdkit.app import exit_status
 # internal libs
 from .config import get_site
 
+# public interface
+__all__ = ['log_exception', 'handle_exception', ]
+
 
 def log_exception(exc: Exception, logger: Callable[[str], None], status: int) -> int:
     """Log the exception and exit with `status`."""

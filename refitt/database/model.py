@@ -43,6 +43,14 @@ from ..web.token import Key, Secret, Token, JWT
 from streamkit.database.core.orm import Table as Base
 from streamkit.database.core.orm import Level, Topic, Host, Message, Subscriber, Access
 
+# public interface
+__all__ = ['Base', 'DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'IntegrityError',
+           'Level', 'Topic', 'Host', 'Subscriber', 'Message', 'Access',
+           'User', 'Facility', 'FacilityMap', 'ObjectType', 'Object', 'SourceType',
+           'Source', 'ObservationType', 'Observation', 'Forecast', 'Alert', 'FileType', 'File',
+           'RecommendationTag', 'RecommendationGroup', 'Recommendation', 'ModelType', 'Model',
+           'Client', 'Session', 'tables', 'indices', ]
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

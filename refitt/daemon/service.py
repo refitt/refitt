@@ -25,11 +25,14 @@ from signal import SIGINT
 from datetime import datetime, timedelta
 from subprocess import Popen, TimeoutExpired
 
+# external libs
+from cmdkit.cli import ArgumentError
+
 # internal libs
 from refitt.core.config import get_site, config
 
-# external libs
-from cmdkit.cli import ArgumentError
+# public interface
+__all__ = ['DaemonService', ]
 
 
 # initialize module level logger

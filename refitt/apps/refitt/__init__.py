@@ -104,7 +104,7 @@ class RefittApp(ApplicationGroup):
     commands = {'auth': auth.AuthApp,
                 'login': login.LoginApp,
                 'whoami': whoami.WhoAmIApp,
-                'api': api.WebApp,
+                'api': api.APIClientApp,
                 'config': config.ConfigApp,
                 'database': database.DatabaseApp,
                 'service': service.ServiceApp,

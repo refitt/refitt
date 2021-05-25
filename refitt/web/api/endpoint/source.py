@@ -23,6 +23,9 @@ from ..response import endpoint, NotFound, PermissionDenied
 from ..auth import authenticated, authorization
 from ..tools import collect_parameters, disallow_parameters
 
+# public interface
+__all__ = []
+
 
 info: dict = {
     'Description': 'Request sources',

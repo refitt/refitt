@@ -16,6 +16,9 @@
 # type annotations
 from typing import TypeVar
 
+# public interface
+__all__ = ['coerce', ]
+
 
 ValueType = TypeVar('ValueType', str, int, float, type(None))
 def coerce(value: str) -> ValueType:

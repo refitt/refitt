@@ -26,6 +26,9 @@ from .alert import AlertInterface
 from .client import ClientInterface
 from .antares import AntaresClient
 
+# public interface
+__all__ = ['BrokerService', 'broker_map', ]
+
 
 # initialize module level logger
 log = logging.getLogger(__name__)

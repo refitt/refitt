@@ -35,6 +35,9 @@ from ...core.config import config as base_config, get_site, get_config, Configur
 from ...core.exceptions import handle_exception
 from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
 
+# public interface
+__all__ = ['RefittDaemonApp', ]
+
 
 PROGRAM = 'refittd'
 USAGE = f"""\

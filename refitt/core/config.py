@@ -29,6 +29,10 @@ import logging
 from cmdkit.config import Namespace, Configuration, ConfigurationError  # noqa: unused
 from streamkit.core import config as _streamkit
 
+# public interface
+__all__ = ['config', 'get_config', 'get_site', 'update_config', 'PATH', 'DEFAULT', 'ConfigurationError',
+           'Namespace', ]
+
 
 # module level logger
 log = logging.getLogger(__name__)

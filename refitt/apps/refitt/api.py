@@ -40,7 +40,7 @@ from ...core.exceptions import log_exception
 from ...core import typing, ansi
 
 # public interface
-__all__ = ['WebApp', ]
+__all__ = ['APIClientApp', ]
 
 
 PROGRAM = 'refitt api'
@@ -87,7 +87,7 @@ options:
 log = logging.getLogger('refitt')
 
 
-class WebApp(Application):
+class APIClientApp(Application):
     """Application class for requests module."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
