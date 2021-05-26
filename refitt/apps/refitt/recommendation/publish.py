@@ -364,9 +364,9 @@ class RecommendationPublishApp(Application):
 
     @staticmethod
     @check_schema
-    def load_hdf5(filepath: str, extra_fields: Dict[str, str] = None) -> DataFrame:  # noqa: extra_fields unused
+    def load_hdf5(fp: str, extra_fields: Dict[str, str] = None) -> DataFrame:  # noqa: extra_fields unused
         """Load recommendation data from HDF5 filepath."""
-        return DataFrame(read_hdf(filepath))  # NOTE: coerce type
+        return DataFrame(read_hdf(fp))  # NOTE: coerce type
 
     @cached_property
     def file_formats(self) -> Dict[str, Tuple[bool, List[str]]]:
