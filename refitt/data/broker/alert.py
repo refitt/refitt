@@ -3,6 +3,7 @@
 
 """Implements the common `Alert` interface for all broker clients."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import List, Dict, Union, Any, Optional

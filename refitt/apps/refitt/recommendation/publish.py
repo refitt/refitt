@@ -6,7 +6,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Tuple, List, Dict, Union, Optional, Callable, IO
+from typing import Tuple, List, Dict, Union, Optional, Callable, IO, Any
 
 # standard libs
 import os
@@ -21,7 +21,7 @@ from pandas import DataFrame, read_csv, read_json, read_hdf
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from ....core.typing import coerce
+from ....core import typing
 from ....core.exceptions import log_exception
 from ....database.model import (Recommendation, RecommendationGroup, RecommendationTag,
                                 User, Facility, Forecast, Object, NotFound, )
@@ -144,9 +144,8 @@ class RecommendationPublishApp(Application):
     io_interface.add_argument('--json', action='store_true', dest='format_json')
     io_interface.add_argument('--hdf5', action='store_true', dest='format_hdf5')
 
-    extra_fields_spec: str = ''
-    extra_fields: Optional[Dict[str, str]] = None
-    interface.add_argument('--extra-fields', default=extra_fields_spec, dest='extra_fields_spec')
+    extra_fields_args: str = []
+    interface.add_argument('--extra-fields', nargs='+', default=[], dest='extra_fields_args')
 
     verbose: bool = False
     interface.add_argument('--print', action='store_true', dest='verbose')
@@ -176,30 +175,38 @@ class RecommendationPublishApp(Application):
 
     def check_args(self) -> None:
         """Check arguments and build attributes."""
-        if self.group_mode and self.extra_fields_spec:
-            raise ArgumentError('Cannot specify extra fields for file with --group mode')
-        if self.file_mode:
-            self.extra_fields = self.parse_extra_fields_for_file()
-        else:
-            self.extra_fields = self.parse_extra_fields_values()
+        if self.group_mode and self.extra_fields_args:
+            raise ArgumentError('Cannot specify --extra-fields in --group mode')
 
-    def parse_extra_fields_for_file(self) -> Dict[str, str]:
+    @cached_property
+    def extra_fields(self) -> Dict[str, typing.ValueType]:
         """Build extra fields dictionary with type names for values."""
-        if not self.extra_fields_spec:
-            return {}
-        fields = self.extra_fields_spec.split(',')
+        if self.file_mode:
+            return self.__extra_fields_with_types()
+        else:
+            return self.__extra_fields_with_values()
+
+    def __extra_fields_with_types(self) -> Dict[str, str]:
+        """Extra fields specified with type names for values (default with 'str')."""
         extra_fields = {}
-        for field in fields:
-            if ':' in field:
-                name, value = field.split(':')
-                extra_fields[name] = value
-            else:
-                extra_fields[field] = 'str'
+        for field in self.extra_fields_args:
+            name = field
+            value = 'str'
+            if '=' in field:
+                name, value = field.split('=')
+            extra_fields[name.strip()] = value.strip()
         return extra_fields
 
-    def parse_extra_fields_values(self) -> Dict[str, str]:
-        """Build extra fields dictionary with fixed values."""
-        return {field: coerce(value) for field, value in self.parse_extra_fields_for_file().items()}
+    def __extra_fields_with_values(self) -> Dict[str, typing.ValueType]:
+        """Extra fields specified with discrete values (no default)."""
+        extra_fields = {}
+        for field in self.extra_fields_args:
+            if '=' in field:
+                name, value = field.split('=')
+                extra_fields[name.strip()] = value.strip()
+            else:
+                raise ArgumentError('Missing required assignment in \'{field}\', from --extra-fields')
+        return {field: typing.coerce(value) for field, value in extra_fields.items()}
 
     @cached_property
     def group_mode(self) -> True:
@@ -364,9 +371,9 @@ class RecommendationPublishApp(Application):
 
     @staticmethod
     @check_schema
-    def load_hdf5(filepath: str, extra_fields: Dict[str, str] = None) -> DataFrame:  # noqa: extra_fields unused
+    def load_hdf5(fp: str, extra_fields: Dict[str, str] = None) -> DataFrame:  # noqa: extra_fields unused
         """Load recommendation data from HDF5 filepath."""
-        return DataFrame(read_hdf(filepath))  # NOTE: coerce type
+        return DataFrame(read_hdf(fp))  # NOTE: coerce type
 
     @cached_property
     def file_formats(self) -> Dict[str, Tuple[bool, List[str]]]:
