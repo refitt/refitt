@@ -8,7 +8,7 @@
 from typing import TypeVar
 
 # public interface
-__all__ = ['coerce', ]
+__all__ = ['coerce', 'ValueType']
 
 
 ValueType = TypeVar('ValueType', str, int, float, type(None))
