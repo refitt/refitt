@@ -35,7 +35,6 @@ From: ubuntu:20.04
 
 %files
     Miniconda3-latest-Linux-x86_64.sh /Miniconda3-latest-Linux-x86_64.sh
-    . /app
 
 %post
     mkdir -p /home /apps /scratch /depot
@@ -55,7 +54,7 @@ From: ubuntu:20.04
     /opt/conda/bin/pip install cryptography cmdkit toml streamkit names_generator \
                                antares-client slackclient rich parsl astroplan timezonefinder pytz bs4 jinja2
 
-    /opt/conda/bin/pip install /app --no-deps
+    /opt/conda/bin/pip install . --no-deps
 
 %runscript
     exec refitt "$@"
