@@ -9,7 +9,7 @@ From: ubuntu:20.04
 
 %labels
     App         refitt
-    Version     0.16.4
+    Version     0.16.5
     Website	    github.com/refitt/refitt
     Maintainer  Geoffrey Lentner
     CreatedBy   glentner@purdue.edu
