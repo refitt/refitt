@@ -134,6 +134,10 @@ class CoreMixin:
     columns: Dict[str, type] = {}
     relationships: Dict[str, Type[Base]] = {}
 
+    def __init__(self: Type[Base], **fields) -> None:
+        """Forwarded initialization to model `Base`."""
+        Base.__init__(self, **fields)
+
     def __repr__(self) -> str:
         """String representation of record."""
         return (f'<{self.__class__.__name__}(' +
