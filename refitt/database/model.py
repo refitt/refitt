@@ -40,7 +40,7 @@ __all__ = ['Base', 'DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 
            'User', 'Facility', 'FacilityMap', 'ObjectType', 'Object', 'SourceType',
            'Source', 'ObservationType', 'Observation', 'Forecast', 'Alert', 'FileType', 'File',
            'RecommendationTag', 'RecommendationGroup', 'Recommendation', 'ModelType', 'Model',
-           'Client', 'Session', 'tables', 'indices', ]
+           'Client', 'Session', 'tables', 'indices', 'DEFAULT_EXPIRE_TIME', 'DEFAULT_CLIENT_LEVEL', ]
 
 
 # initialize module level logger

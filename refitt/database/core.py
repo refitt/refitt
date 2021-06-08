@@ -21,7 +21,7 @@ from sqlalchemy.exc import ArgumentError
 from ..core.config import config, Namespace, ConfigurationError
 
 # public interface
-__all__ = ['DatabaseURL', 'backends', 'engine', 'Session', 'config', ]
+__all__ = ['DatabaseURL', 'backends', 'engine', 'Session', 'config', 'schema', ]
 
 
 # initialize module level logger
