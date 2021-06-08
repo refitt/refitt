@@ -6,7 +6,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Tuple, List, Dict, Union, Optional, Callable, IO, Any
+from typing import Tuple, List, Dict, Union, Optional, Callable, IO
 
 # standard libs
 import os

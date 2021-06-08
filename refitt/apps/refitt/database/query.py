@@ -16,6 +16,7 @@ from datetime import datetime
 from functools import partial
 
 # external libs
+from sqlalchemy import Column
 from sqlalchemy.exc import InvalidRequestError, ProgrammingError, DataError
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
@@ -25,7 +26,7 @@ from rich.table import Table
 
 # internal libs
 from ....core.exceptions import log_exception
-from ....database.model import Base, Column, tables
+from ....database.model import Base, tables
 from ....database.core import Session
 
 # public interface
