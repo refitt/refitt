@@ -50,10 +50,8 @@ options:
     --priority  NUM   Priority value for recommendation.
     --forecast  ID    Forecast ID for recommendation.
     --print           Write ID of generated resources to <stdout>.
-
-    --extra-fields  NAME[:TYPE][,NAME[:TYPE]...]
+    --extra-fields  NAME[=TYPE] [NAME[=TYPE] ...]
                       Extra fields to pull in as 'data'.
-
 -h, --help            Show this message and exit.
 
 If invoked with only --group, a new recommendation group will be created.
@@ -70,10 +68,11 @@ specified, read from standard input. Format is derived from file name extension,
 unless reading from standard input for which a format specifier (e.g., --csv) 
 is required.
 
-The --extra-fields option allows a comma-separated list of named fields to
-include with the recommendation(s). When used with a single recommendation the
-values (specified with a colon suffix) are interpreted as literals. For file mode,
-the color suffix is to be the name of a type (e.g., 'int').\
+The --extra-fields option allows additional columns from a file or extra fields
+in single recommendation mode. Ordinarily, additional columns would be ignored.
+In file mode, the value (e.g., '--extra-fields maxalt[=int]') is the data type.
+In single recommendation mode, it is the discrete value 
+(e.g., '--extra-fields maxalt=42).\
 """
 
 
