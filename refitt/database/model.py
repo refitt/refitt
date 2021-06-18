@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import List, Tuple, Dict, Any, Type, Optional, Callable, TypeVar, Union
 
 # standard libs
+import re
 import random
 import logging
 from base64 import encodebytes as base64_encode, decodebytes as base64_decode
@@ -18,25 +19,25 @@ from functools import lru_cache
 # external libs
 from names_generator.names import LEFT, RIGHT
 from sqlalchemy import Column, ForeignKey, Index, func, type_coerce, or_
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import relationship, aliased, Query
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.exc import IntegrityError, NoResultFound, MultipleResultsFound
 from sqlalchemy.types import Integer, BigInteger, DateTime, Float, Text, String, JSON, Boolean, LargeBinary
 from sqlalchemy.dialects.postgresql import JSONB
 
 # internal libs
-from .core import schema, Session as _Session
+from .interface import schema, Session as _Session
 from ..web.token import Key, Secret, Token, JWT
 
 # NOTE: declarative base is imported from StreamKit's ORM.
 # This does not relate to the engine/session itself and we don't do anything with them.
 # It helps to have them share a base with our tables for initialization.
-from streamkit.database.core.orm import Table as Base
+# from streamkit.database.core.orm import Table as Base
 from streamkit.database.core.orm import Level, Topic, Host, Message, Subscriber, Access
 
 # public interface
-__all__ = ['Base', 'DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'IntegrityError',
-           'Level', 'Topic', 'Host', 'Subscriber', 'Message', 'Access',
+__all__ = ['DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'IntegrityError',
+           'ModelInterface', 'Level', 'Topic', 'Host', 'Subscriber', 'Message', 'Access',
            'User', 'Facility', 'FacilityMap', 'ObjectType', 'Object', 'SourceType',
            'Source', 'ObservationType', 'Observation', 'Forecast', 'Alert', 'FileType', 'File',
            'RecommendationTag', 'RecommendationGroup', 'Recommendation', 'ModelType', 'Model',
@@ -48,7 +49,7 @@ log = logging.getLogger(__name__)
 
 
 class DatabaseError(Exception):
-    """Generic error with respect to the database model."""
+    """Generic error with respect to the db model."""
 
 
 class NotFound(NoResultFound):
@@ -63,7 +64,6 @@ class AlreadyExists(DatabaseError):
     """Exception specific to a record with unique properties already existing."""
 
 
-# JSON value types and their coerced type before loading into database
 __NT = type(None)
 __VT = TypeVar('__VT', __NT, bool, int, float, str, Dict[str, Any], List[str])
 __RT = Union[__VT, datetime, bytes]
@@ -103,7 +103,6 @@ def __dump_bytes(value: __RT) -> __VT:
         return base64_encode(value).decode().strip().split('\n')
 
 
-# list of defined type coercion filters
 __LM = Callable[[__VT], __RT]
 __DM = Callable[[__RT], __VT]
 __loaders: List[__LM] = [__load_datetime, __load_bytes, ]
@@ -115,7 +114,7 @@ def __load_imp(value: __VT, filters: List[__LM]) -> __RT:
 
 
 def _load(value: __VT) -> __RT:
-    """Passively coerce value types of stored record assets to database compatible types."""
+    """Passively coerce value types of stored record assets to db compatible types."""
     return __load_imp(value, __loaders)
 
 
@@ -124,19 +123,25 @@ def __dump_imp(value: __RT, filters: List[__DM]) -> __VT:
 
 
 def _dump(value: __RT) -> __VT:
-    """Passively coerce database types to JSON encoded types."""
+    """Passively coerce db types to JSON encoded types."""
     return __dump_imp(value, __dumpers)
 
 
-class CoreMixin:
+class ModelBase:
     """Core mixin class for all models."""
 
-    columns: Dict[str, type] = {}
-    relationships: Dict[str, Type[Base]] = {}
+    @declared_attr
+    def __tablename__(cls) -> str:  # noqa: cls
+        """The table name should be the "snake_case" of the "ClassName"."""
+        return re.sub(r'(?<!^)(?=[A-Z])', '_', cls.__name__).lower()
 
-    def __init__(self: Type[Base], **fields) -> None:
-        """Forwarded initialization to model `Base`."""
-        Base.__init__(self, **fields)
+    @declared_attr
+    def __table_args__(cls) -> Dict[str, Any]:  # noqa: cls
+        """Common table attributes."""
+        return {'schema': schema, }
+
+    columns: Dict[str, type] = {}
+    relationships: Dict[str, Type[ModelInterface]] = {}
 
     def __repr__(self) -> str:
         """String representation of record."""
@@ -153,12 +158,17 @@ class CoreMixin:
         return {name: getattr(self, name) for name in self.columns}
 
     @classmethod
-    def from_dict(cls: Type[Base], data: Dict[str, Any]) -> Base:
+    def from_dict(cls: Type[ModelInterface], data: Dict[str, Any]) -> ModelInterface:
         """Build record from existing dictionary."""
         return cls(**data)
 
     @classmethod
-    def from_json(cls: Type[Base], data: Dict[str, __VT]) -> Base:
+    def new(cls) -> ModelInterface:
+        """Create new instance of the model with default fields."""
+        return cls()
+
+    @classmethod
+    def from_json(cls: Type[ModelInterface], data: Dict[str, __VT]) -> ModelInterface:
         """Build record from JSON data (already loaded as dictionary)."""
         return cls.from_dict({k: _load(v) for k, v in data.items()})
 
@@ -176,74 +186,73 @@ class CoreMixin:
         return data
 
     @classmethod
-    def from_id(cls: Type[Base], id: int, session: _Session = None) -> Base:
+    def from_id(cls: Type[ModelInterface], id: int) -> ModelInterface:
         """Query for record using unique `id` if applicable."""
         try:
             if hasattr(cls, 'id'):
-                session = session or _Session()
-                return session.query(cls).filter(cls.id == id).one()
+                return cls.query().filter(cls.id == id).one()
             else:
-                raise AttributeError(f'{cls} has no `id` attribute')
+                raise NotImplementedError(f'{cls} has no `id` attribute')
         except NoResultFound as error:
             raise cls.NotFound(f'No {cls.__tablename__} with id={id}') from error
 
     @classmethod
-    def add(cls: Type[Base], data: dict, session: _Session = None) -> Base:
+    def add(cls: Type[ModelInterface], data: dict) -> ModelInterface:
         """Add record from existing `data`, return constructed record."""
-        record, = cls.add_all([data, ], session=session)
+        record, = cls.add_all([data, ])
         return record
 
     @classmethod
-    def add_all(cls: Type[Base], data: List[dict], session: _Session = None) -> List[Base]:
+    def add_all(cls: Type[ModelInterface], data: List[dict]) -> List[ModelInterface]:
         """Add list of new records to the database and return constructed records."""
-        session = session or _Session()
         try:
             records = [cls.from_dict(record) for record in data]
-            session.add_all(records)
-            session.commit()
+            Session.add_all(records)
+            Session.commit()
             for record in records:
                 log.info(f'Added {cls.__tablename__} ({record.id})')
             return records
         except (IntegrityError, DatabaseError):
-            session.rollback()
+            Session.rollback()
             raise
 
     @classmethod
-    def update(cls: Type[Base], id: int, session: Session = None, **data) -> Base:
+    def update(cls: Type[ModelInterface], id: int, **data) -> ModelInterface:
         """Update named attributes of specified record."""
-        session = session or _Session()
         try:
-            record = cls.from_id(id, session)
+            record = cls.from_id(id)
             for field, value in data.items():
                 if field in cls.columns:
                     setattr(record, field, value)
                 else:
                     record.data = {**record.data, field: value}
-            session.commit()
+            Session.commit()
             log.info(f'Updated {cls.__tablename__} ({id})')
             return record
         except (IntegrityError, DatabaseError):
-            session.rollback()
+            Session.rollback()
             raise
 
     @classmethod
-    def delete(cls: Type[Base], id: int, session: _Session = None) -> None:
+    def delete(cls: Type[ModelInterface], id: int) -> None:
         """Delete existing record with `id`."""
-        session = session or _Session()
-        record = cls.from_id(id, session)
-        session.delete(record)
-        session.commit()
+        record = cls.from_id(id)
+        Session.delete(record)
+        Session.commit()
         log.info(f'Deleted {cls.__tablename__} ({id})')
 
     @classmethod
-    def count(cls, session: _Session = None) -> int:
+    def count(cls) -> int:
         """Count of records in table."""
-        session = session or _Session()
-        return session.query(cls).count()
+        return cls.query().count()
 
     @classmethod
-    def query(cls: Type[Base]) -> Query:
-        return _Session.query(cls)
+    def query(cls: Type[ModelInterface]) -> Query:
+        return Session.query(cls)
+
+
+# declarative base inherits common interface
+ModelInterface = declarative_base(cls=ModelBase)
 
 
 # NOTE: patch existing table definitions.
@@ -274,11 +283,8 @@ Message.columns = {'id': int, 'time': datetime, 'topic_id': int, 'level_id': int
 Message.relationships = {'topic': Topic, 'level': Level, 'host': Host}
 
 
-class User(Base, CoreMixin):
-    """User profiles store characteristics about a person."""
-
-    __tablename__ = 'user'
-    __table_args__ = {'schema': schema}
+class User(ModelInterface):
+    """User profiles store attributes about a participating human observer."""
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     first_name = Column('first_name', Text(), nullable=False)
@@ -367,11 +373,8 @@ class User(Base, CoreMixin):
         log.info(f'Deleted user ({user_id})')
 
 
-class Facility(Base, CoreMixin):
+class Facility(ModelInterface):
     """Facility profiles store characteristics about a telescope and it's instruments."""
-
-    __tablename__ = 'facility'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     name = Column('name', Text(), unique=True, nullable=False)
@@ -445,11 +448,8 @@ class Facility(Base, CoreMixin):
         log.info(f'Deleted facility ({facility_id})')
 
 
-class FacilityMap(Base, CoreMixin):
+class FacilityMap(ModelInterface):
     """Mapping table between users and facilities."""
-
-    __tablename__ = 'facility_map'
-    __table_args__ = {'schema': schema}
 
     user_id = Column('user_id', Integer(), ForeignKey(User.id, ondelete='cascade'),
                      primary_key=True, nullable=False)
@@ -462,7 +462,7 @@ class FacilityMap(Base, CoreMixin):
     }
 
     @classmethod
-    def from_id(cls: Type[Base], id: int, session: _Session = None) -> Base:
+    def from_id(cls, id: int, session: _Session = None) -> FacilityMap:
         raise NotImplementedError()
 
     @classmethod
@@ -483,11 +483,8 @@ class FacilityMap(Base, CoreMixin):
 DEFAULT_CLIENT_LEVEL: int = 10
 
 
-class Client(Base, CoreMixin):
+class Client(ModelInterface):
     """Client stores user authorization and authentication."""
-
-    __tablename__ = 'client'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     user_id = Column('user_id', Integer(), ForeignKey(User.id), unique=True, nullable=False)
@@ -581,11 +578,8 @@ class Client(Base, CoreMixin):
 DEFAULT_EXPIRE_TIME: int = 900  # 15 minutes
 
 
-class Session(Base, CoreMixin):
+class Session(ModelInterface):
     """Session stores hashed token with claim details."""
-
-    __tablename__ = 'session'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     client_id = Column('client_id', Integer(), ForeignKey(Client.id, ondelete='cascade'), unique=True, nullable=False)
@@ -641,11 +635,8 @@ class Session(Base, CoreMixin):
         return jwt
 
 
-class ObjectType(Base, CoreMixin):
+class ObjectType(ModelInterface):
     """Object types (e.g., 'SNIa')."""
-
-    __tablename__ = 'object_type'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     name = Column('name', Text(), unique=True, nullable=False)
@@ -670,11 +661,8 @@ class ObjectType(Base, CoreMixin):
             raise ObjectType.NotFound(f'No object_type with name={name}') from error
 
 
-class Object(Base, CoreMixin):
-    """Object table."""
-
-    __tablename__ = 'object'
-    __table_args__ = {'schema': schema}
+class Object(ModelInterface):
+    """An astronomical object defines names, position, and other attributes."""
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(ObjectType.id), nullable=False)
@@ -734,11 +722,8 @@ class Object(Base, CoreMixin):
             raise
 
 
-class ObservationType(Base, CoreMixin):
+class ObservationType(ModelInterface):
     """Observation types (e.g., 'g-ztf')."""
-
-    __tablename__ = 'observation_type'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     name = Column('name', Text(), unique=True, nullable=False)
@@ -765,11 +750,8 @@ class ObservationType(Base, CoreMixin):
             raise ObservationType.NotFound(f'No observation_type with name={name}') from error
 
 
-class SourceType(Base, CoreMixin):
+class SourceType(ModelInterface):
     """Source types (e.g., 'broker')."""
-
-    __tablename__ = 'source_type'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     name = Column('name', Text(), unique=True, nullable=False)
@@ -794,11 +776,8 @@ class SourceType(Base, CoreMixin):
             raise SourceType.NotFound(f'No source_type with name={name}') from error
 
 
-class Source(Base, CoreMixin):
+class Source(ModelInterface):
     """Source table."""
-
-    __tablename__ = 'source'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(SourceType.id), nullable=False)
@@ -867,11 +846,8 @@ class Source(Base, CoreMixin):
                                'description': f'Observer (alias={user.alias}, facility={facility.name})'})
 
 
-class Observation(Base, CoreMixin):
+class Observation(ModelInterface):
     """Observation table."""
-
-    __tablename__ = 'observation'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(ObservationType.id), nullable=False)
@@ -921,11 +897,8 @@ observation_time_index = Index('observation_time_index', Observation.time)
 observation_recorded_index = Index('observation_recorded_index', Observation.recorded)
 
 
-class Alert(Base, CoreMixin):
+class Alert(ModelInterface):
     """Alert table."""
-
-    __tablename__ = 'alert'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
     observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
@@ -954,11 +927,8 @@ class Alert(Base, CoreMixin):
             raise Alert.NotFound(f'No alert with observation_id={observation_id}') from error
 
 
-class FileType(Base, CoreMixin):
+class FileType(ModelInterface):
     """File type table."""
-
-    __tablename__ = 'file_type'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     name = Column('name', Text(), unique=True, nullable=False)
@@ -988,11 +958,8 @@ class FileType(Base, CoreMixin):
         return [file_type.name for file_type in cls.query().all()]
 
 
-class File(Base, CoreMixin):
+class File(ModelInterface):
     """File table."""
-
-    __tablename__ = 'file'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
     observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
@@ -1024,11 +991,8 @@ class File(Base, CoreMixin):
             raise File.NotFound(f'No file with observation_id={observation_id}') from error
 
 
-class Forecast(Base, CoreMixin):
+class Forecast(ModelInterface):
     """Forecast table."""
-
-    __tablename__ = 'forecast'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
     observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
@@ -1057,11 +1021,8 @@ class Forecast(Base, CoreMixin):
             raise Forecast.NotFound(f'No forecast with observation_id={observation_id}') from error
 
 
-class RecommendationGroup(Base, CoreMixin):
+class RecommendationGroup(ModelInterface):
     """Recommendation group table."""
-
-    __tablename__ = 'recommendation_group'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     created = Column('created', DateTime(timezone=True), nullable=False, server_default=func.now())
@@ -1091,11 +1052,8 @@ class RecommendationGroup(Base, CoreMixin):
         return cls.query().order_by(cls.id.desc()).filter(cls.id <= cls.latest().id - offset).limit(limit).all()
 
 
-class RecommendationTag(Base, CoreMixin):
+class RecommendationTag(ModelInterface):
     """Recommendation tag table."""
-
-    __tablename__ = 'recommendation_tag'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     object_id = Column('object_id', Integer(), ForeignKey(Object.id), unique=True, nullable=False)
@@ -1164,11 +1122,8 @@ class RecommendationTag(Base, CoreMixin):
         return names[tag_id]  # NOTE: will fail when we pass ~2.5M recommended objects
 
 
-class Recommendation(Base, CoreMixin):
+class Recommendation(ModelInterface):
     """Recommendation table."""
-
-    __tablename__ = 'recommendation'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', BigInteger().with_variant(Integer(), 'sqlite'), primary_key=True, nullable=False)
     group_id = Column('group_id', Integer(), ForeignKey(RecommendationGroup.id), nullable=False)
@@ -1273,11 +1228,8 @@ recommendation_group_user_index = Index('recommendation_group_user_index',
                                         Recommendation.group_id, Recommendation.user_id)
 
 
-class ModelType(Base, CoreMixin):
+class ModelType(ModelInterface):
     """Model type table."""
-
-    __tablename__ = 'model_type'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     name = Column('name', Text(), unique=True, nullable=False)
@@ -1304,11 +1256,8 @@ class ModelType(Base, CoreMixin):
             raise ModelType.NotFound(f'No model_type with name={name}') from error
 
 
-class Model(Base, CoreMixin):
+class Model(ModelInterface):
     """Model table."""
-
-    __tablename__ = 'model'
-    __table_args__ = {'schema': schema}
 
     id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(ModelType.id), nullable=False)
@@ -1345,7 +1294,7 @@ class Model(Base, CoreMixin):
 
 
 # global registry of tables
-tables: Dict[str, Base] = {
+tables: Dict[str, ModelInterface] = {
     'facility': Facility,
     'user': User,
     'facility_map': FacilityMap,

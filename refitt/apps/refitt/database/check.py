@@ -17,8 +17,8 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ....database.model import Base
-from ....database.core import engine, schema, Session
+from ....database.model import ModelInterface
+from ....database.interface import engine, schema, Session
 
 # public interface
 __all__ = ['CheckDatabaseApp', ]
@@ -48,9 +48,9 @@ log = logging.getLogger('refitt')
 
 
 @functools.lru_cache(maxsize=None)
-def tables() -> Dict[str, Base]:
+def tables() -> Dict[str, ModelInterface]:
     """Associate in-database table names with ORM tables."""
-    return {table.name: table for table in Base.metadata.sorted_tables}
+    return {table.name: table for table in ModelInterface.metadata.sorted_tables}
 
 
 class CheckDatabaseApp(Application):

@@ -14,8 +14,8 @@ import logging
 
 # internal libs
 from .. import assets
-from .core import engine, Session, config
-from .model import Base, tables
+from .interface import engine, Session, config
+from .model import ModelInterface, tables
 
 # public interface
 __all__ = ['init_database', 'drop_database', 'load_records', ]
@@ -28,16 +28,16 @@ log = logging.getLogger(__name__)
 def init_database() -> None:
     """Initialize all database objects."""
     log.info('Creating database objects')
-    Base.metadata.create_all(engine)
+    ModelInterface.metadata.create_all(engine)
 
 
 def drop_database() -> None:
     """Drop all database objects."""
     log.warning('Dropping database objects')
-    Base.metadata.drop_all(engine)
+    ModelInterface.metadata.drop_all(engine)
 
 
-def __load_records(base: Type[Base], path: str) -> List[Dict[str, Any]]:
+def __load_records(base: Type[ModelInterface], path: str) -> List[Dict[str, Any]]:
     """Load all records from JSON file `path` into model of type `base`."""
     return [base.from_json(record) for record in json.loads(assets.load_asset(path))]
 

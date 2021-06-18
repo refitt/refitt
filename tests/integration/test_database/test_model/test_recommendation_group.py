@@ -46,7 +46,7 @@ class TestRecommendationGroup:
         """Test embedded method to check JSON-serialization and full join."""
         assert RecommendationGroup.from_id(1).to_json(join=True) == {
             'id': 1,
-            'created': '2020-10-24 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+            'created': '2020-10-24 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
         }
 
     def test_from_id(self, testdata: TestData) -> None:
@@ -77,7 +77,7 @@ class TestRecommendationGroup:
         """Test query for latest recommendation_group."""
         assert RecommendationGroup.latest().to_json(join=True) == {
             'id': 3,
-            'created': '2020-10-26 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+            'created': '2020-10-26 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
         }
 
     def test_select_with_limit(self) -> None:
@@ -85,11 +85,11 @@ class TestRecommendationGroup:
         assert [group.to_json(join=True) for group in RecommendationGroup.select(limit=2)] == [
             {
                 'id': 3,
-                'created': '2020-10-26 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+                'created': '2020-10-26 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
             },
             {
                 'id': 2,
-                'created': '2020-10-25 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+                'created': '2020-10-25 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
             }
         ]
 
@@ -98,10 +98,10 @@ class TestRecommendationGroup:
         assert [group.to_json(join=True) for group in RecommendationGroup.select(limit=2, offset=1)] == [
             {
                 'id': 2,
-                'created': '2020-10-25 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+                'created': '2020-10-25 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
             },
             {
                 'id': 1,
-                'created': '2020-10-24 20:01:00' + ('' if config.backend == 'sqlite' else '-04:00')
+                'created': '2020-10-24 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
             }
         ]

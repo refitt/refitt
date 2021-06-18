@@ -16,7 +16,7 @@ from flask import Flask, Response, request
 
 # internal libs
 from .response import STATUS
-from ...database.core import Session
+from ...database.interface import Session
 
 # public interface
 __all__ = ['application', ]

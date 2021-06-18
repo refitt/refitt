@@ -1024,11 +1024,11 @@ class TestPostRecommendationObserved(Endpoint):
     def test_successful_update_observation(self) -> None:
         rec = Recommendation.from_id(self.recommendation_id)
         original = rec.observed.to_json()
-        timestamp = datetime.now() if config.backend == 'sqlite' else datetime.now().astimezone()
+        timestamp = datetime.now() if config.provider == 'sqlite' else datetime.now().astimezone()
         new_data = {'type_id': 1, 'value': 3.14, 'error': None, 'time': str(timestamp)}
         client = self.get_client(self.user)
         # update data
-        just_prior = str(datetime.now() if config.backend == 'sqlite' else datetime.now().astimezone())  # ISO format
+        just_prior = str(datetime.now() if config.provider == 'sqlite' else datetime.now().astimezone())  # ISO format
         status, payload = self.post(self.route, client_id=client.id, json=new_data)
         assert status == STATUS['OK']
         for field, value in new_data.items():
@@ -1049,7 +1049,7 @@ class TestPostRecommendationObserved(Endpoint):
         # temporarily remove existing file to simulate adding "new" observation
         rec = Recommendation.from_id(self.recommendation_id)
         original = rec.observed.to_json()
-        timestamp = datetime.now() if config.backend == 'sqlite' else datetime.now().astimezone()
+        timestamp = datetime.now() if config.provider == 'sqlite' else datetime.now().astimezone()
         new_data = {'type_id': 1, 'value': 3.14, 'error': None, 'time': str(timestamp)}
         file_id = File.from_observation(rec.observation_id).id
         client = self.get_client(self.user)

@@ -57,7 +57,7 @@ PATH = Namespace({
 DEFAULT = Namespace({
 
     'database': {
-            'backend': 'sqlite',
+            'provider': 'sqlite',
     },
 
     'logging': {

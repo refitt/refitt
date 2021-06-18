@@ -26,8 +26,8 @@ from rich.table import Table
 
 # internal libs
 from ....core.exceptions import log_exception
-from ....database.model import Base, tables
-from ....database.core import Session
+from ....database.model import ModelInterface, tables
+from ....database.interface import Session
 
 # public interface
 __all__ = ['QueryDatabaseApp', ]
@@ -81,7 +81,7 @@ def _typed(value: str) -> __VT:
             return value
 
 
-def check_relation(target: Base, *path: str) -> Union[Base, Column]:
+def check_relation(target: ModelInterface, *path: str) -> Union[ModelInterface, Column]:
     try:
         if not path:
             return target
@@ -103,7 +103,7 @@ def get_path(target: str) -> Tuple[str, List[str]]:
     return table, relationships
 
 
-def query_table(__name: str, limit: int = None, count: bool = False, **filters) -> Union[List[Base], int]:
+def query_table(__name: str, limit: int = None, count: bool = False, **filters) -> Union[List[ModelInterface], int]:
     """Query a given table by `__name` with `filters`."""
     session = Session()
     query = session.query(tables[__name])
@@ -160,14 +160,14 @@ class QueryDatabaseApp(Application):
         else:
             print(results)
 
-    def run_query(self, __name: str) -> Union[List[Base], Any]:
+    def run_query(self, __name: str) -> Union[List[ModelInterface], Any]:
         return query_table(__name, limit=self.limit, count=self.show_count, **{
             field: _typed(value) for field, value in [
                 arg.split('==') for arg in self.filters
             ]
         })
 
-    def print_all(self, results: List[Base]) -> None:
+    def print_all(self, results: List[ModelInterface]) -> None:
         """Pretty-print a list of records."""
         if self.format_json:
             self.print_json(results)
@@ -175,7 +175,7 @@ class QueryDatabaseApp(Application):
             self.print_table(results)
 
     @staticmethod
-    def print_json(results: List[Base]) -> None:
+    def print_json(results: List[ModelInterface]) -> None:
         """Format records as JSON text."""
         if hasattr(results[0], 'to_json'):
             data = [record.to_json(join=False) for record in results]
@@ -189,7 +189,7 @@ class QueryDatabaseApp(Application):
             print(json.dumps(data, indent=4), file=sys.stdout, flush=True)
 
     @staticmethod
-    def print_table(results: List[Base]) -> None:
+    def print_table(results: List[ModelInterface]) -> None:
         """Format records as an ASCII table."""
         if hasattr(results[0], 'columns'):
             _, *fields = results[0].columns
