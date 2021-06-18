@@ -144,7 +144,9 @@ def update_config(site: str, data: dict) -> None:
 
 # inject configuration back into streamkit library
 # this needs to happen before streamkit is imported anywhere
+db_conf = Namespace(config.database)
+db_conf['backend'] = db_conf.pop('provider')
 _streamkit.config.extend(refitt=Namespace({
-   'database': config.database,
+   'database': db_conf,
    'logging': config.logging
 }))
