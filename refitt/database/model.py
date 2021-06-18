@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Core database ORM definitions."""
+"""Core database model definitions."""
 
 
 # type annotations
@@ -23,17 +23,12 @@ from sqlalchemy.ext.declarative import declared_attr, declarative_base
 from sqlalchemy.orm import relationship, aliased, Query
 from sqlalchemy.exc import IntegrityError, NoResultFound, MultipleResultsFound
 from sqlalchemy.types import Integer, BigInteger, DateTime, Float, Text, String, JSON, Boolean, LargeBinary
+from sqlalchemy.schema import Sequence, CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 
 # internal libs
-from .interface import schema, Session as _Session
+from .interface import schema, config, Session as _Session
 from ..web.token import Key, Secret, Token, JWT
-
-# NOTE: declarative base is imported from StreamKit's ORM.
-# This does not relate to the engine/session itself and we don't do anything with them.
-# It helps to have them share a base with our tables for initialization.
-# from streamkit.database.core.orm import Table as Base
-from streamkit.database.core.orm import Level, Topic, Host, Message, Subscriber, Access
 
 # public interface
 __all__ = ['DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'IntegrityError',
@@ -163,9 +158,9 @@ class ModelBase:
         return cls(**data)
 
     @classmethod
-    def new(cls) -> ModelInterface:
+    def new(cls: Type[Model], **fields) -> ModelInterface:
         """Create new instance of the model with default fields."""
-        return cls()
+        return cls(**fields)
 
     @classmethod
     def from_json(cls: Type[ModelInterface], data: Dict[str, __VT]) -> ModelInterface:
@@ -186,34 +181,36 @@ class ModelBase:
         return data
 
     @classmethod
-    def from_id(cls: Type[ModelInterface], id: int) -> ModelInterface:
-        """Query for record using unique `id` if applicable."""
+    def from_id(cls: Type[ModelInterface], id: int, session: _Session = None) -> ModelInterface:
+        """Query using unique `id`."""
         try:
             if hasattr(cls, 'id'):
-                return cls.query().filter(cls.id == id).one()
+                session = session or _Session()
+                return session.query(cls).filter(cls.id == id).one()
             else:
-                raise NotImplementedError(f'{cls} has no `id` attribute')
+                raise AttributeError(f'{cls} has no `id` attribute')
         except NoResultFound as error:
             raise cls.NotFound(f'No {cls.__tablename__} with id={id}') from error
 
     @classmethod
-    def add(cls: Type[ModelInterface], data: dict) -> ModelInterface:
+    def add(cls: Type[ModelInterface], data: dict, session: _Session = None) -> ModelInterface:
         """Add record from existing `data`, return constructed record."""
-        record, = cls.add_all([data, ])
+        record, = cls.add_all([data, ], session=session)
         return record
 
     @classmethod
-    def add_all(cls: Type[ModelInterface], data: List[dict]) -> List[ModelInterface]:
+    def add_all(cls: Type[ModelInterface], data: List[dict], session: _Session = None) -> List[ModelInterface]:
         """Add list of new records to the database and return constructed records."""
+        session = session or _Session()
         try:
             records = [cls.from_dict(record) for record in data]
-            Session.add_all(records)
-            Session.commit()
+            session.add_all(records)
+            session.commit()
             for record in records:
                 log.info(f'Added {cls.__tablename__} ({record.id})')
             return records
         except (IntegrityError, DatabaseError):
-            Session.rollback()
+            session.rollback()
             raise
 
     @classmethod
@@ -226,19 +223,19 @@ class ModelBase:
                     setattr(record, field, value)
                 else:
                     record.data = {**record.data, field: value}
-            Session.commit()
+            _Session.commit()
             log.info(f'Updated {cls.__tablename__} ({id})')
             return record
         except (IntegrityError, DatabaseError):
-            Session.rollback()
+            _Session.rollback()
             raise
 
     @classmethod
     def delete(cls: Type[ModelInterface], id: int) -> None:
         """Delete existing record with `id`."""
         record = cls.from_id(id)
-        Session.delete(record)
-        Session.commit()
+        _Session.delete(record)
+        _Session.commit()
         log.info(f'Deleted {cls.__tablename__} ({id})')
 
     @classmethod
@@ -248,39 +245,11 @@ class ModelBase:
 
     @classmethod
     def query(cls: Type[ModelInterface]) -> Query:
-        return Session.query(cls)
+        return _Session.query(cls)
 
 
 # declarative base inherits common interface
 ModelInterface = declarative_base(cls=ModelBase)
-
-
-# NOTE: patch existing table definitions.
-# This is a hack and will be redone at a later point (likely improvement to StreamKit).
-Level.from_json = lambda data: Level(**{k: _load(v) for k, v in data.items()})
-Topic.from_json = lambda data: Topic(**{k: _load(v) for k, v in data.items()})
-Host.from_json = lambda data: Host(**{k: _load(v) for k, v in data.items()})
-Message.from_json = lambda data: Message(**{k: _load(v) for k, v in data.items()})
-Subscriber.from_json = lambda data: Subscriber(**{k: _load(v) for k, v in data.items()})
-Access.from_json = lambda data: Access(**{k: _load(v) for k, v in data.items()})
-Level.to_tuple = Level.values
-Topic.to_tuple = Topic.values
-Host.to_tuple = Host.values
-Message.to_tuple = Message.values
-Subscriber.to_tuple = Subscriber.values
-Access.to_tuple = Access.values
-Level.columns = {'id': int, 'name': str}
-Level.relationships = {}
-Topic.columns = {'id': int, 'name': str}
-Topic.relationships = {}
-Host.columns = {'id': int, 'name': str}
-Host.relationships = {}
-Subscriber.columns = {'id': int, 'name': str}
-Subscriber.relationships = {}
-Access.columns = {'subscriber_id': int, 'topic_id': int, 'time': datetime}
-Access.relationships = {'subscriber': Subscriber, 'topic': Topic}
-Message.columns = {'id': int, 'time': datetime, 'topic_id': int, 'level_id': int, 'host_id': int, 'text': str}
-Message.relationships = {'topic': Topic, 'level': Level, 'host': Host}
 
 
 class User(ModelInterface):
@@ -478,8 +447,7 @@ class FacilityMap(ModelInterface):
         raise NotImplementedError()
 
 
-# New credentials will be initialized with this level unless
-# otherwise specified
+# New credentials will be initialized with this level unless otherwise specified
 DEFAULT_CLIENT_LEVEL: int = 10
 
 
@@ -573,9 +541,8 @@ class Client(ModelInterface):
         return key, secret
 
 
-# New session tokens if not otherwise requested will have
-# the following lifetime (seconds)
-DEFAULT_EXPIRE_TIME: int = 900  # 15 minutes
+# New session tokens if not otherwise requested will have the following lifetime (seconds)
+DEFAULT_EXPIRE_TIME: int = 900  # i.e., 15 minutes
 
 
 class Session(ModelInterface):
@@ -1293,6 +1260,184 @@ class Model(ModelInterface):
             raise Model.NotFound(f'No model with name={name}') from error
 
 
+# ----------------------------------------------------------------------------------------------
+# Re-implementation of StreamKit models
+# We conform to the database schema but re-define under a common ModelInterface
+
+
+class Level(ModelInterface):
+    """A level relates a name and its identifier."""
+
+    id = Column('id', Integer, primary_key=True)
+    name = Column('name', String, unique=True, nullable=False)
+
+    columns = {
+        'id': int,
+        'name': str
+    }
+
+    class NotFound(NotFound):
+        """NotFound exception specific to Level."""
+
+    @classmethod
+    def from_name(cls, name: str, session: _Session = None) -> Level:
+        """Query by unique level `name`."""
+        try:
+            session = session or _Session()
+            return session.query(cls).filter(cls.name == name).one()
+        except NoResultFound as error:
+            raise Level.NotFound(f'No level with name={name}') from error
+
+
+class Topic(ModelInterface):
+    """A topic relates a name and its identifier."""
+
+    id = Column('id', Integer, primary_key=True)
+    name = Column('name', String, unique=True, nullable=False)
+
+    columns = {
+        'id': int,
+        'name': str
+    }
+
+    class NotFound(NotFound):
+        """NotFound exception specific to Topic."""
+
+    @classmethod
+    def from_name(cls, name: str, session: _Session = None) -> Topic:
+        """Query by unique topic `name`."""
+        try:
+            session = session or _Session()
+            return session.query(cls).filter(cls.name == name).one()
+        except NoResultFound as error:
+            raise Topic.NotFound(f'No topic with name={name}') from error
+
+
+class Host(ModelInterface):
+    """A host relates a name and its identifier."""
+
+    id = Column('id', Integer, primary_key=True)
+    name = Column('name', String, unique=True, nullable=False)
+
+    columns = {
+        'id': int,
+        'name': str
+    }
+
+    class NotFound(NotFound):
+        """NotFound exception specific to Host."""
+
+    @classmethod
+    def from_name(cls, name: str, session: _Session = None) -> Host:
+        """Query by unique host `name`."""
+        try:
+            session = session or _Session()
+            return session.query(cls).filter(cls.name == name).one()
+        except NoResultFound as error:
+            raise Host.NotFound(f'No host with name={name}') from error
+
+
+class Message(ModelInterface):
+    """A message joins topic, level, and host, with timestamp and an identifier for the message."""
+
+    id = Column('id', BigInteger().with_variant(Integer(), 'sqlite'), primary_key=True)
+    time = Column('time', DateTime(timezone=True), nullable=False)
+    topic_id = Column('topic_id', Integer(), ForeignKey(Topic.id), nullable=False)
+    level_id = Column('level_id', Integer(), ForeignKey(Level.id), nullable=False)
+    host_id = Column('host_id', Integer(), ForeignKey(Host.id), nullable=False)
+    text = Column('text', String(), nullable=False)
+
+    # Note: conditionally redefine for time-based partitioning
+    if config.provider in ('timescale', ):
+        # The primary key is (`time`, `topic_id`) NOT `id`.
+        # This is weird but important for automatic hyper-table partitioning
+        # on the `time` values for TimeScaleDB (PostgreSQL).
+        id = Column('id', BigInteger(),
+                    Sequence('message_id_seq', start=1, increment=1, schema=schema),
+                    CheckConstraint('id > 0', name='message_id_check'), nullable=False)
+        time = Column('time', DateTime(timezone=True), nullable=False, primary_key=True)
+        topic_id = Column('topic_id', Integer(), nullable=False, primary_key=True)
+
+    topic = relationship('Topic', backref='message')
+    level = relationship('Level', backref='message')
+    host  = relationship('Host', backref='message')
+
+    relationships = {'topic': Topic, 'level': Level, 'host': Host}
+    columns = {
+        'id': int,
+        'time': datetime,
+        'topic_id': int,
+        'level_id': int,
+        'host_id': int,
+        'text': str
+    }
+
+    class NotFound(NotFound):
+        """NotFound exception specific to Message."""
+
+
+if config.provider in ('timescale', ):
+    # NOTE: we use time-topic PK and need to index ID
+    message_id_index = Index('message_id_index', Message.id)
+    message_time_topic_index = None
+else:
+    message_id_index = None
+    message_time_topic_index = Index('message_time_topic_index', Message.time, Message.topic_id)
+
+
+# efficient filtering on host or level
+message_level_index = Index('message_level_index', Message.level_id)
+message_host_index = Index('message_host_index', Message.host_id)
+
+
+class Subscriber(ModelInterface):
+    """A subscriber relates a name and its identifier."""
+
+    id = Column('id', Integer, primary_key=True)
+    name = Column('name', String, unique=True, nullable=False)
+
+    columns = {
+        'id': int,
+        'name': str
+    }
+
+    class NotFound(NotFound):
+        """NotFound exception specific to Subscriber."""
+
+    @classmethod
+    def from_name(cls, name: str, session: _Session = None) -> Subscriber:
+        """Query by unique subscriber `name`."""
+        try:
+            session = session or _Session()
+            return session.query(cls).filter(cls.name == name).one()
+        except NoResultFound as error:
+            raise Subscriber.NotFound(f'No subscriber with name={name}') from error
+
+
+class Access(ModelInterface):
+    """Access tracks the last message received on a given topic for a given subscriber."""
+
+    subscriber_id = Column('subscriber_id', Integer, ForeignKey(Subscriber.id), nullable=False, primary_key=True)
+    topic_id = Column('topic_id', Integer, ForeignKey(Topic.id), nullable=False, primary_key=True)
+    time = Column('time', DateTime(timezone=True), nullable=False)
+
+    subscriber = relationship('Subscriber', backref='access')
+    topic = relationship('Topic', backref='access')
+
+    relationships = {'subscriber': Subscriber, 'topic': Topic}
+    columns = {
+        'subscriber_id': int,
+        'topic_id': int,
+        'time': datetime
+    }
+
+    class NotFound(NotFound):
+        """NotFound exception specific to Access."""
+
+
+# ----------------------------------------------------------------------------------------------
+
+
 # global registry of tables
 tables: Dict[str, ModelInterface] = {
     'facility': Facility,
@@ -1333,4 +1478,12 @@ indices: Dict[str, Index] = {
     'observation_object_index': observation_object_index,
     'observation_recorded_index': observation_recorded_index,
     'observation_source_object_index': observation_source_object_index,
+    'message_level_index': message_level_index,
+    'message_host_index': message_host_index,
 }
+
+# optionally defined depending on provider
+if config.provider in ('timescale', ):
+    indices['message_id_index'] = message_id_index
+else:
+    indices['message_time_topic_index'] = message_time_topic_index

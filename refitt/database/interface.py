@@ -1,14 +1,13 @@
 # SPDX-FileCopyrightText: 2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Database config, connection, and model interface."""
+"""Database config, engine, and session interface."""
 
 
 # type annotations
 from __future__ import annotations
 
 # standard libs
-import logging
 from contextlib import contextmanager
 
 # external libs
@@ -24,12 +23,8 @@ from .url import DatabaseURL
 __all__ = ['providers', 'engine', 'schema', 'Session', 'config', ]
 
 
-# initialize module level logger
-log = logging.getLogger(__name__)
-
-
 # allowed database providers
-# mapping translates from name to library/package name (actual)
+# mapping translates from name to library/package name (SQLAlchemy)
 providers = {
     'sqlite': 'sqlite',
     'postgres': 'postgresql',
@@ -39,7 +34,7 @@ providers = {
 }
 
 
-config = Namespace(config.database.copy())
+config = Namespace(config.database)
 schema = config.pop('schema', None)
 echo = config.pop('echo', False)
 connect_args = config.pop('connect_args', {})
@@ -49,17 +44,18 @@ if not isinstance(echo, bool):
     raise ConfigurationError('\'database.echo\' must be true or false')
 
 
+if config.provider not in providers:
+    raise ConfigurationError(f'Unsupported database provider \'{config.provider}\'')
+
+
 def get_url() -> DatabaseURL:
     """Prepare DatabaseURL from configuration."""
     try:
-        params = Namespace(**{**config.copy(), **{'provider': providers[config.provider]}})
+        params = Namespace(config)
+        params.provider = providers[config.provider]
         return DatabaseURL.from_namespace(params)
     except AttributeError as error:
         raise ConfigurationError(str(error)) from error
-
-
-if config.provider not in providers:
-    raise ConfigurationError(f'Unsupported database provider \'{config.provider}\'')
 
 
 def get_engine() -> Engine:
