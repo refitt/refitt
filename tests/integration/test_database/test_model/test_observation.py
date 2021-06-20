@@ -50,13 +50,13 @@ class TestObservation:
         """Test embedded method to check JSON-serialization and auto-join."""
         assert Observation.from_id(1).to_json(join=True) == {
             'id': 1,
-            'time': '2020-10-24 18:00:00' + ('' if config.backend == 'sqlite' else '-04:00'),
+            'time': '2020-10-24 18:00:00' + ('' if config.provider == 'sqlite' else '-04:00'),
             'object_id': 1,
             'type_id': 4,
             'source_id': 2,
             'value': 18.1,
             'error': 0.08,
-            'recorded': '2020-10-24 18:01:00' + ('' if config.backend == 'sqlite' else '-04:00'),
+            'recorded': '2020-10-24 18:01:00' + ('' if config.provider == 'sqlite' else '-04:00'),
             'object': {
                 'id': 1,
                 'type_id': 1,

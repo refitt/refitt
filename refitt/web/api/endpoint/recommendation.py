@@ -16,7 +16,7 @@ from flask import request
 
 # internal libs
 from ....database.model import (Client, Recommendation, RecommendationGroup, File, FileType, Observation,
-                                Source, Base)
+                                Source, ModelInterface)
 from ..app import application
 from ..response import (endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid,
                         PayloadMalformed, PayloadTooLarge, NotFound)
@@ -78,7 +78,7 @@ def get(id: int, client: Client) -> Recommendation:
         raise PermissionDenied('Recommendation is not public')
 
 
-recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], Base]]] = {
+recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInterface]]] = {
 
     'group':                     ('recommendation_group', lambda r: r.group),
     'tag':                       ('recommendation_tag',   lambda r: r.tag),

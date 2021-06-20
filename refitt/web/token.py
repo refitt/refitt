@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 from cryptography.fernet import Fernet, InvalidToken
 
 # internal libs
-from ..core.config import config, ConfigurationError
+from ..core.config import config, Configuration, ConfigurationError
 
 # public interface
 __all__ = ['AuthError', 'TokenNotFound', 'TokenInvalid', 'TokenExpired', 'Cipher',
@@ -51,26 +51,23 @@ class TokenExpired(AuthError):
 
 
 class Cipher:
-    """A Fernet cipher manager."""
+    """
+    A Fernet cipher.
 
-    _fernet: Fernet = None
+    Example:
+        >>> rootkey = Cipher.new_rootkey()
+        >>> cipher = Cipher(rootkey)
+        >>> cipher
+        <Cipher(key=<RootKey('M2F...BZ3')>)>
+    """
 
-    def __init__(self, key: bytes) -> None:
+    _fernet: Fernet
+    _key: RootKey
+
+    def __init__(self, key: Union[str, bytes, RootKey]) -> None:
         """Initialize cipher with given root `key`."""
-        self._fernet = Fernet(key)
-
-    @classmethod
-    @functools.lru_cache(maxsize=None)
-    def from_config(cls) -> Cipher:
-        """Load the root key from the configuration."""
-        try:
-            api_config = config['api']
-        except KeyError:
-            raise ConfigurationError('Missing "api" section')
-        rootkey = api_config.rootkey
-        if rootkey is None:
-            raise ConfigurationError('No "api.rootkey" found')
-        return cls(rootkey.encode())
+        self._key = RootKey(key)
+        self._fernet = Fernet(self._key.encode())
 
     def encrypt(self, data: bytes) -> bytes:
         """Encrypt `data` with the Cipher."""
@@ -81,9 +78,27 @@ class Cipher:
         return self._fernet.decrypt(data)
 
     @classmethod
-    def new_rootkey(cls) -> RootKey:
+    @functools.lru_cache(maxsize=None)
+    def from_config(cls) -> Cipher:
+        """Load the root key from the configuration."""
+        return cls(cls.load_rootkey(config))
+
+    @staticmethod
+    def load_rootkey(__config: Configuration) -> RootKey:
+        """Load rootkey from configuration."""
+        try:
+            return RootKey(__config.api.rootkey)
+        except AttributeError as error:
+            raise ConfigurationError('Missing \'api.rootkey\'') from error
+
+    @staticmethod
+    def new_rootkey() -> RootKey:
         """Generate a new cryptography 'rootkey' for deployments."""
         return RootKey(Fernet.generate_key().decode())
+
+    def __repr__(self) -> str:
+        """Representation shows RootKey."""
+        return f'<{self.__class__.__name__}(key={repr(self._key)})>'
 
 
 class CryptoDigits:
@@ -99,7 +114,7 @@ class CryptoDigits:
     _pattern: re.Pattern = re.compile(r'^[a-zA-Z0-9-_=]+$')
     _hash_alg: str = 'sha256'
 
-    def __init__(self, value: Union[str, CryptoDigits]) -> None:
+    def __init__(self, value: Union[str, bytes, CryptoDigits]) -> None:
         """Direct initialization with `value`."""
 
         # allow passive coercion
@@ -112,7 +127,7 @@ class CryptoDigits:
         # NOTE: derived classes will have set a _size and this enforces initialization
         # The base class will simply define this on the fly if needed.
         self._size = self._size if self._size is not None else len(value)
-        self.value = value
+        self.value = value if isinstance(value, str) else value.decode()
 
     @property
     def value(self) -> str:
@@ -149,16 +164,14 @@ class CryptoDigits:
 
     def copy(self) -> CryptoDigits:
         """Return a copy."""
-        new = self.__class__(self.value)
-        new._is_hash = self._is_hash
-        return new
+        return self.__class__(self)
 
     @classmethod
     def generate(cls, size: int = None) -> CryptoDigits:
         """Generate a new instance of `size`."""
         _size = size if size is not None else cls._size
         if _size is not None:
-            digits = (random.SystemRandom().choice(cls._digits) for i in range(_size))
+            digits = (random.SystemRandom().choice(cls._digits) for _ in range(_size))
             return cls(''.join(digits))
         else:
             raise AttributeError(f'{cls.__name__}.generate needs a size if not intrinsic.')
@@ -190,11 +203,11 @@ class CryptoDigits:
         self._is_hash = bool(value)
 
     def encode(self) -> bytes:
-        """JSON-serialize the JWT to bytes."""
+        """Return encoded bytes."""
         return self.value.encode('utf-8')
 
     def encrypt(self, cipher: Cipher = None) -> bytes:
-        """Encrypt an encoded version of the JWT using a Cipher."""
+        """Encrypt digits using a Cipher."""
         _cipher = cipher if cipher is not None else Cipher.from_config()
         return _cipher.encrypt(self.encode())
 
@@ -232,6 +245,9 @@ class Token(CryptoDigits):
     """A variable-length token."""
     _size = None  # depends on JWT data
 
+    def __len__(self) -> int:
+        return len(self._value)
+
 
 # value types for JWT claims
 Claim = TypeVar('Claim', int, str)
@@ -239,15 +255,13 @@ ExpTime = TypeVar('ExpTime', datetime, timedelta, float, int, type(None))
 
 
 class JWT:
-    """
-    A JSON Web Token.
-    """
+    """A JSON Web Token."""
 
     _sub: int
     _exp: Optional[datetime]
 
     def __init__(self, sub: int, exp: ExpTime) -> None:
-        """Initialize from `sub` and `exp`."""
+        """Initialize directly with `sub` and `exp` claims."""
         self.sub = sub
         self.exp = exp
 
@@ -286,12 +300,12 @@ class JWT:
         """Interactive representation (see also: __str__)."""
         return str(self)
 
-    def to_dict(self) -> Dict[str, Union[int, datetime]]:
+    def to_dict(self) -> Dict[str, Union[int, None, datetime]]:
         """Convert to standard dictionary."""
         return dict(sub=self.sub, exp=self.exp)
 
     @classmethod
-    def from_dict(cls, other: Dict[str, Union[int, datetime]]):
+    def from_dict(cls, other: Dict[str, Union[int, datetime]]) -> JWT:
         """Initialize from existing dictionary."""
         return cls(**other)
 
@@ -300,6 +314,11 @@ class JWT:
         payload = self.to_dict()
         payload['exp'] = -1 if self.exp is None else int(self.exp.timestamp())
         return json.dumps(payload).encode('utf-8')
+
+    @classmethod
+    def decode(cls, data: Union[str, bytes]) -> JWT:
+        """Deserialize JSON `data` using a Cipher."""
+        return cls.from_dict(json.loads(data if isinstance(data, str) else data.decode()))
 
     def encrypt(self, cipher: Cipher = None) -> str:
         """Encrypt an encoded version of the JWT using a Cipher."""
@@ -313,7 +332,6 @@ class JWT:
         try:
             _token = token if isinstance(token, bytes) else str(token).encode()
             _cipher = cipher if cipher is not None else Cipher.from_config()
-            payload = json.loads(_cipher.decrypt(_token).decode())
-            return cls.from_dict(payload)
+            return cls.decode(_cipher.decrypt(_token))
         except InvalidToken as error:
             raise TokenInvalid(f'Token invalid: \'{Token(_token.decode())}\'') from error

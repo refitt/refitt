@@ -11,7 +11,7 @@ from ..auth import authenticated, authorization
 from . import client, token, facility, user, object, source, observation, recommendation
 
 # public interface
-__all__ = []
+__all__ = ['INFO', ]
 
 
 INFO = {

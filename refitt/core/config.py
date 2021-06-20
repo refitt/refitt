@@ -21,8 +21,8 @@ from cmdkit.config import Namespace, Configuration, ConfigurationError  # noqa: 
 from streamkit.core import config as _streamkit
 
 # public interface
-__all__ = ['config', 'get_config', 'get_site', 'update_config', 'PATH', 'DEFAULT', 'ConfigurationError',
-           'Namespace', ]
+__all__ = ['config', 'get_config', 'get_site', 'update_config', 'SITE', 'PATH', 'DEFAULT',
+           'ConfigurationError', 'Namespace', ]
 
 
 # module level logger
@@ -57,7 +57,7 @@ PATH = Namespace({
 DEFAULT = Namespace({
 
     'database': {
-            'backend': 'sqlite',
+            'provider': 'sqlite',
     },
 
     'logging': {
@@ -74,7 +74,7 @@ DEFAULT = Namespace({
     'api': {
         'site': 'https://api.refitt.org',
         'port': None,
-        'login': 'https://refitt.org/profile/api_credentials'
+        'login': 'https://refitt.org/api_credentials'
     },
 
     'daemon': {
@@ -144,7 +144,9 @@ def update_config(site: str, data: dict) -> None:
 
 # inject configuration back into streamkit library
 # this needs to happen before streamkit is imported anywhere
+db_conf = Namespace(config.database)
+db_conf['backend'] = db_conf.pop('provider')
 _streamkit.config.extend(refitt=Namespace({
-   'database': config.database,
+   'database': db_conf,
    'logging': config.logging
 }))

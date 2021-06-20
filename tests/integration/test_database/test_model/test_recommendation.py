@@ -49,7 +49,7 @@ class TestRecommendation:
             'id': 1,
             'group_id': 1,
             'tag_id': 1,
-            'time': '2020-10-24 20:02:00' + ('' if config.backend == 'sqlite' else '-04:00'),
+            'time': '2020-10-24 20:02:00' + ('' if config.provider == 'sqlite' else '-04:00'),
             'priority': 1,
             'object_id': 1,
             'facility_id': 1,

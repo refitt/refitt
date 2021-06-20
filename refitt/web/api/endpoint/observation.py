@@ -15,7 +15,7 @@ from functools import partial
 from flask import request
 
 # internal libs
-from ....database.core import Session
+from ....database.interface import Session
 from ....database.model import Client, Source, Observation, ObservationType, Alert, Forecast, File, FileType
 from ..app import application
 from ..response import endpoint, PermissionDenied, PayloadTooLarge

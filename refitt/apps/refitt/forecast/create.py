@@ -16,7 +16,7 @@ from functools import partial, cached_property
 
 # external libs
 from cmdkit.app import Application, exit_status
-from cmdkit.cli import Interface, ArgumentError
+from cmdkit.cli import Interface
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
