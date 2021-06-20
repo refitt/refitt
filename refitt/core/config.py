@@ -74,7 +74,7 @@ DEFAULT = Namespace({
     'api': {
         'site': 'https://api.refitt.org',
         'port': None,
-        'login': 'https://refitt.org/profile/api_credentials'
+        'login': 'https://refitt.org/api_credentials'
     },
 
     'daemon': {
