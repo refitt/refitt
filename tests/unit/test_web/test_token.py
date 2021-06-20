@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 import random
 import string
+from datetime import datetime, timedelta
 
 # external libs
 import pytest
@@ -18,7 +19,7 @@ from hypothesis import given, strategies as st
 from cmdkit.config import Configuration, Namespace, ConfigurationError
 
 # internal libs
-from refitt.web.token import Cipher, CryptoDigits, RootKey, Key, Secret, Token
+from refitt.web.token import Cipher, CryptoDigits, RootKey, Key, Secret, Token, JWT
 
 
 FAKE_ROOTKEY = Cipher.new_rootkey()
@@ -203,5 +204,77 @@ class TestToken(CryptoDigitsCommonTests):
 class TestJWT:
     """Tests for JSON-Web Token implementation."""
 
-    def test_init(self) -> None:
-        pass
+    def test_attributes(self) -> None:
+        """Test attribute access."""
+        sub, exp = 1, datetime.utcnow()
+        jwt = JWT(sub=sub, exp=exp)
+        assert isinstance(jwt, JWT)
+        assert jwt.sub == sub
+        assert jwt.exp == exp
+
+    def test_init_with_none(self) -> None:
+        """Create JWT with `exp` as None."""
+        jwt = JWT(sub=1, exp=None)
+        assert isinstance(jwt, JWT)
+        assert jwt.exp is None
+
+    def test_init_with_datetime(self) -> None:
+        """Create JWT with `exp` as datetime."""
+        now = datetime.utcnow()
+        jwt = JWT(sub=1, exp=now)
+        assert isinstance(jwt, JWT)
+        assert isinstance(jwt.exp, datetime)
+        assert jwt.exp == now
+
+    def test_init_with_timedelta(self) -> None:
+        """Create JWT with `exp` as timedelta."""
+        delta = timedelta(minutes=15)
+        jwt = JWT(sub=1, exp=delta)
+        assert isinstance(jwt, JWT)
+        assert isinstance(jwt.exp, datetime)
+        assert jwt.exp < datetime.utcnow() + delta
+
+    def test_init_with_unix_timestamp(self) -> None:
+        """Create JWT with `exp` as unix timestamp (float)."""
+        timestamp = float(datetime.utcnow().timestamp())
+        jwt = JWT(sub=1, exp=timestamp)
+        assert isinstance(jwt, JWT)
+
+    def test_init_with_unix_timestamp_integer(self) -> None:
+        """Create JWT with `exp` as unix timestamp (int -- nearest second)."""
+        timestamp = int(datetime.utcnow().timestamp())
+        jwt = JWT(sub=1, exp=timestamp)
+        assert isinstance(jwt, JWT)
+
+    def test_repr(self) -> None:
+        """Representation shows attributes."""
+        exp = datetime.utcnow()
+        assert repr(JWT(sub=1, exp=None)) == 'JWT(sub=1, exp=None)'
+        assert repr(JWT(sub=1, exp=exp)) == f'JWT(sub=1, exp={repr(exp)})'
+
+    def test_to_from_dict(self) -> None:
+        """JWT can be initialized from an existing dictionary and exported to one."""
+        claims = {'sub': 1, 'exp': datetime.utcnow()}
+        assert isinstance(JWT.from_dict(claims), JWT)
+        assert JWT.from_dict(claims).to_dict() == claims
+
+    def test_encode(self) -> None:
+        """JWT can be encoded as a raw JSON string."""
+        assert JWT(sub=1, exp=1624167581).encode() == b'{"sub": 1, "exp": 1624167581}'
+        assert JWT(sub=1, exp=None).encode() == b'{"sub": 1, "exp": -1}'
+
+    def test_encrypt(self) -> None:
+        """JWT can be encrypted and decrypted with a Cipher."""
+        jwt = JWT(sub=1, exp=1624167581)
+        jwt_encrypted = jwt.encrypt(MockCipher.from_config())
+        assert isinstance(jwt_encrypted, str)
+
+    def test_decrypt(self) -> None:
+        """JWT can be decrypted from bytes with a Cipher."""
+        jwt = JWT(sub=1, exp=1624167581)
+        cipher = MockCipher.from_config()
+        jwt_encrypted = jwt.encrypt(cipher)
+        jwt_new = JWT.decrypt(jwt_encrypted, cipher)
+        assert isinstance(jwt_new, JWT)
+        assert jwt.to_dict() == jwt_new.to_dict()
+

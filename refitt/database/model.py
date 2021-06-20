@@ -498,16 +498,7 @@ class Client(ModelInterface):
 
     @classmethod
     def new(cls, user_id: int, level: int = DEFAULT_CLIENT_LEVEL) -> Tuple[Key, Secret, Client]:
-        """
-        Create client credentials for `user` with `level`.
-
-        Args:
-            user_id (int or `User`):
-                An existing user.
-
-            level (int):
-                Authorization level (default: `DEFAULT_CLIENT_LEVEL`).
-        """
+        """Create client credentials for `user_id` with `level`."""
         session = _Session()
         user = User.from_id(user_id, session)
         key, secret = Key.generate(), Secret.generate()

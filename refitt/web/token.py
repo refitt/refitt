@@ -255,15 +255,13 @@ ExpTime = TypeVar('ExpTime', datetime, timedelta, float, int, type(None))
 
 
 class JWT:
-    """
-    A JSON Web Token.
-    """
+    """A JSON Web Token."""
 
     _sub: int
     _exp: Optional[datetime]
 
     def __init__(self, sub: int, exp: ExpTime) -> None:
-        """Initialize from `sub` and `exp`."""
+        """Initialize directly with `sub` and `exp` claims."""
         self.sub = sub
         self.exp = exp
 
@@ -302,12 +300,12 @@ class JWT:
         """Interactive representation (see also: __str__)."""
         return str(self)
 
-    def to_dict(self) -> Dict[str, Union[int, datetime]]:
+    def to_dict(self) -> Dict[str, Union[int, None, datetime]]:
         """Convert to standard dictionary."""
         return dict(sub=self.sub, exp=self.exp)
 
     @classmethod
-    def from_dict(cls, other: Dict[str, Union[int, datetime]]):
+    def from_dict(cls, other: Dict[str, Union[int, datetime]]) -> JWT:
         """Initialize from existing dictionary."""
         return cls(**other)
 
@@ -316,6 +314,11 @@ class JWT:
         payload = self.to_dict()
         payload['exp'] = -1 if self.exp is None else int(self.exp.timestamp())
         return json.dumps(payload).encode('utf-8')
+
+    @classmethod
+    def decode(cls, data: Union[str, bytes]) -> JWT:
+        """Deserialize JSON `data` using a Cipher."""
+        return cls.from_dict(json.loads(data if isinstance(data, str) else data.decode()))
 
     def encrypt(self, cipher: Cipher = None) -> str:
         """Encrypt an encoded version of the JWT using a Cipher."""
@@ -329,7 +332,6 @@ class JWT:
         try:
             _token = token if isinstance(token, bytes) else str(token).encode()
             _cipher = cipher if cipher is not None else Cipher.from_config()
-            payload = json.loads(_cipher.decrypt(_token).decode())
-            return cls.from_dict(payload)
+            return cls.decode(_cipher.decrypt(_token))
         except InvalidToken as error:
             raise TokenInvalid(f'Token invalid: \'{Token(_token.decode())}\'') from error
