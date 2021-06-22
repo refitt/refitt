@@ -78,7 +78,8 @@ class AntaresAlert(AlertInterface):
     @property
     def object_aliases(self) -> Dict[str, Union[int, str]]:
         return {'antares': self.data['locus_id'],
-                'ztf': self.data['properties']['ztf_object_id']}
+                'ztf': self.data['properties']['ztf_object_id'],
+                'ztf_candid': int(self.data['new_alert']['properties']['ztf_candid'])}
 
     @property
     def id(self) -> str:
