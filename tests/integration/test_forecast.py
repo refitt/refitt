@@ -5,21 +5,14 @@
 
 
 # type annotations
-from typing import Dict, Any
 
 # standard libs
-import io
-import json
-import string
-import random
 
 # external libs
 import pytest
-import numpy as np
-from astropy.time import Time
 
 # internal libs
-from refitt.forecast import Forecast
+from refitt.data.forecast import Forecast
 from refitt.database.model import Observation as ObservationModel, Forecast as ForecastModel
 from tests.unit.test_forecast import generate_random_forecast
 

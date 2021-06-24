@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 # internal libs
 from ....core.exceptions import log_exception
 from ....core.schema import SchemaError
-from ....forecast import Forecast
+from ....data.forecast import Forecast
 
 # public interface
 __all__ = ['ForecastPublishApp', ]

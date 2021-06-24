@@ -18,8 +18,8 @@ from functools import cached_property, lru_cache
 from astropy.time import Time
 
 # internal libs
-from ..core.schema import ListSchema, DictSchema
-from ..database.model import Object, Source, ObservationType, Observation, Forecast as ForecastModel
+from ...core.schema import ListSchema, DictSchema
+from ...database.model import Object, Source, ObservationType, Observation, Forecast as ForecastModel
 
 # public interface
 __all__ = ['Forecast', ]

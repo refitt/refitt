@@ -18,7 +18,7 @@ import numpy as np
 from astropy.time import Time
 
 # internal libs
-from refitt.forecast import Forecast
+from refitt.data.forecast import Forecast
 
 
 def generate_random_forecast() -> Dict[str, Any]:
