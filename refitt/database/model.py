@@ -1259,8 +1259,8 @@ class Model(ModelInterface):
 class Level(ModelInterface):
     """A level relates a name and its identifier."""
 
-    id = Column('id', Integer, primary_key=True)
-    name = Column('name', String, unique=True, nullable=False)
+    id = Column('id', Integer(), primary_key=True)
+    name = Column('name', String(), unique=True, nullable=False)
 
     columns = {
         'id': int,
@@ -1283,8 +1283,8 @@ class Level(ModelInterface):
 class Topic(ModelInterface):
     """A topic relates a name and its identifier."""
 
-    id = Column('id', Integer, primary_key=True)
-    name = Column('name', String, unique=True, nullable=False)
+    id = Column('id', Integer(), primary_key=True)
+    name = Column('name', String(), unique=True, nullable=False)
 
     columns = {
         'id': int,
@@ -1307,8 +1307,8 @@ class Topic(ModelInterface):
 class Host(ModelInterface):
     """A host relates a name and its identifier."""
 
-    id = Column('id', Integer, primary_key=True)
-    name = Column('name', String, unique=True, nullable=False)
+    id = Column('id', Integer(), primary_key=True)
+    name = Column('name', String(), unique=True, nullable=False)
 
     columns = {
         'id': int,
@@ -1384,8 +1384,8 @@ message_host_index = Index('message_host_index', Message.host_id)
 class Subscriber(ModelInterface):
     """A subscriber relates a name and its identifier."""
 
-    id = Column('id', Integer, primary_key=True)
-    name = Column('name', String, unique=True, nullable=False)
+    id = Column('id', Integer(), primary_key=True)
+    name = Column('name', String(), unique=True, nullable=False)
 
     columns = {
         'id': int,
@@ -1408,8 +1408,8 @@ class Subscriber(ModelInterface):
 class Access(ModelInterface):
     """Access tracks the last message received on a given topic for a given subscriber."""
 
-    subscriber_id = Column('subscriber_id', Integer, ForeignKey(Subscriber.id), nullable=False, primary_key=True)
-    topic_id = Column('topic_id', Integer, ForeignKey(Topic.id), nullable=False, primary_key=True)
+    subscriber_id = Column('subscriber_id', Integer(), ForeignKey(Subscriber.id), nullable=False, primary_key=True)
+    topic_id = Column('topic_id', Integer(), ForeignKey(Topic.id), nullable=False, primary_key=True)
     time = Column('time', DateTime(timezone=True), nullable=False)
 
     subscriber = relationship('Subscriber', backref='access')
