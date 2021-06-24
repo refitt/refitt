@@ -15,7 +15,7 @@ from sqlalchemy.exc import DatabaseError
 
 # internal libs
 from ....core.exceptions import log_exception
-from ....database import init_database, drop_database, load_records
+from ....database import create_all, drop_all, load_all
 
 # public interface
 __all__ = ['InitDatabaseApp', ]
@@ -66,9 +66,9 @@ class InitDatabaseApp(Application):
     def run(self) -> None:
         """Business logic of command."""
         if self.drop_tables:
-            drop_database()
-        init_database()
+            drop_all()
+        create_all()
         if self.load_core:
-            load_records('core')
+            load_all('core')
         if self.load_test:
-            load_records('test')
+            load_all('test')
