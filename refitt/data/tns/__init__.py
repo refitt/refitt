@@ -37,7 +37,7 @@ class TNSConfig:
 
     key: str
     bot_id: int
-    bot_name: str = 'REFITT_BOT'
+    bot_name: str
 
     schema = DictSchema.of({
         'key': str,
@@ -58,7 +58,7 @@ class TNSConfig:
         except AttributeError as error:
             raise ConfigurationError(f'Missing \'tns\' section') from error
         except SchemaError as error:
-            raise ConfigurationError(f'TNSConfig: {error}') from error
+            raise ConfigurationError(str(error)) from error
 
     @cached_property
     def headers(self) -> dict:
@@ -80,7 +80,7 @@ class TNSError(Exception):
 
 
 class TNS:
-    """Query interface for Transient Name Server query service."""
+    """Query interface for Transient Name Server."""
 
     config: TNSConfig
 
