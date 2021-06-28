@@ -16,9 +16,11 @@ import random
 # external libs
 import numpy as np
 from astropy.time import Time
+from hypothesis import given, strategies as st
 
 # internal libs
-from refitt.forecast import Forecast
+from refitt.core.schema import SchemaError
+from refitt.data.forecast import Forecast
 
 
 def generate_random_forecast() -> Dict[str, Any]:
@@ -44,6 +46,13 @@ def generate_random_forecast() -> Dict[str, Any]:
     }
 
 
+FORECAST_KEYS = [
+    'ztf_id', 'instrument', 'time_since_trigger', 'current_time', 'num_obs', 'filter', 'class',
+    'phase', 'next_mag_mean', 'next_mag_sigma', 'time_to_peak', 'time_arr', 'mag_mean',
+    'mag_sigma', 'mdmc', 'moe',
+]
+
+
 class TestForecast:
     """Unit tests against basic forecast interface."""
 
@@ -52,6 +61,29 @@ class TestForecast:
         data = generate_random_forecast()
         forecast = Forecast(data)
         assert forecast.data == data
+
+    @given(st.sampled_from(FORECAST_KEYS))
+    def test_missing_key(self, key: str) -> None:
+        """Will raise SchemaError on missing key."""
+        data = generate_random_forecast()
+        data.pop(key)
+        try:
+            _ = Forecast(data)
+        except SchemaError as error:
+            assert str(error) == f'Missing key \'{key}\''
+        else:
+            raise AssertionError('Expected SchemaError')
+
+    def test_wrong_type_for_value(self) -> None:
+        """Will raise SchemaError on wrong type for value."""
+        data = generate_random_forecast()
+        data['ztf_id'] = 123
+        try:
+            _ = Forecast(data)
+        except SchemaError as error:
+            assert str(error) == 'Expected type str for member \'ztf_id\', found int(123) at position 0'
+        else:
+            raise AssertionError('Expected SchemaError')
 
     def test_init_from_forecast(self) -> None:
         """Test passive type coercion."""

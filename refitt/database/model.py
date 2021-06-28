@@ -14,7 +14,7 @@ import random
 import logging
 from base64 import encodebytes as base64_encode, decodebytes as base64_decode
 from datetime import datetime, timedelta
-from functools import lru_cache
+from functools import lru_cache, cached_property
 
 # external libs
 from names_generator.names import LEFT, RIGHT
@@ -158,7 +158,7 @@ class ModelBase:
         return cls(**data)
 
     @classmethod
-    def new(cls: Type[Model], **fields) -> ModelInterface:
+    def new(cls: Type[ModelInterface], **fields) -> ModelInterface:
         """Create new instance of the model with default fields."""
         return cls(**fields)
 
@@ -618,6 +618,24 @@ class ObjectType(ModelInterface):
         except NoResultFound as error:
             raise ObjectType.NotFound(f'No object_type with name={name}') from error
 
+    @classmethod
+    def get_or_create(cls, name: str, session: _Session = None) -> ObjectType:
+        """Get or create object_type for a given `name`."""
+        session = session or _Session()
+        try:
+            return session.query(cls).filter(cls.name == name).one()
+        except NoResultFound:
+            return cls.add({'name': name, 'description': f'{name} (automatically created)'}, session=session)
+
+
+# Object name provider pattern matching
+OBJECT_NAMING_PATTERNS: Dict[str, re.Pattern] = {
+    'ztf': re.compile(r'ZTF.*'),
+    'iau': re.compile(r'20[2-3][0-9][a-zA-Z]+'),
+    'antares': re.compile(r'ANT.*'),
+    'tag': re.compile(r'[a-z]+_[a-z]+_[a-z]'),
+}
+
 
 class Object(ModelInterface):
     """An astronomical object defines names, position, and other attributes."""
@@ -644,7 +662,7 @@ class Object(ModelInterface):
     }
 
     class NotFound(NotFound):
-        """NotFound exception specific to ObjectType."""
+        """NotFound exception specific to Object."""
 
     @classmethod
     def from_alias(cls, session: _Session = None, **alias: str) -> Object:
@@ -660,6 +678,15 @@ class Object(ModelInterface):
             raise Object.NotFound(f'No object with alias {provider}={name}') from error
         except MultipleResultsFound as error:
             raise NotDistinct(f'Multiple objects with alias {provider}={name}') from error
+
+    @classmethod
+    def from_name(cls, name: str, session: _Session = None) -> Object:
+        """Smart detection of alias by name syntax."""
+        for provider, pattern in OBJECT_NAMING_PATTERNS.items():
+            if pattern.match(name):
+                return cls.from_alias(**{provider: name, 'session': session})
+        else:
+            raise Object.NotFound(f'Unrecognized name pattern \'{name}\'')
 
     @classmethod
     def add_alias(cls, object_id: int, session: _Session = None, **aliases: str) -> None:
@@ -1259,8 +1286,8 @@ class Model(ModelInterface):
 class Level(ModelInterface):
     """A level relates a name and its identifier."""
 
-    id = Column('id', Integer, primary_key=True)
-    name = Column('name', String, unique=True, nullable=False)
+    id = Column('id', Integer(), primary_key=True)
+    name = Column('name', String(), unique=True, nullable=False)
 
     columns = {
         'id': int,
@@ -1283,8 +1310,8 @@ class Level(ModelInterface):
 class Topic(ModelInterface):
     """A topic relates a name and its identifier."""
 
-    id = Column('id', Integer, primary_key=True)
-    name = Column('name', String, unique=True, nullable=False)
+    id = Column('id', Integer(), primary_key=True)
+    name = Column('name', String(), unique=True, nullable=False)
 
     columns = {
         'id': int,
@@ -1307,8 +1334,8 @@ class Topic(ModelInterface):
 class Host(ModelInterface):
     """A host relates a name and its identifier."""
 
-    id = Column('id', Integer, primary_key=True)
-    name = Column('name', String, unique=True, nullable=False)
+    id = Column('id', Integer(), primary_key=True)
+    name = Column('name', String(), unique=True, nullable=False)
 
     columns = {
         'id': int,
@@ -1384,8 +1411,8 @@ message_host_index = Index('message_host_index', Message.host_id)
 class Subscriber(ModelInterface):
     """A subscriber relates a name and its identifier."""
 
-    id = Column('id', Integer, primary_key=True)
-    name = Column('name', String, unique=True, nullable=False)
+    id = Column('id', Integer(), primary_key=True)
+    name = Column('name', String(), unique=True, nullable=False)
 
     columns = {
         'id': int,
@@ -1408,8 +1435,8 @@ class Subscriber(ModelInterface):
 class Access(ModelInterface):
     """Access tracks the last message received on a given topic for a given subscriber."""
 
-    subscriber_id = Column('subscriber_id', Integer, ForeignKey(Subscriber.id), nullable=False, primary_key=True)
-    topic_id = Column('topic_id', Integer, ForeignKey(Topic.id), nullable=False, primary_key=True)
+    subscriber_id = Column('subscriber_id', Integer(), ForeignKey(Subscriber.id), nullable=False, primary_key=True)
+    topic_id = Column('topic_id', Integer(), ForeignKey(Topic.id), nullable=False, primary_key=True)
     time = Column('time', DateTime(timezone=True), nullable=False)
 
     subscriber = relationship('Subscriber', backref='access')

@@ -224,12 +224,7 @@ class AlertInterface(ABC):
         return object_type_id
 
     def backfill_database(self) -> List[Alert]:
-        """
-        Retroactively fill database with an alert's available prior history.
-
-        Note:
-            The method calls :meth:`to_database` automatically if necessary.
-        """
+        """Retroactively fill database with an alert's available prior history."""
         latest = self._record or self.to_database()
         query = Session.query(Observation).filter(Observation.object_id == latest.observation.object.id,
                                                   Observation.source_id == latest.observation.source.id)

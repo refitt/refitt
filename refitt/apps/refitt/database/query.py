@@ -39,7 +39,7 @@ __all__ = ['QueryDatabaseApp', ]
 
 PROGRAM = 'refitt database query'
 USAGE = f"""\
-usage: {PROGRAM} [-h] TABLE[.RELATION]... [COND...] [--count | --limit NUM]
+usage: {PROGRAM} [-h] TABLE[.RELATION]... [COND...] [--count | --limit NUM] [--json]
 {__doc__}\
 """
 
@@ -51,6 +51,7 @@ TABLE[.RELATION ...]   Table name with relationship path.
 COND...                Filters (e.g., `name==foo`).
 
 options:
+    --json             Format output as JSON.
 -c, --count            Display row count.
 -l, --limit            Limit number of returned rows.
 -h, --help             Show this message and exit.\

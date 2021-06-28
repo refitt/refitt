@@ -17,7 +17,8 @@ gunicorn = "*"
 requests = "*"
 cryptography = ">=3.2.1"
 cmdkit = ">=2.5.1"
-toml = "*"
+toml = ">=0.10.2"
+pyyaml = ">=5.4.1"
 streamkit = ">=0.3.2"
 names_generator = ">=0.1.0"
 astropy = ">=4.0.1"
@@ -34,6 +35,7 @@ pytz = "*"
 bs4 = "*"
 jinja2 = "*"
 refitt = {editable = true, path = "."}
+
 
 [dev-packages]
 pytest = "*"
