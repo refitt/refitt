@@ -6,9 +6,11 @@
 
 # type annotations
 from __future__ import annotations
+from typing import IO, Iterator
 
 # standard libs
 import sys
+import time
 import logging
 
 # external libs
@@ -25,7 +27,7 @@ __all__ = ['TNSApp', ]
 
 PROGRAM = 'refitt service tns'
 USAGE = f"""\
-usage: {PROGRAM} [-h] [--from PATH | --live]
+usage: {PROGRAM} [-h] [[--persist] --from PATH | --live]
 {__doc__}\
 """
 
@@ -43,6 +45,10 @@ options:
 log = logging.getLogger('refitt')
 
 
+# Time to wait before reading a line from a file if persisting
+FILE_SLEEP_PERIOD: int = 4  # seconds
+
+
 class TNSApp(Application):
     """Application class for TNS service."""
 
@@ -53,6 +59,9 @@ class TNSApp(Application):
     source_group = interface.add_mutually_exclusive_group()
     source_group.add_argument('-f', '--from', default=source_path, dest='source_path')
     source_group.add_argument('--live', action='store_true', dest='source_live')
+
+    source_persist: bool = False
+    interface.add_argument('-p', '--persist', action='store_true', dest='source_persist')
 
     def run(self) -> None:
         """Run TNS query service."""
@@ -77,5 +86,18 @@ class TNSApp(Application):
             server.run()
         else:
             with open(self.source_path, mode='r') as stream:
-                server = TNSService.from_io(stream)
-                server.run()
+                if not self.source_persist:
+                    server = TNSService.from_io(stream)
+                    server.run()
+                else:
+                    server = TNSService(source=self.yield_forever(stream))
+                    server.run()
+
+    def yield_forever(self, stream: IO) -> Iterator[str]:
+        """Yield lines from `stream`, keep waiting until new data arrives."""
+        while True:
+            if name := stream.readline().strip():
+                yield name
+            else:
+                log.debug(f'Waiting on data ({self.source_path})')
+                time.sleep(FILE_SLEEP_PERIOD)
