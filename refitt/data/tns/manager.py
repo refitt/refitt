@@ -95,7 +95,10 @@ class TNSManager:
     def __lookup_ztf(name: str) -> str:
         """Lookup ZTF name from database if possible."""
         log.debug(f'Searching database for ZTF name for \'{name}\'')
-        obj = Object.from_name(name)
+        try:
+            obj = Object.from_name(name)
+        except Object.NotFound as error:
+            raise TNSError(str(error))
         if 'ztf' not in obj.aliases:
             raise TNSError(f'ZTF name unknown for \'{name}\'')
         else:

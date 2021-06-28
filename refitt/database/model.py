@@ -700,7 +700,7 @@ class Object(ModelInterface):
                     if existing.id != object_id:
                         raise AlreadyExists(f'Object with alias {provider}={name} already exists')
                 except Object.NotFound:
-                    obj.aliases[provider] = name
+                    obj.aliases = {**obj.aliases, provider: name}
             session.commit()
         except (IntegrityError, AlreadyExists):
             session.rollback()
@@ -1079,6 +1079,8 @@ class RecommendationTag(ModelInterface):
         """Create a new recommendation tag for `object_id`."""
         session = session or _Session()
         try:
+            # NOTE: The tag.name is Nullable at first because we have to first commit
+            # the tag to get it's tag.id because that's what we use to slice into the names list.
             tag = cls.add({'object_id': object_id}, session=session)
             tag.name = cls.get_name(tag.id)
             session.commit()
