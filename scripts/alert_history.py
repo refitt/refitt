@@ -12,6 +12,7 @@ from typing import List, IO, Union, Optional
 # standard libs
 import os
 import sys
+import logging
 from functools import cached_property
 from dataclasses import dataclass
 from datetime import datetime
@@ -25,10 +26,13 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 
 # internal libs
-from refitt.core.logging import refitt_logger as log
+import refitt  # noqa: import to trigger logging setup
 
 # public interface
 __all__ = ['LogRecord', 'LogData', 'AlertChart', 'AlertHistoryApp', ]
+
+
+log = logging.getLogger('refitt')
 
 
 @dataclass
