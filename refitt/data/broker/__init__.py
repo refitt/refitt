@@ -104,14 +104,10 @@ class BrokerService:
             log.info(f'Rejected by filter \'{self.filter_name}\' ({name})')
         else:
             log.info(f'Accepted by filter \'{self.filter_name}\' ({name})')
-            self.persist(__alert)
-
-    def persist(self, __alert: AlertInterface) -> None:
-        """Save `alert` to file and/or database."""
-        if not self.database_only:
-            self.persist_to_disk(__alert)
-        if not self.local_only:
-            self.persist_to_database(__alert)
+            if not self.database_only:
+                self.persist_to_disk(__alert)
+            if not self.local_only:
+                self.persist_to_database(__alert, name)
 
     def persist_to_disk(self, __alert: AlertInterface) -> None:
         """Save `alert` to local file."""
@@ -119,8 +115,10 @@ class BrokerService:
         __alert.to_local(filepath)
         log.info(f'Written to file ({filepath})')
 
-    def persist_to_database(self, __alert: AlertInterface) -> None:
+    def persist_to_database(self, __alert: AlertInterface, name: str) -> None:
         """Save `alert` to database (backfill if requested)."""
         __alert.to_database()
+        log.info(f'Written to database ({name})')
         if self.enable_backfill:
+            log.debug(f'Backfilling observations ({name})')
             __alert.backfill_database()

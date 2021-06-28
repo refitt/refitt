@@ -9,7 +9,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import api, stream, test
+from . import api, stream, test, tns
 
 
 PROGRAM = 'refitt service'
@@ -23,6 +23,7 @@ HELP = f"""\
 
 commands:
 api                 {api.__doc__}
+tns                 {tns.__doc__}
 stream              {stream.__doc__}
 
 options:
@@ -41,4 +42,5 @@ class ServiceApp(ApplicationGroup):
     command = None
     commands = {'api': api.WebApp,
                 'stream': stream.StreamApp,
+                'tns': tns.TNSApp,
                 'test': test.TestApp, }
