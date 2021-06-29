@@ -18,7 +18,11 @@ from ...database.model import ObjectType, Object, Source, ObservationType, Obser
 from ...database.interface import Session
 
 # public interface
-__all__ = ['AlertInterface', ]
+__all__ = ['AlertInterface', 'AlertError', ]
+
+
+class AlertError(Exception):
+    """Exceptions specific to problems with Alerts."""
 
 
 # JSON-dict
