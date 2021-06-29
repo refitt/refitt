@@ -118,7 +118,7 @@ class TNSManager:
                 'data': {**obj.data, 'history': self.__build_history(obj), 'tns': tns_response.data}
             }
         else:
-            log.debug(f'Info unchanged for \'{iau_name}\'')
+            log.debug(f'No change for \'{iau_name}\'')
             return {
                 'aliases': {**obj.aliases, 'iau': iau_name},
                 'data': {**obj.data, 'tns': tns_response.data}
