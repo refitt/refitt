@@ -13,6 +13,7 @@ __authors__     = ['Dan Milisavljevic <dmilisav@purdue.edu>',
                    'Bhagya Subrayan <bsubraya@purdue.edu>',
                    'Katie Weil <keweil@purdue.edu>',
                    'Josh Church <church10@purdue.edu>',
+                   'John Banovetz <jbanovet@purdue.edu>',
                    ]
 __developer__   = 'Geoffrey Lentner'
 __contact__     = 'glentner@purdue.edu'
