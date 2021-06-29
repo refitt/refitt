@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Package metadata for refitt."""
@@ -19,7 +19,7 @@ __developer__   = 'Geoffrey Lentner'
 __contact__     = 'glentner@purdue.edu'
 __license__     = 'Apache License 2.0'
 __website__     = 'https://github.com/refitt/refitt'
-__copyright__   = 'REFITT Team 2019'
+__copyright__   = 'REFITT Team 2019-2021'
 __description__ = 'The Recommender Engine for Intelligent Transient Tracking.'
 __keywords__    = 'astronomy science machine-learning recommendation service'
 __ascii_art__   = r"""
