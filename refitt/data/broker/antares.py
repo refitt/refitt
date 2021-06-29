@@ -19,7 +19,7 @@ from astropy.time import Time
 
 # internal libs
 from .client import ClientInterface
-from .alert import AlertInterface
+from .alert import AlertInterface, AlertError
 
 # public interface
 __all__ = ['AntaresAlert', 'AntaresClient', ]
@@ -35,22 +35,9 @@ class AntaresAlert(AlertInterface):
     source_name = 'antares'
     previous: List[AntaresAlert] = []
 
-    _needed_properties: List[str] = [
-        'ztf_fid',
-        'ztf_magpsf',
-        'ztf_sigmapsf',
-    ]
-
     @classmethod
     def from_locus(cls, locus: Locus) -> AntaresAlert:
         """Extract new pseudo-schema from existing `locus`."""
-
-        def has_needed_props(data: dict) -> bool:
-            for name in cls._needed_properties:
-                if name not in data:
-                    return False
-            else:
-                return True
 
         base = {'locus_id': locus.locus_id,
                 'ra': locus.ra,
@@ -63,17 +50,35 @@ class AntaresAlert(AlertInterface):
                      'ra': locus.ra, 'dec': locus.dec,
                      'properties': alert.properties}
                     for alert in reversed(sorted(locus.alerts, key=(lambda alert: alert.mjd)))
-                    if has_needed_props(alert.properties)]
+                    if cls.__has_needed_properties(alert.properties)]
 
         if not previous:
-            raise ValueError('Missing necessary properties in all alerts')
+            raise AlertError(f'Missing necessary properties on all alerts ({locus.locus_id})')
+        elif len(previous) < len(locus.alerts):
+            missing = len(locus.alerts) - len(previous)
+            log.debug(f'{missing} alert(s) not included because of missing properties ({locus.locus_id})')
 
-        self = cls.from_dict({**base, 'new_alert': previous[0]})
+        alert = cls.from_dict({**base, 'new_alert': previous[0]})
         if len(previous) > 1:
-            self.previous = [cls.from_dict({**base, 'new_alert': alert}) for alert in previous[1:]]
+            alert.previous = [cls.from_dict({**base, 'new_alert': alert}) for alert in previous[1:]]
         else:
-            self.previous = []
-        return self
+            alert.previous = []
+        return alert
+
+    __needed_properties: List[str] = [
+        'ztf_fid',
+        'ztf_magpsf',
+        'ztf_sigmapsf',
+    ]
+
+    @classmethod
+    def __has_needed_properties(cls, properties: dict) -> bool:
+        """True if all fields found in alert `properties`."""
+        for name in cls.__needed_properties:
+            if name not in properties:
+                return False
+        else:
+            return True
 
     @property
     def object_aliases(self) -> Dict[str, Union[int, str]]:
@@ -99,7 +104,7 @@ class AntaresAlert(AlertInterface):
 
     @property
     def object_redshift(self) -> Optional[float]:
-        return None  # FIXME: not available?
+        return None  # Note:  not available from Antares -- will be updated later by TNS
 
     # ztf_fid property map
     obs_types: dict = {
@@ -150,7 +155,10 @@ class AntaresClient(ClientInterface):
     def __iter__(self) -> Iterator[AntaresAlert]:
         """Iterate over alerts."""
         for topic, locus in self._client.iter():
-            yield AntaresAlert.from_locus(locus)
+            try:
+                yield AntaresAlert.from_locus(locus)
+            except AlertError as error:
+                log.error(str(error))
 
     @staticmethod
     def filter_not_extragalactic_sso(alert: AntaresAlert) -> bool:
@@ -162,6 +170,5 @@ class AntaresClient(ClientInterface):
             properties = alert['new_alert']['properties']
             return properties['ztf_distpsnr1'] > 2 and properties['ztf_ssdistnr'] == -999.0
         except KeyError:
-            log.warning(f'Missing necessary data for filter=not_extragalactic_sso')
+            log.error(f'Missing necessary data for filter=not_extragalactic_sso')
             return False
-

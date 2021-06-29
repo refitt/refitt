@@ -5,11 +5,15 @@
 
 
 __appname__     = 'refitt'
-__version__     = '0.18.1'
-__authors__     = ['Dan Milisavljevic, Ph.D. <dmilisav@purdue.edu>',
-                   'Niharika Sravan, Ph.D. <nsravan@purdue.edu>',
-                   'Geoffrey Lentner, M.Sc. <glentner@purdue.edu>',
-                   'Mark Linvill <mlinvill@purdue.edu>']
+__version__     = '0.18.2'
+__authors__     = ['Dan Milisavljevic <dmilisav@purdue.edu>',
+                   'Niharika Sravan <nsravan@purdue.edu>',
+                   'Geoffrey Lentner <glentner@purdue.edu>',
+                   'Mark Linvill <mlinvill@purdue.edu>',
+                   'Bhagya Subrayan <bsubraya@purdue.edu>',
+                   'Katie Weil <keweil@purdue.edu>',
+                   'Josh Church <church10@purdue.edu>',
+                   ]
 __developer__   = 'Geoffrey Lentner'
 __contact__     = 'glentner@purdue.edu'
 __license__     = 'Apache License 2.0'
