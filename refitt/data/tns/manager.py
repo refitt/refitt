@@ -105,13 +105,24 @@ class TNSManager:
             return obj.aliases['ztf']
 
     def __build_info(self, iau_name: str, obj: Object, tns_response: TNSObjectSearchResult) -> dict:
-        """Build attributes for Object.update method."""
-        return {
-            'type_id': self.__get_type_id(tns_response),
-            'redshift': tns_response.redshift,
-            'aliases': {**obj.aliases, 'iau': iau_name},
-            'data': {**obj.data, 'history': self.__build_history(obj), 'tns': tns_response.data}
-        }
+        """
+        Build attributes for Object.update method.
+        If the new info is different, the data.history section is appended.
+        """
+        type_id = self.__get_type_id(tns_response)
+        redshift = tns_response.redshift
+        if type_id != obj.type_id or redshift != redshift:
+            log.debug(f'New data available on \'{iau_name}\'')
+            return {
+                'type_id': type_id, 'redshift': redshift, 'aliases': {**obj.aliases, 'iau': iau_name},
+                'data': {**obj.data, 'history': self.__build_history(obj), 'tns': tns_response.data}
+            }
+        else:
+            log.debug(f'Info unchanged for \'{iau_name}\'')
+            return {
+                'aliases': {**obj.aliases, 'iau': iau_name},
+                'data': {**obj.data, 'tns': tns_response.data}
+            }
 
     def __build_history(self, obj: Object) -> dict:
         """Build 'history' data dictionary."""
