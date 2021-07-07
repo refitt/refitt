@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Chart alert ingest frequency over time."""
@@ -122,8 +122,8 @@ class LogData:
 
     @cached_property
     def sampled_data(self) -> DataFrame:
-        """Resampled data frame on 5-min totals."""
-        log.info('Re-sampling data on 5-min totals')
+        """Resampled data frame on some frequency totals."""
+        log.info(f'Re-sampling data on {self.freq} totals')
         return self.structured_data.assign(count=1).set_index('timestamp').resample(self.freq).sum()
 
 

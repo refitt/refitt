@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Transient Name Server (TNS) object info update manager."""
@@ -51,17 +51,18 @@ class TNSManager:
 
         The 'object_type.name' and 'redshift' are taken from TNS along with the IAU name.
         The object record in the database is updated with these fields and the 'data.history'
-        field is appended with the previous values.
+        field is appended with the previous values (if different).
 
-        The full TNS payload is retained within `object.data.tns` minus the 'photometry'.
+        The full TNS payload is retained within `object.data.tns` less the 'photometry'.
         """
         iau_name, obj = self.__parse_object(name)
         tns_response = self.tns.search_object(iau_name)
         if tns_response.is_empty:
             raise TNSError(f'No data on object ({name}) from TNS')
         else:
-            log.info(f'Updating object ({name}) from TNS')
-            Object.update(obj.id, **self.__build_info(iau_name, obj, tns_response))
+            log.info(f'Found object ({name}) from TNS')
+            if info := self.__build_info(iau_name, obj, tns_response):
+                Object.update(obj.id, **info)
 
     def __parse_object(self, name: str) -> Tuple[str, Object]:
         """Determine ZTF/IAU status of `name` and fetch Object by alias."""
@@ -111,18 +112,22 @@ class TNSManager:
         """
         type_id = self.__get_type_id(tns_response)
         redshift = tns_response.redshift
-        if type_id != obj.type_id or redshift != redshift:
-            log.debug(f'New data available on \'{iau_name}\'')
+        type_changed = type_id != obj.type_id
+        redshift_changed = redshift != obj.redshift
+        iau_name_changed = 'iau' not in obj.aliases
+        tns_data_changed = obj.data.get('tns', {}) != tns_response.data
+        if type_changed or redshift_changed:  # keep history of previous values
             return {
                 'type_id': type_id, 'redshift': redshift, 'aliases': {**obj.aliases, 'iau': iau_name},
                 'data': {**obj.data, 'history': self.__build_history(obj), 'tns': tns_response.data}
             }
-        else:
-            log.debug(f'No change for \'{iau_name}\'')
+        elif iau_name_changed or tns_data_changed:
             return {
                 'aliases': {**obj.aliases, 'iau': iau_name},
                 'data': {**obj.data, 'tns': tns_response.data}
             }
+        else:
+            return {}
 
     def __build_history(self, obj: Object) -> dict:
         """Build 'history' data dictionary."""

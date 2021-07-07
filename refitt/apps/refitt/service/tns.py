@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Query Transient Name Server (tns) for object attributes."""
@@ -27,7 +27,7 @@ __all__ = ['TNSApp', ]
 
 PROGRAM = 'refitt service tns'
 USAGE = f"""\
-usage: {PROGRAM} [-h] [[--persist] --from PATH | --live]
+usage: {PROGRAM} [-h] [[--persist] --from PATH | --live] [--workers NUM]
 {__doc__}\
 """
 
@@ -36,7 +36,8 @@ HELP = f"""\
 
 options:
     --live               Listen for object events.
--f, --from   PATH        File listing object names.
+-f, --from     PATH      File listing object names.
+-w, --workers  NUM       Number of threads used.
 -h, --help               Show this message and exit.\
 """
 
@@ -63,6 +64,9 @@ class TNSApp(Application):
     source_persist: bool = False
     interface.add_argument('-p', '--persist', action='store_true', dest='source_persist')
 
+    num_workers: int = 1
+    interface.add_argument('-w', '--workers', type=int, default=num_workers, dest='num_workers')
+
     def run(self) -> None:
         """Run TNS query service."""
         if not self.source_live and not self.source_path:
@@ -72,25 +76,24 @@ class TNSApp(Application):
         else:
             self.run_from(self.source_path)
 
-    @staticmethod
-    def run_live() -> None:
+    def run_live(self) -> None:
         """Subscribe to broker events and run forever."""
         with Subscriber(name='tns', topics=['refitt.data.broker', ], batchsize=10, poll=4) as subscriber:
-            server = TNSService.from_subscriber(subscriber)
+            server = TNSService.from_subscriber(subscriber, threads=self.num_workers)
             server.run()
 
     def run_from(self, path: str) -> None:
         """Stream object names from I/O device."""
         if path == '-':
-            server = TNSService.from_io(sys.stdin)
+            server = TNSService.from_io(sys.stdin, threads=self.num_workers)
             server.run()
         else:
             with open(self.source_path, mode='r') as stream:
                 if not self.source_persist:
-                    server = TNSService.from_io(stream)
+                    server = TNSService.from_io(stream, threads=self.num_workers)
                     server.run()
                 else:
-                    server = TNSService(source=self.yield_forever(stream))
+                    server = TNSService(source=self.yield_forever(stream), threads=self.num_workers)
                     server.run()
 
     def yield_forever(self, stream: IO) -> Iterator[str]:

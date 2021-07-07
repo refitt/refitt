@@ -1,8 +1,11 @@
-# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Unit tests for TNS interfaces."""
 
+
+# type annotations
+from __future__ import annotations
 
 # external libs
 from hypothesis import given, strategies as st
@@ -10,7 +13,7 @@ from cmdkit.config import Namespace, ConfigurationError
 
 # internal libs
 from refitt.core.schema import SchemaError
-from refitt.data.tns import TNSConfig
+from refitt.data.tns import TNSConfig, TNSInterface, TNSNameSearchResult, TNSObjectSearchResult
 
 
 class TestTNSConfig:
@@ -79,3 +82,87 @@ class TestTNSConfig:
         assert instance.format_data(a='foo', b=1, c=42) == {
             'api_key': 'abc', 'data': '{"a": "foo", "b": 1, "c": 42}'
         }
+
+
+FAKE_TNS_ZTF_ID = 'ZTF21abcdef'
+FAKE_TNS_IAU_NAME = '2021abc'
+FAKE_TNS_OBJ_ID = 12345
+FAKE_TNS_TYPE_NAME = 'SN Ia'
+FAKE_TNS_REDSHIFT = 0.123
+
+
+FAKE_TNS_NAME_DATA = {
+    'id_code': 200,
+    'id_message': 'Success',
+    'data': {
+        'received_data': {'internal_name': FAKE_TNS_ZTF_ID},
+        'reply': [
+            {'objname': FAKE_TNS_IAU_NAME,
+             'prefix': 'SN',
+             'objid': FAKE_TNS_OBJ_ID}
+        ]
+    }
+}
+
+
+FAKE_TNS_OBJECT_DATA = {
+    'id_code': 200,
+    'id_message': 'Success',
+    'data': {
+        'received_data': {'objname': FAKE_TNS_IAU_NAME},
+        'reply': {
+            'object_type': {'id': 12, 'name': FAKE_TNS_TYPE_NAME},
+            'redshift': FAKE_TNS_REDSHIFT,
+        }
+    }
+}
+
+
+class MockTNSInterface(TNSInterface):
+    """Mock the interface and return fake responses."""
+
+    @property
+    def canned_responses(self) -> dict:
+        return {'name': FAKE_TNS_NAME_DATA, 'object': FAKE_TNS_OBJECT_DATA}
+
+    def query(self, endpoint: str, **parameters) -> dict:
+        """Fake query."""
+        return self.canned_responses.get(endpoint)
+
+
+class TestTNSNameSearchResult:
+    """Unit tests for TNSNameSearchResult."""
+
+    def test_initialization(self) -> None:
+        """Created object returns instance of type with data."""
+        instance = TNSNameSearchResult(FAKE_TNS_NAME_DATA)
+        assert isinstance(instance, TNSNameSearchResult)
+        assert instance._data == FAKE_TNS_NAME_DATA
+
+    def test_schema_valid(self) -> None:
+        """Valid schema provides for properties."""
+        instance = TNSNameSearchResult.from_dict(FAKE_TNS_NAME_DATA)
+        assert isinstance(instance, TNSNameSearchResult)
+        assert instance._data == FAKE_TNS_NAME_DATA
+        assert instance.objid == FAKE_TNS_OBJ_ID
+        assert instance.prefix == 'SN'
+        assert instance.objname == FAKE_TNS_IAU_NAME
+
+
+class TestTNSObjectSearchResult:
+    """Unit tests for TNSObjectSearchResult."""
+
+    def test_initialization(self) -> None:
+        """Created object returns instance of type with data."""
+        instance = TNSObjectSearchResult(FAKE_TNS_OBJECT_DATA)
+        assert isinstance(instance, TNSObjectSearchResult)
+        assert instance._data == FAKE_TNS_OBJECT_DATA
+
+    def test_schema_valid(self) -> None:
+        """Valid schema provides for properties."""
+        instance = TNSObjectSearchResult.from_dict(FAKE_TNS_OBJECT_DATA)
+        assert isinstance(instance, TNSObjectSearchResult)
+        assert instance._data == FAKE_TNS_OBJECT_DATA
+        assert instance.object_type_name == FAKE_TNS_TYPE_NAME
+        assert instance.redshift == FAKE_TNS_REDSHIFT
+

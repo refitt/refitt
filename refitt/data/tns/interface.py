@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Transient Name Server (TNS) query interface."""
@@ -120,12 +120,12 @@ class TNSQueryResult(ABC):
     """Abstract base class for TNS query results."""
 
     _data: dict
-    schema = DictSchema.any()
+    _schema = DictSchema.any()
 
     @classmethod
     def from_dict(cls, other: dict) -> TNSQueryResult:
         """Build from existing dictionary."""
-        return cls(cls.schema.ensure(other))
+        return cls(cls._schema.ensure(other))
 
 
 @dataclass
@@ -133,7 +133,7 @@ class TNSNameSearchResult(TNSQueryResult):
     """Query results from a name search."""
 
     _data: dict
-    schema = DictSchema.of({
+    _schema = DictSchema.of({
         'id_code': int,
         'id_message': str,
         'data': DictSchema.of({
@@ -173,7 +173,7 @@ class TNSObjectSearchResult(TNSQueryResult):
     """Query results from an object details search."""
 
     _data: dict
-    schema = DictSchema.of({
+    _schema = DictSchema.of({
         'id_code': int,
         'id_message': str,
         'data': DictSchema.of({
