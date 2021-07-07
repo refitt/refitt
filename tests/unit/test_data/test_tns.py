@@ -121,6 +121,9 @@ FAKE_TNS_OBJECT_DATA = {
 class MockTNSInterface(TNSInterface):
     """Mock the interface and return fake responses."""
 
+    def __init__(self) -> None:
+        super().__init__(TNSConfig(key='abc', bot_id=123, bot_name='REFITT'))
+
     @property
     def canned_responses(self) -> dict:
         return {'name': FAKE_TNS_NAME_DATA, 'object': FAKE_TNS_OBJECT_DATA}
