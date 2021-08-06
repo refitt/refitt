@@ -16,7 +16,8 @@ from flask import request
 
 # internal libs
 from ....database.interface import Session
-from ....database.model import Client, Source, Observation, ObservationType, Alert, Forecast, File, FileType
+from ....database.model import (Client, Source, Observation, ObservationType, Alert, Forecast, File, FileType,
+                                User, Facility)
 from ..app import application
 from ..response import endpoint, PermissionDenied, PayloadTooLarge
 from ..auth import authenticated, authorization
@@ -393,7 +394,11 @@ info['Endpoints']['/observation/<id>/source/type']['GET'] = {
 def get_observation_source_user(client: Client, id: int) -> dict:
     """Query for source user of observation by `id`."""
     disallow_parameters(request)
-    return {'user': _get_observation(id, client).source.user.to_json()}
+    obs = _get_observation(id, client)
+    if obs.source.user:
+        return {'user': obs.source.user.to_json()}
+    else:
+        raise User.NotFound(f'No user found for observation ({id})')
 
 
 info['Endpoints']['/observation/<id>/source/user']['GET'] = {
@@ -430,7 +435,11 @@ info['Endpoints']['/observation/<id>/source/user']['GET'] = {
 def get_observation_source_facility(client: Client, id: int) -> dict:
     """Query for source facility of observation by `id`."""
     disallow_parameters(request)
-    return {'facility': _get_observation(id, client).source.facility.to_json()}
+    obs = _get_observation(id, client)
+    if obs.source.facility:
+        return {'facility': obs.source.facility.to_json()}
+    else:
+        raise Facility.NotFound(f'No user found for observation ({id})')
 
 
 info['Endpoints']['/observation/<id>/source/facility']['GET'] = {
