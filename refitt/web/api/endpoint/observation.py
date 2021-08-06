@@ -54,9 +54,9 @@ info: dict = {
 }
 
 
-def is_public(obs: Observation, client: Client) -> bool:
+def is_viewable(obs: Observation, client: Client) -> bool:
     """Filter out user sourced observations if not admin."""
-    return not (obs.source.user_id is not None and obs.source.user_id != client.user_id and client.user_id > 1)
+    return obs.source.user_id is None or obs.source.user_id == client.user_id or client.level <= 1
 
 
 @application.route('/observation', methods=['GET'])
@@ -81,7 +81,7 @@ def get_many(client: Client) -> dict:
     if 'limit' in params:
         query = query.limit(params['limit'])
     return {'observation': [obs.to_json(join=join)
-                            for obs in filter(partial(is_public, client=client), query.all())]}
+                            for obs in filter(partial(is_viewable, client=client), query.all())]}
 
 
 info['Endpoints']['/observation']['GET'] = {
@@ -132,11 +132,12 @@ info['Endpoints']['/observation']['GET'] = {
 
 
 def _get_observation(id: int, client: Client) -> Observation:
+    """Load observation by ID and check permissions."""
     obs = Observation.from_id(id)
-    if obs.source.user_id and obs.source.user_id != client.user_id and client.level != 0:
-        raise PermissionDenied(f'Observation is not public')
-    else:
+    if is_viewable(obs, client):
         return obs
+    else:
+        raise PermissionDenied(f'Observation is not public')
 
 
 @application.route('/observation/<int:id>', methods=['GET'])
