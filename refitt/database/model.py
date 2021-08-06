@@ -838,7 +838,7 @@ class Observation(ModelInterface):
     type_id = Column('type_id', Integer(), ForeignKey(ObservationType.id), nullable=False)
     object_id = Column('object_id', Integer(), ForeignKey(Object.id), nullable=False)
     source_id = Column('source_id', Integer(), ForeignKey(Source.id), nullable=False)
-    value = Column('value', Float(), nullable=False)
+    value = Column('value', Float(), nullable=True)  # NOTE: null value is 'provisional' observation
     error = Column('error', Float(), nullable=True)
     time = Column('time', DateTime(timezone=True), nullable=False)
     recorded = Column('recorded', DateTime(timezone=True), nullable=False, server_default=func.now())
