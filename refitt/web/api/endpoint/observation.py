@@ -16,7 +16,8 @@ from flask import request
 
 # internal libs
 from ....database.interface import Session
-from ....database.model import Client, Source, Observation, ObservationType, Alert, Forecast, File, FileType
+from ....database.model import (Client, Source, Observation, ObservationType, Alert, Forecast, File, FileType,
+                                User, Facility)
 from ..app import application
 from ..response import endpoint, PermissionDenied, PayloadTooLarge
 from ..auth import authenticated, authorization
@@ -54,9 +55,9 @@ info: dict = {
 }
 
 
-def is_public(obs: Observation, client: Client) -> bool:
+def is_viewable(obs: Observation, client: Client) -> bool:
     """Filter out user sourced observations if not admin."""
-    return not (obs.source.user_id is not None and obs.source.user_id != client.user_id and client.user_id > 1)
+    return obs.source.user_id is None or obs.source.user_id == client.user_id or client.level <= 1
 
 
 @application.route('/observation', methods=['GET'])
@@ -81,7 +82,7 @@ def get_many(client: Client) -> dict:
     if 'limit' in params:
         query = query.limit(params['limit'])
     return {'observation': [obs.to_json(join=join)
-                            for obs in filter(partial(is_public, client=client), query.all())]}
+                            for obs in filter(partial(is_viewable, client=client), query.all())]}
 
 
 info['Endpoints']['/observation']['GET'] = {
@@ -132,11 +133,12 @@ info['Endpoints']['/observation']['GET'] = {
 
 
 def _get_observation(id: int, client: Client) -> Observation:
+    """Load observation by ID and check permissions."""
     obs = Observation.from_id(id)
-    if obs.source.user_id and obs.source.user_id != client.user_id and client.level != 0:
-        raise PermissionDenied(f'Observation is not public')
-    else:
+    if is_viewable(obs, client):
         return obs
+    else:
+        raise PermissionDenied(f'Observation is not public')
 
 
 @application.route('/observation/<int:id>', methods=['GET'])
@@ -392,7 +394,11 @@ info['Endpoints']['/observation/<id>/source/type']['GET'] = {
 def get_observation_source_user(client: Client, id: int) -> dict:
     """Query for source user of observation by `id`."""
     disallow_parameters(request)
-    return {'user': _get_observation(id, client).source.user.to_json()}
+    obs = _get_observation(id, client)
+    if obs.source.user:
+        return {'user': obs.source.user.to_json()}
+    else:
+        raise User.NotFound(f'No user found for observation ({id})')
 
 
 info['Endpoints']['/observation/<id>/source/user']['GET'] = {
@@ -429,7 +435,11 @@ info['Endpoints']['/observation/<id>/source/user']['GET'] = {
 def get_observation_source_facility(client: Client, id: int) -> dict:
     """Query for source facility of observation by `id`."""
     disallow_parameters(request)
-    return {'facility': _get_observation(id, client).source.facility.to_json()}
+    obs = _get_observation(id, client)
+    if obs.source.facility:
+        return {'facility': obs.source.facility.to_json()}
+    else:
+        raise Facility.NotFound(f'No user found for observation ({id})')
 
 
 info['Endpoints']['/observation/<id>/source/facility']['GET'] = {

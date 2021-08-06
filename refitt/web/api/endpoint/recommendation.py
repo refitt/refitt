@@ -65,7 +65,7 @@ info: dict = {
 
 
 def is_owner(recommendation: Recommendation, client: Client) -> bool:
-    """Permission denied for recommendations that do not belong to you."""
+    """Permission denied for recommendations that do not belong to you (or not admin)."""
     return recommendation.user_id == client.user_id or client.level <= 1
 
 
@@ -179,6 +179,12 @@ info['Endpoints']['/recommendation/<id>']['GET'] = {
     'Permissions': 'Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            }
+        },
     },
     'Optional': {
         'Parameters': {
@@ -224,6 +230,12 @@ info['Endpoints']['/recommendation/<id>']['PUT'] = {
     'Permissions': 'Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            }
+        },
     },
     'Optional': {
         'Parameters': {
@@ -271,6 +283,12 @@ for path in recommendation_slices:
         'Permissions': 'Owner',
         'Requires': {
             'Auth': 'Authorization Bearer Token',
+            'Path': {
+                'id': {
+                    'Description': 'Unique ID for recommendation',
+                    'Type': 'Integer',
+                }
+            },
         },
         'Optional': {
             'Parameters': {
@@ -358,6 +376,12 @@ info['Endpoints']['/recommendation/group/<id>']['GET'] = {
     'Permissions': 'Public',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for group',
+                'Type': 'Integer',
+            }
+        },
     },
     'Responses': {
         200: {
@@ -496,6 +520,12 @@ info['Endpoints']['/recommendation/<id>/observed/file']['POST'] = {
     'Permissions': 'Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            }
+        },
         'Attachment': {
             'Description': 'File',
             'Type': 'application/octet-stream',
@@ -610,7 +640,7 @@ info['Endpoints']['/recommendation/<id>/observed']['POST'] = {
                     'Type': 'Integer'
                 },
                 'value': {
-                    'Description': 'Observed magnitude',
+                    'Description': 'Observed magnitude (can be null)',
                     'Type': 'Float'
                 },
                 'error': {
