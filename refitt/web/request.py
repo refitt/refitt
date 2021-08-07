@@ -7,11 +7,6 @@ REFITT based web requests.
 This module is a thin wrapper around the popular `requests` package.
 Only relative-paths need be specified and the token-based authentication
 is handled automatically.
-
-Example:
-    >>> from refitt.web import request
-    >>> request.get('recommendation')
-    {...}
 """
 
 # type annotations
