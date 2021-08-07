@@ -40,7 +40,7 @@ Application.exceptions = {
 
 # NOTE: delayed imports to allow Application class modifications
 from . import (config, database, service, auth, login, whoami, api, notify,
-               recommendation, forecast, object)  # noqa
+               recommendation, forecast, object, epoch)  # noqa
 
 
 PROGRAM = 'refitt'
@@ -67,6 +67,7 @@ whoami                 {whoami.__doc__}
 api                    {api.__doc__}
 config                 {config.__doc__}
 database               {database.__doc__}
+epoch                  {epoch.__doc__}
 service                {service.__doc__}
 notify                 {notify.__doc__}
 object                 {object.__doc__}
@@ -100,6 +101,7 @@ class RefittApp(ApplicationGroup):
                 'api': api.APIClientApp,
                 'config': config.ConfigApp,
                 'database': database.DatabaseApp,
+                'epoch': epoch.EpochApp,
                 'service': service.ServiceApp,
                 'notify': notify.NotifyApp,
                 'object': object.QueryObjectApp,
