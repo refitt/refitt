@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database import config
-from refitt.database.model import (Recommendation, RecommendationGroup, RecommendationTag,
+from refitt.database.model import (Epoch, Recommendation, RecommendationTag,
                                    User, Facility, Object, Forecast, Observation, NotFound)
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
@@ -47,7 +47,7 @@ class TestRecommendation:
         """Test embedded method to check JSON-serialization and full join."""
         assert Recommendation.from_id(1).to_json(join=True) == {
             'id': 1,
-            'group_id': 1,
+            'epoch_id': 1,
             'tag_id': 1,
             'time': '2020-10-24 20:02:00' + ('' if config.provider == 'sqlite' else '-04:00'),
             'priority': 1,
@@ -60,7 +60,7 @@ class TestRecommendation:
             'accepted': True,
             'rejected': False,
             'data': {},
-            'group': RecommendationGroup.from_id(1).to_json(join=True),
+            'epoch': Epoch.from_id(1).to_json(join=True),
             'tag': RecommendationTag.from_id(1).to_json(join=True),
             'user': User.from_id(2).to_json(join=True),
             'facility': Facility.from_id(1).to_json(join=True),
@@ -84,13 +84,13 @@ class TestRecommendation:
     def test_id_already_exists(self) -> None:
         """Test exception on recommendation `id` already exists."""
         with pytest.raises(IntegrityError):
-            Recommendation.add({'id': 1, 'group_id': 1, 'tag_id': 1, 'priority': 1, 'object_id': 1,
+            Recommendation.add({'id': 1, 'epoch_id': 1, 'tag_id': 1, 'priority': 1, 'object_id': 1,
                                 'facility_id': 1, 'user_id': 2})
 
     def test_relationship_group(self, testdata: TestData) -> None:
-        """Test recommendation_group foreign key relationship on recommendation."""
+        """Test epoch foreign key relationship on recommendation."""
         for i, record in enumerate(testdata['recommendation']):
-            assert Recommendation.from_id(i + 1).group.id == record['group_id']
+            assert Recommendation.from_id(i + 1).epoch.id == record['epoch_id']
 
     def test_relationship_object(self, testdata: TestData) -> None:
         """Test object foreign key relationship on recommendation."""
@@ -129,25 +129,25 @@ class TestRecommendation:
         assert len(results) == 4
         for record in results:
             assert record.user_id == user_id
-            assert record.group_id == 3
+            assert record.epoch_id == 3
 
-    def test_for_user_with_group_id(self) -> None:
+    def test_for_user_with_epoch_id(self) -> None:
         """Test query for all recommendations for a given user and group."""
         user_id = User.from_alias('tomb_raider').id
-        results = Recommendation.for_user(user_id, group_id=3)
+        results = Recommendation.for_user(user_id, epoch_id=3)
         assert len(results) == 4
         for record in results:
             assert record.user_id == user_id
-            assert record.group_id == 3
+            assert record.epoch_id == 3
 
-    def test_for_user_with_group_id_2(self) -> None:
+    def test_for_user_with_epoch_id_2(self) -> None:
         """Test query for all recommendations for a given user and group."""
         user_id = User.from_alias('tomb_raider').id
-        results = Recommendation.for_user(user_id, group_id=2)
+        results = Recommendation.for_user(user_id, epoch_id=2)
         assert len(results) == 4
         for record in results:
             assert record.user_id == user_id
-            assert record.group_id == 2
+            assert record.epoch_id == 2
 
     def test_next(self) -> None:
         """Test query for latest recommendation."""
@@ -170,7 +170,7 @@ class TestRecommendation:
         """Test query for previously interacted with recommendations."""
 
         user_id = User.from_alias('tomb_raider').id
-        records = Recommendation.history(user_id=user_id, group_id=3)
+        records = Recommendation.history(user_id=user_id, epoch_id=3)
         assert all(isinstance(r, Recommendation) for r in records)
         assert len(records) == 4  # NOTE: all accepted already
         assert all(r.accepted for r in records)
@@ -178,12 +178,12 @@ class TestRecommendation:
         rec_id = Recommendation.for_user(user_id)[0].id
         Recommendation.update(rec_id, accepted=False)
 
-        records = Recommendation.history(user_id=user_id, group_id=3)
+        records = Recommendation.history(user_id=user_id, epoch_id=3)
         assert len(records) == 3
         assert all(r.accepted for r in records)
 
         # restore state of database
         Recommendation.update(rec_id, accepted=True)
-        records = Recommendation.history(user_id=user_id, group_id=3)
+        records = Recommendation.history(user_id=user_id, epoch_id=3)
         assert len(records) == 4
         assert all(r.accepted for r in records)

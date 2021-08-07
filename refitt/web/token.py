@@ -20,9 +20,10 @@ from datetime import datetime, timedelta
 
 # external libs
 from cryptography.fernet import Fernet, InvalidToken
+from cmdkit.config import Configuration, ConfigurationError
 
 # internal libs
-from ..core.config import config, Configuration, ConfigurationError
+from ..core.config import config
 
 # public interface
 __all__ = ['AuthError', 'TokenNotFound', 'TokenInvalid', 'TokenExpired', 'Cipher',
