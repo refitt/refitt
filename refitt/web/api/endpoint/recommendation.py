@@ -15,16 +15,16 @@ from datetime import datetime
 from flask import request
 
 # internal libs
-from ....database.model import (Client, Recommendation, RecommendationGroup, File, FileType, Observation,
+from ....database.model import (Client, Recommendation, File, FileType, Observation,
                                 Source, ModelInterface)
 from ..app import application
 from ..response import (endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid,
-                        PayloadMalformed, PayloadTooLarge, NotFound)
+                        PayloadMalformed, NotFound)
 from ..auth import authenticated, authorization
 from ..tools import collect_parameters, disallow_parameters, require_file, require_data
 
 # public interface
-__all__ = []
+__all__ = ['info', 'recommendation_slices', ]
 
 
 info: dict = {
@@ -32,7 +32,7 @@ info: dict = {
     'Endpoints': {
         '/recommendation': {},
         '/recommendation/<id>': {},
-        '/recommendation/<id>/group': {},
+        '/recommendation/<id>/epoch': {},
         '/recommendation/<id>/tag': {},
         '/recommendation/<id>/user': {},
         '/recommendation/<id>/facility': {},
@@ -58,8 +58,6 @@ info: dict = {
         '/recommendation/<id>/observed/file': {},
         '/recommendation/<id>/observed/file/type': {},
         '/recommendation/history': {},
-        '/recommendation/group': {},
-        '/recommendation/group/<id>': {},
     }
 }
 
@@ -80,7 +78,7 @@ def get(id: int, client: Client) -> Recommendation:
 
 recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInterface]]] = {
 
-    'group':                     ('recommendation_group', lambda r: r.group),
+    'epoch':                     ('epoch',                lambda r: r.epoch),
     'tag':                       ('recommendation_tag',   lambda r: r.tag),
     'user':                      ('user',                 lambda r: r.user),
     'facility':                  ('facility',             lambda r: r.facility),
@@ -113,7 +111,7 @@ recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInte
 @authorization(level=None)
 def get_next(client: Client) -> dict:
     """Query for recommendations for user."""
-    optional = ['group_id', 'facility_id', 'limiting_magnitude', 'limit', 'join']
+    optional = ['epoch_id', 'facility_id', 'limiting_magnitude', 'limit', 'join']
     params = collect_parameters(request, optional=optional, defaults={'join': False})
     join = params.pop('join')
     return {'recommendation': [recommendation.to_json(join=join)
@@ -128,8 +126,8 @@ info['Endpoints']['/recommendation']['GET'] = {
     },
     'Optional': {
         'Parameters': {
-            'group_id': {
-                'Description': 'Unique ID for recommendation group (defaults to latest)',
+            'epoch_id': {
+                'Description': 'Unique ID for epoch (defaults to latest)',
                 'Type': 'Integer'
             },
             'facility_id': {
@@ -313,103 +311,18 @@ for path in recommendation_slices:
     }
 
 
-@application.route('/recommendation/group', methods=['GET'])
-@endpoint('application/json')
-@authenticated
-@authorization(level=None)
-def get_recommendation_group(client: Client) -> dict:  # noqa: unused client
-    """Query for recommendation groups."""
-    params = collect_parameters(request, required=['limit', ], optional=['offset', ])
-    for name, value in params.items():
-        if not isinstance(value, int):
-            raise ParameterInvalid(f'Expected integer for parameter: {name}')
-    if params['limit'] > 100:
-        raise PayloadTooLarge('Must provide \'limit\' less than 100')
-    return {'recommendation_group': [group.to_json() for group in RecommendationGroup.select(**params)]}
-
-
-info['Endpoints']['/recommendation/group']['GET'] = {
-    'Description': 'Request recommendation groups (most recent first order)',
-    'Permissions': 'Public',
-    'Requires': {
-        'Auth': 'Authorization Bearer Token',
-        'Parameters': {
-            'limit': {
-                'Description': 'Limit on number of returned groups',
-                'Type': 'Integer'
-            }
-        }
-    },
-    'Optional': {
-        'Parameters': {
-            'offset': {
-                'Description': 'Filter groups with ID greater than '
-            },
-        },
-    },
-    'Responses': {
-        200: {
-            'Description': 'Success',
-            'Payload': {
-                'Description': 'Recommendation group set',
-                'Type': 'application/json'
-            },
-        },
-        401: {'Description': 'Access revoked, token expired, or unauthorized'},
-        403: {'Description': 'Token not found or invalid'},
-    }
-}
-
-
-@application.route('/recommendation/group/<int:id>', methods=['GET'])
-@endpoint('application/json')
-@authenticated
-@authorization(level=None)
-def get_recommendation_group_by_id(client: Client, id: int) -> dict:  # noqa: unused client
-    """Query for recommendation group by unique `id`."""
-    disallow_parameters(request)
-    return {'recommendation_group': RecommendationGroup.from_id(id).to_json()}
-
-
-info['Endpoints']['/recommendation/group/<id>']['GET'] = {
-    'Description': 'Request recommendation group by id',
-    'Permissions': 'Public',
-    'Requires': {
-        'Auth': 'Authorization Bearer Token',
-        'Path': {
-            'id': {
-                'Description': 'Unique ID for group',
-                'Type': 'Integer',
-            }
-        },
-    },
-    'Responses': {
-        200: {
-            'Description': 'Success',
-            'Payload': {
-                'Description': 'Recommendation group data',
-                'Type': 'application/json'
-            },
-        },
-        401: {'Description': 'Access revoked, token expired, or unauthorized'},
-        403: {'Description': 'Token not found or invalid'},
-        404: {'Description': 'Recommendation group not found'}
-    }
-}
-
-
 @application.route('/recommendation/history', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
 def get_recommendation_history(client: Client) -> dict:
     """Query for recommendation history by group ID."""
-    params = collect_parameters(request, required=['group_id'])
-    if not isinstance(params['group_id'], int):
-        raise ParameterInvalid(f'Expected integer for parameter: group_id')
+    params = collect_parameters(request, required=['epoch_id'])
+    if not isinstance(params['epoch_id'], int):
+        raise ParameterInvalid(f'Expected integer for parameter: epoch_id')
     return {'recommendation': [
         recommendation.to_json()
-        for recommendation in Recommendation.history(user_id=client.user_id, group_id=params['group_id'])
+        for recommendation in Recommendation.history(user_id=client.user_id, epoch_id=params['epoch_id'])
     ]}
 
 
@@ -419,8 +332,8 @@ info['Endpoints']['/recommendation/history']['GET'] = {
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Parameters': {
-            'group_id': {
-                'Description': 'The recommendation group ID',
+            'epoch_id': {
+                'Description': 'The epoch ID',
                 'Type': 'Integer'
             }
         }
