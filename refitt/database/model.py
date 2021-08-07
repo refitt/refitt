@@ -35,7 +35,7 @@ __all__ = ['DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'Integri
            'ModelInterface', 'Level', 'Topic', 'Host', 'Subscriber', 'Message', 'Access',
            'User', 'Facility', 'FacilityMap', 'ObjectType', 'Object', 'SourceType',
            'Source', 'ObservationType', 'Observation', 'Forecast', 'Alert', 'FileType', 'File',
-           'RecommendationTag', 'RecommendationGroup', 'Recommendation', 'ModelType', 'Model',
+           'RecommendationTag', 'Epoch', 'Recommendation', 'ModelType', 'Model',
            'Client', 'Session', 'tables', 'indices', 'DEFAULT_EXPIRE_TIME', 'DEFAULT_CLIENT_LEVEL', ]
 
 
@@ -1006,8 +1006,8 @@ class Forecast(ModelInterface):
             raise Forecast.NotFound(f'No forecast with observation_id={observation_id}') from error
 
 
-class RecommendationGroup(ModelInterface):
-    """Recommendation group table."""
+class Epoch(ModelInterface):
+    """Epoch table."""
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     created = Column('created', DateTime(timezone=True), nullable=False, server_default=func.now())
@@ -1018,22 +1018,22 @@ class RecommendationGroup(ModelInterface):
     }
 
     class NotFound(NotFound):
-        """NotFound exception specific to RecommendationGroup."""
+        """NotFound exception specific to Epoch."""
 
     @classmethod
-    def new(cls, session: _Session = None) -> RecommendationGroup:
-        """Create and return a new recommendation group."""
+    def new(cls, session: _Session = None) -> Epoch:
+        """Create and return a new epoch."""
         return cls.add({}, session=session)
 
     @classmethod
-    def latest(cls, session: _Session = None) -> RecommendationGroup:
-        """Get the most recent recommendation group."""
+    def latest(cls, session: _Session = None) -> Epoch:
+        """Get the most recent epoch."""
         session = session or _Session()
         return session.query(cls).order_by(cls.id.desc()).first()
 
     @classmethod
-    def select(cls, limit: int, offset: int = 0) -> List[RecommendationGroup]:
-        """Select a range of recommendation groups."""
+    def select(cls, limit: int, offset: int = 0) -> List[Epoch]:
+        """Select a range of epochs."""
         return cls.query().order_by(cls.id.desc()).filter(cls.id <= cls.latest().id - offset).limit(limit).all()
 
 
@@ -1113,7 +1113,7 @@ class Recommendation(ModelInterface):
     """Recommendation table."""
 
     id = Column('id', BigInteger().with_variant(Integer(), 'sqlite'), primary_key=True, nullable=False)
-    group_id = Column('group_id', Integer(), ForeignKey(RecommendationGroup.id), nullable=False)
+    epoch_id = Column('epoch_id', Integer(), ForeignKey(Epoch.id), nullable=False)
     tag_id = Column('tag_id', Integer(), ForeignKey(RecommendationTag.id), nullable=False)
     time = Column('time', DateTime(timezone=True), nullable=False, server_default=func.now())
     priority = Column('priority', Integer(), nullable=False)
@@ -1130,7 +1130,7 @@ class Recommendation(ModelInterface):
     rejected = Column('rejected', Boolean(), nullable=False, default=False)
     data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
 
-    group = relationship(RecommendationGroup, backref='recommendation')
+    epoch = relationship(Epoch, backref='recommendation')
     tag = relationship(RecommendationTag, backref='recommendation')
     user = relationship(User, backref='recommendation')
     facility = relationship(Facility, backref='recommendation')
@@ -1139,12 +1139,12 @@ class Recommendation(ModelInterface):
     predicted = relationship(Observation, foreign_keys=[predicted_observation_id, ])
     observed = relationship(Observation, foreign_keys=[observation_id, ])
 
-    relationships = {'group': RecommendationGroup, 'tag': RecommendationTag, 'user': User, 
+    relationships = {'epoch': Epoch, 'tag': RecommendationTag, 'user': User,
                      'facility': Facility, 'object': Object, 'forecast': Forecast, 
                      'predicted': Observation, 'observed': Observation}
     columns = {
         'id': int,
-        'group_id': int,
+        'epoch_id': int,
         'tag_id': int,
         'time': datetime,
         'priority': int,
@@ -1163,15 +1163,15 @@ class Recommendation(ModelInterface):
         """NotFound exception specific to Recommendation."""
 
     @classmethod
-    def for_user(cls, user_id: int, group_id: int = None, session: _Session = None) -> List[Recommendation]:
+    def for_user(cls, user_id: int, epoch_id: int = None, session: _Session = None) -> List[Recommendation]:
         """Select recommendations for the given user and group."""
         session = session or _Session()
-        group_id = group_id or RecommendationGroup.latest(session).id
+        epoch_id = epoch_id or Epoch.latest(session).id
         return (session.query(cls).order_by(cls.priority)
-                .filter(cls.group_id == group_id, cls.user_id == user_id)).all()
+                .filter(cls.epoch_id == epoch_id, cls.user_id == user_id)).all()
 
     @classmethod
-    def next(cls, user_id: int, group_id: int = None, limit: int = None,
+    def next(cls, user_id: int, epoch_id: int = None, limit: int = None,
              facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
         """
         Select next recommendation(s) for the given user and group, in priority order,
@@ -1186,7 +1186,7 @@ class Recommendation(ModelInterface):
         query = session.query(cls).join(predicted, cls.predicted_observation_id == predicted.id)
         query = query.order_by(cls.priority)
         query = query.filter(cls.user_id == user_id)
-        query = query.filter(cls.group_id == (group_id or RecommendationGroup.latest(session).id))
+        query = query.filter(cls.epoch_id == (epoch_id or Epoch.latest(session).id))
         query = query.filter(cls.accepted == False).filter(cls.rejected == False)
         if facility_id is not None:
             query = query.filter(cls.facility_id == facility_id)
@@ -1197,13 +1197,13 @@ class Recommendation(ModelInterface):
         return query.all()
 
     @classmethod
-    def history(cls, user_id: int, group_id: int) -> List[Recommendation]:
+    def history(cls, user_id: int, epoch_id: int) -> List[Recommendation]:
         """
         Select previous recommendations that the user has either affirmatively
         accepted OR rejected.
         """
         return (cls.query().order_by(cls.id)
-                .filter(cls.user_id == user_id).filter(cls.group_id == group_id)
+                .filter(cls.user_id == user_id).filter(cls.epoch_id == epoch_id)
                 .filter(or_(cls.accepted == True, cls.rejected == True))).all()
 
 
@@ -1211,8 +1211,8 @@ class Recommendation(ModelInterface):
 recommendation_object_index = Index('recommendation_object_index', Recommendation.object_id)
 recommendation_user_facility_index = Index('recommendation_user_facility_index',
                                            Recommendation.user_id, Recommendation.facility_id)
-recommendation_group_user_index = Index('recommendation_group_user_index',
-                                        Recommendation.group_id, Recommendation.user_id)
+recommendation_epoch_user_index = Index('recommendation_epoch_user_index',
+                                        Recommendation.epoch_id, Recommendation.user_id)
 
 
 class ModelType(ModelInterface):
@@ -1475,7 +1475,7 @@ tables: Dict[str, ModelInterface] = {
     'alert': Alert,
     'file_type': FileType,
     'file': File,
-    'recommendation_group': RecommendationGroup,
+    'epoch': Epoch,
     'recommendation_tag': RecommendationTag,
     'recommendation': Recommendation,
     'model_type': ModelType,
@@ -1492,7 +1492,7 @@ tables: Dict[str, ModelInterface] = {
 # global registry of indices
 indices: Dict[str, Index] = {
     'recommendation_object_index': recommendation_object_index,
-    'recommendation_group_user_index': recommendation_group_user_index,
+    'recommendation_epoch_user_index': recommendation_epoch_user_index,
     'recommendation_user_facility_index': recommendation_user_facility_index,
     'observation_time_index': observation_time_index,
     'observation_object_index': observation_object_index,
@@ -1501,6 +1501,7 @@ indices: Dict[str, Index] = {
     'message_level_index': message_level_index,
     'message_host_index': message_host_index,
 }
+
 
 # optionally defined depending on provider
 if config.provider in ('timescale', ):

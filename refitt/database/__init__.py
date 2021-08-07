@@ -21,7 +21,7 @@ from .interface import engine as __engine, Session, config
 from .model import ModelInterface, tables
 
 # public interface
-__all__ = ['create_all', 'drop_all', 'load_all', ]
+__all__ = ['create_all', 'drop_all', 'load_all', 'config', ]
 
 
 # initialize module level logger
@@ -50,7 +50,7 @@ __REFS: Dict[str, List[str]] = {
     'core': ['user', 'object_type', 'level', 'topic', ],
     'test': ['facility', 'user', 'facility_map', 'client', 'session', 'object_type', 'object', 'source_type',
              'source', 'observation_type', 'observation', 'forecast', 'alert', 'file_type', 'file',
-             'recommendation_group', 'recommendation_tag', 'recommendation', 'level', 'topic', ]
+             'epoch', 'recommendation_tag', 'recommendation', 'level', 'topic', ]
 }
 
 
