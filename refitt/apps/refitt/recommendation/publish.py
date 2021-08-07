@@ -23,7 +23,7 @@ from sqlalchemy.exc import IntegrityError
 # internal libs
 from ....core import typing
 from ....core.exceptions import log_exception
-from ....database.model import (Recommendation, RecommendationGroup, RecommendationTag,
+from ....database.model import (Recommendation, Epoch, RecommendationTag,
                                 User, Facility, Forecast, Object, NotFound, )
 
 # public interface
@@ -33,9 +33,8 @@ __all__ = ['RecommendationPublishApp', ]
 PROGRAM = 'refitt recommendation publish'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} --group [--print]
-       {PROGRAM} --user ID [--group ID] [--facility ID] --object ID --forecast ID --priority NUM [--print]
-       {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]] [--group ID] [--print] ...
+usage: {PROGRAM} --user ID [--epoch ID] [--facility ID] --object ID --forecast ID --priority NUM [--print]
+       {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]] [--epoch ID] [--print] ...
 {__doc__}\
 """
 
@@ -43,7 +42,7 @@ HELP = f"""\
 {USAGE}
 
 options:
-    --group     ID    Group ID for recommendation(s).
+    --epoch     ID    Epoch ID for recommendation(s).
     --user      ID    User ID for recommendation.
     --facility  ID    Facility ID for recommendation.
     --object    ID    Object ID for recommendation.
@@ -54,12 +53,9 @@ options:
                       Extra fields to pull in as 'data'.
 -h, --help            Show this message and exit.
 
-If invoked with only --group, a new recommendation group will be created.
-The output will be the new recommendation group ID.
-
 Create a single recommendation by specifying a --user and all the necessary
 values inline using the named options. The --user and --facility options may
-be specified as alias and name, respectively, instead of their ID. If --group
+be specified as alias and name, respectively, instead of their ID. If --epoch
 is not specified, the most recent group is used. If --facility is not specified
 and only one facility is registered for that user it will be used.
 
@@ -110,12 +106,12 @@ def check_schema(loader_impl: LoaderImpl) -> LoaderImpl:
 
 
 class RecommendationPublishApp(Application):
-    """Application class for recommendation and group creation."""
+    """Application class for recommendation publishing."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
-    group: Optional[Union[bool, int]] = None
-    interface.add_argument('--group', nargs='?', type=int, const=True, default=None)
+    epoch: Optional[int] = None
+    interface.add_argument('--epoch', type=int, default=None)
 
     user: Optional[str] = None
     interface.add_argument('--user', default=None)
@@ -163,19 +159,11 @@ class RecommendationPublishApp(Application):
 
     def run(self) -> None:
         """Business logic of command."""
-        self.check_args()
-        if self.group_mode:
-            self.create_group()
-        elif self.file_mode:
+        if self.file_mode:
             self.create_from_file()
         else:
             self.check_missing_values()
             self.create_from_values()
-
-    def check_args(self) -> None:
-        """Check arguments and build attributes."""
-        if self.group_mode and self.extra_fields_args:
-            raise ArgumentError('Cannot specify --extra-fields in --group mode')
 
     @cached_property
     def extra_fields(self) -> Dict[str, typing.ValueType]:
@@ -208,17 +196,6 @@ class RecommendationPublishApp(Application):
         return {field: typing.coerce(value) for field, value in extra_fields.items()}
 
     @cached_property
-    def group_mode(self) -> True:
-        """Check if we are in group creation mode."""
-        if self.group is None or self.group is not True:
-            return False
-        if any((self.user, self.facility, self.object, self.priority, self.forecast)):
-            raise ArgumentError('--group without arguments suggestions group creation, but discrete values provided')
-        if any((self.file_path, self.format_csv, self.format_json, self.format_hdf5)):
-            raise ArgumentError('--group without arguments suggestions group creation, but file/format specified')
-        return True
-
-    @cached_property
     def file_mode(self) -> bool:
         """Check if we should be creating recommendations from a file."""
         if self.file_path is not None:
@@ -236,23 +213,19 @@ class RecommendationPublishApp(Application):
             if not given:
                 raise ArgumentError(f'Single recommendation mode: missing discrete --{name}')
 
-    def create_group(self) -> None:
-        """Create new recommendation group and print new group ID."""
-        self.write(RecommendationGroup.new().id)
-
     def create_from_values(self) -> None:
         """Create a new recommendation with the given inputs and print its new ID."""
-        rec = self.build_recommendation(group_id=self.group_id, object_id=self.object_id, priority=self.priority,
+        rec = self.build_recommendation(epoch_id=self.epoch_id, object_id=self.object_id, priority=self.priority,
                                         user_id=self.user_id, facility_id=self.facility_id,
                                         forecast_id=self.forecast_id, **self.extra_fields)
         recommendation, = self.add_recommendations([rec, ])
         self.write(recommendation.id)
 
     @staticmethod
-    def build_recommendation(group_id: int, object_id: int, priority: int, user_id: int, facility_id: int,
+    def build_recommendation(epoch_id: int, object_id: int, priority: int, user_id: int, facility_id: int,
                              forecast_id: int, **data) -> Recommendation:
         return Recommendation.from_dict({
-            'group_id': group_id, 'tag_id': RecommendationTag.get_or_create(object_id).id,
+            'epoch_id': epoch_id, 'tag_id': RecommendationTag.get_or_create(object_id).id,
             'priority': priority, 'object_id': object_id, 'user_id': user_id, 'facility_id': facility_id,
             'forecast_id': forecast_id, 'predicted_observation_id': Forecast.from_id(forecast_id).observation.id,
             'data': data
@@ -261,20 +234,20 @@ class RecommendationPublishApp(Application):
     @staticmethod
     def add_recommendations(data: List[Recommendation]) -> List[Recommendation]:
         """Add all constructed recommendations to the database."""
+        # Note: We deconstruct as dictionaries to use `add_all` and a single transaction.
+        #       We demand recommendation is constructed to validate schema and dependencies.
         return Recommendation.add_all([pre.to_dict() for pre in data])
-        # we deconstruct as dictionaries to use `add_all` and a single transaction.
-        # we demand recommendation is constructed to validate schema and dependencies.
 
     @cached_property
-    def group_id(self) -> int:
-        """Unique group ID for recommendation."""
-        if self.group is None:
-            log.debug('Group not specified, fetching latest')
-            return RecommendationGroup.latest().id
+    def epoch_id(self) -> int:
+        """Unique epoch ID for recommendation."""
+        if self.epoch is None:
+            log.debug('Epoch not specified, fetching latest')
+            return Epoch.latest().id
         try:
-            return int(self.group)
+            return int(self.epoch)
         except ValueError:
-            raise ArgumentError('--group must be an integer if specified with --user')
+            raise ArgumentError('--epoch must be an integer if specified')
 
     @cached_property
     def user_id(self) -> int:
@@ -328,7 +301,7 @@ class RecommendationPublishApp(Application):
             data = self.load_from_local(self.file_path)
         recommendations = []
         for idx, row in data.iterrows():
-            new = self.build_recommendation(**{**row.to_dict(), 'group_id': self.group_id})
+            new = self.build_recommendation(**{**row.to_dict(), 'epoch_id': self.epoch_id})
             recommendations.append(new)
         for recommendation in self.add_recommendations(recommendations):
             self.write(recommendation.id)
