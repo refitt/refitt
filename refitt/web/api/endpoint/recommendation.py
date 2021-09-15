@@ -353,7 +353,7 @@ info['Endpoints']['/recommendation/history']['GET'] = {
 
 
 # limit on allowed file upload size
-FILE_SIZE_LIMIT: int = 8 * 1024**2
+FILE_SIZE_LIMIT: int = 800 * 1024**2
 # NOTE: 800M file allows single 10k-square CCD w/ 64-bit Integers
 # Larger collections in size and number can be included if compressed
 
