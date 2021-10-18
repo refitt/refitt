@@ -648,19 +648,21 @@ class Object(ModelInterface):
     """An astronomical object defines names, position, and other attributes."""
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
-    type_id = Column('type_id', Integer(), ForeignKey(ObjectType.id), nullable=False)
+    type_id = Column('type_id', Integer(), ForeignKey(ObjectType.id), nullable=True)
+    pred_type_id = Column('pred_type_id', Integer(), ForeignKey(ObjectType.id), nullable=True)
     aliases = Column('aliases', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     ra = Column('ra', Float(), nullable=False)
     dec = Column('dec', Float(), nullable=False)
     redshift = Column('redshift', Float(), nullable=True)
     data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
 
-    type = relationship(ObjectType, backref='object')
+    type = relationship(ObjectType, foreign_keys=[type_id, ])
 
     relationships = {'type': ObjectType}
     columns = {
         'id': int,
         'type_id': int,
+        'pred_type_id': int,
         'aliases': dict,
         'ra': float,
         'dec': float,

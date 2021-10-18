@@ -61,6 +61,7 @@ class TestObservation:
             'object': {
                 'id': 1,
                 'type_id': 1,
+                'pred_type_id': None,
                 'aliases': {
                     'antares': 'ANT2020ae7t5xa',
                     'ztf': 'ZTF20actrfli',

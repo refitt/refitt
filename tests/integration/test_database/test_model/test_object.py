@@ -45,6 +45,7 @@ class TestObject:
         assert Object.from_id(1).to_json(join=True) == {
             'id': 1,
             'type_id': 1,
+            'pred_type_id': None,
             'aliases': {'antares': 'ANT2020ae7t5xa', 'ztf': 'ZTF20actrfli', 'tag': 'determined_thirsty_cray'},
             'ra': 133.0164572,
             'dec': 44.80034109999999,
