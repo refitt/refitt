@@ -19,7 +19,7 @@ from astropy.time import Time
 
 # internal libs
 from ...core.schema import ListSchema, DictSchema
-from ...database.model import Object, Source, ObservationType, Observation, Forecast as ForecastModel
+from ...database.model import Object, Source, ObservationType, Observation, Model, ModelType, Epoch
 
 # public interface
 __all__ = ['Forecast', ]
@@ -141,14 +141,18 @@ class Forecast:
     @cached_property
     def observation_data(self) -> Dict[str, Any]:
         """Generated Observation records for this forecast."""
-        return {'type_id': get_type_id(self.filter),
+        return {'epoch_id': Epoch.latest().id,
+                'type_id': get_type_id(self.filter),
                 'object_id': self.object_id,
                 'source_id': get_source_id(),
                 'value': self.next_mag_mean,
                 'error': self.next_mag_sigma,
                 'time': self.time}
 
-    def publish(self) -> ForecastModel:
+    def publish(self) -> Model:
         """Construct forecast record and insert into database."""
-        return ForecastModel.add({'observation_id': Observation.add(self.observation_data).id,
-                                  'data': self.to_dict()})
+        return Model.add({
+            'epoch_id': Epoch.latest().id,
+            'type_id': ModelType.from_name('forecast').id,
+            'observation_id': Observation.add(self.observation_data).id,
+            'data': self.to_dict()})

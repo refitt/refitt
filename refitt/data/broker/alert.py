@@ -14,7 +14,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 
 # internal libs
-from ...database.model import ObjectType, Object, Source, ObservationType, Observation, Alert
+from ...database.model import Epoch, ObjectType, Object, Source, ObservationType, Observation, Alert
 from ...database.interface import Session
 
 # public interface
@@ -163,12 +163,14 @@ class AlertInterface(ABC):
         object_id = self._get_object_id(object_type_id, session)
         obs_type_id = self._get_observation_type(session)
         observation_id = self._create_observation(object_id, obs_type_id, session)
-        self._record = Alert.add({'observation_id': observation_id, 'data': self.data})
+        self._record = Alert.add({'epoch_id': Epoch.latest().id,
+                                  'observation_id': observation_id, 'data': self.data})
         return self._record
 
     def _create_observation(self, object_id: int, obs_type_id: int, session: Session) -> int:
         """Add observation to database and return new observation id."""
-        observation = Observation.add({'object_id': object_id, 'type_id': obs_type_id,
+        observation = Observation.add({'epoch_id': Epoch.latest().id,
+                                       'object_id': object_id, 'type_id': obs_type_id,
                                        'source_id': Source.from_name(self.source_name, session).id,
                                        'value': self.observation_value, 'error': self.observation_error,
                                        'time': self.observation_time}, session)
@@ -200,7 +202,8 @@ class AlertInterface(ABC):
             except Object.NotFound:
                 pass
         else:
-            object = Object.add({'type_id': object_type_id, 'aliases': self.object_aliases,
+            object = Object.add({'type_id': object_type_id,  # 'pred_type_id': None,
+                                 'aliases': self.object_aliases,
                                  'ra': self.object_ra, 'dec': self.object_dec,
                                  'redshift': self.object_redshift}, session)
         return object.id

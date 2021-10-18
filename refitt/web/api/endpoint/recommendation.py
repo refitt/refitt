@@ -16,7 +16,7 @@ from flask import request
 
 # internal libs
 from ....database.model import (Client, Recommendation, File, FileType, Observation,
-                                Source, ModelInterface)
+                                Source, ModelInterface, Epoch)
 from ..app import application
 from ..response import (endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid,
                         PayloadMalformed, NotFound)
@@ -38,7 +38,6 @@ info: dict = {
         '/recommendation/<id>/facility': {},
         '/recommendation/<id>/object': {},
         '/recommendation/<id>/object/type': {},
-        '/recommendation/<id>/forecast': {},
         '/recommendation/<id>/predicted': {},
         '/recommendation/<id>/predicted/type': {},
         '/recommendation/<id>/predicted/object': {},
@@ -46,7 +45,6 @@ info: dict = {
         '/recommendation/<id>/predicted/source': {},
         '/recommendation/<id>/predicted/source/type': {},
         '/recommendation/<id>/predicted/source/user': {},
-        '/recommendation/<id>/predicted/forecast': {},
         '/recommendation/<id>/observed': {},
         '/recommendation/<id>/observed/type': {},
         '/recommendation/<id>/observed/object': {},
@@ -57,6 +55,7 @@ info: dict = {
         '/recommendation/<id>/observed/source/facility': {},
         '/recommendation/<id>/observed/file': {},
         '/recommendation/<id>/observed/file/type': {},
+        '/recommendation/<id>/model': {},
         '/recommendation/history': {},
     }
 }
@@ -84,7 +83,7 @@ recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInte
     'facility':                  ('facility',             lambda r: r.facility),
     'object':                    ('object',               lambda r: r.object),
     'object/type':               ('object_type',          lambda r: r.object.type),
-    'forecast':                  ('forecast',             lambda r: r.forecast),
+    'model':                     ('model',                lambda r: r.models),
 
     'predicted':                 ('observation',          lambda r: r.predicted),
     'predicted/type':            ('observation_type',     lambda r: r.predicted.type),
@@ -269,7 +268,10 @@ def get_recommendation_partial(client: Client, id: int, relation: str) -> dict:
     params = collect_parameters(request, optional=['join', ], defaults={'join': False})
     member = get_member(get(id, client))
     if member is not None:
-        return {name: member.to_json(**params)}
+        if isinstance(member, list):
+            return {name: [record.to_json(**params) for record in member]}
+        else:
+            return {name: member.to_json(**params)}
     else:
         raise NotFound(f'Member \'{relation}\' not available for recommendation ({id})')
 
@@ -424,7 +426,7 @@ def add_recommendation_observed_file(client: Client, id: int) -> dict:
         File.update(file.id, type_id=type_id, data=file_data)
     except File.NotFound:
         file = File.add({'observation_id': recommendation.observation_id,
-                         'type_id': type_id, 'data': file_data})
+                         'epoch_id': Epoch.latest().id, 'type_id': type_id, 'data': file_data})
     return {'file': {'id': file.id}}
 
 
@@ -524,7 +526,7 @@ def add_recommendation_observed(client: Client, id: int) -> dict:
     except ValueError as error:
         raise PayloadMalformed(str(error)) from error
     if recommendation.observation_id is None:
-        observation = Observation.add({**known_fields, 'time': time, **data})
+        observation = Observation.add({**known_fields, 'epoch_id': Epoch.latest().id, 'time': time, **data})
         Recommendation.update(recommendation.id, observation_id=observation.id)
         return {'observation': observation.to_json()}
     else:

@@ -5,7 +5,7 @@
 
 
 # internal libs
-from refitt.database.model import Source, Observation, ObservationType, Alert, Forecast, File, FileType
+from refitt.database.model import Source, Observation, ObservationType, Alert, ModelType, Model, File, FileType
 from refitt.web.api.response import STATUS, RESPONSE_MAP, NotFound, ParameterInvalid, PermissionDenied, PayloadTooLarge
 from tests.integration.test_web.test_api.test_endpoint import Endpoint
 
@@ -81,13 +81,12 @@ class TestGetObservations(Endpoint):
         )
 
     def test_query_object_not_public(self) -> None:
-        source = Source.from_name('antares')
+        # source = Source.from_name('antares')
         observations = Observation.with_object(1)  # NOTE: tomb_raider never recommended #1
         assert self.get(self.route, client_id=self.get_client(self.user).id, object_id=1) == (
             STATUS['OK'], {
-                'Status': 'Success',
-                'Response': {'observation': [obs.to_json() for obs in observations
-                                             if obs.source_id == source.id]}},
+                'Status': 'Success',  # source_id == 4 is a user, so we should see any of those
+                'Response': {'observation': [obs.to_json() for obs in observations if obs.source.type_id != 4]}},
         )
 
     def test_query_object_and_source(self) -> None:
@@ -570,10 +569,10 @@ class TestGetObservationAlert(Endpoint):
         )
 
 
-class TestGetObservationForecast(Endpoint):
-    """Tests for GET /observation/<id>/forecast endpoint."""
+class TestGetObservationModel(Endpoint):
+    """Tests for GET /observation/<id>/model endpoint."""
 
-    route: str = '/observation/10/forecast'
+    route: str = '/observation/10/model'
     method: str = 'get'
     admin: str = 'superman'
     user: str = 'tomb_raider'
@@ -590,7 +589,7 @@ class TestGetObservationForecast(Endpoint):
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
         observation = Observation.with_source(source.id)[0]
-        assert self.get(f'/observation/{observation.id}/forecast',
+        assert self.get(f'/observation/{observation.id}/model',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
                 'Status': 'Error',
@@ -600,32 +599,32 @@ class TestGetObservationForecast(Endpoint):
 
     def test_observation_not_found(self) -> None:
         client = self.get_client(self.user)
-        assert self.get(f'/observation/0/forecast', client_id=client.id) == (
+        assert self.get(f'/observation/0/model', client_id=client.id) == (
             RESPONSE_MAP[NotFound], {
                 'Status': 'Error',
                 'Message': 'No observation with id=0',
             }
         )
 
-    def test_forecast_not_found(self) -> None:
+    def test_model_not_found(self) -> None:
         source = Source.from_name('antares')
         observation = Observation.with_source(source.id)[0]
-        assert self.get(f'/observation/{observation.id}/forecast',
+        assert self.get(f'/observation/{observation.id}/model',
                         client_id=self.get_client(self.admin).id) == (
-            RESPONSE_MAP[NotFound], {
-                'Status': 'Error',
-                'Message': f'No forecast with observation_id={observation.id}',
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': []},
             }
         )
 
     def test_get_by_id(self) -> None:
         source = Source.from_name('refitt')
         observation = Observation.with_source(source.id)[0]
-        assert self.get(f'/observation/{observation.id}/forecast',
+        assert self.get(f'/observation/{observation.id}/model',
                         client_id=self.get_client(self.admin).id) == (
             STATUS['OK'], {
                 'Status': 'Success',
-                'Response': {'forecast': Forecast.from_observation(observation.id).data},
+                'Response': {'model': [record.to_json() for record in observation.models]},
             }
         )
 
@@ -840,10 +839,10 @@ class TestGetAlert(Endpoint):
         )
 
 
-class TestGetForecast(Endpoint):
-    """Tests for GET /observation/forecast/<id> endpoint."""
+class TestGetModel(Endpoint):
+    """Tests for GET /observation/model/<id> endpoint."""
 
-    route: str = '/observation/forecast/1'
+    route: str = '/observation/model/1'
     method: str = 'get'
     admin: str = 'superman'
     user: str = 'tomb_raider'
@@ -859,19 +858,19 @@ class TestGetForecast(Endpoint):
 
     def test_not_found(self) -> None:
         client = self.get_client(self.user)
-        assert self.get(f'/observation/forecast/0', client_id=client.id) == (
+        assert self.get(f'/observation/model/0', client_id=client.id) == (
             RESPONSE_MAP[NotFound], {
                 'Status': 'Error',
-                'Message': 'No forecast with id=0',
+                'Message': 'No model with id=0',
             }
         )
 
     def test_get_by_id(self) -> None:
-        forecast = Forecast.from_id(1)
-        assert self.get(f'/observation/forecast/1', client_id=self.get_client(self.admin).id) == (
+        model = Model.from_id(1)
+        assert self.get(f'/observation/model/1', client_id=self.get_client(self.admin).id) == (
             STATUS['OK'], {
                 'Status': 'Success',
-                'Response': {'forecast': forecast.data},
+                'Response': {'model': model.to_json()},
             }
         )
 

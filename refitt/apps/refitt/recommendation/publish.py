@@ -24,7 +24,7 @@ from sqlalchemy.exc import IntegrityError
 from ....core import typing
 from ....core.exceptions import log_exception
 from ....database.model import (Recommendation, Epoch, RecommendationTag,
-                                User, Facility, Forecast, Object, NotFound, )
+                                User, Facility, Model, Object, NotFound, )
 
 # public interface
 __all__ = ['RecommendationPublishApp', ]
@@ -80,6 +80,8 @@ REQUIRED_FIELDS = ['object_id', 'user_id', 'facility_id', 'forecast_id', 'priori
 FILE_SCHEMA = {field: 'int' for field in REQUIRED_FIELDS}
 
 LoaderImpl = Callable[[Union[str, IO], Optional[Dict[str, str]]], DataFrame]
+
+
 def check_schema(loader_impl: LoaderImpl) -> LoaderImpl:
     """Wrapper method to check column names and types."""
 
@@ -227,7 +229,8 @@ class RecommendationPublishApp(Application):
         return Recommendation.from_dict({
             'epoch_id': epoch_id, 'tag_id': RecommendationTag.get_or_create(object_id).id,
             'priority': priority, 'object_id': object_id, 'user_id': user_id, 'facility_id': facility_id,
-            'forecast_id': forecast_id, 'predicted_observation_id': Forecast.from_id(forecast_id).observation.id,
+            # 'forecast_id': forecast_id,
+            'predicted_observation_id': Model.from_id(forecast_id).observation.id,
             'data': data
         })
 

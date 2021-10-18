@@ -61,7 +61,7 @@ class TestGetEpochMany(Endpoint):
 
     def test_get_all(self) -> None:
         data = [group.to_json() for group in Epoch.select(20)]
-        assert len(data) == 3
+        assert len(data) == 4
         assert self.get(self.route, client_id=self.get_client(self.user).id, limit=20) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -71,7 +71,7 @@ class TestGetEpochMany(Endpoint):
 
     def test_get_with_limit(self) -> None:
         data = [group.to_json() for group in Epoch.select(20)]
-        assert len(data) == 3
+        assert len(data) == 4
         assert self.get(self.route, client_id=self.get_client(self.user).id, limit=2) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -81,17 +81,17 @@ class TestGetEpochMany(Endpoint):
 
     def test_get_with_offset_1(self) -> None:
         data = [group.to_json() for group in Epoch.select(20)]
-        assert len(data) == 3
+        assert len(data) == 4
         assert self.get(self.route, client_id=self.get_client(self.user).id, limit=2, offset=1) == (
             STATUS['OK'], {
                 'Status': 'Success',
-                'Response': {'epoch': data[1:]},
+                'Response': {'epoch': data[1:3]},
             }
         )
 
     def test_get_with_offset_2(self) -> None:
         data = [group.to_json() for group in Epoch.select(20)]
-        assert len(data) == 3
+        assert len(data) == 4
         assert self.get(self.route, client_id=self.get_client(self.user).id, limit=2, offset=2) == (
             STATUS['OK'], {
                 'Status': 'Success',

@@ -58,9 +58,7 @@ class TestGetNextRecommendation(Endpoint):
     def test_all_accepted(self) -> None:
         """Should be empty if all are already accepted/rejected (as in test data)."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
-        assert self.get(self.route, client_id=client.id) == (
+        assert self.get(self.route, client_id=client.id, epoch_id=3) == (
             STATUS['OK'], {
                 'Status': 'Success',
                 'Response': {
@@ -72,12 +70,11 @@ class TestGetNextRecommendation(Endpoint):
     def test_all_unseen(self) -> None:
         """Should get all recommendations for the user if none have been accepted or rejected."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id)
             assert len(recommendations) == 4
-            assert self.get(self.route, client_id=client.id) == (
+            assert self.get(self.route, client_id=client.id, epoch_id=epoch_id) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -89,12 +86,11 @@ class TestGetNextRecommendation(Endpoint):
     def test_with_limit(self) -> None:
         """Should only return the first recommendation of the unseen for given group."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id, limit=1)
             assert len(recommendations) == 1
-            assert self.get(self.route, client_id=client.id, limit=1) == (
+            assert self.get(self.route, client_id=client.id, limit=1, epoch_id=epoch_id) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -106,8 +102,7 @@ class TestGetNextRecommendation(Endpoint):
     def test_with_facility(self) -> None:
         """Only return recommendations for the given facility."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             facility = Facility.from_name('Croft_1m')
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id,
@@ -115,7 +110,7 @@ class TestGetNextRecommendation(Endpoint):
             assert len(recommendations) == 2
             assert all(recommendation.epoch_id == epoch_id for recommendation in recommendations)
             assert all(recommendation.facility_id == facility.id for recommendation in recommendations)
-            assert self.get(self.route, client_id=client.id, facility_id=facility.id) == (
+            assert self.get(self.route, client_id=client.id, epoch_id=epoch_id, facility_id=facility.id) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -127,8 +122,7 @@ class TestGetNextRecommendation(Endpoint):
     def test_with_facility_and_limiting_magnitude(self) -> None:
         """Only return recommendations for the given facility and limiting magnitude."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             facility = Facility.from_name('Croft_1m')
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id,
@@ -137,7 +131,8 @@ class TestGetNextRecommendation(Endpoint):
             assert all(recommendation.epoch_id == epoch_id for recommendation in recommendations)
             assert all(recommendation.facility_id == facility.id for recommendation in recommendations)
             assert recommendations[0].predicted.value <= 15.4
-            assert self.get(self.route, client_id=client.id, facility_id=facility.id, limiting_magnitude=15.4) == (
+            assert self.get(self.route, client_id=client.id, epoch_id=epoch_id,
+                            facility_id=facility.id, limiting_magnitude=15.4) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -146,11 +141,9 @@ class TestGetNextRecommendation(Endpoint):
                 }
             )
 
-    def test_with_group(self) -> None:
+    def test_with_epoch(self) -> None:
         """Return recommendations for a specified group."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
         epoch_id = 2  # the previous group instead
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id)
@@ -168,13 +161,12 @@ class TestGetNextRecommendation(Endpoint):
     def test_with_join(self) -> None:
         """Return recommendations for a specified group."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id, limit=1)
             assert len(recommendations) == 1
             assert all(recommendation.epoch_id == epoch_id for recommendation in recommendations)
-            assert self.get(self.route, client_id=client.id, limit=1, join=True) == (
+            assert self.get(self.route, client_id=client.id, limit=1, epoch_id=epoch_id, join=True) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -290,6 +282,7 @@ class RecommendationEndpoint(Endpoint, ABC):
     method: str = 'get'
     admin: str = 'superman'
     user: str = 'tomb_raider'
+    response_type: str = 'dict'
 
     @abstractproperty
     def relation(self) -> str:
@@ -326,7 +319,13 @@ class RecommendationEndpoint(Endpoint, ABC):
     def test_get(self) -> None:
         resource, get_member = recommendation_slices[self.relation]
         recommendation = Recommendation.from_id(3)
-        data = get_member(recommendation).to_json(join=False)
+        member = get_member(recommendation)
+        if self.response_type == 'dict':
+            data = member.to_json(join=False)
+        elif self.response_type == 'list':
+            data = [record.to_json(join=False) for record in member]
+        else:
+            raise ValueError('Bad \'response_type\' on test class')
         assert self.get(self.route, client_id=self.get_client(self.user).id) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -337,7 +336,13 @@ class RecommendationEndpoint(Endpoint, ABC):
     def test_get_with_join(self) -> None:
         resource, get_member = recommendation_slices[self.relation]
         recommendation = Recommendation.from_id(3)
-        data = get_member(recommendation).to_json(join=True)
+        member = get_member(recommendation)
+        if self.response_type == 'dict':
+            data = member.to_json(join=True)
+        elif self.response_type == 'list':
+            data = [record.to_json(join=True) for record in member]
+        else:
+            raise ValueError('Bad \'response_type\' on test class')
         assert self.get(self.route, client_id=self.get_client(self.user).id, join=True) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -370,8 +375,9 @@ class TestGetObjectType(RecommendationEndpoint):
     relation = 'object/type'
 
 
-class TestGetForecast(RecommendationEndpoint):
-    relation = 'forecast'
+class TestGetModel(RecommendationEndpoint):
+    relation = 'model'
+    response_type = 'list'
 
 
 class TestGetPredicted(RecommendationEndpoint):
@@ -542,7 +548,7 @@ class TestGetRecommendationObservedFile(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.get(f'/recommendation/{rec.id}/observed/file',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -604,7 +610,7 @@ class TestPostRecommendationObservedFile(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.post(f'/recommendation/{rec.id}/observed/file',
                          client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -735,7 +741,7 @@ class TestGetRecommendationObservedFileType(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.get(f'/recommendation/{rec.id}/observed/file/type',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -799,7 +805,7 @@ class TestPostRecommendationObserved(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.post(f'/recommendation/{rec.id}/observed/file',
                          client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {

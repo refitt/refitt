@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 # internal libs
 from refitt.database import config
 from refitt.database.model import (Epoch, Recommendation, RecommendationTag,
-                                   User, Facility, Object, Forecast, Observation, NotFound)
+                                   User, Facility, Object, ModelType, Model, Observation, NotFound)
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
@@ -54,7 +54,6 @@ class TestRecommendation:
             'object_id': 1,
             'facility_id': 1,
             'user_id': 2,
-            'forecast_id': 1,
             'predicted_observation_id': 11,
             'observation_id': 19,
             'accepted': True,
@@ -65,7 +64,6 @@ class TestRecommendation:
             'user': User.from_id(2).to_json(join=True),
             'facility': Facility.from_id(1).to_json(join=True),
             'object': Object.from_id(1).to_json(join=True),
-            'forecast': Forecast.from_id(1).to_json(join=True),
             'predicted': Observation.from_id(11).to_json(join=True),
             'observed': Observation.from_id(19).to_json(join=True),
             }
@@ -107,11 +105,6 @@ class TestRecommendation:
         for i, record in enumerate(testdata['recommendation']):
             assert Recommendation.from_id(i + 1).user.id == record['user_id']
 
-    def test_relationship_forecast(self, testdata: TestData) -> None:
-        """Test forecast foreign key relationship on recommendation."""
-        for i, record in enumerate(testdata['recommendation']):
-            assert Recommendation.from_id(i + 1).forecast.id == record['forecast_id']
-
     def test_relationship_predicted(self, testdata: TestData) -> None:
         """Test predicted observation foreign key relationship on recommendation."""
         for i, record in enumerate(testdata['recommendation']):
@@ -126,10 +119,7 @@ class TestRecommendation:
         """Test query for all recommendations for a given user."""
         user_id = User.from_alias('tomb_raider').id
         results = Recommendation.for_user(user_id)
-        assert len(results) == 4
-        for record in results:
-            assert record.user_id == user_id
-            assert record.epoch_id == 3
+        assert len(results) == 0  # nothing for epoch 4
 
     def test_for_user_with_epoch_id(self) -> None:
         """Test query for all recommendations for a given user and group."""
@@ -153,17 +143,17 @@ class TestRecommendation:
         """Test query for latest recommendation."""
 
         user_id = User.from_alias('tomb_raider').id
-        response = Recommendation.next(user_id=user_id)
+        response = Recommendation.next(user_id=user_id, epoch_id=3)
         assert len(response) == 0  # NOTE: all accepted already
 
-        rec_id = Recommendation.for_user(user_id)[0].id
+        rec_id = Recommendation.for_user(user_id, epoch_id=3)[0].id
         Recommendation.update(rec_id, accepted=False)
 
-        response = Recommendation.next(user_id=user_id)
+        response = Recommendation.next(user_id=user_id, epoch_id=3)
         assert len(response) == 1
 
         Recommendation.update(rec_id, accepted=True)
-        response = Recommendation.next(user_id=user_id)
+        response = Recommendation.next(user_id=user_id, epoch_id=3)
         assert len(response) == 0
 
     def test_history(self) -> None:
@@ -175,7 +165,7 @@ class TestRecommendation:
         assert len(records) == 4  # NOTE: all accepted already
         assert all(r.accepted for r in records)
 
-        rec_id = Recommendation.for_user(user_id)[0].id
+        rec_id = Recommendation.for_user(user_id, epoch_id=3)[0].id
         Recommendation.update(rec_id, accepted=False)
 
         records = Recommendation.history(user_id=user_id, epoch_id=3)
