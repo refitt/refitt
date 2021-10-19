@@ -1234,7 +1234,6 @@ class Recommendation(ModelInterface):
             _Session.query(Model.id, Model.epoch_id, Model.type_id, Model.observation_id)
                 .order_by(Model.type_id)
                 .filter(Model.observation_id == self.predicted_observation_id)
-                .filter(Model.epoch_id == self.epoch_id)
                 .all()
         ]
 
@@ -1245,7 +1244,6 @@ class Recommendation(ModelInterface):
             Model.query()
             .order_by(Model.type_id)
             .filter(Model.observation_id == self.predicted_observation_id)
-            .filter(Model.epoch_id == self.epoch_id)
             .all()
         )
 
