@@ -67,35 +67,29 @@ class TestEpoch:
 
     def test_new(self) -> None:
         """Test the creation of a new epoch."""
-        assert Epoch.count() == 3
-        group = Epoch.new()
         assert Epoch.count() == 4
-        Epoch.delete(group.id)
-        assert Epoch.count() == 3
+        epoch = Epoch.new()
+        assert Epoch.count() == 5
+        Epoch.delete(epoch.id)
+        assert Epoch.count() == 4
 
     def test_latest(self) -> None:
         """Test query for latest epoch."""
         assert Epoch.latest().to_json(join=True) == {
-            'id': 3,
-            'created': '2020-10-26 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
+            'id': 4,
+            'created': '2020-10-27 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
         }
 
     def test_select_with_limit(self) -> None:
         """Test the selection of epoch with a limit."""
         assert [group.to_json(join=True) for group in Epoch.select(limit=2)] == [
-            {
-                'id': 3,
-                'created': '2020-10-26 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
-            },
-            {
-                'id': 2,
-                'created': '2020-10-25 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
-            }
+            {'id': 4, 'created': '2020-10-27 20:01:00-04:00'},
+            {'id': 3, 'created': '2020-10-26 20:01:00-04:00'}
         ]
 
     def test_select_with_limit_and_offset(self) -> None:
         """Test the selection of epoch with a limit and offset."""
-        assert [group.to_json(join=True) for group in Epoch.select(limit=2, offset=1)] == [
+        assert [group.to_json(join=True) for group in Epoch.select(limit=2, offset=2)] == [
             {
                 'id': 2,
                 'created': '2020-10-25 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')

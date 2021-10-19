@@ -16,7 +16,7 @@ from flask import request
 
 # internal libs
 from ....database.interface import Session
-from ....database.model import (Client, Source, Observation, ObservationType, Alert, Forecast, File, FileType,
+from ....database.model import (Client, Source, Observation, ObservationType, Alert, Model, File, FileType,
                                 User, Facility)
 from ..app import application
 from ..response import endpoint, PermissionDenied, PayloadTooLarge
@@ -40,13 +40,13 @@ info: dict = {
         '/observation/<id>/source/user': {},
         '/observation/<id>/source/facility': {},
         '/observation/<id>/alert': {},
-        '/observation/<id>/forecast': {},
+        '/observation/<id>/model': {},
         '/observation/<id>/file': {},
         '/observation/<id>/file/type': {},
         '/observation/type': {},
         '/observation/type/<id>': {},
+        '/observation/model/<id>': {},
         '/observation/alert/<id>': {},
-        '/observation/forecast/<id>': {},
         '/observation/file/<id>': {},
         '/observation/file/<id>/type': {},
         '/observation/file/type': {},
@@ -55,9 +55,11 @@ info: dict = {
 }
 
 
+# NOTE: we hard code the user_id == 1 because its more efficient and essentially
+# guaranteed by the fact that we define this in the metadata to be 'refitt'
 def is_viewable(obs: Observation, client: Client) -> bool:
     """Filter out user sourced observations if not admin."""
-    return obs.source.user_id is None or obs.source.user_id == client.user_id or client.level <= 1
+    return client.level <= 1 or obs.source.user_id == client.user_id or obs.source.type_id != 4
 
 
 @application.route('/observation', methods=['GET'])
@@ -464,7 +466,7 @@ info['Endpoints']['/observation/<id>/source/facility']['GET'] = {
         },
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
-        404: {'Description': 'Observation does not exist'},
+        404: {'Description': 'Observation or facility does not exist'},
     }
 }
 
@@ -506,18 +508,55 @@ info['Endpoints']['/observation/<id>/alert']['GET'] = {
 }
 
 
-@application.route('/observation/<int:id>/forecast', methods=['GET'])
+@application.route('/observation/model/<id>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_observation_forecast(client: Client, id: int) -> dict:
-    """Query for forecast related to observation by `id`."""
+def get_observation_model(client: Client, id: int) -> dict:  # noqa: unused client
+    """Query for model by `id`."""
     disallow_parameters(request)
-    return {'forecast': Forecast.from_observation(_get_observation(id, client).id).data}
+    return {'model': Model.from_id(id).to_json()}
 
 
-info['Endpoints']['/observation/<id>/forecast']['GET'] = {
-    'Description': 'Request forecast related to observation by ID',
+info['Endpoints']['/observation/model/<id>']['GET'] = {
+    'Description': 'Request model by ID',
+    'Permissions': 'Public',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for observation',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'Model data',
+                'Type': 'application/json'
+            },
+        },
+        401: {'Description': 'Access revoked, token expired, or unauthorized'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Model does not exist'},
+    }
+}
+
+
+@application.route('/observation/<int:id>/model', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_observation_models(client: Client, id: int) -> dict:
+    """Query for models related to observation by `id`."""
+    disallow_parameters(request)
+    return {'model': [record.to_json() for record in _get_observation(id, client).models]}
+
+
+info['Endpoints']['/observation/<id>/model']['GET'] = {
+    'Description': 'Request models related to observation by ID',
     'Permissions': 'Public/Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
@@ -532,13 +571,13 @@ info['Endpoints']['/observation/<id>/forecast']['GET'] = {
         200: {
             'Description': 'Success',
             'Payload': {
-                'Description': 'Forecast data',
+                'Description': 'Model data',
                 'Type': 'application/json'
             },
         },
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
-        404: {'Description': 'Observation or forecast does not exist'},
+        404: {'Description': 'Observation does not exist'},
     }
 }
 
@@ -727,43 +766,6 @@ info['Endpoints']['/observation/alert/<id>']['GET'] = {
         401: {'Description': 'Access revoked, token expired'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Alert does not exist'},
-    }
-}
-
-
-@application.route('/observation/forecast/<int:id>', methods=['GET'])
-@endpoint('application/json')
-@authenticated
-@authorization(level=None)
-def get_forecast(client: Client, id: int) -> dict:  # noqa: unused client
-    """Query for forecast by `id`."""
-    disallow_parameters(request)
-    return {'forecast': Forecast.from_id(id).data}
-
-
-info['Endpoints']['/observation/forecast/<id>']['GET'] = {
-    'Description': 'Request forecast by ID',
-    'Permissions': 'Public',
-    'Requires': {
-        'Auth': 'Authorization Bearer Token',
-        'Path': {
-            'id': {
-                'Description': 'Unique ID for forecast',
-                'Type': 'Integer',
-            }
-        },
-    },
-    'Responses': {
-        200: {
-            'Description': 'Success',
-            'Payload': {
-                'Description': 'Forecast data',
-                'Type': 'application/json'
-            },
-        },
-        401: {'Description': 'Access revoked, token expired'},
-        403: {'Description': 'Token not found or invalid'},
-        404: {'Description': 'Forecast does not exist'},
     }
 }
 

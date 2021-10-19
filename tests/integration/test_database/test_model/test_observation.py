@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database import config
-from refitt.database.model import Observation, NotFound, Object, Source
+from refitt.database.model import Epoch, Observation, NotFound, Object, Source
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
@@ -50,6 +50,7 @@ class TestObservation:
         """Test embedded method to check JSON-serialization and auto-join."""
         assert Observation.from_id(1).to_json(join=True) == {
             'id': 1,
+            'epoch_id': 1,
             'time': '2020-10-24 18:00:00' + ('' if config.provider == 'sqlite' else '-04:00'),
             'object_id': 1,
             'type_id': 4,
@@ -60,6 +61,7 @@ class TestObservation:
             'object': {
                 'id': 1,
                 'type_id': 1,
+                'pred_type_id': None,
                 'aliases': {
                     'antares': 'ANT2020ae7t5xa',
                     'ztf': 'ZTF20actrfli',
@@ -74,6 +76,10 @@ class TestObservation:
                     'name': 'Unknown',
                     'description': 'Objects with unknown or unspecified type',
                 },
+            },
+            'epoch': {
+                'id': 1,
+                'created': '2020-10-24 20:01:00-04:00'
             },
             'type': {
                 'id': 4,
@@ -111,10 +117,15 @@ class TestObservation:
     def test_id_already_exists(self) -> None:
         """Test exception on observation `id` already exists."""
         with pytest.raises(IntegrityError):
-            Observation.add({'id': 1, 'time': datetime.now(), 'object_id': 1, 'type_id': 1,
+            Observation.add({'id': 1, 'epoch_id': 1, 'time': datetime.now(), 'object_id': 1, 'type_id': 1,
                              'source_id': 1, 'value': 3.14, 'error': None})
 
-    def test_relationship_observation_type(self, testdata: TestData) -> None:
+    def test_relationship_epoch(self, testdata: TestData) -> None:
+        """Test observation foreign key relationship on epoch."""
+        for i, record in enumerate(testdata['observation']):
+            assert Observation.from_id(i + 1).epoch.id == record['epoch_id']
+
+    def test_relationship_type(self, testdata: TestData) -> None:
         """Test observation foreign key relationship on observation_type."""
         for i, record in enumerate(testdata['observation']):
             assert Observation.from_id(i + 1).type.id == record['type_id']

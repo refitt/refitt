@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database.model import Alert, Observation, NotFound
+from refitt.database.model import Epoch, Alert, Observation, NotFound
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
@@ -45,6 +45,7 @@ class TestAlert:
         """Test embedded method to check JSON-serialization and auto-join."""
         assert Alert.from_id(1).to_json(join=True) == {
             'id': 1,
+            'epoch_id': 1,
             'observation_id': 1,
             'data': {
                 'alert': {
@@ -64,6 +65,7 @@ class TestAlert:
                 'properties': {},
                 'ra': 133.0164572
             },
+            'epoch': Epoch.from_id(1).to_json(join=True),
             'observation': Observation.from_id(1).to_json(join=True)
         }
 
@@ -99,7 +101,7 @@ class TestAlert:
         with pytest.raises(IntegrityError):
             Alert.add({'id': -1, 'observation_id': 1, 'data': {}})
 
-    def test_relationship_observation_type(self, testdata: TestData) -> None:
+    def test_relationship_observation(self, testdata: TestData) -> None:
         """Test alert foreign key relationship on observation."""
         for i, record in enumerate(testdata['alert']):
             assert Alert.from_id(i + 1).observation.id == record['observation_id']

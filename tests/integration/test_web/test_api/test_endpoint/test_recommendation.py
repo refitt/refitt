@@ -58,9 +58,7 @@ class TestGetNextRecommendation(Endpoint):
     def test_all_accepted(self) -> None:
         """Should be empty if all are already accepted/rejected (as in test data)."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
-        assert self.get(self.route, client_id=client.id) == (
+        assert self.get(self.route, client_id=client.id, epoch_id=3) == (
             STATUS['OK'], {
                 'Status': 'Success',
                 'Response': {
@@ -72,12 +70,11 @@ class TestGetNextRecommendation(Endpoint):
     def test_all_unseen(self) -> None:
         """Should get all recommendations for the user if none have been accepted or rejected."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id)
             assert len(recommendations) == 4
-            assert self.get(self.route, client_id=client.id) == (
+            assert self.get(self.route, client_id=client.id, epoch_id=epoch_id) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -89,12 +86,11 @@ class TestGetNextRecommendation(Endpoint):
     def test_with_limit(self) -> None:
         """Should only return the first recommendation of the unseen for given group."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id, limit=1)
             assert len(recommendations) == 1
-            assert self.get(self.route, client_id=client.id, limit=1) == (
+            assert self.get(self.route, client_id=client.id, limit=1, epoch_id=epoch_id) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -106,8 +102,7 @@ class TestGetNextRecommendation(Endpoint):
     def test_with_facility(self) -> None:
         """Only return recommendations for the given facility."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             facility = Facility.from_name('Croft_1m')
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id,
@@ -115,7 +110,7 @@ class TestGetNextRecommendation(Endpoint):
             assert len(recommendations) == 2
             assert all(recommendation.epoch_id == epoch_id for recommendation in recommendations)
             assert all(recommendation.facility_id == facility.id for recommendation in recommendations)
-            assert self.get(self.route, client_id=client.id, facility_id=facility.id) == (
+            assert self.get(self.route, client_id=client.id, epoch_id=epoch_id, facility_id=facility.id) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -127,8 +122,7 @@ class TestGetNextRecommendation(Endpoint):
     def test_with_facility_and_limiting_magnitude(self) -> None:
         """Only return recommendations for the given facility and limiting magnitude."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             facility = Facility.from_name('Croft_1m')
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id,
@@ -137,7 +131,8 @@ class TestGetNextRecommendation(Endpoint):
             assert all(recommendation.epoch_id == epoch_id for recommendation in recommendations)
             assert all(recommendation.facility_id == facility.id for recommendation in recommendations)
             assert recommendations[0].predicted.value <= 15.4
-            assert self.get(self.route, client_id=client.id, facility_id=facility.id, limiting_magnitude=15.4) == (
+            assert self.get(self.route, client_id=client.id, epoch_id=epoch_id,
+                            facility_id=facility.id, limiting_magnitude=15.4) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -146,11 +141,9 @@ class TestGetNextRecommendation(Endpoint):
                 }
             )
 
-    def test_with_group(self) -> None:
+    def test_with_epoch(self) -> None:
         """Return recommendations for a specified group."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
         epoch_id = 2  # the previous group instead
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id)
@@ -168,13 +161,12 @@ class TestGetNextRecommendation(Endpoint):
     def test_with_join(self) -> None:
         """Return recommendations for a specified group."""
         client = self.get_client(self.user)
-        epoch_id = Epoch.latest().id
-        assert epoch_id == 3
+        epoch_id = 3
         with all_unseen(user_id=client.user_id, epoch_id=epoch_id):
             recommendations = Recommendation.next(user_id=client.user_id, epoch_id=epoch_id, limit=1)
             assert len(recommendations) == 1
             assert all(recommendation.epoch_id == epoch_id for recommendation in recommendations)
-            assert self.get(self.route, client_id=client.id, limit=1, join=True) == (
+            assert self.get(self.route, client_id=client.id, limit=1, epoch_id=epoch_id, join=True) == (
                 STATUS['OK'], {
                     'Status': 'Success',
                     'Response': {
@@ -326,7 +318,8 @@ class RecommendationEndpoint(Endpoint, ABC):
     def test_get(self) -> None:
         resource, get_member = recommendation_slices[self.relation]
         recommendation = Recommendation.from_id(3)
-        data = get_member(recommendation).to_json(join=False)
+        member = get_member(recommendation)
+        data = member.to_json(join=False)
         assert self.get(self.route, client_id=self.get_client(self.user).id) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -337,7 +330,8 @@ class RecommendationEndpoint(Endpoint, ABC):
     def test_get_with_join(self) -> None:
         resource, get_member = recommendation_slices[self.relation]
         recommendation = Recommendation.from_id(3)
-        data = get_member(recommendation).to_json(join=True)
+        member = get_member(recommendation)
+        data = member.to_json(join=True)
         assert self.get(self.route, client_id=self.get_client(self.user).id, join=True) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -368,10 +362,6 @@ class TestGetObject(RecommendationEndpoint):
 
 class TestGetObjectType(RecommendationEndpoint):
     relation = 'object/type'
-
-
-class TestGetForecast(RecommendationEndpoint):
-    relation = 'forecast'
 
 
 class TestGetPredicted(RecommendationEndpoint):
@@ -542,7 +532,7 @@ class TestGetRecommendationObservedFile(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.get(f'/recommendation/{rec.id}/observed/file',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -604,7 +594,7 @@ class TestPostRecommendationObservedFile(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.post(f'/recommendation/{rec.id}/observed/file',
                          client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -735,7 +725,7 @@ class TestGetRecommendationObservedFileType(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.get(f'/recommendation/{rec.id}/observed/file/type',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -799,7 +789,7 @@ class TestPostRecommendationObserved(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.post(f'/recommendation/{rec.id}/observed/file',
                          client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -946,4 +936,109 @@ class TestPostRecommendationObserved(Endpoint):
         assert self.get(self.route, client_id=client.id) == (
             STATUS['OK'], {'Status': 'Success',
                            'Response': {'observation': original}}
+        )
+
+
+class TestGetRecommendationModels(Endpoint):
+    """Tests for GET /recommendation/<id>/models endpoint."""
+
+    route: str = '/recommendation/22/models'
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_not_found(self) -> None:
+        assert self.get(f'/recommendation/0/models', client_id=self.get_client(self.user).id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No recommendation with id=0'
+            }
+        )
+
+    def test_permission_denied(self) -> None:
+        assert self.get('/recommendation/18/models', client_id=self.get_client(self.user).id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'Recommendation is not public',
+            }
+        )
+
+    def test_invalid_parameter(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_type_id_not_integer(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id='abc') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Expected integer for parameter: type_id'
+            }
+        )
+
+    def test_include_data_not_boolean(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, include_data='abc') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Expected type \'bool\' for parameter \'include_data\''
+            }
+        )
+
+    def test_get_models_without_data(self) -> None:
+        models = Recommendation.from_id(22).model_info
+        assert len(models) == 1
+        assert self.get(self.route, client_id=self.get_client(self.user).id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': [model.to_json() for model in models]},
+            }
+        )
+
+    def test_get_models_without_data_filter_by_type_id_1(self) -> None:
+        models = Recommendation.from_id(22).model_info
+        assert len(models) == 1
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=1) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': [model.to_json() for model in models]},
+            }
+        )
+
+    def test_get_models_without_data_filter_by_type_id_2(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=2) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': []},
+            }
+        )
+
+    def test_get_models_include_data(self) -> None:
+        models = Recommendation.from_id(22).models
+        assert len(models) == 1
+        assert self.get(self.route, client_id=self.get_client(self.user).id, include_data=True) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': [model.to_json() for model in models]},
+            }
+        )
+
+    def test_get_models_include_data_filter_by_type_id_1(self) -> None:
+        models = Recommendation.from_id(22).models
+        assert len(models) == 1
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=1, include_data=True) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': [model.to_json() for model in models]},
+            }
+        )
+
+    def test_get_models_include_data_filter_by_type_id_2(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=2, include_data=True) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': []},
+            }
         )

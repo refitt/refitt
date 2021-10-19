@@ -15,6 +15,7 @@ import logging
 from base64 import encodebytes as base64_encode, decodebytes as base64_decode
 from datetime import datetime, timedelta
 from functools import lru_cache, cached_property
+from dataclasses import dataclass
 
 # external libs
 from names_generator.names import LEFT, RIGHT
@@ -34,7 +35,7 @@ from ..web.token import Key, Secret, Token, JWT
 __all__ = ['DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'IntegrityError',
            'ModelInterface', 'Level', 'Topic', 'Host', 'Subscriber', 'Message', 'Access',
            'User', 'Facility', 'FacilityMap', 'ObjectType', 'Object', 'SourceType',
-           'Source', 'ObservationType', 'Observation', 'Forecast', 'Alert', 'FileType', 'File',
+           'Source', 'ObservationType', 'Observation', 'Alert', 'FileType', 'File',
            'RecommendationTag', 'Epoch', 'Recommendation', 'ModelType', 'Model',
            'Client', 'Session', 'tables', 'indices', 'DEFAULT_EXPIRE_TIME', 'DEFAULT_CLIENT_LEVEL', ]
 
@@ -175,9 +176,16 @@ class ModelBase:
                 data.pop(field)
         if join is True:
             for name in self.relationships:
-                record = getattr(self, name)
-                if record is not None:
-                    data[name] = record.to_json(join=True)
+                relation = getattr(self, name)
+                if isinstance(relation, list):
+                    data[name] = [record.to_json(join=True) for record in relation]
+                elif isinstance(relation, ModelInterface):
+                    data[name] = relation.to_json(join=True)
+                elif relation is None:
+                    pass
+                else:
+                    raise AttributeError(f'Unexpected {relation.__class__.__name__}({relation}) for '
+                                         f'{self.__class__.__name__}.{name}')
         return data
 
     @classmethod
@@ -641,19 +649,21 @@ class Object(ModelInterface):
     """An astronomical object defines names, position, and other attributes."""
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
-    type_id = Column('type_id', Integer(), ForeignKey(ObjectType.id), nullable=False)
+    type_id = Column('type_id', Integer(), ForeignKey(ObjectType.id), nullable=True)
+    pred_type_id = Column('pred_type_id', Integer(), ForeignKey(ObjectType.id), nullable=True)
     aliases = Column('aliases', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     ra = Column('ra', Float(), nullable=False)
     dec = Column('dec', Float(), nullable=False)
     redshift = Column('redshift', Float(), nullable=True)
     data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
 
-    type = relationship(ObjectType, backref='object')
+    type = relationship(ObjectType, foreign_keys=[type_id, ])
 
     relationships = {'type': ObjectType}
     columns = {
         'id': int,
         'type_id': int,
+        'pred_type_id': int,
         'aliases': dict,
         'ra': float,
         'dec': float,
@@ -831,10 +841,42 @@ class Source(ModelInterface):
                                'description': f'Observer (alias={user.alias}, facility={facility.name})'})
 
 
+class Epoch(ModelInterface):
+    """Epoch table."""
+
+    id = Column('id', Integer(), primary_key=True, nullable=False)
+    created = Column('created', DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    columns = {
+        'id': int,
+        'created': datetime
+    }
+
+    class NotFound(NotFound):
+        """NotFound exception specific to Epoch."""
+
+    @classmethod
+    def new(cls, session: _Session = None) -> Epoch:
+        """Create and return a new epoch."""
+        return cls.add({}, session=session)
+
+    @classmethod
+    def latest(cls, session: _Session = None) -> Epoch:
+        """Get the most recent epoch."""
+        session = session or _Session()
+        return session.query(cls).order_by(cls.id.desc()).first()
+
+    @classmethod
+    def select(cls, limit: int, offset: int = 0) -> List[Epoch]:
+        """Select a range of epochs."""
+        return cls.query().order_by(cls.id.desc()).filter(cls.id <= cls.latest().id - offset).limit(limit).all()
+
+
 class Observation(ModelInterface):
     """Observation table."""
 
     id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
+    epoch_id = Column('epoch_id', Integer(), ForeignKey(Epoch.id), nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(ObservationType.id), nullable=False)
     object_id = Column('object_id', Integer(), ForeignKey(Object.id), nullable=False)
     source_id = Column('source_id', Integer(), ForeignKey(Source.id), nullable=False)
@@ -843,13 +885,15 @@ class Observation(ModelInterface):
     time = Column('time', DateTime(timezone=True), nullable=False)
     recorded = Column('recorded', DateTime(timezone=True), nullable=False, server_default=func.now())
 
+    epoch = relationship(Epoch, backref='observation')
     type = relationship(ObservationType, backref='observation')
     object = relationship(Object, backref='observation')
     source = relationship(Source, backref='observation')
 
-    relationships = {'type': ObservationType, 'object': Object, 'source': Source}
+    relationships = {'epoch': Epoch, 'type': ObservationType, 'object': Object, 'source': Source}
     columns = {
         'id': int,
+        'epoch_id': int,
         'type_id': int,
         'object_id': int,
         'source_id': int,
@@ -874,6 +918,17 @@ class Observation(ModelInterface):
         session = session or _Session()
         return session.query(cls).order_by(cls.id).filter(cls.source_id == source_id).all()
 
+    @cached_property
+    def models(self) -> List[Model]:
+        """Models associated with the current observation and 'epoch_id'."""
+        return (
+            Model.query()
+            .order_by(Model.type_id)
+            .filter(Model.observation_id == self.id)
+            .filter(Model.epoch_id == self.epoch_id)
+            .all()
+        )
+
 
 # indices for observation table
 observation_object_index = Index('observation_object_index', Observation.object_id)
@@ -886,15 +941,18 @@ class Alert(ModelInterface):
     """Alert table."""
 
     id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
+    epoch_id = Column('epoch_id', Integer(), ForeignKey(Epoch.id), nullable=False)
     observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
                             ForeignKey(Observation.id), unique=True, nullable=False)
     data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False)
 
+    epoch = relationship(Epoch, backref='alert')
     observation = relationship(Observation, backref='alert')
 
-    relationships = {'observation': Observation}
+    relationships = {'epoch': Epoch, 'observation': Observation, }
     columns = {
         'id': int,
+        'epoch_id': int,
         'observation_id': int,
         'data': dict,
     }
@@ -947,17 +1005,20 @@ class File(ModelInterface):
     """File table."""
 
     id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
+    epoch_id = Column('epoch_id', Integer(), ForeignKey(Epoch.id), nullable=False)
     observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
                             ForeignKey(Observation.id), unique=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(FileType.id), nullable=False)
     data = Column('data', LargeBinary(), nullable=False)
 
+    epoch = relationship(Epoch, backref='file')
     type = relationship(FileType, backref='file')
     observation = relationship(Observation, backref='file')
 
-    relationships = {'type': FileType, 'observation': Observation}
+    relationships = {'epoch': Epoch, 'type': FileType, 'observation': Observation, }
     columns = {
         'id': int,
+        'epoch_id': int,
         'observation_id': int,
         'type_id': int,
         'data': bytes,
@@ -976,65 +1037,71 @@ class File(ModelInterface):
             raise File.NotFound(f'No file with observation_id={observation_id}') from error
 
 
-class Forecast(ModelInterface):
-    """Forecast table."""
+class ModelType(ModelInterface):
+    """Model type table."""
 
-    id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
-    observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
-                            ForeignKey(Observation.id), unique=True, nullable=False)
-    data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False)
+    id = Column('id', Integer(), primary_key=True, nullable=False)
+    name = Column('name', Text(), unique=True, nullable=False)
+    description = Column('description', Text(), nullable=False)
 
-    observation = relationship(Observation, backref='forecast')
-
-    relationships = {'observation': Observation}
     columns = {
         'id': int,
+        'name': str,
+        'description': str
+    }
+
+    class NotFound(NotFound):
+        """NotFound exception specific to ModelType."""
+
+    @classmethod
+    def from_name(cls, name: str, session: _Session = None) -> ModelType:
+        """Query by unique model_type `name`."""
+        try:
+            session = session or _Session()
+            return session.query(cls).filter(cls.name == name).one()
+        except NoResultFound as error:
+            raise ModelType.NotFound(f'No model_type with name={name}') from error
+
+
+@dataclass
+class ModelInfo:
+    """Model information without the data payload."""
+    id: int
+    epoch_id: int
+    type_id: int
+    observation_id: int
+
+    def to_json(self) -> Dict[str, int]:
+        """Convert to dictionary (consistent with ModelInterface)."""
+        return {'id': self.id, 'epoch_id': self.epoch_id,
+                'type_id': self.type_id, 'observation_id': self.observation_id}
+
+
+class Model(ModelInterface):
+    """Model table."""
+
+    id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
+    epoch_id = Column('epoch_id', Integer(), ForeignKey(Epoch.id), nullable=False)
+    type_id = Column('type_id', Integer(), ForeignKey(ModelType.id), nullable=False)
+    observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
+                            ForeignKey(Observation.id), nullable=False)
+    data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False)
+
+    epoch = relationship(Epoch, backref='model')
+    type = relationship(ModelType, backref='model')
+    observation = relationship(Observation, backref='model')
+
+    relationships = {'epoch': Epoch, 'type': ModelType, 'observation': Observation, }
+    columns = {
+        'id': int,
+        'epoch_id': int,
+        'type_id': int,
         'observation_id': int,
         'data': dict,
     }
 
     class NotFound(NotFound):
-        """NotFound exception specific to Forecast."""
-
-    @classmethod
-    def from_observation(cls, observation_id: int, session: _Session = None) -> Alert:
-        """Query by unique forecast `observation_id`."""
-        try:
-            session = session or _Session()
-            return session.query(cls).filter(cls.observation_id == observation_id).one()
-        except NoResultFound as error:
-            raise Forecast.NotFound(f'No forecast with observation_id={observation_id}') from error
-
-
-class Epoch(ModelInterface):
-    """Epoch table."""
-
-    id = Column('id', Integer(), primary_key=True, nullable=False)
-    created = Column('created', DateTime(timezone=True), nullable=False, server_default=func.now())
-
-    columns = {
-        'id': int,
-        'created': datetime
-    }
-
-    class NotFound(NotFound):
-        """NotFound exception specific to Epoch."""
-
-    @classmethod
-    def new(cls, session: _Session = None) -> Epoch:
-        """Create and return a new epoch."""
-        return cls.add({}, session=session)
-
-    @classmethod
-    def latest(cls, session: _Session = None) -> Epoch:
-        """Get the most recent epoch."""
-        session = session or _Session()
-        return session.query(cls).order_by(cls.id.desc()).first()
-
-    @classmethod
-    def select(cls, limit: int, offset: int = 0) -> List[Epoch]:
-        """Select a range of epochs."""
-        return cls.query().order_by(cls.id.desc()).filter(cls.id <= cls.latest().id - offset).limit(limit).all()
+        """NotFound exception specific to Model."""
 
 
 class RecommendationTag(ModelInterface):
@@ -1120,8 +1187,6 @@ class Recommendation(ModelInterface):
     object_id = Column('object_id', Integer(), ForeignKey(Object.id), nullable=False)
     facility_id = Column('facility_id', Integer(), ForeignKey(Facility.id), nullable=False)
     user_id = Column('user_id', Integer(), ForeignKey(User.id), nullable=False)
-    forecast_id = Column('forecast_id', BigInteger().with_variant(Integer(), 'sqlite'),
-                         ForeignKey(Forecast.id), nullable=True)
     predicted_observation_id = Column('predicted_observation_id', BigInteger().with_variant(Integer(), 'sqlite'),
                                       ForeignKey(Observation.id), nullable=True)
     observation_id = Column('observation_id', BigInteger().with_variant(Integer(), 'sqlite'),
@@ -1135,13 +1200,12 @@ class Recommendation(ModelInterface):
     user = relationship(User, backref='recommendation')
     facility = relationship(Facility, backref='recommendation')
     object = relationship(Object, backref='recommendation')
-    forecast = relationship(Forecast, backref='recommendation')
     predicted = relationship(Observation, foreign_keys=[predicted_observation_id, ])
     observed = relationship(Observation, foreign_keys=[observation_id, ])
 
-    relationships = {'epoch': Epoch, 'tag': RecommendationTag, 'user': User,
-                     'facility': Facility, 'object': Object, 'forecast': Forecast, 
-                     'predicted': Observation, 'observed': Observation}
+    relationships = {'epoch': Epoch, 'tag': RecommendationTag,
+                     'user': User, 'facility': Facility, 'object': Object,
+                     'predicted': Observation, 'observed': Observation, }
     columns = {
         'id': int,
         'epoch_id': int,
@@ -1151,7 +1215,6 @@ class Recommendation(ModelInterface):
         'object_id': int,
         'facility_id': int,
         'user_id': int,
-        'forecast_id': int,
         'predicted_observation_id': int,
         'observation_id': int,
         'accepted': bool,
@@ -1161,6 +1224,30 @@ class Recommendation(ModelInterface):
 
     class NotFound(NotFound):
         """NotFound exception specific to Recommendation."""
+
+    @cached_property
+    def model_info(self) -> List[ModelInfo]:
+        """Listing of available models for this recommendation without the data itself."""
+        return [
+            ModelInfo(id, epoch_id, type_id, observation_id)
+            for id, epoch_id, type_id, observation_id in
+            _Session.query(Model.id, Model.epoch_id, Model.type_id, Model.observation_id)
+                .order_by(Model.type_id)
+                .filter(Model.observation_id == self.predicted_observation_id)
+                .filter(Model.epoch_id == self.epoch_id)
+                .all()
+        ]
+
+    @cached_property
+    def models(self) -> List[Model]:
+        """Models associated with the 'predicted_observation_id' and 'epoch_id'."""
+        return (
+            Model.query()
+            .order_by(Model.type_id)
+            .filter(Model.observation_id == self.predicted_observation_id)
+            .filter(Model.epoch_id == self.epoch_id)
+            .all()
+        )
 
     @classmethod
     def for_user(cls, user_id: int, epoch_id: int = None, session: _Session = None) -> List[Recommendation]:
@@ -1187,7 +1274,7 @@ class Recommendation(ModelInterface):
         query = query.order_by(cls.priority)
         query = query.filter(cls.user_id == user_id)
         query = query.filter(cls.epoch_id == (epoch_id or Epoch.latest(session).id))
-        query = query.filter(cls.accepted == False).filter(cls.rejected == False)
+        query = query.filter(cls.accepted.is_(False)).filter(cls.rejected.is_(False))
         if facility_id is not None:
             query = query.filter(cls.facility_id == facility_id)
         if limiting_magnitude is not None:
@@ -1204,7 +1291,7 @@ class Recommendation(ModelInterface):
         """
         return (cls.query().order_by(cls.id)
                 .filter(cls.user_id == user_id).filter(cls.epoch_id == epoch_id)
-                .filter(or_(cls.accepted == True, cls.rejected == True))).all()
+                .filter(or_(cls.accepted.is_(True), cls.rejected.is_(True)))).all()
 
 
 # indices for recommendation table
@@ -1213,71 +1300,6 @@ recommendation_user_facility_index = Index('recommendation_user_facility_index',
                                            Recommendation.user_id, Recommendation.facility_id)
 recommendation_epoch_user_index = Index('recommendation_epoch_user_index',
                                         Recommendation.epoch_id, Recommendation.user_id)
-
-
-class ModelType(ModelInterface):
-    """Model type table."""
-
-    id = Column('id', Integer(), primary_key=True, nullable=False)
-    name = Column('name', Text(), unique=True, nullable=False)
-    format = Column('format', Text(), nullable=False)
-    description = Column('description', Text(), nullable=False)
-
-    columns = {
-        'id': int,
-        'name': str,
-        'format': str,
-        'description': str
-    }
-
-    class NotFound(NotFound):
-        """NotFound exception specific to ModelType."""
-
-    @classmethod
-    def from_name(cls, name: str, session: _Session = None) -> ModelType:
-        """Query by unique model_type `name`."""
-        try:
-            session = session or _Session()
-            return session.query(cls).filter(cls.name == name).one()
-        except NoResultFound as error:
-            raise ModelType.NotFound(f'No model_type with name={name}') from error
-
-
-class Model(ModelInterface):
-    """Model table."""
-
-    id = Column('id', Integer().with_variant(BigInteger(), 'postgresql'), primary_key=True, nullable=False)
-    type_id = Column('type_id', Integer(), ForeignKey(ModelType.id), nullable=False)
-    name = Column('name', Text(), unique=True, nullable=False)
-    hash = Column('hash', String(64), nullable=False)
-    accuracy = Column('accuracy', Float(), nullable=True)
-    data = Column('data', LargeBinary(), nullable=False)
-    created = Column('created', DateTime(timezone=True), nullable=False, server_default=func.now())
-
-    type = relationship(ModelType, backref='model')
-
-    relationships = {'type': ModelType}
-    columns = {
-        'id': int,
-        'type_id': int,
-        'name': str,
-        'hash': str,
-        'accuracy': float,
-        'data': bytes,
-        'created': datetime
-    }
-
-    class NotFound(NotFound):
-        """NotFound exception specific to Model."""
-
-    @classmethod
-    def from_name(cls, name: str, session: _Session = None) -> Model:
-        """Query by unique model `name`."""
-        try:
-            session = session or _Session()
-            return session.query(cls).filter(cls.name == name).one()
-        except NoResultFound as error:
-            raise Model.NotFound(f'No model with name={name}') from error
 
 
 # ----------------------------------------------------------------------------------------------
@@ -1380,7 +1402,7 @@ class Message(ModelInterface):
 
     topic = relationship('Topic', backref='message')
     level = relationship('Level', backref='message')
-    host  = relationship('Host', backref='message')
+    host = relationship('Host', backref='message')
 
     relationships = {'topic': Topic, 'level': Level, 'host': Host}
     columns = {
@@ -1403,11 +1425,6 @@ if config.provider in ('timescale', ):
 else:
     message_id_index = None
     message_time_topic_index = Index('message_time_topic_index', Message.time, Message.topic_id)
-
-
-# efficient filtering on host or level
-message_level_index = Index('message_level_index', Message.level_id)
-message_host_index = Index('message_host_index', Message.host_id)
 
 
 class Subscriber(ModelInterface):
@@ -1470,12 +1487,11 @@ tables: Dict[str, ModelInterface] = {
     'observation_type': ObservationType,
     'source_type': SourceType,
     'source': Source,
+    'epoch': Epoch,
     'observation': Observation,
-    'forecast': Forecast,
     'alert': Alert,
     'file_type': FileType,
     'file': File,
-    'epoch': Epoch,
     'recommendation_tag': RecommendationTag,
     'recommendation': Recommendation,
     'model_type': ModelType,
@@ -1498,8 +1514,6 @@ indices: Dict[str, Index] = {
     'observation_object_index': observation_object_index,
     'observation_recorded_index': observation_recorded_index,
     'observation_source_object_index': observation_source_object_index,
-    'message_level_index': message_level_index,
-    'message_host_index': message_host_index,
 }
 
 

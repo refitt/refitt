@@ -115,9 +115,11 @@ class QueryDatabaseApp(Application):
         else:
             self.print_table(results)
 
-    @staticmethod
-    def print_json(results: List[ModelInterface]) -> None:
+    def print_json(self, results: List[ModelInterface]) -> None:
         """Format records as JSON text."""
+        if isinstance(results[0], list):
+            self.print_json([record for group in results for record in group])
+            return
         if hasattr(results[0], 'to_json'):
             data = [record.to_json(join=False) for record in results]
         else:
@@ -129,9 +131,12 @@ class QueryDatabaseApp(Application):
         else:
             print(json.dumps(data, indent=4), file=sys.stdout, flush=True)
 
-    @staticmethod
-    def print_table(results: List[ModelInterface]) -> None:
+    def print_table(self, results: List[ModelInterface]) -> None:
         """Format records as an ASCII table."""
+        if isinstance(results[0], list):
+            # compound relationship (e.g., Recommendation.models)
+            self.print_table([record for group in results for record in group])
+            return
         if hasattr(results[0], 'columns'):
             _, *fields = results[0].columns
             table = Table(title=None)

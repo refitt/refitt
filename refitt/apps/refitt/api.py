@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Make authenticate requests to the API."""
+"""Make authenticated requests to the API."""
 
 
 # type annotations

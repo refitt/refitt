@@ -13,7 +13,7 @@ import pytest
 
 # internal libs
 from refitt.data.forecast import Forecast
-from refitt.database.model import Observation as ObservationModel, Forecast as ForecastModel
+from refitt.database.model import Observation as ObservationModel, Model
 from tests.unit.test_forecast import generate_random_forecast
 
 
@@ -23,18 +23,18 @@ class TestForecastPublish:
     def test_publish(self) -> None:
         """Verify roundtrip with database."""
         data = generate_random_forecast()
-        num_forecasts = ForecastModel.count()
+        num_forecasts = Model.count()
         num_observations = ObservationModel.count()
         model = Forecast.from_dict(data).publish()
-        assert ForecastModel.count() == num_forecasts + 1
+        assert Model.count() == num_forecasts + 1
         assert ObservationModel.count() == num_observations + 1
-        assert model.to_dict() == ForecastModel.from_id(model.id).to_dict()
-        ForecastModel.delete(model.id)
+        assert model.to_dict() == Model.from_id(model.id).to_dict()
+        Model.delete(model.id)
         ObservationModel.delete(model.observation_id)
-        assert ForecastModel.count() == num_forecasts
+        assert Model.count() == num_forecasts
         assert ObservationModel.count() == num_observations
-        with pytest.raises(ForecastModel.NotFound):
-            ForecastModel.from_id(model.id)
+        with pytest.raises(Model.NotFound):
+            Model.from_id(model.id)
         with pytest.raises(ObservationModel.NotFound):
             ObservationModel.from_id(model.observation_id)
 

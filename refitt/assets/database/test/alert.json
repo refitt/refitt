@@ -1,6 +1,7 @@
 [
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 1,
     "data": {
       "locus_id": "ANT2020ae7t5xa",
@@ -23,6 +24,7 @@
   },
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 2,
     "data": {
       "locus_id": "ANT2020ae7t5qi",
@@ -45,6 +47,7 @@
   },
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 3,
     "data": {
       "locus_id": "ANT2020ae7t5la",
@@ -67,6 +70,7 @@
   },
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 4,
     "data": {
       "locus_id": "ANT2020ae7t5ky",
@@ -89,6 +93,7 @@
   },
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 5,
     "data": {
       "locus_id": "ANT2020ae7t5hi",
@@ -111,6 +116,7 @@
   },
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 6,
     "data": {
       "locus_id": "ANT2020ae7t5gq",
@@ -133,6 +139,7 @@
   },
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 7,
     "data": {
       "locus_id": "ANT2020ae7t46q",
@@ -155,6 +162,7 @@
   },
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 8,
     "data": {
       "locus_id": "ANT2020ae7t45i",
@@ -177,6 +185,7 @@
   },
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 9,
     "data": {
       "locus_id": "ANT2020ae7t42y",
@@ -199,6 +208,7 @@
   },
   {
     "id": null,
+    "epoch_id": 1,
     "observation_id": 10,
     "data": {
       "locus_id": "ANT2020ae7t42a",
@@ -222,6 +232,7 @@
 
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 27,
     "data": {
       "locus_id": "ANT2020ae7t5xa",
@@ -244,6 +255,7 @@
   },
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 28,
     "data": {
       "locus_id": "ANT2020ae7t5qi",
@@ -266,6 +278,7 @@
   },
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 29,
     "data": {
       "locus_id": "ANT2020ae7t5la",
@@ -288,6 +301,7 @@
   },
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 30,
     "data": {
       "locus_id": "ANT2020ae7t5ky",
@@ -310,6 +324,7 @@
   },
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 31,
     "data": {
       "locus_id": "ANT2020ae7t5hi",
@@ -332,6 +347,7 @@
   },
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 32,
     "data": {
       "locus_id": "ANT2020ae7t5gq",
@@ -354,6 +370,7 @@
   },
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 33,
     "data": {
       "locus_id": "ANT2020ae7t46q",
@@ -376,6 +393,7 @@
   },
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 34,
     "data": {
       "locus_id": "ANT2020ae7t45i",
@@ -398,6 +416,7 @@
   },
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 35,
     "data": {
       "locus_id": "ANT2020ae7t42y",
@@ -420,6 +439,7 @@
   },
   {
     "id": null,
+    "epoch_id": 2,
     "observation_id": 36,
     "data": {
       "locus_id": "ANT2020ae7t42a",
@@ -443,6 +463,7 @@
 
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 53,
     "data": {
       "locus_id": "ANT2020ae7t5xa",
@@ -465,6 +486,7 @@
   },
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 54,
     "data": {
       "locus_id": "ANT2020ae7t5qi",
@@ -487,6 +509,7 @@
   },
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 55,
     "data": {
       "locus_id": "ANT2020ae7t5la",
@@ -509,6 +532,7 @@
   },
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 56,
     "data": {
       "locus_id": "ANT2020ae7t5ky",
@@ -531,6 +555,7 @@
   },
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 57,
     "data": {
       "locus_id": "ANT2020ae7t5hi",
@@ -553,6 +578,7 @@
   },
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 58,
     "data": {
       "locus_id": "ANT2020ae7t5gq",
@@ -575,6 +601,7 @@
   },
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 59,
     "data": {
       "locus_id": "ANT2020ae7t46q",
@@ -597,6 +624,7 @@
   },
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 60,
     "data": {
       "locus_id": "ANT2020ae7t45i",
@@ -619,6 +647,7 @@
   },
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 61,
     "data": {
       "locus_id": "ANT2020ae7t42y",
@@ -641,6 +670,7 @@
   },
   {
     "id": null,
+    "epoch_id": 3,
     "observation_id": 62,
     "data": {
       "locus_id": "ANT2020ae7t42a",

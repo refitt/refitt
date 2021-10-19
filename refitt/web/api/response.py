@@ -111,11 +111,10 @@ RESPONSE_MAP: Dict[Type[Exception], int] = {
 }
 
 
-EndpointDecorator = Callable[..., Response]
-def endpoint(content_type: str) -> Callable[..., EndpointDecorator]:
+def endpoint(content_type: str) -> Callable[..., Callable[..., Response]]:
     """Correctly format the response based on content-type."""
 
-    def format_response(route: Callable[..., Union[dict, Tuple[IO, dict]]]) -> EndpointDecorator:
+    def format_response(route: Callable[..., Union[dict, Tuple[IO, dict]]]) -> Callable[..., Response]:
         """Dispatch based on content-type."""
 
         @wraps(route)

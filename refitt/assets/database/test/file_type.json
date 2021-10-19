@@ -12,6 +12,6 @@
   {
     "id": null,
     "name": "fit",
-    "description": "Alias of 'fits' for compatibility."
+    "description": "Compatibility alias for 'fits'."
   }
 ]

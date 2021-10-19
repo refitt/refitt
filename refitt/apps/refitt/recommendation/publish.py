@@ -24,7 +24,7 @@ from sqlalchemy.exc import IntegrityError
 from ....core import typing
 from ....core.exceptions import log_exception
 from ....database.model import (Recommendation, Epoch, RecommendationTag,
-                                User, Facility, Forecast, Object, NotFound, )
+                                User, Facility, Model, Object, NotFound, )
 
 # public interface
 __all__ = ['RecommendationPublishApp', ]
@@ -55,12 +55,12 @@ options:
 
 Create a single recommendation by specifying a --user and all the necessary
 values inline using the named options. The --user and --facility options may
-be specified as alias and name, respectively, instead of their ID. If --epoch
-is not specified, the most recent group is used. If --facility is not specified
+be specified as alias or name, respectively, instead of their ID. If --epoch
+is not specified, the most recent epoch is used. If --facility is not specified
 and only one facility is registered for that user it will be used.
 
 Create a set of recommendations at once by using --from-file. If no PATH is 
-specified, read from standard input. Format is derived from file name extension, 
+specified, read from standard input. Format is derived from the file extension, 
 unless reading from standard input for which a format specifier (e.g., --csv) 
 is required.
 
@@ -80,6 +80,8 @@ REQUIRED_FIELDS = ['object_id', 'user_id', 'facility_id', 'forecast_id', 'priori
 FILE_SCHEMA = {field: 'int' for field in REQUIRED_FIELDS}
 
 LoaderImpl = Callable[[Union[str, IO], Optional[Dict[str, str]]], DataFrame]
+
+
 def check_schema(loader_impl: LoaderImpl) -> LoaderImpl:
     """Wrapper method to check column names and types."""
 
@@ -216,8 +218,8 @@ class RecommendationPublishApp(Application):
     def create_from_values(self) -> None:
         """Create a new recommendation with the given inputs and print its new ID."""
         rec = self.build_recommendation(epoch_id=self.epoch_id, object_id=self.object_id, priority=self.priority,
-                                        user_id=self.user_id, facility_id=self.facility_id,
-                                        forecast_id=self.forecast_id, **self.extra_fields)
+                                        forecast_id=self.forecast_id, user_id=self.user_id,
+                                        facility_id=self.facility_id, **self.extra_fields)
         recommendation, = self.add_recommendations([rec, ])
         self.write(recommendation.id)
 
@@ -227,7 +229,7 @@ class RecommendationPublishApp(Application):
         return Recommendation.from_dict({
             'epoch_id': epoch_id, 'tag_id': RecommendationTag.get_or_create(object_id).id,
             'priority': priority, 'object_id': object_id, 'user_id': user_id, 'facility_id': facility_id,
-            'forecast_id': forecast_id, 'predicted_observation_id': Forecast.from_id(forecast_id).observation.id,
+            'predicted_observation_id': Model.from_id(forecast_id).observation.id,
             'data': data
         })
 
@@ -287,7 +289,7 @@ class RecommendationPublishApp(Application):
 
     @cached_property
     def forecast_id(self) -> int:
-        """Unique forecast ID for recommendation."""
+        """Unique model ID for forecast."""
         try:
             return int(self.forecast)
         except ValueError as error:

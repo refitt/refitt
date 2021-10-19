@@ -16,7 +16,7 @@ from flask import request
 
 # internal libs
 from ....database.model import (Client, Recommendation, File, FileType, Observation,
-                                Source, ModelInterface)
+                                Source, ModelInterface, Epoch)
 from ..app import application
 from ..response import (endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid,
                         PayloadMalformed, NotFound)
@@ -38,7 +38,6 @@ info: dict = {
         '/recommendation/<id>/facility': {},
         '/recommendation/<id>/object': {},
         '/recommendation/<id>/object/type': {},
-        '/recommendation/<id>/forecast': {},
         '/recommendation/<id>/predicted': {},
         '/recommendation/<id>/predicted/type': {},
         '/recommendation/<id>/predicted/object': {},
@@ -46,7 +45,6 @@ info: dict = {
         '/recommendation/<id>/predicted/source': {},
         '/recommendation/<id>/predicted/source/type': {},
         '/recommendation/<id>/predicted/source/user': {},
-        '/recommendation/<id>/predicted/forecast': {},
         '/recommendation/<id>/observed': {},
         '/recommendation/<id>/observed/type': {},
         '/recommendation/<id>/observed/object': {},
@@ -57,6 +55,7 @@ info: dict = {
         '/recommendation/<id>/observed/source/facility': {},
         '/recommendation/<id>/observed/file': {},
         '/recommendation/<id>/observed/file/type': {},
+        '/recommendation/<id>/models': {},
         '/recommendation/history': {},
     }
 }
@@ -84,7 +83,6 @@ recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInte
     'facility':                  ('facility',             lambda r: r.facility),
     'object':                    ('object',               lambda r: r.object),
     'object/type':               ('object_type',          lambda r: r.object.type),
-    'forecast':                  ('forecast',             lambda r: r.forecast),
 
     'predicted':                 ('observation',          lambda r: r.predicted),
     'predicted/type':            ('observation_type',     lambda r: r.predicted.type),
@@ -156,6 +154,7 @@ info['Endpoints']['/recommendation']['GET'] = {
                 'Type': 'application/json'
             },
         },
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
     }
@@ -200,6 +199,7 @@ info['Endpoints']['/recommendation/<id>']['GET'] = {
                 'Type': 'application/json'
             },
         },
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Recommendation not found'}
@@ -249,6 +249,7 @@ info['Endpoints']['/recommendation/<id>']['PUT'] = {
     },
     'Responses': {
         200: {'Description': 'Success'},
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Recommendation not found'},
@@ -269,7 +270,10 @@ def get_recommendation_partial(client: Client, id: int, relation: str) -> dict:
     params = collect_parameters(request, optional=['join', ], defaults={'join': False})
     member = get_member(get(id, client))
     if member is not None:
-        return {name: member.to_json(**params)}
+        if isinstance(member, list):
+            return {name: [record.to_json(**params) for record in member]}
+        else:
+            return {name: member.to_json(**params)}
     else:
         raise NotFound(f'Member \'{relation}\' not available for recommendation ({id})')
 
@@ -304,6 +308,7 @@ for path in recommendation_slices:
                     'Type': 'application/json'
                 },
             },
+            400: {'Description': 'Parameter invalid'},
             401: {'Description': 'Access revoked, token expired, or unauthorized'},
             403: {'Description': 'Token not found or invalid'},
             404: {'Description': f'Recommendation or {phrase} not found'}
@@ -328,7 +333,7 @@ def get_recommendation_history(client: Client) -> dict:
 
 info['Endpoints']['/recommendation/history']['GET'] = {
     'Description': 'Request recommendation history',
-    'Permissions': 'Public',
+    'Permissions': 'Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Parameters': {
@@ -346,6 +351,7 @@ info['Endpoints']['/recommendation/history']['GET'] = {
                 'Type': 'application/json'
             },
         },
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
     }
@@ -353,7 +359,7 @@ info['Endpoints']['/recommendation/history']['GET'] = {
 
 
 # limit on allowed file upload size
-FILE_SIZE_LIMIT: int = 8 * 1024**2
+FILE_SIZE_LIMIT: int = 800 * 1024**2
 # NOTE: 800M file allows single 10k-square CCD w/ 64-bit Integers
 # Larger collections in size and number can be included if compressed
 
@@ -424,7 +430,7 @@ def add_recommendation_observed_file(client: Client, id: int) -> dict:
         File.update(file.id, type_id=type_id, data=file_data)
     except File.NotFound:
         file = File.add({'observation_id': recommendation.observation_id,
-                         'type_id': type_id, 'data': file_data})
+                         'epoch_id': Epoch.latest().id, 'type_id': type_id, 'data': file_data})
     return {'file': {'id': file.id}}
 
 
@@ -524,7 +530,7 @@ def add_recommendation_observed(client: Client, id: int) -> dict:
     except ValueError as error:
         raise PayloadMalformed(str(error)) from error
     if recommendation.observation_id is None:
-        observation = Observation.add({**known_fields, 'time': time, **data})
+        observation = Observation.add({**known_fields, 'epoch_id': Epoch.latest().id, 'time': time, **data})
         Recommendation.update(recommendation.id, observation_id=observation.id)
         return {'observation': observation.to_json()}
     else:
@@ -579,5 +585,54 @@ info['Endpoints']['/recommendation/<id>/observed']['POST'] = {
         401: {'Description': 'Access level insufficient, revoked, or token expired'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Recommendation not found'}
+    }
+}
+
+
+@application.route('/recommendation/<int:id>/models', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_recommendation_models(client: Client, id: int) -> dict:
+    """Query for model info/data by recommendation ID."""
+    params = collect_parameters(request, optional=['type_id', 'include_data'], defaults={'include_data': False})
+    type_id = params.pop('type_id', None)
+    include_data = params.pop('include_data')
+    if type_id is not None and not isinstance(type_id, int):
+        raise ParameterInvalid(f'Expected integer for parameter: type_id')
+    recommendation = get(id, client)
+    if include_data:
+        models = recommendation.models
+    else:
+        models = recommendation.model_info
+    if type_id:
+        models = [model for model in models if model.type_id == type_id]
+    return {'model': [model.to_json() for model in models]}
+
+
+info['Endpoints'][f'/recommendation/<id>/models']['GET'] = {
+    'Description': f'Request model info and/or data for recommendation by ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': f'Model data for recommendation',
+                'Type': 'application/json'
+            },
+        },
+        400: {'Description': 'Parameter invalid'},
+        401: {'Description': 'Access revoked, token expired, or unauthorized'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': f'Recommendation not found'}
     }
 }

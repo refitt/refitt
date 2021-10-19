@@ -47,10 +47,11 @@ def __load_records(base: Type[ModelInterface], path: str) -> List[Dict[str, Any]
 
 # NOTE: order matters for foreign key references
 __REFS: Dict[str, List[str]] = {
-    'core': ['user', 'object_type', 'level', 'topic', ],
-    'test': ['facility', 'user', 'facility_map', 'client', 'session', 'object_type', 'object', 'source_type',
-             'source', 'observation_type', 'observation', 'forecast', 'alert', 'file_type', 'file',
-             'epoch', 'recommendation_tag', 'recommendation', 'level', 'topic', ]
+    'core': ['user', 'object_type', 'model_type', 'level', 'topic', ],
+    'test': ['facility', 'user', 'facility_map', 'client', 'session',
+             'object_type', 'object', 'source_type', 'source',
+             'epoch', 'observation_type', 'observation', 'model_type', 'model', 'alert', 'file_type', 'file',
+             'recommendation_tag', 'recommendation', 'level', 'topic', ]
 }
 
 
