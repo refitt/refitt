@@ -48,16 +48,17 @@ class TestObservation:
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
+        tzinfo = '' if config.provider == 'sqlite' else '-04:00'
         assert Observation.from_id(1).to_json(join=True) == {
             'id': 1,
             'epoch_id': 1,
-            'time': '2020-10-24 18:00:00' + ('' if config.provider == 'sqlite' else '-04:00'),
+            'time': f'2020-10-24 18:00:00{tzinfo}',
             'object_id': 1,
             'type_id': 4,
             'source_id': 2,
             'value': 18.1,
             'error': 0.08,
-            'recorded': '2020-10-24 18:01:00' + ('' if config.provider == 'sqlite' else '-04:00'),
+            'recorded': f'2020-10-24 18:01:00{tzinfo}',
             'object': {
                 'id': 1,
                 'type_id': 1,
@@ -79,7 +80,7 @@ class TestObservation:
             },
             'epoch': {
                 'id': 1,
-                'created': '2020-10-24 20:01:00-04:00'
+                'created': f'2020-10-24 20:01:00{tzinfo}'
             },
             'type': {
                 'id': 4,

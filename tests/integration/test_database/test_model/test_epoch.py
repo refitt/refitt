@@ -82,9 +82,10 @@ class TestEpoch:
 
     def test_select_with_limit(self) -> None:
         """Test the selection of epoch with a limit."""
+        tzinfo = '' if config.provider == 'sqlite' else '-04:00'
         assert [group.to_json(join=True) for group in Epoch.select(limit=2)] == [
-            {'id': 4, 'created': '2020-10-27 20:01:00-04:00'},
-            {'id': 3, 'created': '2020-10-26 20:01:00-04:00'}
+            {'id': 4, 'created': f'2020-10-27 20:01:00{tzinfo}'},
+            {'id': 3, 'created': f'2020-10-26 20:01:00{tzinfo}'}
         ]
 
     def test_select_with_limit_and_offset(self) -> None:
