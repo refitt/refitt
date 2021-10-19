@@ -15,6 +15,7 @@ import logging
 from base64 import encodebytes as base64_encode, decodebytes as base64_decode
 from datetime import datetime, timedelta
 from functools import lru_cache, cached_property
+from dataclasses import dataclass
 
 # external libs
 from names_generator.names import LEFT, RIGHT
@@ -1062,6 +1063,20 @@ class ModelType(ModelInterface):
             raise ModelType.NotFound(f'No model_type with name={name}') from error
 
 
+@dataclass
+class ModelInfo:
+    """Model information without the data payload."""
+    id: int
+    epoch_id: int
+    type_id: int
+    observation_id: int
+
+    def to_json(self) -> Dict[str, int]:
+        """Convert to dictionary (consistent with ModelInterface)."""
+        return {'id': self.id, 'epoch_id': self.epoch_id,
+                'type_id': self.type_id, 'observation_id': self.observation_id}
+
+
 class Model(ModelInterface):
     """Model table."""
 
@@ -1209,6 +1224,19 @@ class Recommendation(ModelInterface):
 
     class NotFound(NotFound):
         """NotFound exception specific to Recommendation."""
+
+    @cached_property
+    def model_info(self) -> List[ModelInfo]:
+        """Listing of available models for this recommendation without the data itself."""
+        return [
+            ModelInfo(id, epoch_id, type_id, observation_id)
+            for id, epoch_id, type_id, observation_id in
+            _Session.query(Model.id, Model.epoch_id, Model.type_id, Model.observation_id)
+                .order_by(Model.type_id)
+                .filter(Model.observation_id == self.predicted_observation_id)
+                .filter(Model.epoch_id == self.epoch_id)
+                .all()
+        ]
 
     @cached_property
     def models(self) -> List[Model]:
