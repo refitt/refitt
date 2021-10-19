@@ -155,6 +155,7 @@ info['Endpoints']['/recommendation']['GET'] = {
                 'Type': 'application/json'
             },
         },
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
     }
@@ -199,6 +200,7 @@ info['Endpoints']['/recommendation/<id>']['GET'] = {
                 'Type': 'application/json'
             },
         },
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Recommendation not found'}
@@ -248,6 +250,7 @@ info['Endpoints']['/recommendation/<id>']['PUT'] = {
     },
     'Responses': {
         200: {'Description': 'Success'},
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Recommendation not found'},
@@ -306,6 +309,7 @@ for path in recommendation_slices:
                     'Type': 'application/json'
                 },
             },
+            400: {'Description': 'Parameter invalid'},
             401: {'Description': 'Access revoked, token expired, or unauthorized'},
             403: {'Description': 'Token not found or invalid'},
             404: {'Description': f'Recommendation or {phrase} not found'}
@@ -330,7 +334,7 @@ def get_recommendation_history(client: Client) -> dict:
 
 info['Endpoints']['/recommendation/history']['GET'] = {
     'Description': 'Request recommendation history',
-    'Permissions': 'Public',
+    'Permissions': 'Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Parameters': {
@@ -348,6 +352,7 @@ info['Endpoints']['/recommendation/history']['GET'] = {
                 'Type': 'application/json'
             },
         },
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
     }
