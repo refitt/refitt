@@ -59,7 +59,7 @@
     "facility_id": null,
     "user_id": null,
     "name": "test_broker",
-    "description": "Fake data broker using in systems tests.",
+    "description": "Fake data broker used in tests.",
     "data": {}
   }
 ]
