@@ -8,7 +8,7 @@ from ....database.model import Client
 from ..app import application
 from ..response import endpoint, NotFound
 from ..auth import authenticated, authorization
-from . import client, token, facility, user, object, source, observation, recommendation
+from . import client, token, facility, user, object, source, observation, recommendation, epoch
 
 # public interface
 __all__ = ['INFO', ]
@@ -23,6 +23,7 @@ INFO = {
     'source': source.info,
     'observation': observation.info,
     'recommendation': recommendation.info,
+    'epoch': epoch.info,
 }
 
 

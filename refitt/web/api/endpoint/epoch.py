@@ -69,6 +69,7 @@ info['Endpoints']['/epoch']['GET'] = {
                 'Type': 'application/json'
             },
         },
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
     }
@@ -105,6 +106,7 @@ info['Endpoints']['/epoch/<id>']['GET'] = {
                 'Type': 'application/json'
             },
         },
+        400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Epoch not found'}
