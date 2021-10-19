@@ -282,7 +282,6 @@ class RecommendationEndpoint(Endpoint, ABC):
     method: str = 'get'
     admin: str = 'superman'
     user: str = 'tomb_raider'
-    response_type: str = 'dict'
 
     @abstractproperty
     def relation(self) -> str:
@@ -320,12 +319,7 @@ class RecommendationEndpoint(Endpoint, ABC):
         resource, get_member = recommendation_slices[self.relation]
         recommendation = Recommendation.from_id(3)
         member = get_member(recommendation)
-        if self.response_type == 'dict':
-            data = member.to_json(join=False)
-        elif self.response_type == 'list':
-            data = [record.to_json(join=False) for record in member]
-        else:
-            raise ValueError('Bad \'response_type\' on test class')
+        data = member.to_json(join=False)
         assert self.get(self.route, client_id=self.get_client(self.user).id) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -337,12 +331,7 @@ class RecommendationEndpoint(Endpoint, ABC):
         resource, get_member = recommendation_slices[self.relation]
         recommendation = Recommendation.from_id(3)
         member = get_member(recommendation)
-        if self.response_type == 'dict':
-            data = member.to_json(join=True)
-        elif self.response_type == 'list':
-            data = [record.to_json(join=True) for record in member]
-        else:
-            raise ValueError('Bad \'response_type\' on test class')
+        data = member.to_json(join=True)
         assert self.get(self.route, client_id=self.get_client(self.user).id, join=True) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -373,11 +362,6 @@ class TestGetObject(RecommendationEndpoint):
 
 class TestGetObjectType(RecommendationEndpoint):
     relation = 'object/type'
-
-
-class TestGetModel(RecommendationEndpoint):
-    relation = 'model'
-    response_type = 'list'
 
 
 class TestGetPredicted(RecommendationEndpoint):
@@ -952,4 +936,109 @@ class TestPostRecommendationObserved(Endpoint):
         assert self.get(self.route, client_id=client.id) == (
             STATUS['OK'], {'Status': 'Success',
                            'Response': {'observation': original}}
+        )
+
+
+class TestGetRecommendationModels(Endpoint):
+    """Tests for GET /recommendation/<id>/models endpoint."""
+
+    route: str = '/recommendation/22/models'
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_not_found(self) -> None:
+        assert self.get(f'/recommendation/0/models', client_id=self.get_client(self.user).id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No recommendation with id=0'
+            }
+        )
+
+    def test_permission_denied(self) -> None:
+        assert self.get('/recommendation/18/models', client_id=self.get_client(self.user).id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'Recommendation is not public',
+            }
+        )
+
+    def test_invalid_parameter(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_type_id_not_integer(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id='abc') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Expected integer for parameter: type_id'
+            }
+        )
+
+    def test_include_data_not_boolean(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, include_data='abc') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Expected type \'bool\' for parameter \'include_data\''
+            }
+        )
+
+    def test_get_models_without_data(self) -> None:
+        models = Recommendation.from_id(22).model_info
+        assert len(models) == 1
+        assert self.get(self.route, client_id=self.get_client(self.user).id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': [model.to_json() for model in models]},
+            }
+        )
+
+    def test_get_models_without_data_filter_by_type_id_1(self) -> None:
+        models = Recommendation.from_id(22).model_info
+        assert len(models) == 1
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=1) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': [model.to_json() for model in models]},
+            }
+        )
+
+    def test_get_models_without_data_filter_by_type_id_2(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=2) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': []},
+            }
+        )
+
+    def test_get_models_include_data(self) -> None:
+        models = Recommendation.from_id(22).models
+        assert len(models) == 1
+        assert self.get(self.route, client_id=self.get_client(self.user).id, include_data=True) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': [model.to_json() for model in models]},
+            }
+        )
+
+    def test_get_models_include_data_filter_by_type_id_1(self) -> None:
+        models = Recommendation.from_id(22).models
+        assert len(models) == 1
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=1, include_data=True) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': [model.to_json() for model in models]},
+            }
+        )
+
+    def test_get_models_include_data_filter_by_type_id_2(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=2, include_data=True) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'model': []},
+            }
         )
