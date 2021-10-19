@@ -55,7 +55,7 @@ info: dict = {
         '/recommendation/<id>/observed/source/facility': {},
         '/recommendation/<id>/observed/file': {},
         '/recommendation/<id>/observed/file/type': {},
-        '/recommendation/<id>/model': {},
+        '/recommendation/<id>/models': {},
         '/recommendation/history': {},
     }
 }
@@ -83,7 +83,6 @@ recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInte
     'facility':                  ('facility',             lambda r: r.facility),
     'object':                    ('object',               lambda r: r.object),
     'object/type':               ('object_type',          lambda r: r.object.type),
-    'model':                     ('model',                lambda r: r.models),
 
     'predicted':                 ('observation',          lambda r: r.predicted),
     'predicted/type':            ('observation_type',     lambda r: r.predicted.type),
@@ -586,5 +585,54 @@ info['Endpoints']['/recommendation/<id>/observed']['POST'] = {
         401: {'Description': 'Access level insufficient, revoked, or token expired'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Recommendation not found'}
+    }
+}
+
+
+@application.route('/recommendation/<int:id>/models', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_recommendation_models(client: Client, id: int) -> dict:
+    """Query for model info/data by recommendation ID."""
+    params = collect_parameters(request, optional=['type_id', 'include_data'], defaults={'include_data': False})
+    type_id = params.pop('type_id', None)
+    include_data = params.pop('include_data')
+    if type_id is not None and not isinstance(type_id, int):
+        raise ParameterInvalid(f'Expected integer for parameter: type_id')
+    recommendation = get(id, client)
+    if include_data:
+        models = recommendation.models
+    else:
+        models = recommendation.model_info
+    if type_id:
+        models = [model for model in models if model.type_id == type_id]
+    return {'model': [model.to_json() for model in models]}
+
+
+info['Endpoints'][f'/recommendation/<id>/models']['GET'] = {
+    'Description': f'Request model info and/or data for recommendation by ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': f'Model data for recommendation',
+                'Type': 'application/json'
+            },
+        },
+        400: {'Description': 'Parameter invalid'},
+        401: {'Description': 'Access revoked, token expired, or unauthorized'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': f'Recommendation not found'}
     }
 }
