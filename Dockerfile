@@ -13,7 +13,8 @@ RUN /opt/conda/bin/conda update -n base -c defaults conda && \
     /opt/conda/bin/conda install pandas numba astropy sqlalchemy psycopg2 requests flask gunicorn \
                                  matplotlib seaborn h5py pytables -c conda-forge
 RUN /opt/conda/bin/pip install cryptography cmdkit toml streamkit names_generator \
-                               antares-client slackclient rich
+                               antares-client slackclient rich pyyaml \
+                               parsl astroplan timezonefinder pytz bs4 jinja2
 
 RUN mkdir -p /app
 COPY . /app
