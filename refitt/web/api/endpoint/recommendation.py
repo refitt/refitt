@@ -622,6 +622,18 @@ info['Endpoints'][f'/recommendation/<id>/models']['GET'] = {
             }
         },
     },
+    'Optional': {
+        'Parameters': {
+            'type_id': {
+                'Description': 'Type ID of model to filter on',
+                'Type': 'Integer'
+            },
+            'include_data': {
+                'Description': 'Include data in payload.',
+                'Type': 'Boolean'
+            }
+        }
+    },
     'Responses': {
         200: {
             'Description': 'Success',
@@ -633,6 +645,6 @@ info['Endpoints'][f'/recommendation/<id>/models']['GET'] = {
         400: {'Description': 'Parameter invalid'},
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
-        404: {'Description': f'Recommendation not found'}
+        404: {'Description': 'Recommendation not found'}
     }
 }
