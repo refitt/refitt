@@ -54,7 +54,7 @@ HELP = f"""\
 {USAGE}
 
 arguments:
-ENTITY[.RELATION ...]  Table name with relationship path.
+ENTITY[.RELATION ...]        Table name with relationship path.
 
 options:
 -w, --where           COND   Expressions to filter on (e.g., `user_id==2`).
