@@ -124,7 +124,7 @@ class QueryDatabaseApp(Application):
             self.print_output(selector, query.all(), extract_values=self.extract_values)
 
     def build_query(self, selector: Selector, filters: List[FieldSelector]) -> Query:
-        """Query a given table by `name` with `filters`."""
+        """Build query instance via `selector` implementation and apply `filters`."""
         query = selector.query()
         for cond in filters:
             query = query.filter(cond.compile())
@@ -210,14 +210,14 @@ class Selector(ABC):
 
 @dataclass
 class SimpleTableSelector(Selector):
-    """A single table selector."""
+    """A simple table selector."""
 
     @property
     def model(self) -> Type[ModelInterface]:
         return self.entities[0].model
 
     def query(self) -> Query:
-        """Query a single table entity."""
+        """Query a single table."""
         return Session.query(self.model)
 
     def print_table(self, results: List[Result], extract_values: bool = False) -> None:
@@ -277,7 +277,7 @@ class SimpleColumnSelector(Selector):
         return query
 
     def print_table(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in table format from simple named tuples."""
+        """Print in table format from rows."""
         if extract_values and len(results[0]) == 1:
             for row in results:
                 value, = row
@@ -303,7 +303,7 @@ class SimpleColumnSelector(Selector):
             print(json.dumps(data, indent=4), file=sys.stdout, flush=True)
 
     def print_csv(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in CVS format from simple instances of ModelInterface."""
+        """Print in CVS format from rows."""
         fields = [f'{entity.name}.{entity.path[0]}' for entity in self.entities]
         dataframe = DataFrame(results, columns=fields)
         print(dataframe.to_csv(index=False))
@@ -318,7 +318,11 @@ class SingleCompoundSelector(Selector):
         return self.entities[0].model
 
     def query(self) -> Query:
-        """Query a single table entity."""
+        """
+        Dynamically apply joining logic based on target entity specification.
+        E.g., `observation.source.user.id` would automatically apply a compound
+        join along source -> user by their common foreign keys.
+        """
         parent = self.entities[0].model
         relationships = []
         for attr in self.entities[0].path:
@@ -334,7 +338,7 @@ class SingleCompoundSelector(Selector):
         return query
 
     def print_table(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in table format from instances of ModelInterface or singular values."""
+        """Print in table format from instances of ModelInterface or rows."""
         entity = self.entities[0]
         for relation in entity.path:
             results = [getattr(record, relation) for record in results]
@@ -357,7 +361,7 @@ class SingleCompoundSelector(Selector):
                 Console().print(table)
 
     def print_json(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in JSON format from instances of ModelInterface or singular values."""
+        """Print in JSON format from instances of ModelInterface or rows."""
         entity = self.entities[0]
         for relation in entity.path:
             results = [getattr(record, relation) for record in results]
@@ -373,7 +377,7 @@ class SingleCompoundSelector(Selector):
             print(json.dumps(data, indent=4), file=sys.stdout, flush=True)
 
     def print_csv(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in CVS format from simple instances of ModelInterface."""
+        """Print in CVS format from simple instances of ModelInterface or rows."""
         entity = self.entities[0]
         for relation in entity.path:
             results = [getattr(record, relation) for record in results]
@@ -508,7 +512,7 @@ class FieldSelector:
 
         Example:
             >>> FieldSelector.from_cmdline('object.aliases -> tag == foo_bar_baz')
-            FieldSelector(name='a', path=['b'], operand='==', value=42)
+            FieldSelector(parent='object', name='aliases', path=['tag'], operand='==', value='foo_bar_baz')
         """
         match = cls.pattern.match(argument)
         if match:
