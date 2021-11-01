@@ -86,6 +86,9 @@ class QueryDatabaseApp(Application):
     limit: int = None
     interface.add_argument('-l', '--limit', type=int, default=limit)
 
+    order_by: str = None
+    interface.add_argument('-s', '--order-by', default=None)
+
     show_count: bool = False
     interface.add_argument('-c', '--count', dest='show_count', action='store_true')
 
@@ -126,6 +129,12 @@ class QueryDatabaseApp(Application):
     def build_query(self, selector: Selector, filters: List[FieldSelector]) -> Query:
         """Build query instance via `selector` implementation and apply `filters`."""
         query = selector.query()
+        if self.order_by:
+            arg = self.order_by
+            pattern = re.compile(r'^[a-z_]+\.')
+            default_name = selector.model.__tablename__
+            field = EntityRelation.from_arg(arg if pattern.match(arg) else f'{default_name}.{arg}')
+            query = query.order_by(field.select())
         for cond in filters:
             query = query.filter(cond.compile())
         if self.limit is not None:
