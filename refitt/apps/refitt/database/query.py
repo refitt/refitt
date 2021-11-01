@@ -46,7 +46,7 @@ PROGRAM = 'refitt database query'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 usage: {PROGRAM} [-h] ENTITY[.RELATION | ENTITY...] [-w COND [COND...]] 
-       {PADDING} [-x] [ --json | --csv] [--count | --limit NUM] [--dry-run] 
+       {PADDING} [--count | --limit NUM] [-s ENTITY] [-x] [ --json | --csv] [--dry-run] 
 {__doc__}\
 """
 
@@ -63,6 +63,7 @@ options:
 -x, --extract-values         Print values only (no formatting).
 -c, --count                  Print row count.
 -l, --limit                  Limit number of returned rows.
+-s, --order-by       ENTITY  Sort results by specified column.
     --dry-run                Show SQL query, do not execute.
 -h, --help                   Show this message and exit.\
 """
