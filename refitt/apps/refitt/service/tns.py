@@ -35,10 +35,12 @@ HELP = f"""\
 {USAGE}
 
 options:
-    --live               Listen for object events.
--f, --from     PATH      File listing object names.
--w, --workers  NUM       Number of threads used.
--h, --help               Show this message and exit.\
+    --live                  Listen for object events.
+-f, --from        PATH      File listing object names.
+    --persist               Keep file open forever (e.g., <stdin>).
+-w, --workers     NUM       Number of threads to use.
+    --no-catalog            Use API queries for every update.
+-h, --help                  Show this message and exit.\
 """
 
 
@@ -67,6 +69,9 @@ class TNSApp(Application):
     num_workers: int = 1
     interface.add_argument('-w', '--workers', type=int, default=num_workers, dest='num_workers')
 
+    no_catalog: bool = False
+    interface.add_argument('--no-catalog', action='store_true')
+
     def run(self) -> None:
         """Run TNS query service."""
         if not self.source_live and not self.source_path:
@@ -76,24 +81,30 @@ class TNSApp(Application):
         else:
             self.run_from(self.source_path)
 
+    @property
+    def provider(self) -> str:
+        """Name of provider type (e.g., catalog or query)."""
+        return 'query' if self.no_catalog else 'catalog'
+
     def run_live(self) -> None:
         """Subscribe to broker events and run forever."""
         with Subscriber(name='tns', topics=['refitt.data.broker', ], batchsize=10, poll=4) as subscriber:
-            server = TNSService.from_subscriber(subscriber, threads=self.num_workers)
+            server = TNSService.from_subscriber(subscriber, threads=self.num_workers, provider=self.provider)
             server.run()
 
     def run_from(self, path: str) -> None:
         """Stream object names from I/O device."""
         if path == '-':
-            server = TNSService.from_io(sys.stdin, threads=self.num_workers)
+            server = TNSService.from_io(sys.stdin, threads=self.num_workers, provider=self.provider)
             server.run()
         else:
             with open(self.source_path, mode='r') as stream:
                 if not self.source_persist:
-                    server = TNSService.from_io(stream, threads=self.num_workers)
+                    server = TNSService.from_io(stream, threads=self.num_workers, provider=self.provider)
                     server.run()
                 else:
-                    server = TNSService(source=self.yield_forever(stream), threads=self.num_workers)
+                    server = TNSService(source=self.yield_forever(stream), threads=self.num_workers,
+                                        provider=self.provider)
                     server.run()
 
     def yield_forever(self, stream: IO) -> Iterator[str]:

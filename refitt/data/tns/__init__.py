@@ -6,9 +6,10 @@
 
 # internal libs
 from .interface import TNSInterface, TNSError, TNSConfig, TNSNameSearchResult, TNSObjectSearchResult
-from .manager import TNSManager
-from .service import TNSServiceWorker, TNSServiceThread, TNSService
+from .manager import TNSQueryManager, TNSCatalogManager
+from .service import TNSService
+from .catalog import TNSCatalog
 
 # public interface
 __all__ = ['TNSInterface', 'TNSError', 'TNSConfig', 'TNSNameSearchResult', 'TNSObjectSearchResult',
-           'TNSManager', 'TNSServiceWorker', 'TNSServiceThread', 'TNSService', ]
+           'TNSQueryManager', 'TNSQueryManager', 'TNSCatalogManager', 'TNSService', 'TNSCatalog', ]
