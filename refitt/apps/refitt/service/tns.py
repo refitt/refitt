@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Query Transient Name Server (tns) for object attributes."""
+"""Query Transient Name Server for object info."""
 
 
 # type annotations
@@ -26,8 +26,10 @@ __all__ = ['TNSApp', ]
 
 
 PROGRAM = 'refitt service tns'
+PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} [-h] [[--persist] --from PATH | --live] [--workers NUM] [--no-catalog]
+usage: {PROGRAM} [-h] [--name NAME | [--persist] --from PATH | --live]
+       {PADDING} [--workers NUM] [--no-catalog]
 {__doc__}\
 """
 
@@ -36,6 +38,7 @@ HELP = f"""\
 
 options:
     --live                  Listen for object events.
+-n, --name        NAME      Single name.
 -f, --from        PATH      File listing object names.
 -p, --persist               Keep file open forever (e.g., <stdin>).
 -w, --workers     NUM       Number of threads to use.
@@ -57,9 +60,11 @@ class TNSApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
+    source_name: str = None
     source_path: str = None
     source_live: bool = False
     source_group = interface.add_mutually_exclusive_group()
+    source_group.add_argument('-n', '--name', default=source_name, dest='source_name')
     source_group.add_argument('-f', '--from', default=source_path, dest='source_path')
     source_group.add_argument('--live', action='store_true', dest='source_live')
 
@@ -74,8 +79,10 @@ class TNSApp(Application):
 
     def run(self) -> None:
         """Run TNS query service."""
-        if not self.source_live and not self.source_path:
-            raise ArgumentError(f'Must specify either --from=PATH or --live')
+        if not self.source_live and not self.source_path and not self.source_name:
+            raise ArgumentError(f'Must specify either --name=NAME, --from=PATH, or --live')
+        elif self.source_name:
+            self.run_name()
         elif self.source_live:
             self.run_live()
         else:
@@ -91,6 +98,11 @@ class TNSApp(Application):
         with Subscriber(name='tns', topics=['refitt.data.broker', ], batchsize=10, poll=4) as subscriber:
             server = TNSService.from_subscriber(subscriber, threads=self.num_workers, provider=self.provider)
             server.run()
+
+    def run_name(self) -> None:
+        """Look up a single name."""
+        server = TNSService([self.source_name, ], threads=self.num_workers, provider=self.provider)
+        server.run()
 
     def run_from(self, path: str) -> None:
         """Stream object names from I/O device."""
