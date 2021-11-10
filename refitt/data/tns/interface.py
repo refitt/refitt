@@ -13,7 +13,7 @@ import json
 import logging
 from dataclasses import dataclass
 from functools import cached_property
-from abc import ABC
+from abc import ABC, abstractclassmethod
 
 # external libs
 import requests
@@ -24,7 +24,8 @@ from ...core.config import config
 from ...core.schema import DictSchema, SchemaError, ListSchema
 
 # public interface
-__all__ = ['TNSInterface', 'TNSError', 'TNSConfig', 'TNSNameSearchResult', 'TNSObjectSearchResult', ]
+__all__ = ['TNSInterface', 'TNSError', 'TNSConfig', 'TNSNameSearchResult', 'TNSObjectSearchResult',
+           'TNSQueryCatalogResult', ]
 
 
 # initialize module level logger
@@ -67,12 +68,16 @@ class TNSConfig:
 
     def format_data(self, **parameters) -> dict:
         """Build search data for request."""
-        return {'api_key': self.key, 'data': json.dumps(parameters)}
+        if parameters:
+            return {'api_key': self.key, 'data': json.dumps(parameters)}
+        else:
+            return {'api_key': self.key, }
 
 
-TNS_URL_BASE = 'https://www.wis-tns.org/api'
-TNS_URL_SEARCH = f'{TNS_URL_BASE}/get/search'
-TNS_URL_OBJECT = f'{TNS_URL_BASE}/get/object'
+TNS_URL_BASE = 'https://www.wis-tns.org'
+TNS_URL_SEARCH = f'{TNS_URL_BASE}/api/get/search'
+TNS_URL_OBJECT = f'{TNS_URL_BASE}/api/get/object'
+TNS_URL_CATALOG = f'{TNS_URL_BASE}/system/files/tns_public_objects/tns_public_objects.csv.zip'
 
 
 class TNSError(Exception):
@@ -90,46 +95,66 @@ class TNSInterface:
 
     @cached_property
     def endpoint_map(self) -> Dict[str, Tuple[str, Type[TNSQueryResult]]]:
-        """Map of endpoint label with result type."""
+        """Map of endpoint label with request URL and result interface."""
         return {
             'name': (TNS_URL_SEARCH, TNSNameSearchResult),
             'object': (TNS_URL_OBJECT, TNSObjectSearchResult),
+            'catalog': (TNS_URL_CATALOG, TNSQueryCatalogResult),
         }
 
-    def query(self, endpoint: str, **parameters) -> dict:
+    def query(self, endpoint: str, **parameters) -> requests.Response:
         """Issue request to TNS endpoint `url` with `data` and `headers`."""
         data = self.config.format_data(**parameters)
         url, response_type = self.endpoint_map[endpoint]
         response = requests.post(url, data=data, headers=self.config.headers)
         if response.status_code == 200:
-            return response.json()
+            return response
         else:
-            raise TNSError(response.status_code, response.json().get('id_message'))
+            raise TNSError(response.status_code, endpoint)
 
     def search_name(self, ztf_id: str) -> TNSNameSearchResult:
         """Query TNS with internal `ztf_id`."""
-        return TNSNameSearchResult.from_dict(self.query('name', internal_name=ztf_id))
+        return TNSNameSearchResult.from_response(self.query('name', internal_name=ztf_id))
 
     def search_object(self, iau_name: str) -> TNSObjectSearchResult:
         """Query TNS with `iau_name` for object details."""
-        return TNSObjectSearchResult.from_dict(self.query('object', objname=iau_name))
+        return TNSObjectSearchResult.from_response(self.query('object', objname=iau_name))
+
+    def search_catalog(self) -> TNSQueryCatalogResult:
+        """Query TNS for full data catalog."""
+        return TNSQueryCatalogResult.from_response(self.query('catalog'))
 
 
 @dataclass
 class TNSQueryResult(ABC):
     """Abstract base class for TNS query results."""
 
-    _data: dict
+    _data: Union[bytes, dict]
+
+    @abstractclassmethod
+    def from_response(cls, response: requests.Response) -> TNSQueryResult:
+        """Load results from request response.."""
+
+
+@dataclass
+class TNSQueryJSONResult(TNSQueryResult):
+    """Abstract base class for TNS query results."""
+
     _schema = DictSchema.any()
 
     @classmethod
-    def from_dict(cls, other: dict) -> TNSQueryResult:
+    def from_response(cls, response: requests.Response) -> TNSQueryJSONResult:
+        """Build from request response."""
+        return cls.from_dict(response.json())
+
+    @classmethod
+    def from_dict(cls, other: dict) -> TNSQueryJSONResult:
         """Build from existing dictionary."""
         return cls(cls._schema.ensure(other))
 
 
 @dataclass
-class TNSNameSearchResult(TNSQueryResult):
+class TNSNameSearchResult(TNSQueryJSONResult):
     """Query results from a name search."""
 
     _data: dict
@@ -169,7 +194,7 @@ class TNSNameSearchResult(TNSQueryResult):
 
 
 @dataclass
-class TNSObjectSearchResult(TNSQueryResult):
+class TNSObjectSearchResult(TNSQueryJSONResult):
     """Query results from an object details search."""
 
     _data: dict
@@ -207,3 +232,20 @@ class TNSObjectSearchResult(TNSQueryResult):
     def redshift(self) -> Optional[float]:
         """Redshift for object."""
         return self.data['redshift']
+
+
+@dataclass
+class TNSQueryCatalogResult(TNSQueryResult):
+    """Response from TNS with CSV catalog data."""
+
+    _data: bytes
+
+    @classmethod
+    def from_response(cls, response: requests.Response) -> TNSQueryCatalogResult:
+        """Build from request response."""
+        return cls(response.content)
+
+    @property
+    def data(self) -> bytes:
+        """Access raw data content from query."""
+        return self._data

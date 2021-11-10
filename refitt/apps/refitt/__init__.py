@@ -61,26 +61,28 @@ HELP = f"""\
 {USAGE}
 
 commands:
-auth                   {auth.__doc__}
-login                  {login.__doc__}
-whoami                 {whoami.__doc__}
-api                    {api.__doc__}
-config                 {config.__doc__}
-database               {database.__doc__}
-epoch                  {epoch.__doc__}
-service                {service.__doc__}
-notify                 {notify.__doc__}
-object                 {object.__doc__}
-forecast               {forecast.__doc__}
-recommendation         {recommendation.__doc__}
-pipeline               ...
+  user:
+      login                  {login.__doc__}
+      whoami                 {whoami.__doc__}
+      api                    {api.__doc__}
+      config                 {config.__doc__}
+
+  admin:
+      auth                   {auth.__doc__}
+      database               {database.__doc__}
+      object                 {object.__doc__}
+      service                {service.__doc__}
+
+  workflows:
+      epoch                  {epoch.__doc__}
+      notify                 {notify.__doc__}
+      forecast               {forecast.__doc__}
+      recommendation         {recommendation.__doc__}
+      pipeline               ...
 
 options:
 -h, --help             Show this message and exit.
 -v, --version          Show the version and exit.
-
-Use the -h/--help flag with the above commands to
-learn more about their usage.
 
 {EPILOG}\
 """

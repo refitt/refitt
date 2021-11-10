@@ -638,10 +638,12 @@ class ObjectType(ModelInterface):
 
 # Object name provider pattern matching
 OBJECT_NAMING_PATTERNS: Dict[str, re.Pattern] = {
-    'ztf': re.compile(r'ZTF.*'),
-    'iau': re.compile(r'20[2-3][0-9][a-zA-Z]+'),
-    'antares': re.compile(r'ANT.*'),
-    'tag': re.compile(r'[a-z]+_[a-z]+_[a-z]'),
+    'id': re.compile(r'^[0-9]+$'),
+    'ztf': re.compile(r'^ZTF.*'),
+    'iau': re.compile(r'^20[2-3][0-9][a-zA-Z]+'),
+    'antares': re.compile(r'^ANT.*'),
+    'atlas': re.compile(r'^ATLAS.*'),
+    'tag': re.compile(r'^[a-z]+_[a-z]+_[a-z]'),
 }
 
 
@@ -671,6 +673,9 @@ class Object(ModelInterface):
         'data': dict,
     }
 
+    # store patterns with object class
+    name_patterns = OBJECT_NAMING_PATTERNS
+
     class NotFound(NotFound):
         """NotFound exception specific to Object."""
 
@@ -694,7 +699,10 @@ class Object(ModelInterface):
         """Smart detection of alias by name syntax."""
         for provider, pattern in OBJECT_NAMING_PATTERNS.items():
             if pattern.match(name):
-                return cls.from_alias(**{provider: name, 'session': session})
+                if provider == 'id':
+                    return cls.from_id(int(name))
+                else:
+                    return cls.from_alias(**{provider: name, 'session': session})
         else:
             raise Object.NotFound(f'Unrecognized name pattern \'{name}\'')
 

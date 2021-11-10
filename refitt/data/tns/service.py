@@ -6,20 +6,21 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, IO, Iterable, Iterator
+from typing import List, Dict, IO, Iterable, Iterator, Type
 
 # standard libs
 import re
 import logging
-from threading import Thread
+from abc import ABC
 from queue import Queue
+from threading import Thread
 
 # external libs
 from streamkit.subscriber import Subscriber
 
 # internal libs
 from .interface import TNSError
-from .manager import TNSManager
+from .manager import TNSManager, TNSQueryManager, TNSCatalogManager
 
 # public interface
 __all__ = ['TNSServiceWorker', 'TNSServiceThread', 'TNSService', ]
@@ -30,23 +31,22 @@ log = logging.getLogger(__name__)
 
 
 # message pattern for alert ingest from brokers
-MESSAGE_PATTERN = re.compile(r"Written to database \(([a-z]+)::([a-zA-Z0-9]+)\)")
+MESSAGE_PATTERN = re.compile(r'Written to database \(([a-z]+)::([a-zA-Z0-9]+)\)')
 
 
 # sentinel value signalling stop iteration on queue-based service workers
 STOP_ITER = ''
 
 
-class TNSServiceWorker:
+class TNSServiceWorker(ABC):
     """Object info update service worker using TNS query interface."""
 
     source: Iterable[str]
-    manager: TNSManager
+    manager: TNSManager  # NOTE: implementation class must initialize manager
 
     def __init__(self, source: Iterable[str]) -> None:
         """Directly initialize TNS service worker with a `source` of names."""
         self.source = source
-        self.manager = TNSManager.from_config()
 
     def run(self) -> None:
         """Run service until `source` exhausted (if ever)."""
@@ -66,14 +66,42 @@ class TNSServiceWorker:
         return cls(iter(queue.get, STOP_ITER))
 
 
+class TNSQueryServerWorker(TNSServiceWorker):
+    """TNS service working using the query manager for its interface."""
+
+    def __init__(self, source: Iterable[str]) -> None:
+        """Directly initialize TNS service worker with a `source` of names."""
+        super().__init__(source)
+        self.manager = TNSQueryManager.from_config()
+
+
+class TNSCatalogServerWorker(TNSServiceWorker):
+    """TNS service working using the catalog manager for its interface."""
+
+    def __init__(self, source: Iterable[str]) -> None:
+        """Directly initialize TNS service worker with a `source` of names."""
+        super().__init__(source)
+        self.manager = TNSCatalogManager.from_config()
+
+
+SERVICE_WORKER_TYPES: Dict[str, Type[TNSServiceWorker]] = {
+    'query': TNSQueryServerWorker,
+    'catalog': TNSCatalogServerWorker,
+}
+
+
+# look up objects with catalog by default
+DEFAULT_PROVIDER: str = 'catalog'
+
+
 class TNSServiceThread(Thread):
     """Embed `TSNServiceWorker` within isolated thread."""
 
     service: TNSServiceWorker
 
-    def __init__(self, thread_id: int, queue: Queue) -> None:
+    def __init__(self, thread_id: int, queue: Queue, provider: str = DEFAULT_PROVIDER) -> None:
         """Initialize thread with integer identifier and queue for names."""
-        self.service = TNSServiceWorker.from_queue(queue)
+        self.service = SERVICE_WORKER_TYPES[provider].from_queue(queue)
         super().__init__(name=f'TNSServerThread-{thread_id}')
 
     def run(self) -> None:
@@ -93,11 +121,14 @@ class TNSService:
     source: Iterable[str]
     workers: List[TNSServiceThread]
 
-    def __init__(self, source: Iterable[str], threads: int = DEFAULT_THREAD_COUNT) -> None:
+    def __init__(self, source: Iterable[str], threads: int = DEFAULT_THREAD_COUNT,
+                 provider: str = DEFAULT_PROVIDER) -> None:
         """Initialize service from iterable `source` of names."""
+        if provider == 'catalog' and threads > 1:
+            raise ValueError(f'Cannot have multiple threads for TNSCatalogServiceWorker')
         self.source = source
         self.queue = Queue(maxsize=threads)
-        self.workers = [TNSServiceThread(num + 1, self.queue) for num in range(threads)]
+        self.workers = [TNSServiceThread(num + 1, self.queue, provider) for num in range(threads)]
 
     def run(self) -> None:
         """Start worker threads and feed queue names."""
@@ -111,14 +142,15 @@ class TNSService:
             worker.join()
 
     @classmethod
-    def from_io(cls, stream: IO, threads: int = DEFAULT_THREAD_COUNT) -> TNSService:
+    def from_io(cls, stream: IO, threads: int = DEFAULT_THREAD_COUNT, provider: str = DEFAULT_PROVIDER) -> TNSService:
         """Initialize TNSServiceWorker from iterable I/O `stream`."""
-        return cls(cls.__yield_names_from_io(stream), threads=threads)
+        return cls(cls.__yield_names_from_io(stream), threads=threads, provider=provider)
 
     @classmethod
-    def from_subscriber(cls, subscriber: Subscriber, threads: int = DEFAULT_THREAD_COUNT) -> TNSService:
+    def from_subscriber(cls, subscriber: Subscriber, threads: int = DEFAULT_THREAD_COUNT,
+                        provider: str = 'catalog') -> TNSService:
         """Initialize TNSServiceWorker with subscriber stream."""
-        return cls(cls.__yield_names_from_subscriber(subscriber), threads=threads)
+        return cls(cls.__yield_names_from_subscriber(subscriber), threads=threads, provider=provider)
 
     @staticmethod
     def __yield_names_from_subscriber(subscriber: Subscriber) -> Iterator[str]:

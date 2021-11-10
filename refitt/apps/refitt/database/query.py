@@ -46,7 +46,7 @@ PROGRAM = 'refitt database query'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 usage: {PROGRAM} [-h] ENTITY[.RELATION | ENTITY...] [-w COND [COND...]] 
-       {PADDING} [-x] [ --json | --csv] [--count | --limit NUM] [--dry-run] 
+       {PADDING} [--count | --limit NUM] [-s ENTITY] [-x] [ --json | --csv] [--dry-run] 
 {__doc__}\
 """
 
@@ -54,7 +54,7 @@ HELP = f"""\
 {USAGE}
 
 arguments:
-ENTITY[.RELATION ...]  Table name with relationship path.
+ENTITY[.RELATION ...]        Table name with relationship path.
 
 options:
 -w, --where           COND   Expressions to filter on (e.g., `user_id==2`).
@@ -63,6 +63,7 @@ options:
 -x, --extract-values         Print values only (no formatting).
 -c, --count                  Print row count.
 -l, --limit                  Limit number of returned rows.
+-s, --order-by       ENTITY  Sort results by specified column.
     --dry-run                Show SQL query, do not execute.
 -h, --help                   Show this message and exit.\
 """
@@ -85,6 +86,9 @@ class QueryDatabaseApp(Application):
 
     limit: int = None
     interface.add_argument('-l', '--limit', type=int, default=limit)
+
+    order_by: str = None
+    interface.add_argument('-s', '--order-by', default=None)
 
     show_count: bool = False
     interface.add_argument('-c', '--count', dest='show_count', action='store_true')
@@ -124,8 +128,14 @@ class QueryDatabaseApp(Application):
             self.print_output(selector, query.all(), extract_values=self.extract_values)
 
     def build_query(self, selector: Selector, filters: List[FieldSelector]) -> Query:
-        """Query a given table by `name` with `filters`."""
+        """Build query instance via `selector` implementation and apply `filters`."""
         query = selector.query()
+        if self.order_by:
+            arg = self.order_by
+            pattern = re.compile(r'^[a-z_]+\.')
+            default_name = selector.model.__tablename__
+            field = EntityRelation.from_arg(arg if pattern.match(arg) else f'{default_name}.{arg}')
+            query = query.order_by(field.select())
         for cond in filters:
             query = query.filter(cond.compile())
         if self.limit is not None:
@@ -210,14 +220,14 @@ class Selector(ABC):
 
 @dataclass
 class SimpleTableSelector(Selector):
-    """A single table selector."""
+    """A simple table selector."""
 
     @property
     def model(self) -> Type[ModelInterface]:
         return self.entities[0].model
 
     def query(self) -> Query:
-        """Query a single table entity."""
+        """Query a single table."""
         return Session.query(self.model)
 
     def print_table(self, results: List[Result], extract_values: bool = False) -> None:
@@ -277,7 +287,7 @@ class SimpleColumnSelector(Selector):
         return query
 
     def print_table(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in table format from simple named tuples."""
+        """Print in table format from rows."""
         if extract_values and len(results[0]) == 1:
             for row in results:
                 value, = row
@@ -303,7 +313,7 @@ class SimpleColumnSelector(Selector):
             print(json.dumps(data, indent=4), file=sys.stdout, flush=True)
 
     def print_csv(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in CVS format from simple instances of ModelInterface."""
+        """Print in CVS format from rows."""
         fields = [f'{entity.name}.{entity.path[0]}' for entity in self.entities]
         dataframe = DataFrame(results, columns=fields)
         print(dataframe.to_csv(index=False))
@@ -318,7 +328,11 @@ class SingleCompoundSelector(Selector):
         return self.entities[0].model
 
     def query(self) -> Query:
-        """Query a single table entity."""
+        """
+        Dynamically apply joining logic based on target entity specification.
+        E.g., `observation.source.user.id` would automatically apply a compound
+        join along source -> user by their common foreign keys.
+        """
         parent = self.entities[0].model
         relationships = []
         for attr in self.entities[0].path:
@@ -334,7 +348,7 @@ class SingleCompoundSelector(Selector):
         return query
 
     def print_table(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in table format from instances of ModelInterface or singular values."""
+        """Print in table format from instances of ModelInterface or rows."""
         entity = self.entities[0]
         for relation in entity.path:
             results = [getattr(record, relation) for record in results]
@@ -357,7 +371,7 @@ class SingleCompoundSelector(Selector):
                 Console().print(table)
 
     def print_json(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in JSON format from instances of ModelInterface or singular values."""
+        """Print in JSON format from instances of ModelInterface or rows."""
         entity = self.entities[0]
         for relation in entity.path:
             results = [getattr(record, relation) for record in results]
@@ -373,7 +387,7 @@ class SingleCompoundSelector(Selector):
             print(json.dumps(data, indent=4), file=sys.stdout, flush=True)
 
     def print_csv(self, results: List[Result], extract_values: bool = False) -> None:
-        """Print in CVS format from simple instances of ModelInterface."""
+        """Print in CVS format from simple instances of ModelInterface or rows."""
         entity = self.entities[0]
         for relation in entity.path:
             results = [getattr(record, relation) for record in results]
@@ -508,7 +522,7 @@ class FieldSelector:
 
         Example:
             >>> FieldSelector.from_cmdline('object.aliases -> tag == foo_bar_baz')
-            FieldSelector(name='a', path=['b'], operand='==', value=42)
+            FieldSelector(parent='object', name='aliases', path=['tag'], operand='==', value='foo_bar_baz')
         """
         match = cls.pattern.match(argument)
         if match:

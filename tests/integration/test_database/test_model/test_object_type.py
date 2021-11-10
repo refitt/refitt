@@ -43,10 +43,10 @@ class TestObjectType:
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        assert ObjectType.from_name('SNIa').to_json(join=True) == {
-            'id': 2,
-            'name': 'SNIa',
-            'description': 'WD detonation, Type Ia SN'
+        assert ObjectType.from_name('SN Ia').to_json(join=True) == {
+            'id': 42,
+            'name': 'SN Ia',
+            'description': 'WD detonation, Type Ia Supernova'
         }
 
     def test_from_id(self, testdata: TestData) -> None:
@@ -78,4 +78,4 @@ class TestObjectType:
     def test_name_already_exists(self) -> None:
         """Test exception on object_type `name` already exists."""
         with pytest.raises(IntegrityError):
-            ObjectType.add({'name': 'SNIa', 'description': 'WD detonation, Type Ia SN'})
+            ObjectType.add({'name': 'SN Ia', 'description': 'WD detonation, Type Ia Supernova'})
