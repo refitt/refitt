@@ -81,8 +81,8 @@ commands:
       pipeline               ...
 
 options:
--h, --help             Show this message and exit.
--v, --version          Show the version and exit.
+-h, --help                   Show this message and exit.
+-v, --version                Show the version and exit.
 
 {EPILOG}\
 """
