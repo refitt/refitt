@@ -72,55 +72,30 @@ class TNSQueryManager(TNSManager):
         Information gathered by querying the live TNS service.
         First for the IAU name if not given explicitly, and then for the data.
         """
-        iau_name, obj = self.__parse_object(name)
-        tns_response = self.tns.search_object(iau_name)
-        if tns_response.is_empty:
-            raise TNSError(f'No data on object ({name}) from TNS')
-        else:
-            log.info(f'Found object ({name}) from TNS')
-            if info := self.__build_info(iau_name, obj, tns_response):
-                Object.update(obj.id, **info)
-
-    def __parse_object(self, name: str) -> Tuple[str, Object]:
-        """Determine ZTF/IAU status of `name` and fetch Object by alias."""
-        if IAU_PATTERN.match(name):
-            return self.__parse_iau(name)
-        else:
-            return self.__parse_other(name)
-
-    @staticmethod
-    def __parse_iau(name: str) -> Tuple[str, Object]:
-        """Load object from IAU `name`."""
         try:
-            return name, Object.from_alias(iau=name)
+            object = Object.from_name(name)
         except Object.NotFound as error:
+            log.warning(f'Cannot add new objects using TNSQueryManager')
             raise TNSError(str(error)) from error
-
-    def __parse_other(self, name: str) -> Tuple[str, Object]:
-        """Determine provider for `name` and query TNS for IAU name."""
-        if not ZTF_PATTERN.match(name):
-            name = self.__lookup_ztf(name)
-        log.debug(f'Searching for IAU name ({name}) from TNS')
-        iau_name = self.tns.search_name(name).objname
-        if iau_name is None:
-            raise TNSError(f'Could not find IAU name ({name})')
-        try:
-            return iau_name, Object.from_alias(ztf=name)
-        except Object.NotFound as error:
-            raise TNSError(str(error)) from error
-
-    @staticmethod
-    def __lookup_ztf(name: str) -> str:
-        """Lookup ZTF name from database if possible."""
-        log.debug(f'Searching database for ZTF name for \'{name}\'')
-        try:
-            obj = Object.from_name(name)
-        except Object.NotFound as error:
-            raise TNSError(str(error))
-        if 'ztf' not in obj.aliases:
-            raise TNSError(f'ZTF name unknown for \'{name}\'')
+        if 'iau' in object.aliases:
+            if name != object.aliases['iau']:
+                log.debug(f'Searching with name \'{object.aliases["iau"]} <- {name}\'')
+                name = object.aliases['iau']
+        elif 'ztf' in object.aliases:
+            log.debug(f'Search TNS for IAU name ({name})')
+            name = self.tns.search_name(name).objname
+            if name is None:
+                raise TNSError(f'Could not find IAU name ({name})')
         else:
-            return obj.aliases['ztf']
+            raise TNSError(f'No support identifier found ({name})')
+        response = self.tns.search_object(name)
+        if response.is_empty:
+            raise TNSError(f'No data on object ({name})')
+        else:
+            if info := self.__build_info(name, object, response):
+                Object.update(object.id, **info)
+            else:
+                log.info(f'No changes for \'{name}\'')
 
     def __build_info(self, iau_name: str, obj: Object, tns_response: TNSObjectSearchResult) -> dict:
         """
@@ -184,7 +159,7 @@ class TNSCatalogManager(TNSManager):
             for provider in ('iau', 'ztf', 'atlas'):  # preferred ordering
                 if provider in object.aliases:
                     if name != object.aliases[provider]:
-                        log.debug(f'Searching catalog with name \'{object.aliases[provider]} <- {name}\'')
+                        log.debug(f'Searching with name \'{object.aliases[provider]} <- {name}\'')
                         name = object.aliases[provider]
                     break
             else:
