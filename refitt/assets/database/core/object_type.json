@@ -6,43 +6,8 @@
   },
   {
     "id": null,
-    "name": "SNIa",
-    "description": "WD detonation, Type Ia SN"
-  },
-  {
-    "id": null,
-    "name": "SNIa-91bg",
-    "description": "Peculiar type Ia: 91bg"
-  },
-  {
-    "id": null,
-    "name": "SNIax",
-    "description": "Peculiar SNIax"
-  },
-  {
-    "id": null,
-    "name": "SNII",
-    "description": "Core Collapse, Type II"
-  },
-  {
-    "id": null,
-    "name": "SNIbc",
-    "description": "Core Collapse, Type Ibc"
-  },
-  {
-    "id": null,
-    "name": "SLSN-I",
-    "description": "Super-Lum. SN (magnetar)"
-  },
-  {
-    "id": null,
-    "name": "TDE",
-    "description": "Tidal Disruption Event"
-  },
-  {
-    "id": null,
-    "name": "KN",
-    "description": "Kilonova (NS-NS merger)"
+    "name": "Other",
+    "description": "Other"
   },
   {
     "id": null,
@@ -51,13 +16,8 @@
   },
   {
     "id": null,
-    "name": "RRL",
-    "description": "RR Lyrae"
-  },
-  {
-    "id": null,
-    "name": "M-dwarf",
-    "description": "M-dwarf stellar flare"
+    "name": "Afterglow",
+    "description": "Gamma-Ray Burst Afterglow"
   },
   {
     "id": null,
@@ -66,37 +26,302 @@
   },
   {
     "id": null,
-    "name": "Mira",
-    "description": "Pulsating variable stars"
+    "name": "CV",
+    "description": "Cataclysmic Variable Star"
   },
   {
     "id": null,
-    "name": "Micro-Lens-Single",
-    "description": "Micro-lens from single lens"
+    "name": "Computed-IIP",
+    "description": "Computed Core-Collapse SN"
   },
   {
     "id": null,
-    "name": "Micro-Lens-Binary",
-    "description": "Micro-lens from binary lens"
+    "name": "Computed-IIb",
+    "description": "Computed Striped Envelope Core-Collapse SN"
   },
   {
     "id": null,
-    "name": "ILOT",
-    "description": "Intermed. Lum. Optical Trans."
+    "name": "Computed-IIn",
+    "description": "Computed Core-Collapse SN showing interaction"
   },
   {
     "id": null,
-    "name": "CaRT",
-    "description": "Calcium Rich Transient"
+    "name": "Computed-Ia",
+    "description": "Computed Thermonuclear Explosion of a White Dwarf"
   },
   {
     "id": null,
-    "name": "PISN",
-    "description": "Pair Instability SN"
+    "name": "Computed-PISN",
+    "description": "Computed Pair Instability SN"
   },
   {
     "id": null,
-    "name": "Micro-Lens-String",
-    "description": "Micro-lens from cosmic strings"
+    "name": "FBOT",
+    "description": "Fast Blue Optical Transient"
+  },
+  {
+    "id": null,
+    "name": "FRB",
+    "description": "Fast Radio Burst"
+  },
+  {
+    "id": null,
+    "name": "Galaxy",
+    "description": "Galaxy"
+  },
+  {
+    "id": null,
+    "name": "Gap",
+    "description": "Gap"
+  },
+  {
+    "id": null,
+    "name": "Gap I",
+    "description": "Gap I"
+  },
+  {
+    "id": null,
+    "name": "Gap II",
+    "description": "Gap II"
+  },
+  {
+    "id": null,
+    "name": "ILRT",
+    "description": "Intermediate Luminosity Optical Transient"
+  },
+  {
+    "id": null,
+    "name": "Impostor-SN",
+    "description": "Supernova Imposter"
+  },
+  {
+    "id": null,
+    "name": "Kilonova",
+    "description": "Neutron Star Merger"
+  },
+  {
+    "id": null,
+    "name": "LBV",
+    "description": "Luminous Blue Variable"
+  },
+  {
+    "id": null,
+    "name": "LRN",
+    "description": "Luminous Red Nova"
+  },
+  {
+    "id": null,
+    "name": "Light-Echo",
+    "description": "Light-Echo"
+  },
+  {
+    "id": null,
+    "name": "M dwarf",
+    "description": "M dwarf star"
+  },
+  {
+    "id": null,
+    "name": "Nova",
+    "description": "Nova"
+  },
+  {
+    "id": null,
+    "name": "QSO",
+    "description": "Quasar"
+  },
+  {
+    "id": null,
+    "name": "RRL",
+    "description": "RR Lyrae"
+  },
+  {
+    "id": null,
+    "name": "SLSN-I",
+    "description": "Superluminous Supernova"
+  },
+  {
+    "id": null,
+    "name": "SLSN-II",
+    "description": "Superluminous Supernova"
+  },
+  {
+    "id": null,
+    "name": "SLSN-R",
+    "description": "Superluminous Supernova"
+  },
+  {
+    "id": null,
+    "name": "SN",
+    "description": "Supernova"
+  },
+  {
+    "id": null,
+    "name": "SN I",
+    "description": "Supernova with no hydrogen"
+  },
+  {
+    "id": null,
+    "name": "SN I-faint",
+    "description": "SN I-faint"
+  },
+  {
+    "id": null,
+    "name": "SN I-rapid",
+    "description": "SN I-rapid"
+  },
+  {
+    "id": null,
+    "name": "SN II",
+    "description": "Core-collapse SN"
+  },
+  {
+    "id": null,
+    "name": "SN II-pec",
+    "description": "Peculiar core-collapse SN"
+  },
+  {
+    "id": null,
+    "name": "SN IIL",
+    "description": "Core-collapse SN"
+  },
+  {
+    "id": null,
+    "name": "SN IIP",
+    "description": "Core-collapse SN"
+  },
+  {
+    "id": null,
+    "name": "SN IIb",
+    "description": "Striped Envelope Core-Collapse SN"
+  },
+  {
+    "id": null,
+    "name": "SN IIn",
+    "description": "Core-collapse SN showing interaction"
+  },
+  {
+    "id": null,
+    "name": "SN IIn-pec",
+    "description": "Peculiar Core-collapse SN showing interaction"
+  },
+  {
+    "id": null,
+    "name": "SN Ia",
+    "description": "WD detonation, Type Ia Supernova"
+  },
+  {
+    "id": null,
+    "name": "SN Ia-91T-like",
+    "description": "Peculiar WD detonation, Type Ia Supernova"
+  },
+  {
+    "id": null,
+    "name": "SN Ia-91bg-like",
+    "description": "Peculiar WD detonation, Type Ia Supernova"
+  },
+  {
+    "id": null,
+    "name": "SN Ia-CSM",
+    "description": "WD detonation showing interaction with the CSM, Type Ia Supernova"
+  },
+  {
+    "id": null,
+    "name": "SN Ia-SC",
+    "description": "WD detonation, Type Ia Supernova"
+  },
+  {
+    "id": null,
+    "name": "SN Ia-pec",
+    "description": "Peculiar WD detonation, Type Ia Supernova"
+  },
+  {
+    "id": null,
+    "name": "SN Iax[02cx-like]",
+    "description": "Peculiar WD detonation, Type Ia Supernova"
+  },
+  {
+    "id": null,
+    "name": "SN Ib",
+    "description": "Core-collapse SN with no hydrogen"
+  },
+  {
+    "id": null,
+    "name": "SN Ib-Ca-rich",
+    "description": "Calcium-rich core-collapse SN"
+  },
+  {
+    "id": null,
+    "name": "SN Ib-pec",
+    "description": "Peculiar core-collapse SN with no hydrogen"
+  },
+  {
+    "id": null,
+    "name": "SN Ib/c",
+    "description": "Striped-envelope core-collapse SN with no hydrogen"
+  },
+  {
+    "id": null,
+    "name": "SN Ibn",
+    "description": "Core-collapse SN with no hydrogen, showing signs of interaction"
+  },
+  {
+    "id": null,
+    "name": "SN Ibn/Icn",
+    "description": "Interacting striped-envelope core-collapse SN"
+  },
+  {
+    "id": null,
+    "name": "SN Ic",
+    "description": "Core-collapse SN with no hydrogen or helium"
+  },
+  {
+    "id": null,
+    "name": "SN Ic-BL",
+    "description": "Core-collapse SN with no hydrogen or helium, broad lines"
+  },
+  {
+    "id": null,
+    "name": "SN Ic-pec",
+    "description": "Peculiar core-collapse SN with no hydrogen or helium"
+  },
+  {
+    "id": null,
+    "name": "SN Icn",
+    "description": "Core-collapse SN with no hydrogen or helium showing narrow lines of interaction"
+  },
+  {
+    "id": null,
+    "name": "Std-spec",
+    "description": "Standard Star spectrum used for calibration"
+  },
+  {
+    "id": null,
+    "name": "TDE",
+    "description": "Tidal Disruption Event"
+  },
+  {
+    "id": null,
+    "name": "Varstar",
+    "description": "Variable Star"
+  },
+  {
+    "id": null,
+    "name": "WR",
+    "description": "Wolf-Rayet Star"
+  },
+  {
+    "id": null,
+    "name": "WR-WC",
+    "description": "Wolf-Rayet Star with Carbon WD"
+  },
+  {
+    "id": null,
+    "name": "WR-WN",
+    "description": "Wolf-Rayet Star with Nitrogen WD"
+  },
+  {
+    "id": null,
+    "name": "WR-WO",
+    "description": "Wolf-Rayet Star with Oxygen WD"
   }
 ]
