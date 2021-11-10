@@ -638,12 +638,12 @@ class ObjectType(ModelInterface):
 
 # Object name provider pattern matching
 OBJECT_NAMING_PATTERNS: Dict[str, re.Pattern] = {
-    'id': re.compile(r'[0-9]+'),
-    'ztf': re.compile(r'ZTF.*'),
-    'iau': re.compile(r'20[2-3][0-9][a-zA-Z]+'),
-    'antares': re.compile(r'ANT.*'),
-    'atlas': re.compile(r'ATLAS.*'),
-    'tag': re.compile(r'[a-z]+_[a-z]+_[a-z]'),
+    'id': re.compile(r'^[0-9]+$'),
+    'ztf': re.compile(r'^ZTF.*'),
+    'iau': re.compile(r'^20[2-3][0-9][a-zA-Z]+'),
+    'antares': re.compile(r'^ANT.*'),
+    'atlas': re.compile(r'^ATLAS.*'),
+    'tag': re.compile(r'^[a-z]+_[a-z]+_[a-z]'),
 }
 
 
