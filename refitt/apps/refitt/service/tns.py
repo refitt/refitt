@@ -27,7 +27,7 @@ __all__ = ['TNSApp', ]
 
 PROGRAM = 'refitt service tns'
 USAGE = f"""\
-usage: {PROGRAM} [-h] [[--persist] --from PATH | --live] [--workers NUM]
+usage: {PROGRAM} [-h] [[--persist] --from PATH | --live] [--workers NUM] [--no-catalog]
 {__doc__}\
 """
 
@@ -37,7 +37,7 @@ HELP = f"""\
 options:
     --live                  Listen for object events.
 -f, --from        PATH      File listing object names.
-    --persist               Keep file open forever (e.g., <stdin>).
+-p, --persist               Keep file open forever (e.g., <stdin>).
 -w, --workers     NUM       Number of threads to use.
     --no-catalog            Use API queries for every update.
 -h, --help                  Show this message and exit.\
