@@ -568,7 +568,7 @@ class RecommendationMail(MailTemplate):
                 spname = f'skyplot-{stamp}.png'
                 attachfiles[spname] = attachment
             else:
-                raise ValueError(f'RecommendationMail expects attachments of .csv or .png only.')
+                raise ValueError(f'RecommendationMail expects attachments of type csv or png only.')
 
         self.attach(attachfiles)
 
