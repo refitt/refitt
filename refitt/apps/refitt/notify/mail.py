@@ -21,6 +21,7 @@ from cmdkit.cli import Interface, ArgumentError
 # internal libs
 from ....comm.mail import UserAuth, Mail, MailServer, templates, TEMPLATES
 from ....core.config import config, ConfigurationError
+from ....core.exceptions import log_exception
 
 # public interface
 __all__ = ['MailApp', ]
@@ -144,6 +145,7 @@ class MailApp(Application):
         SMTPAuthenticationError: authentication_failed,
         TimeoutError: connection_timeout,
         ConnectionRefusedError: connection_refused,
+        Mail.Error: functools.partial(log_exception, logger=log.error, status=exit_status.bad_argument),
         **Application.exceptions,
     }
 
