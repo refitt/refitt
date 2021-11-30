@@ -139,6 +139,9 @@ class Mail:
     _data: Dict[str, bytes] = None
     _bcc: List[str] = []  # not included in headers
 
+    class Error(Exception):
+        """Exception specific to Mail construction or handling."""
+
     def __init__(self, *args, **kwargs) -> None:
         """Initialize email."""
         if len(args) == 0:
@@ -161,7 +164,7 @@ class Mail:
             self._payload_index = other._payload_index
             self._data = other._data
         else:
-            raise TypeError(f'cannot convert {other} to type Mail')
+            raise TypeError(f'Cannot convert {other} to type Mail')
 
     def _init_constructor(self, from_addr: str, to_addr: ADDR_SPEC, *,
                           subject: str = None, cc: ADDR_SPEC = None, bcc: ADDR_SPEC = None,
@@ -481,6 +484,9 @@ class TestMail(MailTemplate):
     message = "This is a test of REFITT's automated messaging system."
     required = 0
 
+    class Error(Mail.Error):
+        pass
+
     def __init__(self, *args, **kwargs) -> None:
         """No attachments or subject allowed."""
 
@@ -500,8 +506,9 @@ RECOMMENDATION_TEMPLATE = """\
         <p>Hello, {name}.</p>
 
         <p>
-        Attached are your recommended targets for {facility} tonight.
-        This email is for convenience purposes. Log in at
+        This email is for your convenience. Attached are your recommended
+        targets for {facility} tonight. {custom_verbiage}
+        Log in at
         <a href="http://refitt.org">refitt.org</a> to adjust your notification
         preferences. Below is a preview of the first few targets.
         </p>
@@ -525,14 +532,17 @@ RECOMMENDATION_TEMPLATE = """\
 
 
 class RecommendationMail(MailTemplate):
-    """Recommendation mail with a CSV of targets attached."""
+    """Recommendation mail with a CSV of targets attached. A skyplot attachment is optional"""
 
-    required = 1
+    required = 2
+
+    class Error(Mail.Error):
+        pass
 
     def __init__(self, facility: str, name: str, *args, **kwargs) -> None:
         """
         Initialize template with a facility `facility` and a person's `name`.
-        A single attachment is required to be a CSV file.
+        Accept attachments of a CSV file and (optionally) a skyplot image.
         """
 
         for field in ('text', 'html', 'subject'):
@@ -540,15 +550,13 @@ class RecommendationMail(MailTemplate):
             if value is not None:
                 raise AttributeError(f'Cannot specify \'{field}\' for RecommendationMail')
 
-        attachment = kwargs.pop('attach', None)
-        if not attachment or len(attachment) != 1:
-            raise ValueError('RecommendationMail requires a single file attachment.')
-        if not isinstance(attachment, list):
-            raise ValueError('RecommendationMail expected a length-1 list of attachments.')
-
-        attachment, = attachment
-        if not attachment.endswith('.csv'):
-            raise ValueError(f'RecommendationMail requires a CSV file, given {attachment}.')
+        attachments = kwargs.pop('attach', None)
+        if not attachments:
+            raise self.Error('Expected at least one attachment')
+        if len(attachments) > 2:
+            raise self.Error('At most two attachments allowed')
+        if not isinstance(attachments, list):
+            raise TypeError('Expected list for attachments')
 
         # base initialization
         super().__init__(*args, **kwargs)
@@ -559,8 +567,34 @@ class RecommendationMail(MailTemplate):
         # add attachment (loads the raw data)
         time = datetime.utcnow().astimezone()
         stamp = time.strftime('%Y%m%d-%H%M%S')
-        filename = f'recommendations-{stamp}.csv'
-        self.attach({filename: attachment})
+
+        files = dict()
+        filename = None
+        custom_verbiage = ""
+
+        has_csv = False
+        has_png = False
+
+        for attachment in attachments:
+            if attachment.endswith('.csv'):
+                filename = f'recommendations-{stamp}.csv'
+                files[filename] = attachment
+                if has_csv:
+                    raise self.Error(f'Can only attach a single CSV')
+                has_csv = True
+            elif attachment.endswith('.png'):
+                custom_verbiage = "A skyplot is attached to this email to facilitate observation planning."
+                files[f'skyplot-{stamp}.png'] = attachment
+                if has_png:
+                    raise self.Error(f'Can only attach a single PNG')
+                has_png = True
+            else:
+                raise self.Error(f'Only CSV and PNG attachments are supported ({attachment})')
+
+        if not has_csv:
+            raise self.Error(f'CSV file attachment expected')
+
+        self.attach(files)
 
         # parse the CSV data
         data = read_csv(io.BytesIO(self._data[filename]))
@@ -568,8 +602,9 @@ class RecommendationMail(MailTemplate):
 
         # format html message
         date = time.strftime('%a, %d %b %Y %T UTC')
-        self.html = RECOMMENDATION_TEMPLATE.format(facility=facility, name=name, table=table, date=date)
         self.subject = f'REFITT Recommendations for {facility} ({date})'
+        self.html = RECOMMENDATION_TEMPLATE.format(facility=facility, name=name, table=table, date=date,
+                                                   custom_verbiage=custom_verbiage)
 
 
 # named templates and their classes
