@@ -14,7 +14,7 @@ from flask import request
 from ....database.model import Client, User, IntegrityError, NotFound
 from ..app import application
 from ..auth import authenticated, authorization
-from ..response import endpoint, ConstraintViolation
+from ..response import endpoint, ConstraintViolation, ParameterNotFound, ParameterInvalid
 from ..tools import require_data, collect_parameters, disallow_parameters
 
 # public interface
@@ -61,6 +61,58 @@ info['Endpoints']['/whoami']['GET'] = {
         },
         401: {'Description': 'Access revoked or token expired'},
         403: {'Description': 'Token not found or invalid'},
+    }
+}
+
+
+@application.route('/user', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=1)
+def search_user(admin: Client) -> dict:  # noqa: unused client
+    """Search for user profile."""
+    params = collect_parameters(request, optional=['email', 'alias'])
+    if not params:
+        raise ParameterNotFound('Expected either \'email\' or \'alias\' parameter')
+    if len(params) > 1:
+        raise ParameterInvalid('Expected either \'email\' or \'alias\' parameter (not both)')
+    if 'alias' in params:
+        profile = User.from_alias(params.get('alias'))
+    else:
+        profile = User.from_email(params.get('email'))
+    return {'user': profile.to_json(join=False)}
+
+
+info['Endpoints']['/user']['GET'] = {
+    'Description': 'Search for user by attribute',
+    'Permissions': 'Admin (level 1)',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+    },
+    'Optional': {
+        'Parameters': {
+            'alias': {
+                'Description': 'User alias',
+                'Type': 'String',
+            },
+            'email': {
+                'Description': 'User email',
+                'Type': 'String',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'User data',
+                'Type': 'application/json'
+            },
+        },
+        400: {'Description': 'Invalid parameters'},
+        401: {'Description': 'Access level insufficient, revoked, or token expired'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'User not found'},
     }
 }
 
