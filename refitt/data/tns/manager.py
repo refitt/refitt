@@ -159,7 +159,7 @@ class TNSCatalogManager(TNSManager):
             for provider in ('iau', 'ztf', 'atlas'):  # preferred ordering
                 if provider in object.aliases:
                     if name != object.aliases[provider]:
-                        log.debug(f'Searching with name \'{object.aliases[provider]} <- {name}\'')
+                        log.debug(f'Searching with name {object.aliases[provider]} <- {name}')
                         name = object.aliases[provider]
                     break
             else:
