@@ -148,7 +148,7 @@ class TNSService:
 
     @classmethod
     def from_subscriber(cls, subscriber: Subscriber, threads: int = DEFAULT_THREAD_COUNT,
-                        provider: str = 'catalog') -> TNSService:
+                        provider: str = DEFAULT_PROVIDER) -> TNSService:
         """Initialize TNSServiceWorker with subscriber stream."""
         return cls(cls.__yield_names_from_subscriber(subscriber), threads=threads, provider=provider)
 
