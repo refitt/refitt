@@ -317,7 +317,7 @@ class TestTNSCatalog:
             catalog.get('2021zzz')
         except TNSCatalog.NoRecordsFound as error:
             message, = error.args
-            assert message == 'name == 2021zzz'
+            assert message == 'No record with name == 2021zzz'
         else:
             raise AssertionError('Expected TNSCatalog.NoRecordsFound')
 
@@ -328,7 +328,7 @@ class TestTNSCatalog:
             catalog.get('ZTF20actresa')
         except TNSCatalog.NoRecordsFound as error:
             message, = error.args
-            assert message == 'object_names ~ ZTF20actresa'
+            assert message == 'No record with object_names ~ ZTF20actresa'
         else:
             raise AssertionError('Expected TNSCatalog.NoRecordsFound')
 
@@ -342,6 +342,6 @@ class TestTNSCatalog:
             catalog.get('ZTF20actresa')
         except TNSCatalog.MultipleRecordsFound as error:
             message, = error.args
-            assert message == 'object_names ~ ZTF20actresa'
+            assert message == 'Multiple records with object_names ~ ZTF20actresa'
         else:
             raise AssertionError('Expected TNSCatalog.NoRecordsFound')

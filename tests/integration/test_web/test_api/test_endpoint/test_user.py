@@ -14,6 +14,105 @@ from refitt.web.api.response import (STATUS, RESPONSE_MAP, NotFound, ConstraintV
 from tests.integration.test_web.test_api.test_endpoint import Endpoint
 
 
+class TestSearchUser(Endpoint):
+    """Tests for GET /user endpoint."""
+
+    method: str = 'get'
+    route: str = '/user'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_permission_denied(self) -> None:
+        client = self.get_client(self.user)
+        assert self.get(self.route, client_id=client.id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'Authorization level insufficient',
+            }
+        )
+
+    def test_invalid_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_missing_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id) == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Expected either \'email\' or \'alias\' parameter'
+            }
+        )
+
+    def test_duplicate_parameter(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, alias='tomb_raider', email='lara@croft.net') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Expected either \'email\' or \'alias\' parameter (not both)'
+            }
+        )
+
+    def test_get_alias(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, alias='tomb_raider') == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {
+                    'user': {
+                        'id': 3,
+                        'first_name': 'Lara',
+                        'last_name': 'Croft',
+                        'email': 'lara@croft.net',
+                        'alias': 'tomb_raider',
+                        'data': {'user_type': 'amateur'},
+                    }
+                }
+            }
+        )
+
+    def test_get_email(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, email='lara@croft.net') == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {
+                    'user': {
+                        'id': 3,
+                        'first_name': 'Lara',
+                        'last_name': 'Croft',
+                        'email': 'lara@croft.net',
+                        'alias': 'tomb_raider',
+                        'data': {'user_type': 'amateur'},
+                    }
+                }
+            }
+        )
+
+    def test_alias_not_found(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, alias='batman') == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No user with alias=batman',
+            }
+        )
+
+    def test_email_not_found(self) -> None:
+        admin = self.get_client(self.admin)
+        assert self.get(self.route, client_id=admin.id, email='bruce@wayne.com') == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No user with email=bruce@wayne.com',
+            }
+        )
+
+
 class TestAddUser(Endpoint):
     """Tests for POST /user endpoint."""
 

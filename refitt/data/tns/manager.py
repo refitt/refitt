@@ -79,28 +79,28 @@ class TNSQueryManager(TNSManager):
             raise TNSError(str(error)) from error
         if 'iau' in object.aliases:
             if name != object.aliases['iau']:
-                log.debug(f'Searching with name \'{object.aliases["iau"]} <- {name}\'')
+                log.debug(f'Searching with name {object.aliases["iau"]} <- {name}')
                 name = object.aliases['iau']
         elif 'ztf' in object.aliases:
-            log.debug(f'Search TNS for IAU name ({name})')
+            log.debug(f'Searching TNS for IAU name {name}')
             name = self.tns.search_name(name).objname
             if name is None:
-                raise TNSError(f'Could not find IAU name ({name})')
+                raise TNSError(f'Could not find IAU name {name}')
         else:
-            raise TNSError(f'No support identifier found ({name})')
+            raise TNSError(f'No support identifier found {name}')
         response = self.tns.search_object(name)
         if response.is_empty:
-            raise TNSError(f'No data on object ({name})')
+            raise TNSError(f'No data on object {name}')
         else:
             if info := self.__build_info(name, object, response):
                 Object.update(object.id, **info)
             else:
-                log.info(f'No changes for \'{name}\'')
+                log.info(f'No changes for {name}')
 
     def __build_info(self, iau_name: str, obj: Object, tns_response: TNSObjectSearchResult) -> dict:
         """
-        Build attributes for Object.update method.
-        If the new info is different, the data.history section is appended.
+        Build attributes for `Object.update` method.
+        If the new info is different, the `data.history` section is appended.
         """
         type_id = self.__get_type_id(tns_response)
         redshift = tns_response.redshift
@@ -150,7 +150,7 @@ class TNSCatalogManager(TNSManager):
             object = Object.from_name(name)
         except Object.NotFound:
             record = self.catalog.get(name)  # must be name pattern recognized by catalog
-            log.info(f'Creating new object for \'{name}\'')
+            log.info(f'Creating new object for {name}')
             Object.add({'type_id': self.__get_type_id(record), 'aliases': self.__get_names(record),
                         'ra': record.ra, 'dec': record.declination, 'redshift': record.redshift,
                         'data': {'tns': record.to_json()}})
@@ -169,7 +169,7 @@ class TNSCatalogManager(TNSManager):
             if info := self.__build_info(object, record):
                 Object.update(object.id, **info)
             else:
-                log.info(f'No changes found for \'{name}\'')
+                log.info(f'No changes found for {name}')
 
     @property
     def catalog(self) -> TNSCatalog:
@@ -198,8 +198,8 @@ class TNSCatalogManager(TNSManager):
 
     def __build_info(self, obj: Object, record: TNSRecord) -> dict:
         """
-        Build attributes for Object.update method.
-        If the new info is different, the data.history section is appended.
+        Build attributes for `Object.update` method.
+        If the new info is different, the `data.history` section is appended.
         """
         type_id = self.__get_type_id(record)
         redshift = record.redshift
@@ -226,7 +226,7 @@ class TNSCatalogManager(TNSManager):
 
     @staticmethod
     def __get_names(record: TNSRecord) -> Dict[str, str]:
-        """Format Object.aliases dictionary from TNSRecord."""
+        """Format `Object.aliases` dictionary from TNSRecord."""
         aliases = {'iau': record.name}
         internal_names = record.internal_names.split(',')
         for provider, pattern in Object.name_patterns.items():

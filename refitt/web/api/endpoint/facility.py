@@ -35,7 +35,7 @@ info: dict = {
 @application.route('/facility', methods=['POST'])
 @endpoint('application/json')
 @authenticated
-@authorization(level=0)
+@authorization(level=1)
 def add_facility(admin: Client) -> dict:  # noqa: unused client
     """Add new facility profile."""
     disallow_parameters(request)
@@ -79,7 +79,7 @@ info['Endpoints']['/facility']['POST'] = {
 @application.route('/facility/<id_or_name>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
-@authorization(level=0)
+@authorization(level=1)
 def get_facility(admin: Client, id_or_name: Union[int, str]) -> dict:  # noqa: unused client
     """Query for existing facility profile."""
     disallow_parameters(request)
@@ -93,7 +93,7 @@ def get_facility(admin: Client, id_or_name: Union[int, str]) -> dict:  # noqa: u
 
 info['Endpoints']['/facility/<facility_id>']['GET'] = {
     'Description': 'Request facility profile',
-    'Permissions': 'Admin (level 0)',
+    'Permissions': 'Admin (level 1)',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
@@ -121,7 +121,7 @@ info['Endpoints']['/facility/<facility_id>']['GET'] = {
 @application.route('/facility/<int:facility_id>', methods=['PUT'])
 @endpoint('application/json')
 @authenticated
-@authorization(level=0)
+@authorization(level=1)
 def update_facility(admin: Client, facility_id: int) -> dict:  # noqa: unused client
     """Update facility profile attributes."""
     try:
@@ -133,7 +133,7 @@ def update_facility(admin: Client, facility_id: int) -> dict:  # noqa: unused cl
 
 info['Endpoints']['/facility/<facility_id>']['PUT'] = {
     'Description': 'Update facility profile attributes',
-    'Permissions': 'Admin (level 0)',
+    'Permissions': 'Admin (level 1)',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
@@ -189,7 +189,7 @@ info['Endpoints']['/facility/<facility_id>']['PUT'] = {
 @application.route('/facility/<int:facility_id>', methods=['DELETE'])
 @endpoint('application/json')
 @authenticated
-@authorization(level=0)
+@authorization(level=1)
 def delete_facility(admin: Client, facility_id: int) -> dict:  # noqa: unused client
     """Delete a facility profile (assuming no existing relationships)."""
     disallow_parameters(request)
@@ -202,7 +202,7 @@ def delete_facility(admin: Client, facility_id: int) -> dict:  # noqa: unused cl
 
 info['Endpoints']['/facility/<facility_id>']['DELETE'] = {
     'Description': 'Delete facility profile (assuming no existing relationships)',
-    'Permissions': 'Admin (level 0)',
+    'Permissions': 'Admin (level 1)',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
@@ -224,7 +224,7 @@ info['Endpoints']['/facility/<facility_id>']['DELETE'] = {
 @application.route('/facility/<int:facility_id>/user', methods=['GET'])
 @endpoint('application/json')
 @authenticated
-@authorization(level=0)
+@authorization(level=1)
 def get_all_facility_users(admin: Client, facility_id: int) -> dict:  # noqa: unused client
     """Query for users related to the given facility."""
     disallow_parameters(request)
@@ -238,7 +238,7 @@ def get_all_facility_users(admin: Client, facility_id: int) -> dict:  # noqa: un
 
 info['Endpoints']['/facility/<facility_id>/user']['GET'] = {
     'Description': 'Request user profiles associated with this facility',
-    'Permissions': 'Admin (level 0)',
+    'Permissions': 'Admin (level 1)',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
@@ -266,7 +266,7 @@ info['Endpoints']['/facility/<facility_id>/user']['GET'] = {
 @application.route('/facility/<int:facility_id>/user/<int:user_id>', methods=['GET'])
 @endpoint('application/json')
 @authenticated
-@authorization(level=0)
+@authorization(level=1)
 def get_facility_user(admin: Client, facility_id: int, user_id: int) -> dict:  # noqa: unused client
     """Query for a user related to the given facility."""
     disallow_parameters(request)
@@ -279,7 +279,7 @@ def get_facility_user(admin: Client, facility_id: int, user_id: int) -> dict:  #
 
 info['Endpoints']['/facility/<facility_id>/user/<user_id>']['GET'] = {
     'Description': 'Check user is associated with this facility',
-    'Permissions': 'Admin (level 0)',
+    'Permissions': 'Admin (level 1)',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
@@ -311,7 +311,7 @@ info['Endpoints']['/facility/<facility_id>/user/<user_id>']['GET'] = {
 @application.route('/facility/<int:facility_id>/user/<int:user_id>', methods=['PUT'])
 @endpoint('application/json')
 @authenticated
-@authorization(level=0)
+@authorization(level=1)
 def add_facility_user_association(admin: Client, facility_id: int, user_id: int) -> dict:  # noqa: unused client
     """Associate facility with the given user."""
     disallow_parameters(request)
@@ -321,7 +321,7 @@ def add_facility_user_association(admin: Client, facility_id: int, user_id: int)
 
 info['Endpoints']['/facility/<facility_id>/user/<user_id>']['PUT'] = {
     'Description': 'Associate user with facility',
-    'Permissions': 'Admin (level 0)',
+    'Permissions': 'Admin (level 1)',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {
@@ -347,7 +347,7 @@ info['Endpoints']['/facility/<facility_id>/user/<user_id>']['PUT'] = {
 @application.route('/facility/<int:facility_id>/user/<int:user_id>', methods=['DELETE'])
 @endpoint('application/json')
 @authenticated
-@authorization(level=0)
+@authorization(level=1)
 def delete_facility_user_association(admin: Client, facility_id: int, user_id: int) -> dict:  # noqa: unused client
     """Dissociate the facility for the given user."""
     disallow_parameters(request)
@@ -357,7 +357,7 @@ def delete_facility_user_association(admin: Client, facility_id: int, user_id: i
 
 info['Endpoints']['/facility/<facility_id>/user/<user_id>']['DELETE'] = {
     'Description': 'Disassociate user with facility',
-    'Permissions': 'Admin (level 0)',
+    'Permissions': 'Admin (level 1)',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
         'Path': {

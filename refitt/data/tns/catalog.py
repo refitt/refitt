@@ -165,22 +165,22 @@ class TNSCatalog:
         results = self.data.loc[self.data.name == name]
         results = results.where(results.notnull(), None).replace({np.nan: None})  # clean up NaN/NA
         if len(results) == 0:
-            raise self.NoRecordsFound(f'name == {name}')
+            raise self.NoRecordsFound(f'No record with name == {name}')
         if len(results) == 1:
             return TNSRecord(**results.iloc[0].to_dict())
         else:
-            raise self.MultipleRecordsFound(f'object_names ~ {name}')
+            raise self.MultipleRecordsFound(f'Multiple records with name == {name}')
 
     def __get_from_internal_names(self, name: str) -> TNSRecord:
         """Fuzzy match of `name` against `internal_names` list."""
         results = self.data.loc[self.data.internal_names.str.contains(name)]
         results = results.where(results.notnull(), None).replace({np.nan: None})  # clean up NaN/NA
         if len(results) == 0:
-            raise self.NoRecordsFound(f'object_names ~ {name}')
+            raise self.NoRecordsFound(f'No record with object_names ~ {name}')
         if len(results) == 1:
             return TNSRecord(**results.iloc[0].to_dict())
         else:
-            raise self.MultipleRecordsFound(f'object_names ~ {name}')
+            raise self.MultipleRecordsFound(f'Multiple records with object_names ~ {name}')
 
 
 TNSValue = TypeVar('TNSValue', int, float, str)
