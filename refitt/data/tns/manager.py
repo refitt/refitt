@@ -6,7 +6,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Tuple, Union, Dict
+from typing import Union, Dict
 
 # standard libs
 import re

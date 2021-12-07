@@ -1074,6 +1074,7 @@ class ModelType(ModelInterface):
 @dataclass
 class ModelInfo:
     """Model information without the data payload."""
+
     id: int
     epoch_id: int
     type_id: int
@@ -1257,7 +1258,7 @@ class Recommendation(ModelInterface):
 
     @classmethod
     def for_user(cls, user_id: int, epoch_id: int = None, session: _Session = None) -> List[Recommendation]:
-        """Select recommendations for the given user and group."""
+        """Select recommendations for the given user and epoch."""
         session = session or _Session()
         epoch_id = epoch_id or Epoch.latest(session).id
         return (session.query(cls).order_by(cls.priority)
@@ -1267,7 +1268,7 @@ class Recommendation(ModelInterface):
     def next(cls, user_id: int, epoch_id: int = None, limit: int = None,
              facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
         """
-        Select next recommendation(s) for the given user and group, in priority order,
+        Select next recommendation(s) for the given user and epoch, in priority order,
         that has neither been 'accepted' nor 'rejected', up to some `limit`.
 
         If `facility_id` is provided, only recommendations for the given facility are returned.
