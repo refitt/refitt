@@ -109,9 +109,18 @@ recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInte
 @authorization(level=None)
 def get_next(client: Client) -> dict:
     """Query for recommendations for user."""
-    optional = ['epoch_id', 'facility_id', 'limiting_magnitude', 'limit', 'join']
-    params = collect_parameters(request, optional=optional, defaults={'join': False})
+    optional = ['epoch_id', 'facility_id', 'limiting_magnitude', 'limit', 'mode', 'join']
+    params = collect_parameters(request, optional=optional, defaults={'join': False, 'mode': 'priority'})
     join = params.pop('join')
+    mode = params.pop('mode')
+    if mode not in Recommendation.QUERY_MODES:
+        raise ParameterInvalid(f'Invalid mode: {mode}')
+    if 'limiting_magnitude' in params and not isinstance(params['limiting_magnitude'], (int, float)):
+        raise ParameterInvalid(f'Expected numeric value for \'limiting_magnitude\' '
+                               f'(given {params["limiting_magnitude"]})')
+    for opt in 'epoch_id', 'facility_id', 'limit':
+        if opt in params and not isinstance(params[opt], int):
+            raise ParameterInvalid(f'Expected integer for {opt} (given {params[opt]})')
     return {'recommendation': [recommendation.to_json(join=join)
                                for recommendation in Recommendation.next(user_id=client.user_id, **params)]}
 

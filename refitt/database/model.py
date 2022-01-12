@@ -6,7 +6,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, Tuple, Dict, Any, Type, Optional, Callable, TypeVar, Union
+from typing import List, Tuple, Dict, Any, Type, Optional, Callable, TypeVar, Union, Protocol
 
 # standard libs
 import re
@@ -1149,7 +1149,7 @@ class RecommendationTag(ModelInterface):
             return session.query(cls).filter(cls.object_id == object_id).one()
         except NoResultFound:
             return cls.new(object_id, session=session)
-    
+
     @classmethod
     def new(cls, object_id: int, session: _Session = None) -> RecommendationTag:
         """Create a new recommendation tag for `object_id`."""
@@ -1183,6 +1183,12 @@ class RecommendationTag(ModelInterface):
         """Slice into ordered sequence of names."""
         names = cls.build_names()
         return names[tag_id]  # NOTE: will fail when we pass ~2.5M recommended objects
+
+
+class QueryMethod(Protocol):
+    """Function call signature for recommendation query modes."""
+    def __call__(self, user_id: int, epoch_id: int = None, limit: int = None,
+                 facility_id: int = None, limiting_magnitude: int = None) -> List[Recommendation]: ...
 
 
 class Recommendation(ModelInterface):
@@ -1264,8 +1270,20 @@ class Recommendation(ModelInterface):
         return (session.query(cls).order_by(cls.priority)
                 .filter(cls.epoch_id == epoch_id, cls.user_id == user_id)).all()
 
+    QUERY_MODES: List[str] = [
+        'priority',
+    ]
+
     @classmethod
-    def next(cls, user_id: int, epoch_id: int = None, limit: int = None,
+    def _get_query_method(cls, mode: str) -> QueryMethod:
+        """Access query method by `mode` name."""
+        if mode in cls.QUERY_MODES:
+            return getattr(cls, f'_query_{mode}')
+        else:
+            raise NotImplementedError(f'Recommendation query mode not implemented: {mode}')
+
+    @classmethod
+    def next(cls, user_id: int, epoch_id: int = None, limit: int = None, mode: str = 'priority',
              facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
         """
         Select next recommendation(s) for the given user and epoch, in priority order,
@@ -1275,10 +1293,30 @@ class Recommendation(ModelInterface):
         If `limiting_magnitude` is provided, only recommendations with a 'predicted' magnitude
         brighter than this value are returned.
         """
+        query_method = cls._get_query_method(mode)
+        return query_method(user_id, epoch_id=epoch_id, limit=limit,
+                            facility_id=facility_id, limiting_magnitude=limiting_magnitude)
+
+    @classmethod
+    def _query_priority(cls, user_id: int, epoch_id: int = None, limit: int = None,
+                        facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
+        """
+        Apply 'priority' ordering.
+        """
+        query = cls._base_query(user_id, epoch_id=epoch_id, facility_id=facility_id,
+                                limiting_magnitude=limiting_magnitude)
+        query = query.order_by(cls.priority)
+        if limit:
+            query = query.limit(limit)
+        return query.all()
+
+    @classmethod
+    def _base_query(cls, user_id: int, epoch_id: int = None, facility_id: int = None,
+                    limiting_magnitude: float = None) -> Query:
+        """Build base recommendation query."""
         session = _Session()
         predicted = aliased(Observation)
         query = session.query(cls).join(predicted, cls.predicted_observation_id == predicted.id)
-        query = query.order_by(cls.priority)
         query = query.filter(cls.user_id == user_id)
         query = query.filter(cls.epoch_id == (epoch_id or Epoch.latest(session).id))
         query = query.filter(cls.accepted.is_(False)).filter(cls.rejected.is_(False))
@@ -1286,9 +1324,7 @@ class Recommendation(ModelInterface):
             query = query.filter(cls.facility_id == facility_id)
         if limiting_magnitude is not None:
             query = query.filter(predicted.value <= limiting_magnitude)
-        if limit:
-            query = query.limit(limit)
-        return query.all()
+        return query
 
     @classmethod
     def history(cls, user_id: int, epoch_id: int) -> List[Recommendation]:
