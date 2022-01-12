@@ -1300,9 +1300,7 @@ class Recommendation(ModelInterface):
     @classmethod
     def _query_priority(cls, user_id: int, epoch_id: int = None, limit: int = None,
                         facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
-        """
-        Apply 'priority' ordering.
-        """
+        """Simple 'priority' ordering."""
         query = cls._base_query(user_id, epoch_id=epoch_id, facility_id=facility_id,
                                 limiting_magnitude=limiting_magnitude)
         query = query.order_by(cls.priority)
