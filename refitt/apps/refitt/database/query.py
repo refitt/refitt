@@ -452,7 +452,7 @@ class EntityRelation:
 
     @classmethod
     def from_arg(cls, arg: str) -> EntityRelation:
-        """Separate the left hand table name from its relation path."""
+        """Separate the left-hand table name from its relation path."""
         name, *path = arg.split('.')
         if name in tables:
             check_relation(tables.get(name), *path)
