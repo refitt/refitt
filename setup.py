@@ -15,7 +15,7 @@ with open('README.rst', mode='r') as readme:
 
 
 # get package metadata by parsing __meta__ module
-with open('refitt/__meta__.py', mode='r') as source:
+with open('src/refitt/__meta__.py', mode='r') as source:
     content = source.read().strip()
     metadata = {key: re.search(key + r'\s*=\s*[\'"]([^\'"]*)[\'"]', content).group(1)
                 for key in ['__version__', '__developer__', '__contact__',
@@ -31,7 +31,8 @@ setup(
     license              = metadata['__license__'],
     keywords             = metadata['__keywords__'],
     url                  = metadata['__website__'],
-    packages             = find_packages(),
+    packages             = find_packages('src'),
+    package_dir          = {'': 'src', },
     include_package_data = True,  # see MANIFEST.in
     long_description     = long_description,
     long_description_content_type = 'text/x-rst',
