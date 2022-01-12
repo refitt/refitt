@@ -15,6 +15,7 @@ from datetime import datetime
 
 # external libs
 from flask import request
+from cryptography.hazmat.primitives.constant_time import bytes_eq
 
 # internal libs
 from ...database.model import Client
@@ -65,7 +66,7 @@ def authenticate(route: Callable[[Client], dict]) -> Callable[[Client], dict]:
             secret = Secret(request.authorization.password)
         except ValueError:  # NOTE: expected 64 digits
             raise AuthenticationInvalid('Client secret invalid')
-        if secret.hashed().value != client.secret:
+        if not bytes_eq(secret.hashed().value.encode(), client.secret.encode()):
             raise AuthenticationInvalid('Client secret invalid')
         if not client.valid:
             raise PermissionDenied('Access has been revoked')
