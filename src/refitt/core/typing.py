@@ -5,13 +5,22 @@
 
 
 # type annotations
-from typing import TypeVar
+from typing import Dict, List, Union, Any
 
 # public interface
-__all__ = ['coerce', 'ValueType']
+__all__ = ['coerce', 'ValueType', 'JsonObject', 'JsonArray', 'JsonDict']
 
 
-ValueType = TypeVar('ValueType', str, int, float, type(None))
+# Core value types
+ValueType = Union[bool, str, int, float, None]
+
+
+# JSON structures (so much can be said here: https://github.com/python/typing/issues/182)
+JsonObject = Union[ValueType, Dict[str, Any], List[Any]]
+JsonArray = List[JsonObject]
+JsonDict = Dict[str, JsonObject]
+
+
 def coerce(value: str) -> ValueType:
     """Automatically coerce string to typed value."""
     try:
