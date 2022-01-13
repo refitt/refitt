@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 # internal libs
 from ....core.exceptions import log_exception
 from ....core.schema import SchemaError
-from ....data.forecast import Forecast
+from ....data.forecast import ForecastModel
 
 # public interface
 __all__ = ['ForecastPublishApp', ]
@@ -87,12 +87,12 @@ class ForecastPublishApp(Application):
                     raise RuntimeError(f'Not a file: {filepath}')
 
     @staticmethod
-    def load(filepath: str) -> Forecast:
+    def load(filepath: str) -> ForecastModel:
         """Load forecast data."""
         if filepath == '-':
-            return Forecast.from_io(sys.stdin)
+            return ForecastModel.from_io(sys.stdin)
         else:
-            return Forecast.from_local(filepath)
+            return ForecastModel.from_local(filepath)
 
     @cached_property
     def output(self) -> IO:

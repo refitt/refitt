@@ -21,7 +21,7 @@ from ...database.model import Object, Source, ObservationType, Observation, Mode
 from .interface import ModelData
 
 # public interface
-__all__ = ['Forecast', ]
+__all__ = ['ForecastModel', ]
 
 
 @lru_cache(maxsize=None)
@@ -36,7 +36,7 @@ def get_source_id(name: str = 'refitt') -> int:
     return Source.from_name(name).id
 
 
-class Forecast(ModelData):
+class ForecastModel(ModelData):
     """
     High-level interface for manipulating forecast data.
 

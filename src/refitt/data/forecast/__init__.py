@@ -5,7 +5,7 @@
 
 
 # internal libs
-from .forecast import Forecast
+from .forecast import ForecastModel
 
 # public interface
-__all__ = ['Forecast', ]
+__all__ = ['ForecastModel', ]

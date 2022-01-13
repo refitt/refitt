@@ -12,7 +12,7 @@
 import pytest
 
 # internal libs
-from refitt.data.forecast import Forecast
+from refitt.data.forecast import ForecastModel
 from refitt.database.model import Observation as ObservationModel, Model
 from tests.unit.test_forecast import generate_random_forecast
 
@@ -25,7 +25,7 @@ class TestForecastPublish:
         data = generate_random_forecast()
         num_forecasts = Model.count()
         num_observations = ObservationModel.count()
-        model = Forecast.from_dict(data).publish()
+        model = ForecastModel.from_dict(data).publish()
         assert Model.count() == num_forecasts + 1
         assert ObservationModel.count() == num_observations + 1
         assert model.to_dict() == Model.from_id(model.id).to_dict()

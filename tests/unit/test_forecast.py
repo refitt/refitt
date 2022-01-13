@@ -20,7 +20,7 @@ from hypothesis import given, strategies as st
 
 # internal libs
 from refitt.core.schema import SchemaError
-from refitt.data.forecast import Forecast
+from refitt.data.forecast import ForecastModel
 
 
 def generate_random_forecast() -> Dict[str, Any]:
@@ -59,7 +59,7 @@ class TestForecast:
     def test_init(self) -> None:
         """Check instance creation."""
         data = generate_random_forecast()
-        forecast = Forecast(data)
+        forecast = ForecastModel(data)
         assert forecast.data == data
 
     @given(st.sampled_from(FORECAST_KEYS))
@@ -68,7 +68,7 @@ class TestForecast:
         data = generate_random_forecast()
         data.pop(key)
         try:
-            _ = Forecast(data)
+            _ = ForecastModel(data)
         except SchemaError as error:
             assert str(error) == f'Missing key \'{key}\''
         else:
@@ -79,7 +79,7 @@ class TestForecast:
         data = generate_random_forecast()
         data['ztf_id'] = 123
         try:
-            _ = Forecast(data)
+            _ = ForecastModel(data)
         except SchemaError as error:
             assert str(error) == 'Expected type str for member \'ztf_id\', found int(123) at position 0'
         else:
@@ -88,61 +88,61 @@ class TestForecast:
     def test_init_from_forecast(self) -> None:
         """Test passive type coercion."""
         data = generate_random_forecast()
-        forecast = Forecast(data)
-        assert forecast == Forecast(forecast)
+        forecast = ForecastModel(data)
+        assert forecast == ForecastModel(forecast)
 
     def test_from_dict(self) -> None:
         """Test forecast initialization from existing dictionary."""
         data = generate_random_forecast()
-        assert Forecast.from_dict(data).data == data
+        assert ForecastModel.from_dict(data).data == data
 
     def test_to_dict(self) -> None:
         """Test export to dictionary."""
         data = generate_random_forecast()
-        assert Forecast.from_dict(data).to_dict() == data
+        assert ForecastModel.from_dict(data).to_dict() == data
 
     def test_equality(self) -> None:
         """Test equality comparison operator."""
         data = generate_random_forecast()
-        assert Forecast.from_dict(data) == Forecast.from_dict(data)
-        assert Forecast.from_dict(data) != Forecast.from_dict(generate_random_forecast())
+        assert ForecastModel.from_dict(data) == ForecastModel.from_dict(data)
+        assert ForecastModel.from_dict(data) != ForecastModel.from_dict(generate_random_forecast())
 
     def test_from_str(self) -> None:
         """Test forecast initialization from existing string."""
         data = generate_random_forecast()
         text = json.dumps(data)
-        assert Forecast.from_str(text).data == data
+        assert ForecastModel.from_str(text).data == data
 
     def test_from_io(self) -> None:
         """Test forecast initialization from existing file descriptor."""
         data = generate_random_forecast()
         text = json.dumps(data)
         stream = io.StringIO(text)
-        assert Forecast.from_io(stream).data == data
+        assert ForecastModel.from_io(stream).data == data
 
     def test_from_local(self, tmpdir: str) -> None:
         """Test forecast initialization from local file."""
         data = generate_random_forecast()
         with open(f'{tmpdir}/forecast.json', mode='w') as stream:
             json.dump(data, stream)
-        assert Forecast.from_local(f'{tmpdir}/forecast.json').data == data
+        assert ForecastModel.from_local(f'{tmpdir}/forecast.json').data == data
 
     def test_to_local(self, tmpdir: str) -> None:
         """Test forecast export to local file."""
         data = generate_random_forecast()
-        Forecast.from_dict(data).to_local(f'{tmpdir}/forecast.json')
+        ForecastModel.from_dict(data).to_local(f'{tmpdir}/forecast.json')
         with open(f'{tmpdir}/forecast.json', mode='r') as stream:
             assert json.load(stream) == data
 
     def test_attributes(self) -> None:
         """Check attribute access."""
         data = generate_random_forecast()
-        forecast = Forecast.from_dict(data)
+        forecast = ForecastModel.from_dict(data)
         for field, value in data.items():
             assert getattr(forecast, field) == value
 
     def test_time(self) -> None:
         """Check time property."""
         data = generate_random_forecast()
-        forecast = Forecast.from_dict(data)
+        forecast = ForecastModel.from_dict(data)
         assert forecast.time == Time(forecast.current_time + 1, format='mjd', scale='utc').datetime
