@@ -10,9 +10,10 @@ from typing import Union, Optional, TypeVar, Type, List, Dict
 
 # standard libs
 from abc import ABC
+from enum import Enum
 
 # public interface
-__all__ = ['SchemaError', 'SchemaDefinitionError', 'ListSchema', 'DictSchema', ]
+__all__ = ['SchemaError', 'SchemaDefinitionError', 'ListSchema', 'DictSchema', 'Size', ]
 
 
 class SchemaError(Exception):
@@ -33,6 +34,14 @@ class Schema(ABC):
     """Generic base class for all schema types."""
 
 
+class Size(Enum):
+    """Special sizing indicator to signal requirements."""
+    ALL_EQUAL = 0
+
+
+SizeType = Union[int, Size]
+
+
 class ListSchema(Schema):
     """
     List schema with specified or unspecified member type and size.
@@ -44,7 +53,7 @@ class ListSchema(Schema):
         >>> schema.ensure([1, 2, 3, 'apple'])
         [1, 2, 3, 'apple']
 
-        The input will ensure at least a list however.
+        The input will ensure at least a list, however.
         >>> schema = ListSchema.any()
         >>> schema.ensure({'a': 1, 'b': 2})  # noqa
         Traceback (most recent call last):
@@ -56,7 +65,7 @@ class ListSchema(Schema):
         Traceback (most recent call last):
         schema.SchemaError: Expected length 4, found length 5
 
-        Require a specify type with the `.of` method.
+        Require a specified type with the `.of` method.
         >>> schema = ListSchema.of(int, size=5)
         >>> schema.ensure([1, 2, 3, 4, 5])
         [1, 2, 3, 4, 5]
@@ -71,9 +80,15 @@ class ListSchema(Schema):
         >>> schema = ListSchema.of(ListSchema.of(float, size=3), size=3)
         >>> schema.ensure([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        Nested ListSchema members can have categorical size requirements.
+        >>> schema = ListSchema.of(ListSchema.of(float, size=Size.ALL_EQUAL))
+        >>> schema.ensure([[1, 2], [3, 4], [5, ]])
+        Traceback (most recent call last):
+        schema.SchemaError: Expected all members to have equal size, found size=1 at position 2 (expected size=2)
     """
 
-    __size: Optional[int] = None
+    __size: Optional[SizeType] = None
     __member_type: Optional[Schema_T] = None
 
     def __init__(self, member_type: Schema_T = None, size: int = None) -> None:
@@ -94,20 +109,24 @@ class ListSchema(Schema):
             raise SchemaDefinitionError(f'Unsupported member type \'{given}\'')
 
     @property
-    def size(self) -> Optional[int]:
+    def size(self) -> Optional[SizeType]:
         return self.__size
 
     @size.setter
-    def size(self, value: Optional[int]) -> None:
-        self.__size = None if value is None else int(value)
+    def size(self, value: Optional[SizeType]) -> None:
+        if value is None or isinstance(value, (int, Size)):
+            self.__size = value
+        else:
+            raise TypeError(f'ListSchema.size expects integer or {type(Size)}')
 
     @classmethod
-    def any(cls, size: int = None) -> ListSchema:
+    def any(cls, size: SizeType = None) -> ListSchema:
         """Allow any member type."""
         return cls(size=size)
 
     @classmethod
-    def of(cls, member_type: Schema_T, size: int = None) -> ListSchema:
+    def of(cls, member_type: Schema_T, size: SizeType = None) -> ListSchema:
+        """Strict member type enforcement."""
         return cls(member_type=member_type, size=size)
 
     @classmethod
@@ -116,7 +135,7 @@ class ListSchema(Schema):
         raise NotImplementedError()
 
     def ensure(self, value: Value_T) -> Value_T:
-        """Returns `value` no in violation of specified schema."""
+        """Returns `value` not in violation of specified schema."""
         self.__check_type(value)
         self.__check_size(value)
         self.__check_member_types(value)
@@ -151,12 +170,23 @@ class ListSchema(Schema):
                                   f'found {member.__class__.__name__}({repr(member)}) at position {i}')
 
     def __check_size(self, value: Value_T) -> None:
-        if self.size is not None and len(value) != self.size:
+        if isinstance(self.size, int) and len(value) != self.size:
             raise SchemaError(f'Expected length {self.size}, found length {len(value)}')
+        if hasattr(self.member_type, 'size') and isinstance(self.member_type.size, Size):
+            if self.member_type.size is Size.ALL_EQUAL:
+                if not hasattr(value[0], '__len__'):
+                    raise SchemaError(f'Expected sized members, found {type(value[0])}({value[0]}) '
+                                      f'at position 0')
+                s0 = len(value[0])
+                for i, member in enumerate(value):
+                    si = len(member)
+                    if si != s0:
+                        raise SchemaError(f'Expected members of equal size, found size={si} at position {i} '
+                                          f'but size={s0} at position 0')
 
     @staticmethod
     def __check_type(value: list) -> None:
-        """If `self.member_type"""
+        """Verify `value` is a list."""
         if not isinstance(value, list):
             raise SchemaError(f'Expected list, found {value.__class__.__name__}({value})')
 
@@ -219,10 +249,10 @@ class DictSchema(Schema):
         {'a': [1, 2, 3], 'b': [4, 5, 6], 'c': [7, 8, 9]}
     """
 
-    __size: Optional[int] = None
+    __size: Optional[SizeType] = None
     __member_type: Optional[Dict_Schema_T] = None
 
-    def __init__(self, member_type: Dict_Schema_T = None, size: int = None) -> None:
+    def __init__(self, member_type: Dict_Schema_T = None, size: SizeType = None) -> None:
         """Directly initialize list with `member_type`."""
         self.member_type = member_type
         self.size = size
@@ -252,14 +282,14 @@ class DictSchema(Schema):
             raise TypeError(f'Unsupported member type \'{given}\'')
 
     @property
-    def size(self) -> Optional[int]:
+    def size(self) -> Optional[SizeType]:
         return self.__size
 
     @size.setter
-    def size(self, value: Optional[int]) -> None:
+    def size(self, value: Optional[SizeType]) -> None:
         if value is None:
             self.__size = None
-        elif isinstance(value, int):
+        elif isinstance(value, (int, Size)):
             if isinstance(self.member_type, dict):
                 raise SchemaDefinitionError(f'Cannot specify size if keys given')
             self.__size = value
@@ -267,12 +297,12 @@ class DictSchema(Schema):
             raise SchemaDefinitionError(f'Size must be an integer, given {value.__class__.__name__}({value})')
 
     @classmethod
-    def any(cls, size: int = None) -> DictSchema:
+    def any(cls, size: SizeType = None) -> DictSchema:
         """Allow any keys and member types, optionally require `size`."""
         return cls(size=size)
 
     @classmethod
-    def of(cls, member_type: Dict_Schema_T, keys: List[str] = None, size: int = None) -> DictSchema:
+    def of(cls, member_type: Dict_Schema_T, keys: List[str] = None, size: SizeType = None) -> DictSchema:
         """
         Specify required member types, optionally with keys. A `size` is only allowed if not
         specifying keys.
@@ -293,8 +323,7 @@ class DictSchema(Schema):
                 return cls(member_type=member_type, size=size)
 
     def ensure(self, value: Value_T) -> dict:
-        """
-        """
+        """Returns `value` not in violation of specified schema."""
         self.__check_type(value)
         if isinstance(self.member_type, dict):
             self.__check_dict(value)
