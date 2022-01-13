@@ -14,7 +14,7 @@ from datetime import datetime
 
 # external libs
 from antares_client import StreamingClient as _AntaresClient
-from antares_client._api.models import Locus  # noqa: protected
+from antares_client.models import Locus
 from astropy.time import Time
 
 # internal libs
