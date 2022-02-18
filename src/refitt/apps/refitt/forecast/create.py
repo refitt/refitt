@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Create new forecast."""
+"""Create new forecast(s)."""
 
 
 # type annotations
@@ -36,11 +36,11 @@ HELP = f"""\
 {USAGE}
 
 arguments:
-OBJECT                ID or alias for object to forecast.
+OBJECT                ID or alias for object.
 
 options:
-    --publish         Upload created forecast.
-    --print           Print ID of published forecast. 
+    --publish         Publish created model(s).
+    --print           Print ID of published model. 
 -h, --help            Show this message and exit.\
 """
 
