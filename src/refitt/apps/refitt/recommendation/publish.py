@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2021 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Publish recommendations and groups."""
+"""Publish recommendations."""
 
 
 # type annotations
@@ -23,8 +23,8 @@ from sqlalchemy.exc import IntegrityError
 # internal libs
 from ....core import typing
 from ....core.exceptions import log_exception
-from ....database.model import (Recommendation, Epoch, RecommendationTag,
-                                User, Facility, Model, Object, NotFound, )
+from ....database.model import (Recommendation, Epoch, RecommendationTag, Observation,
+                                User, Facility, Object, NotFound, )
 
 # public interface
 __all__ = ['RecommendationPublishApp', ]
@@ -33,8 +33,8 @@ __all__ = ['RecommendationPublishApp', ]
 PROGRAM = 'refitt recommendation publish'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} --user ID [--epoch ID] [--facility ID] --object ID --forecast ID --priority NUM [--print]
-       {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]] [--epoch ID] [--print] ...
+usage: {PROGRAM} --user ID --priority NUM (--object ID | --prediction ID) [--epoch ID] [--facility ID] [--print]
+       {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]] [--epoch ID] [--print]
 {__doc__}\
 """
 
@@ -42,24 +42,27 @@ HELP = f"""\
 {USAGE}
 
 options:
-    --epoch     ID    Epoch ID for recommendation(s).
-    --user      ID    User ID for recommendation.
-    --facility  ID    Facility ID for recommendation.
-    --object    ID    Object ID for recommendation.
-    --priority  NUM   Priority value for recommendation.
-    --forecast  ID    Forecast ID for recommendation.
-    --print           Write ID of generated resources to <stdout>.
-    --extra-fields  NAME[=TYPE] [NAME[=TYPE] ...]
-                      Extra fields to pull in as 'data'.
--h, --help            Show this message and exit.
+    --user          ID    User ID for recommendation.
+    --epoch         ID    Epoch ID for recommendation(s) (default <latest>).
+    --facility      ID    Facility ID for recommendation.
+    --object        ID    Object ID for recommendation.
+    --prediction    ID    Observation ID for prediction.
+    --priority      NUM   Priority value for recommendation.
+    --print               Write ID of generated resources to <stdout>.
+    --extra-fields        NAME[=TYPE] [NAME[=TYPE] ...] (extra fields to pull into 'data').
+    --from-file     PATH  File path for bulk recommendations.
+    --csv                 Specify file format as CSV.
+    --json                Specify file format as JSON.
+    --hdf5                Specify file format as HDF5.
+-h, --help                Show this message and exit.
 
 Create a single recommendation by specifying a --user and all the necessary
-values inline using the named options. The --user and --facility options may
+values inline with the named options. The --user and --facility options may
 be specified as alias or name, respectively, instead of their ID. If --epoch
 is not specified, the most recent epoch is used. If --facility is not specified
 and only one facility is registered for that user it will be used.
 
-Create a set of recommendations at once by using --from-file. If no PATH is 
+Publish a large batch of recommendations using --from-file. If no PATH is 
 specified, read from standard input. Format is derived from the file extension, 
 unless reading from standard input for which a format specifier (e.g., --csv) 
 is required.
@@ -76,9 +79,17 @@ In single recommendation mode, it is the discrete value
 log = logging.getLogger('refitt')
 
 
-REQUIRED_FIELDS = ['object_id', 'user_id', 'facility_id', 'forecast_id', 'priority']
-FILE_SCHEMA = {field: 'int' for field in REQUIRED_FIELDS}
+REQUIRED_FIELDS = ['object_id', 'user_id', 'facility_id', 'priority', 'prediction_id']
+FILE_SCHEMA = {
+    'object_id': int,
+    'user_id': int,
+    'facility_id': int,
+    'priority': int,
+    'prediction_id': int,
+}
 
+
+# type annotation for loader function
 LoaderImpl = Callable[[Union[str, IO], Optional[Dict[str, str]]], DataFrame]
 
 
@@ -124,11 +135,11 @@ class RecommendationPublishApp(Application):
     object: Optional[str] = None
     interface.add_argument('--object', default=None)
 
+    prediction: Optional[int] = None
+    interface.add_argument('--prediction', type=int, default=None)
+
     priority: Optional[int] = None
     interface.add_argument('--priority', type=int, default=None)
-
-    forecast: Optional[int] = None
-    interface.add_argument('--forecast', type=int, default=None)
 
     file_path: Optional[str] = None
     interface.add_argument('--from-file', nargs='?', const='-', default=None, dest='file_path')
@@ -201,7 +212,7 @@ class RecommendationPublishApp(Application):
     def file_mode(self) -> bool:
         """Check if we should be creating recommendations from a file."""
         if self.file_path is not None:
-            if not any((self.user, self.facility, self.object, self.priority, self.forecast)):
+            if not any((self.user, self.facility, self.object, self.priority, self.prediction)):
                 return True
             else:
                 raise ArgumentError('Cannot provide discrete values with --from-file')
@@ -210,7 +221,7 @@ class RecommendationPublishApp(Application):
 
     def check_missing_values(self) -> None:
         """Check if are creating a single recommendation."""
-        for name in ('user', 'object', 'priority', 'forecast'):
+        for name in ('user', 'priority'):
             given = getattr(self, name)
             if not given:
                 raise ArgumentError(f'Single recommendation mode: missing discrete --{name}')
@@ -218,18 +229,18 @@ class RecommendationPublishApp(Application):
     def create_from_values(self) -> None:
         """Create a new recommendation with the given inputs and print its new ID."""
         rec = self.build_recommendation(epoch_id=self.epoch_id, object_id=self.object_id, priority=self.priority,
-                                        forecast_id=self.forecast_id, user_id=self.user_id,
+                                        prediction_id=self.prediction_id, user_id=self.user_id,
                                         facility_id=self.facility_id, **self.extra_fields)
         recommendation, = self.add_recommendations([rec, ])
         self.write(recommendation.id)
 
     @staticmethod
     def build_recommendation(epoch_id: int, object_id: int, priority: int, user_id: int, facility_id: int,
-                             forecast_id: int, **data) -> Recommendation:
+                             prediction_id: int, **data) -> Recommendation:
         return Recommendation.from_dict({
             'epoch_id': epoch_id, 'tag_id': RecommendationTag.get_or_create(object_id).id,
             'priority': priority, 'object_id': object_id, 'user_id': user_id, 'facility_id': facility_id,
-            'predicted_observation_id': Model.from_id(forecast_id).observation.id,
+            'predicted_observation_id': prediction_id,
             'data': data
         })
 
@@ -279,21 +290,28 @@ class RecommendationPublishApp(Application):
             return Facility.from_name(self.facility).id
 
     @cached_property
-    def object_id(self) -> int:
+    def object_id(self) -> Optional[int]:
         """Unique object ID for recommendation."""
+        if not self.object:
+            if self.prediction_id:
+                return Observation.from_id(self.prediction_id).id
+            else:
+                raise ArgumentError(f'Must specify at least one of --object or --prediction')
         try:
             return int(self.object)
         except ValueError:
-            log.debug('Object was not integer, lookup up by tag name')
-            return Object.from_alias(tag=self.object).id
+            log.debug('Object was not integer, lookup up by name')
+            return Object.from_name(self.object).id
 
     @cached_property
-    def forecast_id(self) -> int:
-        """Unique model ID for forecast."""
+    def prediction_id(self) -> Optional[int]:
+        """Unique observation ID for prediction (from forecast models)."""
+        if not self.prediction:
+            return None
         try:
-            return int(self.forecast)
+            return int(self.prediction)
         except ValueError as error:
-            raise ArgumentError('Forecast ID must be an integer') from error
+            raise ArgumentError('Observation ID for --prediction must be an integer') from error
 
     def create_from_file(self) -> None:
         """Create many recommendations by file."""
