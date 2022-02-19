@@ -28,6 +28,7 @@ from rich.syntax import Syntax
 from ...web import request
 from ...web.api.response import STATUS_CODE
 from ...core.exceptions import log_exception
+from ...core.config import config
 from ...core import typing, ansi
 
 # public interface
@@ -38,7 +39,7 @@ PROGRAM = 'refitt api'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 usage: {PROGRAM} [-h] <method> <route> [<options>...] [[-d DATA | @FILE] | [-f FILE]] [-r] [-x NODE]
-       {PADDING} [--download] [--no-headers]
+       {PADDING} [--download] [--no-headers] [--admin]
 {__doc__}\
 """
 
@@ -70,6 +71,7 @@ options:
 -r, --raw                      Strip quotes on single extracted string literal.
     --no-headers               Do now show headers for TTY.
     --download                 Save file attachment.
+    --admin      TOKEN         Use alternate token (or use `config.api.admin_token`).          
 -h, --help                     Show this message and exit.\
 """
 
@@ -91,6 +93,10 @@ class APIClientApp(Application):
 
     options: List[str] = None
     interface.add_argument('options', nargs='*', default=[])
+
+    token: str = None
+    admin_token: str = None
+    interface.add_argument('--admin', action='store_const', const=True, dest='admin_token')
 
     show_headers: bool = True
     interface.add_argument('--no-headers', action='store_false', dest='show_headers')
@@ -120,7 +126,12 @@ class APIClientApp(Application):
         self.check_args()
         self.apply_settings()
         try:
-            self.format_output(**self.make_request())
+            if not self.admin_token:
+                self.format_output(**self.make_request())
+            else:
+                token = self.admin_token if isinstance(self.admin_token, str) else config.api.admin_token
+                with request.use_token(token):
+                    self.format_output(**self.make_request())
         except request.APIError as error:
             response, = error.args
             self.format_output(**{
@@ -145,9 +156,9 @@ class APIClientApp(Application):
     def request_method(self) -> Callable[..., dict]:
         """Bound method of `request` module by accessing named `method`."""
         method = self.method.lower()
-        try:
+        if method in ('get', 'put', 'delete', 'post'):
             return getattr(request, method)
-        except AttributeError:
+        else:
             raise ArgumentError(f'Method not supported \'{method}\'')
 
     @property
