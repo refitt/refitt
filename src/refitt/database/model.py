@@ -1312,16 +1312,22 @@ class Recommendation(ModelInterface):
     def _base_query(cls, user_id: int, epoch_id: int = None, facility_id: int = None,
                     limiting_magnitude: float = None) -> Query:
         """Build base recommendation query."""
+        # NOTE: we have to join on predicted_observation_id <- observation.id if we want to make a
+        #       comparison to limiting_magnitude, but we will now allow recommendations without an
+        #       explicit prediction. The join will filter out these rows, so we will only do it if
+        #       limiting_magnitude is requested
         session = _Session()
-        predicted = aliased(Observation)
-        query = session.query(cls).join(predicted, cls.predicted_observation_id == predicted.id)
+        if limiting_magnitude:
+            predicted = aliased(Observation)
+            query = session.query(cls).join(predicted, cls.predicted_observation_id == predicted.id)
+            query = query.filter(predicted.value <= limiting_magnitude)
+        else:
+            query = session.query(cls)
         query = query.filter(cls.user_id == user_id)
         query = query.filter(cls.epoch_id == (epoch_id or Epoch.latest(session).id))
         query = query.filter(cls.accepted.is_(False)).filter(cls.rejected.is_(False))
         if facility_id is not None:
             query = query.filter(cls.facility_id == facility_id)
-        if limiting_magnitude is not None:
-            query = query.filter(predicted.value <= limiting_magnitude)
         return query
 
     @classmethod
