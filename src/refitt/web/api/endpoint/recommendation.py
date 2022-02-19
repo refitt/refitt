@@ -153,6 +153,11 @@ info['Endpoints']['/recommendation']['GET'] = {
                 'Description': 'Include related data',
                 'Type': 'Boolean'
             },
+            'mode': {
+                'Description': 'Mode to filter/sort recommendations by',
+                'Type': 'String',
+                'Choices': Recommendation.QUERY_MODES,
+            },
         },
     },
     'Responses': {
