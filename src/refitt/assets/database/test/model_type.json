@@ -1,0 +1,12 @@
+[
+  {
+    "id": null,
+    "name": "conv_auto_encoder",
+    "description": "Original forecast model used by REFITT."
+  },
+  {
+    "id": null,
+    "name": "core_collapse_inference",
+    "description": "Analytical model for core-collapse SN (Bhagya Subrayan, et al)."
+  }
+]

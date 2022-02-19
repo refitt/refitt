@@ -41,7 +41,7 @@ refitt = {editable = true, path = "."}
 pytest = "*"
 pytest-cov = "*"
 hypothesis = "*"
-ipython = "*"
+ipython = "<8"  # 8.0.0 seems broken
 twine = "*"
 sphinx = "*"
 pydata-sphinx-theme = "*"
