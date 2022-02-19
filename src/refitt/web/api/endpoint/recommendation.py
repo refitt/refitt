@@ -62,7 +62,7 @@ info: dict = {
 
 
 def is_owner(recommendation: Recommendation, client: Client) -> bool:
-    """Permission denied for recommendations that do not belong to you (or not admin)."""
+    """Permission denied for recommendations that do not belong to you (and not admin)."""
     return recommendation.user_id == client.user_id or client.level <= 1
 
 
@@ -115,8 +115,8 @@ def get_next(client: Client) -> dict:
     mode = params.pop('mode')
     if mode not in Recommendation.QUERY_MODES:
         raise ParameterInvalid(f'Invalid mode: {mode}')
-    if 'limiting_magnitude' in params and not isinstance(params['limiting_magnitude'], (int, float)):
-        raise ParameterInvalid(f'Expected numeric value for \'limiting_magnitude\' '
+    if 'limiting_magnitude' in params and not isinstance(params['limiting_magnitude'], float):
+        raise ParameterInvalid(f'Expected decimal number for \'limiting_magnitude\' '
                                f'(given {params["limiting_magnitude"]})')
     for opt in 'epoch_id', 'facility_id', 'limit':
         if opt in params and not isinstance(params[opt], int):
