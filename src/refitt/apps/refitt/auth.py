@@ -23,6 +23,7 @@ from rich.syntax import Syntax
 # internal libs
 from ...database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
 from ...core.exceptions import log_exception
+from ...core.config import update_config
 from ...web.token import Cipher
 
 # public interface
@@ -32,7 +33,10 @@ __all__ = ['AuthApp', ]
 PROGRAM = 'refitt auth'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} <user> {{--gen-key [--level NUM] | --gen-secret | --gen-token [--expires SECONDS]}}
+usage: {PROGRAM} [-h] <user> --gen-key [--level NUM] [--update-config]
+       {PROGRAM} [-h] <user> --gen-secret [--update-config]
+       {PROGRAM} [-h] <user> --gen-token [--expires SECONDS] [--update-config]
+       {PROGRAM} [-h] <user> --revoke
        {PROGRAM} [-h] --gen-rootkey
 {__doc__}\
 """
@@ -52,8 +56,9 @@ actions:
     --revoke                 Revoke credentials.
     
 options:
--e, --expires     SEC        Seconds until token expires (default: {DEFAULT_EXPIRE_TIME}).
--l, --level       NUM        Apply specific authorization level (default: {DEFAULT_CLIENT_LEVEL}).
+-e, --expires        SEC     Seconds until token expires (default: {DEFAULT_EXPIRE_TIME}).
+-l, --level          NUM     Apply specific authorization level (default: {DEFAULT_CLIENT_LEVEL}).
+    --update-config          Update user configuration with new credentials.
 -h, --help                   Show this message and exit.\
 """
 
@@ -91,6 +96,9 @@ class AuthApp(Application):
     format_json: bool = False
     interface.add_argument('--json', action='store_true', dest='format_json')
 
+    update_config: bool = False
+    interface.add_argument('--update-config', action='store_true')
+
     exceptions = {
         NotFound: functools.partial(log_exception, logger=log.critical, status=exit_status.runtime_error),
         **Application.exceptions,
@@ -102,6 +110,8 @@ class AuthApp(Application):
         data = self.update_credentials()
         if data:
             self.format_output(data)
+            if self.update_config:
+                update_config('user', {'api': data})
 
     def check_arguments(self) -> None:
         """Additional logical validation of arguments."""
