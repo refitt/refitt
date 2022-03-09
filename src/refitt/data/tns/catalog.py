@@ -11,6 +11,7 @@ from typing import Union, IO, NamedTuple, Dict, TypeVar, Type
 # standard libs
 import os
 import re
+import json
 import logging
 from io import BytesIO
 from zipfile import ZipFile
@@ -163,22 +164,21 @@ class TNSCatalog:
     def __get_from_iau(self, name: str) -> TNSRecord:
         """Look up record against exact matching IAU `name`."""
         results = self.data.loc[self.data.name == name]
-        results = results.where(results.notnull(), None).replace({np.nan: None})  # clean up NaN/NA
         if len(results) == 0:
             raise self.NoRecordsFound(f'No record with name == {name}')
         if len(results) == 1:
-            return TNSRecord(**results.iloc[0].to_dict())
+            return TNSRecord(**json.loads(results.iloc[0].to_json()))
         else:
             raise self.MultipleRecordsFound(f'Multiple records with name == {name}')
 
     def __get_from_internal_names(self, name: str) -> TNSRecord:
         """Fuzzy match of `name` against `internal_names` list."""
         results = self.data.loc[self.data.internal_names.str.contains(name)]
-        results = results.where(results.notnull(), None).replace({np.nan: None})  # clean up NaN/NA
         if len(results) == 0:
             raise self.NoRecordsFound(f'No record with object_names ~ {name}')
         if len(results) == 1:
-            return TNSRecord(**results.iloc[0].to_dict())
+            # NOTE: only safe way to guarantee json-safe types is to rely on pandas to do it :(
+            return TNSRecord(**json.loads(results.iloc[0].to_json()))
         else:
             raise self.MultipleRecordsFound(f'Multiple records with object_names ~ {name}')
 
