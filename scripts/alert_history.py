@@ -181,8 +181,11 @@ HELP = f"""\
 {USAGE}
 
 options:
-    --print           Print output to console. 
--h, --help            Show this message and exit.\
+-f, --frequency   FREQ  Resampling frequency (default: 5min).
+-i, --interactive       Display live figure.
+-o, --output      PATH  Path to save figure as file.
+    --print             Print output to console.
+-h, --help              Show this message and exit.\
 """
 
 
