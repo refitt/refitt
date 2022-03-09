@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2019-2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Chart alert ingest frequency over time."""
@@ -181,8 +181,11 @@ HELP = f"""\
 {USAGE}
 
 options:
-    --print           Print output to console. 
--h, --help            Show this message and exit.\
+-f, --frequency   FREQ  Resampling frequency (default: 5min).
+-i, --interactive       Display live figure.
+-o, --output      PATH  Path to save figure as file.
+    --print             Print output to console.
+-h, --help              Show this message and exit.\
 """
 
 

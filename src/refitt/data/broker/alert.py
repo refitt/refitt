@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2019-2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Implements the common `Alert` interface for all broker clients."""
@@ -188,13 +188,7 @@ class AlertInterface(ABC):
         return obs_type.id
 
     def _get_object_id(self, object_type_id: int, session: Session) -> int:
-        """
-        Check for existing object by aliases or create new object if necessary.
-
-        Returns:
-            object_id (int):
-                The object ID for an existing or newly created object.
-        """
+        """Check for existing object by aliases or create new object if necessary."""
         for provider, name in self.object_aliases.items():
             try:
                 object = Object.from_alias(session, **{provider: name})
@@ -209,13 +203,7 @@ class AlertInterface(ABC):
         return object.id
 
     def _get_object_type_id(self, session: Session) -> int:
-        """
-        Check object type and persist to database if necessary.
-
-        Returns:
-            object_type_id (int):
-                The existing, or newly created, object_type_id.
-        """
+        """Check object type and persist to database if necessary."""
         if self.object_type_name is None:
             object_type_id = ObjectType.from_name('Unknown', session)
         else:

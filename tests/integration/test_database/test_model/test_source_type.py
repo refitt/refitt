@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2019-2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Database source_type model integration tests."""

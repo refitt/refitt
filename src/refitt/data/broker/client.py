@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2019-2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Implements the common `Client` interface for all broker clients."""

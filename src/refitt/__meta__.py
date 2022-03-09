@@ -1,11 +1,11 @@
-# SPDX-FileCopyrightText: 2019-2021 REFITT Team
+# SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
 """Package metadata for refitt."""
 
 
 __appname__     = 'refitt'
-__version__     = '0.22.0'
+__version__     = '0.23.0'
 __authors__     = ['Dan Milisavljevic <dmilisav@purdue.edu>',
                    'Niharika Sravan <nsravan@purdue.edu>',
                    'Geoffrey Lentner <glentner@purdue.edu>',
