@@ -42,13 +42,13 @@ class TokenNotFound(AuthError):
     """The access token was not found."""
 
 
-# NOTE: piggy back on cryptography
+# NOTE: piggyback on cryptography
 class TokenInvalid(AuthError):
     """The token is not legitimate."""
 
 
 class TokenExpired(AuthError):
-    """The token is past it's expiration datetime."""
+    """The token is past its expiration datetime."""
 
 
 class Cipher:
