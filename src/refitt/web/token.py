@@ -85,10 +85,10 @@ class Cipher:
         return cls(cls.load_rootkey(config))
 
     @staticmethod
-    def load_rootkey(__config: Configuration) -> RootKey:
+    def load_rootkey(cfg: Configuration) -> RootKey:
         """Load rootkey from configuration."""
         try:
-            return RootKey(__config.api.rootkey)
+            return RootKey(cfg.api.rootkey)
         except AttributeError as error:
             raise ConfigurationError('Missing \'api.rootkey\'') from error
 
