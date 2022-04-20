@@ -118,7 +118,6 @@ class CryptoDigits:
     def __init__(self, value: Union[str, bytes, CryptoDigits]) -> None:
         """Direct initialization with `value`."""
 
-        # allow passive coercion
         if isinstance(value, CryptoDigits):
             self._size = len(value)
             self.value = value.value
