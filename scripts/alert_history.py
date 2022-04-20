@@ -2,129 +2,65 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Chart alert ingest frequency over time."""
+"""Create graph of alert ingest frequency over time."""
 
 
 # type annotations
 from __future__ import annotations
-from typing import List, IO, Union, Optional
+from typing import List, IO, Union
 
 # standard libs
 import os
 import sys
 import logging
 from functools import cached_property
-from dataclasses import dataclass
 from datetime import datetime
+from dataclasses import dataclass
 
 # external libs
 from cmdkit.app import Application
 from cmdkit.cli import Interface
-from pandas import DataFrame, Series, Timestamp
+from pandas import DataFrame, Timestamp
 from matplotlib import pyplot as plot
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 
 # internal libs
-import refitt  # noqa: import to trigger logging setup
+from refitt.database.model import Level, Message
+from refitt.database.interface import Session
+
 
 # public interface
-__all__ = ['LogRecord', 'LogData', 'AlertChart', 'AlertHistoryApp', ]
+__all__ = ['LogData', 'AlertChart', 'AlertHistoryApp', ]
 
 
 log = logging.getLogger('refitt')
+Application.log_critical = log.critical
+Application.log_exception = log.critical
 
 
 @dataclass
-class LogRecord:
-    """Semi-structured data class for log records."""
-
-    date: str
-    time: str
-    hostname: str
-    level: str
-    topic: str
-    message: str
-
-    @classmethod
-    def from_line(cls, text: str) -> LogRecord:
-        """Parse elements of a line of `text` to a `LogRecord`."""
-        date, time, hostname, level, topic, *message = text.strip().split()
-        return cls(date, time, hostname, level, topic, ' '.join(message))
-
-
 class LogData:
     """Container list for log records."""
 
-    __freq: str = '5Min'
-    __records: List[LogRecord]
-
-    def __init__(self, records: Union[List[LogRecord], LogData] = None, freq: str = __freq) -> None:
-        """Direct initialization."""
-        self.records = records
-        self.freq = freq
-
-    @property
-    def records(self) -> List[LogRecord]:
-        return self.__records
-
-    @records.setter
-    def records(self, other: Optional[List[LogRecord]]) -> None:
-        """Verify log records."""
-        if other is None:
-            self.__records = []
-        elif isinstance(other, list):
-            for i, record in enumerate(other):
-                if not isinstance(record, LogRecord):
-                    raise TypeError(f'Expected type LogRecord, '
-                                    f'found {record.__class__.__name__}{record} at position {i + 1}')
-            else:
-                self.__records = other
-        else:
-            raise TypeError('LogData.records expects a list of type LogRecord')
-
-    @property
-    def freq(self) -> str:
-        return self.__freq
-
-    @freq.setter
-    def freq(self, other: str) -> None:
-        """Ensure `str` for `freq`."""
-        self.__freq = str(other)
+    records: List[datetime]
 
     @classmethod
-    def from_io(cls, stream: IO, freq: str = __freq) -> LogData:
-        """Build LogData from existing I/O `stream`."""
-        return cls(list(map(LogRecord.from_line, stream)), freq=freq)
-
-    @classmethod
-    def from_local(cls, filepath: str, freq: str = __freq, **options) -> LogData:
-        """Build LogData by reading from disk with `filepath`."""
-        with open(filepath, mode='r', **options) as stream:
-            return cls.from_io(stream, freq=freq)
-
-    @cached_property
-    def dataframe(self) -> DataFrame:
-        """Log records represented as a `pandas.DataFrame`."""
-        log.info('Building data frame of log records')
-        return DataFrame(self.records)
-
-    @cached_property
-    def datetime(self) -> Series:
-        """Datetime64[ns] representation of date+time columns."""
-        log.info('Processing date and time values')
-        return (self.dataframe.date + ' ' + self.dataframe.time).astype('datetime64[ns]')
-
-    @cached_property
-    def structured_data(self) -> DataFrame:
-        """Apply datetime values as index."""
-        return self.dataframe[[]].assign(timestamp=self.datetime)
-
-    @cached_property
-    def sampled_data(self) -> DataFrame:
-        """Resampled data frame on some frequency totals."""
-        log.info(f'Re-sampling data on {self.freq} totals')
-        return self.structured_data.assign(count=1).set_index('timestamp').resample(self.freq).sum()
+    def from_database(cls, since: Union[str, datetime] = '2022-01-01') -> LogData:
+        """Query database for timestamps of accepted alerts."""
+        info_level = Level.query().filter_by(name='INFO').one().id
+        since = since if isinstance(since, datetime) else datetime.fromisoformat(since)
+        log.info(f'Searching for alerts since {since}')
+        return cls([
+            ts for (ts, ) in (
+                Session.query(Message.time)
+                    .filter(Message.level_id == info_level,
+                            Message.time >= since.astimezone(),
+                            Message.text.regexp_match('^Accepted by filter'))
+                    .order_by(Message.time)
+                    .all()
+            )
+        ])
 
 
 class AlertChart:
@@ -148,8 +84,14 @@ class AlertChart:
     def draw(self) -> None:
         """Render chart."""
 
+        log.info(f'Aggregating events on {self.freq} basis')
+        local_tz = datetime.now().astimezone().tzinfo
+        data = DataFrame({'time': [dt.astimezone(local_tz).replace(tzinfo=None) for dt in self.data.records]})
+        data = data.sort_values(by='time').set_index('time').assign(count=1)
+        data = data.resample(self.freq).sum()
+
         line_format = dict(color='steelblue', lw=1, alpha=1, zorder=40)
-        self.data.sampled_data.plot(y='count', ax=self.ax, legend=False, **line_format)
+        data.plot(y='count', ax=self.ax, legend=False, **line_format)
 
         for side in 'top', 'bottom', 'left', 'right':
             self.ax.spines[side].set_color('gray')
@@ -173,7 +115,7 @@ class AlertChart:
 
 PROGRAM = 'alert-history'
 USAGE = f"""\
-usage: {PROGRAM} [-h] LOGFILE [-i] [-o PATH] ...
+usage: {PROGRAM} [-h] [-i] [-o PATH] [-s DATE] [-f FREQ] [--print]
 {__doc__}\
 """
 
@@ -182,6 +124,7 @@ HELP = f"""\
 
 options:
 -f, --frequency   FREQ  Resampling frequency (default: 5min).
+-s, --since       DATE  Date in ISO format (default: 2022-01-01).
 -i, --interactive       Display live figure.
 -o, --output      PATH  Path to save figure as file.
     --print             Print output to console.
@@ -194,11 +137,11 @@ class AlertHistoryApp(Application):
 
     interface = Interface(PROGRAM, USAGE, HELP)
 
-    source: str
-    interface.add_argument('source')
-
     freq: str = '5Min'
     interface.add_argument('-f', '--frequency', default=freq, dest='freq')
+
+    since: datetime = datetime.fromisoformat('2022-01-01')
+    interface.add_argument('-s', '--since', type=datetime.isoformat, default=since)
 
     output: str
     interface.add_argument('-o', '--output', default=None)
@@ -211,20 +154,14 @@ class AlertHistoryApp(Application):
 
     def run(self) -> None:
         """Run application."""
-        data = self.load(self.source)
+        data = LogData.from_database(since=self.since)
+        log.info(f'Found {len(data.records)} events')
         chart = AlertChart(data, self.freq)
         chart.draw()
         if self.interactive_mode:
             plot.show()
         if self.output:
             chart.save(self.output)
-
-    def load(self, filepath: str) -> LogData:
-        """Load logging data."""
-        if filepath == '-':
-            return LogData.from_io(sys.stdin, self.freq)
-        else:
-            return LogData.from_local(filepath, self.freq)
 
     @cached_property
     def output(self) -> IO:
