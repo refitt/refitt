@@ -10,6 +10,7 @@ from typing import List, Dict, Union, Any, Optional
 
 # standard libs
 import json
+import logging
 from datetime import datetime
 from abc import ABC, abstractmethod
 
@@ -19,6 +20,9 @@ from ...database.interface import Session
 
 # public interface
 __all__ = ['AlertInterface', 'AlertError', ]
+
+# initialize module level logger
+log = logging.getLogger(__name__)
 
 
 class AlertError(Exception):
@@ -226,4 +230,5 @@ class AlertInterface(ABC):
         observation_times = [observation.time.astimezone() for observation in query.all()]
         alert_times = [alert.observation_time.astimezone() for alert in self.previous]
         missing_alerts = [alert for alert, time in zip(self.previous, alert_times) if time not in observation_times]
+        log.info(f'Backfilling {len(missing_alerts)} previous alerts')
         return [alert.to_database() for alert in missing_alerts]
