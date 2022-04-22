@@ -12,7 +12,8 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface
 
 # internal libs
-from ....core.config import PATH, config
+from ....core.config import config
+from ....core.platform import path
 
 # public interface
 __all__ = ['WhichConfigApp', ]
@@ -57,5 +58,4 @@ class WhichConfigApp(Application):
         if site in ('default', 'env'):
             print(site)
         else:
-            path = PATH[site].config
-            print(f'{site}: {path}')
+            print(f'{site}: {path[site].config}')

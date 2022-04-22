@@ -20,7 +20,8 @@ from subprocess import Popen, TimeoutExpired
 from cmdkit.cli import ArgumentError
 
 # internal libs
-from refitt.core.config import get_site, config
+from refitt.core.config import config
+from refitt.core.platform import default_path
 
 # public interface
 __all__ = ['DaemonService', ]
@@ -81,8 +82,7 @@ class DaemonService:
     @property
     def pidfile(self) -> str:
         """Path to pidfile for this service."""
-        site = get_site()
-        return os.path.join(site['run'], f'refittd.{self.name}.pid')
+        return os.path.join(default_path.run, f'refittd.{self.name}.pid')
 
     @property
     def pid(self) -> int:

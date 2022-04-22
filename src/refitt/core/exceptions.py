@@ -17,7 +17,8 @@ import logging
 from cmdkit.app import exit_status
 
 # internal libs
-from .config import config, get_site
+from .config import config
+from .platform import default_path
 from ..comm.mail import Mail, UserAuth
 
 # public interface
@@ -36,7 +37,7 @@ def log_exception(exc: Exception, logger: Callable[[str], None], status: int) ->
 def handle_exception(logger: logging.Logger, exc: Exception) -> int:
     """Write exception to file and return exit code."""
     time = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-    path = os.path.join(get_site()['log'], f'exception-{time}.log')
+    path = os.path.join(default_path.log, f'exception-{time}.log')
     with open(path, mode='w') as stream:
         print(traceback.format_exc(), file=stream)
     msg = str(exc).replace('\n', ' - ')

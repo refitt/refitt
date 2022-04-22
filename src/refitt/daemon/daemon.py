@@ -15,7 +15,7 @@ import atexit
 import logging
 
 # internal libs
-from ..core.config import get_site
+from ..core.platform import default_path
 
 # public interface
 __all__ = ['Daemon', ]
@@ -31,7 +31,7 @@ class Daemon(abc.ABC):
     @property
     def pidfile(self) -> str:
         """Path to the refitt daemon pidfile."""
-        return os.path.join(get_site()['run'], 'refittd.pid')
+        return os.path.join(default_path.run, 'refittd.pid')
 
     def daemonize(self) -> None:
         """Daemonize class. UNIX double fork mechanism."""

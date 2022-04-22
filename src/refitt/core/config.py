@@ -12,44 +12,22 @@ Files:
 
 
 # standard libs
-import os
-import functools
 import logging
 
 # external libs
-from cmdkit.config import Namespace, Configuration, ConfigurationError  # noqa: unused
+from cmdkit.config import Namespace, Configuration, ConfigurationError
 from streamkit.core import config as _streamkit
 
+# internal libs
+from refitt.core.platform import path
+
 # public interface
-__all__ = ['config', 'get_config', 'get_site', 'update_config', 'SITE', 'PATH', 'DEFAULT',
+__all__ = ['config', 'get_config', 'update_config', 'DEFAULT',
            'ConfigurationError', 'Namespace', ]
 
 
 # module level logger
 log = logging.getLogger(__name__)
-
-
-CWD = os.getcwd()
-HOME = os.getenv('HOME')
-ROOT = os.getuid() == 0
-SITE = 'system' if ROOT else 'user'
-PATH = Namespace({
-    'system': {
-        'lib': '/var/lib/refitt',
-        'log': '/var/log/refitt',
-        'run': '/var/run/refitt',
-        'config': '/etc/refitt.toml'},
-    'user': {
-        'lib': f'{HOME}/.refitt/lib',
-        'log': f'{HOME}/.refitt/log',
-        'run': f'{HOME}/.refitt/run',
-        'config': f'{HOME}/.refitt/config.toml'},
-    'local': {
-        'lib': f'{CWD}/.refitt/lib',
-        'log': f'{CWD}/.refitt/log',
-        'run': f'{CWD}/.refitt/run',
-        'config': f'{CWD}/.refitt/config.toml'},
-})
 
 
 # environment variables and configuration files are automatically
@@ -91,28 +69,14 @@ DEFAULT = Namespace({
 })
 
 
-@functools.lru_cache(maxsize=None)
-def get_site(key: str = None) -> Namespace:
-    """
-    Return the file-system structure based on `key`.
-    Automatically creates directories if needed.
-    """
-    site = PATH[SITE] if key is None else PATH[key]
-    for folder in ['lib', 'log', 'run']:
-        if not os.path.isdir(site[folder]):
-            log.debug(f'creating directory {site[folder]}')
-            os.makedirs(site[folder], exist_ok=True)
-    return site
-
-
 def get_config() -> Configuration:
     """Load configuration."""
     return Configuration.from_local(env=True,
                                     prefix='REFITT',
                                     default=DEFAULT,
-                                    system=PATH.system.config,
-                                    user=PATH.user.config,
-                                    local=PATH.local.config)
+                                    system=path.system.config,
+                                    user=path.user.config,
+                                    local=path.local.config)
 
 
 # single global instance
@@ -136,10 +100,10 @@ def update_config(site: str, data: dict) -> None:
         ...    }
         ... })
     """
-    path = get_site(site).config
-    new_config = Namespace.from_local(path, ignore_if_missing=True)
+    config_path = path.get(site).config
+    new_config = Namespace.from_local(config_path, ignore_if_missing=True)
     new_config.update(data)
-    new_config.to_local(path)
+    new_config.to_local(config_path)
 
 
 # inject configuration back into streamkit library

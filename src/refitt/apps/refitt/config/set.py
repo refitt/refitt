@@ -17,7 +17,8 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ....core.config import SITE, PATH, update_config
+from ....core.config import update_config
+from ....core.platform import site, path, default_path
 
 # public interface
 __all__ = ['SetConfigApp', ]
@@ -83,19 +84,17 @@ class SetConfigApp(Application):
     def run(self) -> None:
         """Business logic for `config set`."""
 
-        site = SITE
-        path = PATH[site].config
+        config_path = default_path.config
         for key in ('local', 'user', 'system'):
             if getattr(self, key) is True:
-                site = key
-                path = PATH[site].config
+                config_path = path[key].config
 
-        if not os.path.exists(path):
-            raise RuntimeError(f'{path} does not exist')
+        if not os.path.exists(config_path):
+            raise RuntimeError(f'{config_path} does not exist')
 
         # parse variable specification
         if '.' not in self.varpath:
-            raise ArgumentError('missing section in variable path')
+            raise ArgumentError('Missing section in variable path')
 
         section, *subsections, variable = self.varpath.split('.')
 

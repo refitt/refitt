@@ -18,12 +18,11 @@ from zipfile import ZipFile
 from datetime import datetime, timedelta
 
 # external libs
-import numpy as np
 from pandas import DataFrame, read_csv
 
 # internal libs
 from .interface import TNSInterface, TNSQueryCatalogResult, TNSError
-from ...core.config import get_site
+from ...core.platform import default_path
 
 # public interface
 __all__ = ['TNSCatalog', 'TNSRecord', ]
@@ -63,7 +62,7 @@ class TNSCatalog:
         return cls(dataframe)
 
     DEFAULT_EXPIRED_AFTER = timedelta(days=1)
-    DEFAULT_CACHE_DIR = os.path.join(get_site().lib, 'tns')
+    DEFAULT_CACHE_DIR = os.path.join(default_path.lib, 'tns')
     DEFAULT_CACHE_PATH = os.path.join(DEFAULT_CACHE_DIR, 'tns_public_objects.csv')
 
     @classmethod

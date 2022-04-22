@@ -19,7 +19,7 @@ from cmdkit.config import Namespace
 import toml
 
 # internal libs
-from ....core.config import SITE, PATH
+from ....core.platform import path, default_path
 
 # public interface
 __all__ = ['GetConfigApp', ]
@@ -72,15 +72,15 @@ class GetConfigApp(Application):
     def run(self) -> None:
         """Business logic for `refitt config get`."""
 
-        path = PATH[SITE].config
+        config_path = default_path.config
         for site in ('local', 'user', 'system'):
             if getattr(self, site) is True:
-                path = PATH[site].config
+                config_path = path[site].config
 
-        if not os.path.exists(path):
-            raise RuntimeError(f'{path} does not exist')
+        if not os.path.exists(config_path):
+            raise RuntimeError(f'{config_path} does not exist')
 
-        config = Namespace.from_local(path)
+        config = Namespace.from_local(config_path)
 
         if self.varpath == '.':
             self.print_result(config)
@@ -107,11 +107,11 @@ class GetConfigApp(Application):
                 for subsection in subsections:
                     subpath += f'.{subsection}'
                     if not isinstance(config_section[subsection], Mapping):
-                        raise RuntimeError(f'"{subpath}" not a section in {path}')
+                        raise RuntimeError(f'"{subpath}" not a section in {config_path}')
                     else:
                         config_section = config_section[subsection]
             except KeyError as error:
-                raise RuntimeError(f'"{subpath}" not found in {path}') from error
+                raise RuntimeError(f'"{subpath}" not found in {config_path}') from error
 
         if self.expand:
             try:
@@ -119,12 +119,12 @@ class GetConfigApp(Application):
             except ValueError as error:
                 raise RuntimeError(*error.args) from error
             if value is None:
-                raise RuntimeError(f'"{variable}" not found in {path}')
+                raise RuntimeError(f'"{variable}" not found in {config_path}')
             self.print_result(value)
             return
 
         if variable not in config_section:
-            raise RuntimeError(f'"{self.varpath}" not found in {path}')
+            raise RuntimeError(f'"{self.varpath}" not found in {config_path}')
 
         self.print_result(config_section[variable])
 

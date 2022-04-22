@@ -17,7 +17,7 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface
 
 # internal libs
-from ....core.config import SITE, PATH
+from ....core.platform import path, default_path
 
 # public interface
 __all__ = ['EditConfigApp', ]
@@ -61,12 +61,10 @@ class EditConfigApp(Application):
 
     def run(self) -> None:
         """Open editor for configuration."""
-        site = SITE
-        path = PATH[site].config
+        config_path = default_path.config
         for key in ('local', 'user', 'system'):
             if getattr(self, key) is True:
-                site = key
-                path = PATH[site].config
+                config_path = path.get(key).config
 
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
@@ -76,4 +74,4 @@ class EditConfigApp(Application):
             raise RuntimeError('EDITOR must be set')
 
         editor = os.environ['EDITOR']
-        run([editor, path])
+        run([editor, config_path])
