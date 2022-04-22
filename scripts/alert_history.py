@@ -26,7 +26,7 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 
 # internal libs
-from refitt.database.model import Level, Message
+from refitt.database.model import Observation, Source
 from refitt.database.interface import Session
 
 
@@ -48,16 +48,15 @@ class LogData:
     @classmethod
     def from_database(cls, since: Union[str, datetime] = '2022-01-01') -> LogData:
         """Query database for timestamps of accepted alerts."""
-        info_level = Level.query().filter_by(name='INFO').one().id
+        antares = Source.from_name('antares')
         since = since if isinstance(since, datetime) else datetime.fromisoformat(since)
         log.info(f'Searching for alerts since {since}')
         return cls([
             ts for (ts, ) in (
-                Session.query(Message.time)
-                    .filter(Message.level_id == info_level,
-                            Message.time >= since.astimezone(),
-                            Message.text.regexp_match('^Accepted by filter'))
-                    .order_by(Message.time)
+                Session.query(Observation.recorded)
+                    .filter(Observation.recorded >= since.astimezone(),
+                            Observation.source_id == antares.id)
+                    .order_by(Observation.recorded)
                     .all()
             )
         ])
