@@ -215,7 +215,7 @@ class ModelBase:
             session.add_all(records)
             session.commit()
             for record in records:
-                log.info(f'Added {cls.__tablename__} ({record.id})')
+                log.debug(f'Added {cls.__tablename__} ({record.id})')
             return records
         except (IntegrityError, DatabaseError):
             session.rollback()
