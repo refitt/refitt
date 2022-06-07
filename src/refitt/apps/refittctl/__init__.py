@@ -15,7 +15,7 @@ import subprocess
 
 # internal libs
 from ...daemon.client import DaemonClient
-from ...core.exceptions import log_exception, handle_exception
+from ...core.exceptions import handle_exception, write_traceback
 from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
 
 # external libs
@@ -88,10 +88,10 @@ class RefittControllerApp(Application):
 
     exceptions = {
         RuntimeError:
-            functools.partial(log_exception, logger=log.critical,
+            functools.partial(handle_exception, logger=log,
                               status=exit_status.runtime_error),
         ConnectionRefusedError: daemon_unavailable,
-        Exception: functools.partial(handle_exception, log),
+        Exception: functools.partial(write_traceback, log),
     }
 
     def run(self) -> None:

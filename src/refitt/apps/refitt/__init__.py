@@ -15,7 +15,7 @@ from cmdkit.cli import Interface
 from cmdkit.config import ConfigurationError
 
 # internal libs
-from ...core.exceptions import log_exception, handle_exception
+from ...core.exceptions import handle_exception, write_traceback
 from ...__meta__ import (__version__, __description__, __copyright__, __developer__,
                          __contact__, __website__, __ascii_art__)
 
@@ -32,9 +32,9 @@ Application.log_critical = log.critical
 Application.log_exception = log.exception
 Application.exceptions = {
     **Application.exceptions,
-    ConfigurationError: functools.partial(log_exception, logger=log.critical, status=exit_status.bad_config),
-    RuntimeError: functools.partial(log_exception, logger=log.error, status=exit_status.runtime_error),
-    Exception: functools.partial(handle_exception, log),
+    ConfigurationError: functools.partial(handle_exception, logger=log, status=exit_status.bad_config),
+    RuntimeError: functools.partial(handle_exception, logger=log, status=exit_status.runtime_error),
+    Exception: functools.partial(write_traceback, logger=log),
 }
 
 

@@ -34,7 +34,7 @@ from rich.table import Table
 from pandas import DataFrame
 
 # internal libs
-from ....core.exceptions import log_exception
+from ....core.exceptions import handle_exception
 from ....database.model import ModelInterface, tables
 from ....database.interface import Session
 
@@ -106,11 +106,11 @@ class QueryDatabaseApp(Application):
     interface.add_argument('-x', '--extract-values', action='store_true')
 
     exceptions = {
-        InvalidRequestError: partial(log_exception, logger=log.critical,
+        InvalidRequestError: partial(handle_exception, logger=log,
                                      status=exit_status.bad_argument),
-        ProgrammingError: partial(log_exception, logger=log.critical,
+        ProgrammingError: partial(handle_exception, logger=log,
                                   status=exit_status.bad_argument),
-        DataError: partial(log_exception, logger=log.critical,
+        DataError: partial(handle_exception, logger=log,
                            status=exit_status.bad_argument),
         **Application.exceptions,
     }

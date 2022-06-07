@@ -22,7 +22,7 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 # internal libs
-from ...core.exceptions import log_exception
+from ...core.exceptions import handle_exception
 from ...database.model import Object
 
 # public interface
@@ -63,7 +63,7 @@ class QueryObjectApp(Application):
     interface.add_argument('--json', action='store_true', dest='format_json')
 
     exceptions = {
-        Object.NotFound: partial(log_exception, logger=log.critical, status=exit_status.runtime_error),
+        Object.NotFound: partial(handle_exception, logger=log, status=exit_status.runtime_error),
         **Application.exceptions,
     }
 

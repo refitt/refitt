@@ -1,91 +1,60 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Common exceptions and error handling."""
+"""Core exception handling."""
 
 
 # type annotations
-from typing import Callable, Union, List
+from typing import Union
 
-# standard libs
+# standard libraries
 import os
-import datetime
-import traceback
+import sys
 import logging
+import functools
+import traceback
+from datetime import datetime
 
 # external libs
 from cmdkit.app import exit_status
+from cmdkit.config import Namespace
 
 # internal libs
-from .config import config
-from .platform import default_path
-from ..comm.mail import Mail, UserAuth
+from refitt.core.ansi import faint, bold, magenta
+from refitt.core.platform import default_path
 
 # public interface
-__all__ = ['log_exception', 'handle_exception', ]
+__all__ = ['display_critical', 'traceback_filepath', 'write_traceback',
+           'handle_exception', ]
 
 
-# initialize module level logger
-log = logging.getLogger(__name__)
+def display_critical(error: Union[Exception, str], module: str = None) -> None:
+    """Apply basic formatting to exceptions (i.e., without logging)."""
+    text = error if isinstance(error, str) else f'{error.__class__.__name__}: {error}'
+    name = '' if not module else faint(f'[{module}]')
+    print(f'{bold(magenta("CRITICAL"))} {name} {text}', file=sys.stderr)
 
-def log_exception(exc: Exception, logger: Callable[[str], None], status: int) -> int:
-    """Log the exception and exit with `status`."""
-    logger(str(exc))
+
+def traceback_filepath(path: Namespace = None) -> str:
+    """Construct filepath for writing traceback."""
+    path = path or default_path
+    time = datetime.now().strftime('%Y%m%d-%H%M%S')
+    return os.path.join(path.log, f'exception-{time}.log')
+
+
+def write_traceback(exc: Exception, site: Namespace = None, logger: logging.Logger = None,
+                    status: int = exit_status.uncaught_exception, module: str = None) -> int:
+    """Write exception to file and return exit code."""
+    write = functools.partial(display_critical, module=module) if not logger else logger.critical
+    path = traceback_filepath(site)
+    with open(path, mode='w') as stream:
+        print(traceback.format_exc(), file=stream)
+    write(f'{exc.__class__.__name__}: ' + str(exc).replace('\n', ' - '))
+    write(f'Exception traceback written to {path}')
     return status
 
 
-def handle_exception(logger: logging.Logger, exc: Exception) -> int:
-    """Write exception to file and return exit code."""
-    time = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-    path = os.path.join(default_path.log, f'exception-{time}.log')
-    with open(path, mode='w') as stream:
-        print(traceback.format_exc(), file=stream)
-    msg = str(exc).replace('\n', ' - ')
-    logger.critical(f'{exc.__class__.__name__}: {msg}')
-    logger.critical(f'Exception traceback written to {path}')
-    if 'exceptions' in config and 'mailto' in config.exceptions:
-        email_exception(config.exceptions.mailto, path)
-        logger.critical(f'Exception traceback mailed to {config.exceptions.mailto}')
-    return exit_status.uncaught_exception
-
-
-MAIL = """\
-This is an automated message from the REFITT system. \
-An uncaught exception has occurred. \
-Please see attached.
-
-"""
-
-
-def email_exception(recipient: Union[str, List[str]], filepath: str) -> None:
-    """Send an email to configured recipient."""
-    if 'mail' not in config:
-        log.error('Missing \'mail\' section in configuration')
-        return
-    try:
-        address = config.mail.address
-        log.debug(f'Sending from {address}')
-    except AttributeError:
-        log.error('Missing \'mail.address\'')
-        return
-    try:
-        username = config.mail.username
-    except AttributeError:
-        username = None
-    try:
-        password = config.mail.password
-    except AttributeError:
-        password = None
-    auth = None
-    if username is None and password is None:
-        log.debug('No username/password provided')
-    elif username is None or password is None:
-        log.error(f'Must provide username and password together')
-        return
-    else:
-        auth = UserAuth(username, password)
-    host = config.mail.get('host', '127.0.0.1')
-    port = config.mail.get('port', 0)
-    mail = Mail(address, recipient, text=MAIL, attach=filepath,
-                subject='Uncaught exception occurred within REFITT')
-    mail.send(host, port, auth)
+def handle_exception(exc: Exception, logger: logging.Logger, status: int) -> int:
+    """Log the exception argument and exit with `status`."""
+    logger.critical(f'{exc.__class__.__name__}: ' + str(exc).replace('\n', ' - '))
+    return status

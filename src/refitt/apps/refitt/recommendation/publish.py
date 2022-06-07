@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from ....core import typing
-from ....core.exceptions import log_exception
+from ....core.exceptions import handle_exception
 from ....database.model import (Recommendation, Epoch, RecommendationTag, Observation,
                                 User, Facility, Object, NotFound, )
 
@@ -159,13 +159,13 @@ class RecommendationPublishApp(Application):
     interface.add_argument('--print', action='store_true', dest='verbose')
 
     exceptions = {
-        FileNotFoundError: partial(log_exception, logger=log.critical,
+        FileNotFoundError: partial(handle_exception, logger=log,
                                    status=exit_status.bad_argument),
-        IOError: partial(log_exception, logger=log.critical,
+        IOError: partial(handle_exception, logger=log,
                          status=exit_status.bad_argument),
-        NotFound: partial(log_exception, logger=log.critical,
+        NotFound: partial(handle_exception, logger=log,
                           status=exit_status.runtime_error),
-        IntegrityError: partial(log_exception, logger=log.critical,
+        IntegrityError: partial(handle_exception, logger=log,
                                 status=exit_status.runtime_error),
         **Application.exceptions,
     }

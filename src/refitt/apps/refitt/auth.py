@@ -22,7 +22,7 @@ from rich.syntax import Syntax
 
 # internal libs
 from ...database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
-from ...core.exceptions import log_exception
+from ...core.exceptions import handle_exception
 from ...core.config import update_config
 from ...web.token import Cipher
 
@@ -100,7 +100,7 @@ class AuthApp(Application):
     interface.add_argument('--update-config', action='store_true')
 
     exceptions = {
-        NotFound: functools.partial(log_exception, logger=log.critical, status=exit_status.runtime_error),
+        NotFound: functools.partial(handle_exception, logger=log, status=exit_status.runtime_error),
         **Application.exceptions,
     }
 

@@ -27,7 +27,7 @@ from rich.syntax import Syntax
 # internal libs
 from ...web import request
 from ...web.api.response import STATUS_CODE
-from ...core.exceptions import log_exception
+from ...core.exceptions import handle_exception
 from ...core.config import config
 from ...core import typing, ansi
 
@@ -117,7 +117,7 @@ class APIClientApp(Application):
     interface.add_argument('-r', '--raw', action='store_true', dest='display_raw')
 
     exceptions = {
-        ConnectionError: functools.partial(log_exception, logger=log.error, status=exit_status.runtime_error),
+        ConnectionError: functools.partial(handle_exception, logger=log, status=exit_status.runtime_error),
         **Application.exceptions,
     }
 

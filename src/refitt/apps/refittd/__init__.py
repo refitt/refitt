@@ -24,7 +24,7 @@ from cmdkit.cli import Interface, ArgumentError
 from ...daemon import Daemon, DaemonService, DaemonServer
 from ...core.platform import default_path
 from ...core.config import config as base_config, get_config, ConfigurationError, Namespace
-from ...core.exceptions import handle_exception
+from ...core.exceptions import write_traceback
 from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
 
 # public interface
@@ -95,7 +95,7 @@ class RefittDaemonApp(Application, Daemon):
     actions: Tuple[str] = ('restart', 'reload', 'flush')
 
     exceptions = {
-        Exception: functools.partial(handle_exception, log),
+        Exception: functools.partial(write_traceback, logger=log),
     }
 
     def run(self) -> None:

@@ -25,10 +25,14 @@ from email.utils import formatdate
 
 # external libs
 from pandas import read_csv
+from cmdkit.config import ConfigurationError
+
+# internal libs
+from refitt.core.config import config
 
 # public interface
 __all__ = ['UserAuth', 'Mail', 'MailServer', 'MailTemplate', 'TestMail', 'RecommendationMail',
-           'templates', 'TEMPLATES', ]
+           'templates', 'TEMPLATES', 'email_exception']
 
 
 # initialize module level logger
@@ -613,7 +617,47 @@ templates = {
     'recommend': RecommendationMail,
 }
 
+
 TEMPLATES = f"""\
 test         {TestMail.__doc__}
 recommend    {RecommendationMail.__doc__}\
 """
+
+
+EXCEPTION_MAIL = """\
+This is an automated message from the REFITT system. \
+An uncaught exception has occurred. \
+Please see attached.
+
+"""
+
+
+def email_exception(recipient: Union[str, List[str]], filepath: str) -> None:
+    """Send email to configured recipient."""
+    if 'mail' not in config:
+        raise ConfigurationError('Missing \'mail\' section in configuration')
+    try:
+        address = config.mail.address
+        log.debug(f'Sending from {address}')
+    except AttributeError:
+        raise ConfigurationError('Missing \'mail.address\'')
+    try:
+        username = config.mail.username
+    except AttributeError:
+        username = None
+    try:
+        password = config.mail.password
+    except AttributeError:
+        password = None
+    auth = None
+    if username is None and password is None:
+        log.debug('No username/password provided')
+    elif username is None or password is None:
+        raise ConfigurationError(f'Must provide username and password together')
+    else:
+        auth = UserAuth(username, password)
+    host = config.mail.get('host', '127.0.0.1')
+    port = config.mail.get('port', 0)
+    mail = Mail(address, recipient, text=EXCEPTION_MAIL, attach=filepath,
+                subject='Uncaught exception occurred within REFITT')
+    mail.send(host, port, auth)

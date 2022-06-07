@@ -14,7 +14,7 @@ from cmdkit.cli import Interface
 from sqlalchemy.exc import DatabaseError
 
 # internal libs
-from ....core.exceptions import log_exception
+from ....core.exceptions import handle_exception
 from ....database import create_all, drop_all, load_all
 
 # public interface
@@ -58,7 +58,7 @@ class InitDatabaseApp(Application):
     load_interface.add_argument('--test', action='store_true', dest='load_test')
 
     exceptions = {
-        DatabaseError: partial(log_exception, logger=log.critical,
+        DatabaseError: partial(handle_exception, logger=log,
                                status=exit_status.runtime_error),
         **Application.exceptions
     }

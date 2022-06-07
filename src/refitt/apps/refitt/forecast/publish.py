@@ -6,8 +6,6 @@
 
 # type annotations
 from __future__ import annotations
-
-import functools
 from typing import List, IO
 
 # standard libs
@@ -22,7 +20,7 @@ from cmdkit.cli import Interface, ArgumentError
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from ....core.exceptions import log_exception
+from ....core.exceptions import handle_exception
 from ....core.schema import SchemaError
 from ....data.forecast import load_model
 from ....data.forecast.model import ModelData
@@ -74,13 +72,13 @@ class ForecastPublishApp(Application):
     interface.add_argument('--print', action='store_true', dest='verbose')
 
     exceptions = {
-        IntegrityError: partial(log_exception, logger=log.critical,
+        IntegrityError: partial(handle_exception, logger=log,
                                 status=exit_status.runtime_error),
-        SchemaError: partial(log_exception, logger=log.critical,
+        SchemaError: partial(handle_exception, logger=log,
                              status=exit_status.runtime_error),
-        RuntimeError: partial(log_exception, logger=log.critical,
+        RuntimeError: partial(handle_exception, logger=log,
                               status=exit_status.runtime_error),
-        ModelData.Error: partial(log_exception, logger=log.critical,
+        ModelData.Error: partial(handle_exception, logger=log,
                                  status=exit_status.runtime_error),
         **Application.exceptions,
     }
