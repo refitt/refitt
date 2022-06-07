@@ -13,7 +13,7 @@ import re
 import sys
 import json
 import logging
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import partial, cached_property
 from dataclasses import dataclass
@@ -182,7 +182,8 @@ class Selector(ABC):
         """Build entities first from arguments."""
         return cls([EntityRelation.from_arg(arg) for arg in args])
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def model(self) -> Type[ModelInterface]:
         """The primary model interface for the selector."""
 

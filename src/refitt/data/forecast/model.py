@@ -12,7 +12,7 @@ from typing import Set, Union, Type, IO, Optional
 import json
 import functools
 from datetime import datetime
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 
 # external libs
 from astropy.time import Time
@@ -81,11 +81,13 @@ class ModelData(ABC):
     class Error(Exception):
         """Errors common to model data interface."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def name(self: ModelData) -> str:
         """The unique name defining this forecast type in the database."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def schema(self: ModelData) -> ModelSchema:
         """Schema definition for model data."""
 
@@ -190,10 +192,12 @@ class ModelData(ABC):
         """MJD plus one day."""
         return Time(self.mjd + 1, format='mjd', scale='utc').datetime
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def observation_value(self: ModelData) -> Optional[float]:
         """Value for published observation record."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def observation_error(self: ModelData) -> Optional[float]:
         """Error for published observation record."""

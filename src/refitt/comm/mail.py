@@ -13,7 +13,7 @@ from typing import List, Dict, Union, Optional
 import os
 import io
 import logging
-from abc import abstractproperty
+from abc import abstractmethod
 from datetime import datetime
 from smtplib import SMTP
 from dataclasses import dataclass
@@ -477,7 +477,8 @@ class MailServer:
 class MailTemplate(Mail):
     """Special purpose Mail with a custom formatted body."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def required(self) -> int:
         """The number of required positional arguments."""
 

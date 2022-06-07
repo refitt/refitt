@@ -9,7 +9,7 @@ from typing import Tuple, Dict, Callable, Union, IO
 
 # standard libs
 import re
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 from datetime import timedelta
 from functools import cached_property
 
@@ -37,15 +37,18 @@ FILENAME_PATTERN: re.Pattern = re.compile(r'^attachment; filename=(.*)$')
 class EndpointBase(ABC):
     """Shared logic and helper methods for Endpoint test classes."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def route(self) -> str:
         """Base route needed for common tests."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def admin(self) -> str:
         """User alias for admin role if needed."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def user(self) -> str:
         """User alias for api target if needed."""
 
