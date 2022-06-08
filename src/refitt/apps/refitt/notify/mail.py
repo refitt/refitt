@@ -113,8 +113,8 @@ class MailApp(Application):
     message_interface.add_argument('--text', action='store_true', dest='message_text')
     message_interface.add_argument('--html', action='store_true', dest='message_html')
 
-    attachments: List[str] = []
-    interface.add_argument('-a', '--attach', nargs='+', default=attachments, dest='attachments')
+    attachments: List[str] = None
+    interface.add_argument('-a', '--attach', nargs='+', default=None, dest='attachments')
 
     template: str = None
     interface.add_argument('-t', '--template', default=None)
