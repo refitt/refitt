@@ -62,6 +62,12 @@ class QueryObjectApp(Application):
     format_json: bool = False
     interface.add_argument('--json', action='store_true', dest='format_json')
 
+    include_data: bool = False
+    interface.add_argument('-d', '--data', action='store_true', dest='include_data')
+
+    include_history: bool = False
+    interface.add_argument('-l', '--history', action='store_true', dest='include_history')
+
     exceptions = {
         Object.NotFound: partial(handle_exception, logger=log, status=exit_status.runtime_error),
         **Application.exceptions,
@@ -69,7 +75,14 @@ class QueryObjectApp(Application):
 
     def run(self) -> None:
         """Business logic of command."""
-        self.write(self.load_object().to_json())
+        info = self.load_object().to_json()
+        data = info.pop('data')
+        hist = data.pop('history')
+        if self.include_data:
+            info['data'] = data
+        if self.include_history:
+            info['history'] = hist
+        self.write(info)
 
     def load_object(self) -> Object:
         """Load object from database."""
