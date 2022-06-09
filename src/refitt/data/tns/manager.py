@@ -49,7 +49,7 @@ class TNSManager(ABC):
         The `name` can be any recognizable designation (e.g., IAU, ZTF, Antares).
 
         The object 'type' and 'redshift' are taken from TNS along with other 'internal_names'.
-        The object record in the database is updated with these fields and 'data.history'
+        The object record in the database is updated with these fields and 'history'
         is appended with the previous values (if different).
 
         The full TNS payload is retained within `object.data.tns` less the 'photometry'.
@@ -100,7 +100,7 @@ class TNSQueryManager(TNSManager):
     def __build_info(self, iau_name: str, obj: Object, tns_response: TNSObjectSearchResult) -> dict:
         """
         Build attributes for `Object.update` method.
-        If the new info is different, the `data.history` section is appended.
+        If the new info is different, the `history` section is appended.
         """
         type_id = self.__get_type_id(tns_response)
         redshift = tns_response.redshift
@@ -111,7 +111,8 @@ class TNSQueryManager(TNSManager):
         if type_changed or redshift_changed:  # keep history of previous values
             return {
                 'type_id': type_id, 'redshift': redshift, 'aliases': {**obj.aliases, 'iau': iau_name},
-                'data': {**obj.data, 'history': self.__build_history(obj), 'tns': tns_response.data}
+                'history': self.__build_history(obj),
+                'data': {**obj.data, 'tns': tns_response.data}
             }
         elif iau_name_changed or tns_data_changed:
             return {
@@ -123,7 +124,7 @@ class TNSQueryManager(TNSManager):
 
     def __build_history(self, obj: Object) -> dict:
         """Build 'history' data dictionary."""
-        previous_history = obj.data.get('history', {})
+        previous_history = dict(obj.history)
         return {**previous_history, self.__get_timestamp(): {'type_id': obj.type_id, 'redshift': obj.redshift}}
 
     @staticmethod
@@ -183,7 +184,7 @@ class TNSCatalogManager(TNSManager):
 
     def __build_history(self, obj: Object) -> dict:
         """Build 'history' data dictionary."""
-        previous_history = obj.data.get('history', {})
+        previous_history = obj.history
         return {**previous_history, self.__get_timestamp(): {'type_id': obj.type_id, 'redshift': obj.redshift}}
 
     @staticmethod
@@ -199,7 +200,7 @@ class TNSCatalogManager(TNSManager):
     def __build_info(self, obj: Object, record: TNSRecord) -> dict:
         """
         Build attributes for `Object.update` method.
-        If the new info is different, the `data.history` section is appended.
+        If the new info is different, the `history` section is appended.
         """
         type_id = self.__get_type_id(record)
         redshift = record.redshift
@@ -208,7 +209,8 @@ class TNSCatalogManager(TNSManager):
         if type_changed or redshift_changed:  # keep history of previous values
             return {
                 'type_id': type_id, 'redshift': redshift, 'aliases': {**obj.aliases, 'iau': record.name},
-                'data': {**obj.data, 'history': self.__build_history(obj), 'tns': record.to_json()}
+                'history': self.__build_history(obj),
+                'data': {**obj.data, 'tns': record.to_json()}
             }
         elif 'iau' not in obj.aliases:
             return {

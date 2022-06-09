@@ -652,11 +652,12 @@ class Object(ModelInterface):
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(ObjectType.id), nullable=True)
-    pred_type_id = Column('pred_type_id', Integer(), ForeignKey(ObjectType.id), nullable=True)
+    pred_type = Column('pred_type', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     aliases = Column('aliases', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     ra = Column('ra', Float(), nullable=False)
     dec = Column('dec', Float(), nullable=False)
     redshift = Column('redshift', Float(), nullable=True)
+    history = Column('history', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
 
     type = relationship(ObjectType, foreign_keys=[type_id, ])
@@ -665,11 +666,12 @@ class Object(ModelInterface):
     columns = {
         'id': int,
         'type_id': int,
-        'pred_type_id': int,
+        'pred_type': dict,
         'aliases': dict,
         'ra': float,
         'dec': float,
         'redshift': float,
+        'history': dict,
         'data': dict,
     }
 

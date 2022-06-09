@@ -76,12 +76,10 @@ class QueryObjectApp(Application):
     def run(self) -> None:
         """Business logic of command."""
         info = self.load_object().to_json()
-        data = info.pop('data')
-        hist = data.pop('history')
-        if self.include_data:
-            info['data'] = data
-        if self.include_history:
-            info['history'] = hist
+        if not self.include_data:
+            info.pop('data')
+        if not self.include_history:
+            info.pop('history')
         self.write(info)
 
     def load_object(self) -> Object:
