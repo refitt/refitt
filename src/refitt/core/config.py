@@ -2,12 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Runtime configuration for REFITT.
-
-Files:
-         /etc/refitt.toml    System
-    ~/.refitt/config.toml    User
-      .refitt/config.toml    Local
+Runtime configuration.
 """
 
 
@@ -29,7 +24,7 @@ from refitt.core.platform import path, default_path
 from refitt.core.exceptions import write_traceback, display_warning
 
 # public interface
-__all__ = ['config', 'update', 'default', 'ConfigurationError', 'Namespace', ]
+__all__ = ['config', 'update', 'default', 'ConfigurationError', 'Namespace', 'blame', ]
 
 
 DEFAULT_LOGGING_STYLE = 'default'
