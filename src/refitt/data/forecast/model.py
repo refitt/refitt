@@ -201,3 +201,8 @@ class ModelData(ABC):
     @abstractmethod
     def observation_error(self: ModelData) -> Optional[float]:
         """Error for published observation record."""
+
+    @property
+    @abstractmethod
+    def object_pred_type(self: ModelData) -> Optional[dict]:
+        """Predicted object type (e.g., {'id': 42, 'name': 'SN Ia', 'score': 0.7931})."""

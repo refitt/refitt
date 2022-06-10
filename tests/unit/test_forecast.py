@@ -134,7 +134,7 @@ class TestConvAutoEncoder(ModelTestBase):
             'mjd': random.uniform(59_260, 60_000),
             'num_obs': random.randint(3, 20),
             'filter': random.choice(['g-ztf', 'r-ztf']),
-            'class': [random.choices(string.ascii_uppercase, k=3), random.random()],
+            'class': [['SN Ia', ], 0.793],
             'phase': 'rising',
             'next_mag_mean': random.uniform(14, 20),
             'next_mag_sigma': random.random(),

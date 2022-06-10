@@ -11,7 +11,7 @@ from typing import List, IO
 # standard libs
 import os
 import sys
-import logging
+from datetime import datetime
 from functools import partial, cached_property
 
 # external libs
@@ -25,6 +25,7 @@ from ....core.logging import Logger
 from ....core.schema import SchemaError
 from ....data.forecast import load_model
 from ....data.forecast.model import ModelData
+from ....database.model import Object
 
 # public interface
 __all__ = ['ForecastPublishApp', ]
@@ -89,11 +90,13 @@ class ForecastPublishApp(Application):
         self.check_args()
         self.check_sources()
         if self.observation_id:
-            self.publish(*map(self.load, self.sources))
+            models = [self.load(source) for source in self.sources]
         else:
             primary_model = self.load(self.primary_filepath)
             self.observation_id = primary_model.publish_observation(epoch_id=self.epoch_id).id
-            self.publish(primary_model, *map(self.load, self.sources))
+            models = [primary_model, ] + [self.load(source) for source in self.sources]
+        self.publish(*models)
+        self.update_object(*models)
 
     def check_args(self) -> None:
         """Ensure at least --observation-id or --primary."""
@@ -128,6 +131,17 @@ class ForecastPublishApp(Application):
         """Publish a loaded model."""
         for model in models:
             self.write(model.publish(observation_id=self.observation_id, epoch_id=self.epoch_id).id)
+
+    @staticmethod
+    def update_object(*models: ModelData) -> None:
+        """Update object with predicted types from models."""
+        obj_id = models[0].object_id
+        obj = Object.from_id(obj_id)
+        pred_type = {model.name: model.object_pred_type for model in models if model.object_pred_type}
+        pred_type = {**obj.pred_type, **pred_type}  # retain previous if any exist
+        if obj.pred_type != pred_type:
+            Object.update(obj_id, pred_type=pred_type,
+                          history={**obj.history, str(datetime.now().astimezone()): obj.pred_type})
 
     @staticmethod
     def load(filepath: str) -> ModelData:

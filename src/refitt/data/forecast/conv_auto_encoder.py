@@ -25,6 +25,16 @@ __all__ = ['ConvAutoEncoder', ]
 log = Logger.with_name(__name__)
 
 
+@functools.lru_cache(maxsize=None)
+def get_object_type(name: str) -> ObjectType:
+    """Fetch and cache `object_type.id` given `name`."""
+    try:
+        return ObjectType.from_name(name)
+    except ObjectType.NotFound as exc:
+        log.error(f'Object type not found ({name}) - trying again (with \'SN {name}\')')
+        return ObjectType.from_name(f'SN {name}')
+
+
 class ConvAutoEncoder(ModelData):
     """
     The principle forecast data used by REFITT.
@@ -66,3 +76,14 @@ class ConvAutoEncoder(ModelData):
     def observation_error(self: ConvAutoEncoder) -> Optional[float]:
         """Error for published observation record."""
         return self.next_mag_sigma
+
+    @property
+    def object_pred_type(self: ConvAutoEncoder) -> Optional[dict]:
+        """Predicted object type name (e.g., {'name': 'Ia', 'score': 0.74})."""
+        types, *scores = self.data['class']
+        obj_type = get_object_type(types[0])
+        return {
+            'id': obj_type.id,
+            'name': obj_type.name,
+            'score': round(float(scores[0]), 4),
+        }

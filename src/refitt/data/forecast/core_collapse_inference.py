@@ -58,3 +58,8 @@ class CoreCollapseInference(ModelData):
     def observation_error(self: CoreCollapseInference) -> Optional[float]:
         """Error for published observation record."""
         return None
+
+    @property
+    def object_pred_type(self: CoreCollapseInference) -> Optional[dict]:
+        """Always None because this model does not predict type."""
+        return None
