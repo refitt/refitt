@@ -23,8 +23,8 @@ import numpy as np
 # internal libs
 from refitt.core.typing import JsonDict
 from refitt.core.schema import SchemaError
-from refitt.data.forecast.model import ModelData
-from refitt.data.forecast import ConvAutoEncoder, CoreCollapseInference
+from refitt.forecast.model import ModelData
+from refitt.forecast import ConvAutoEncoder, CoreCollapseInference
 
 
 class ModelTestBase(ABC):

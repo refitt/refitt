@@ -12,7 +12,7 @@ import json
 import logging
 
 # internal libs
-from ...core.logging import Logger
+from ..core.logging import Logger
 from .model import ModelData
 from .conv_auto_encoder import ConvAutoEncoder
 from .core_collapse_inference import CoreCollapseInference

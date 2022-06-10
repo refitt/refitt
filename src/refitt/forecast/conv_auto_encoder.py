@@ -13,9 +13,9 @@ import functools
 import logging
 
 # internal libs
-from ...core.schema import ListSchema
-from ...core.logging import Logger
-from ...database.model import ObjectType
+from ..core.schema import ListSchema
+from ..core.logging import Logger
+from ..database.model import ObjectType
 from .model import ModelData, ModelSchema
 
 # public interface

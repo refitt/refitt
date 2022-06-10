@@ -15,7 +15,7 @@ import functools
 from scipy.interpolate import interp1d
 
 # internal libs
-from ...core.schema import ListSchema, DictSchema, Size
+from ..core.schema import ListSchema, DictSchema, Size
 from .model import ModelData, ModelSchema
 
 # public interface

@@ -23,8 +23,8 @@ from sqlalchemy.exc import IntegrityError
 from ....core.exceptions import handle_exception
 from ....core.logging import Logger
 from ....core.schema import SchemaError
-from ....data.forecast import load_model
-from ....data.forecast.model import ModelData
+from ....forecast import load_model
+from ....forecast.model import ModelData
 from ....database.model import Object
 
 # public interface
