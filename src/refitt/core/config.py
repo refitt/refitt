@@ -20,7 +20,7 @@ from cmdkit.config import Namespace, Environ, Configuration, ConfigurationError
 from streamkit.core import config as _streamkit
 
 # internal libs
-from refitt.core.platform import path, default_path
+from refitt.core.platform import path, default_path, check_private
 from refitt.core.exceptions import write_traceback, display_warning
 
 # public interface
@@ -96,11 +96,12 @@ default = Namespace({
 @functools.lru_cache(maxsize=None)
 def load_file(filepath: str) -> Namespace:
     """Load configuration file manually."""
+    if not os.path.exists(filepath):
+        return Namespace({})
+    if not check_private(filepath):
+        raise ConfigurationError(f'Non-private file permissions ({filepath})')
     try:
-        if not os.path.exists(filepath):
-            return Namespace({})
-        else:
-            return Namespace.from_toml(filepath)
+        return Namespace.from_toml(filepath)
     except Exception as err:
         raise ConfigurationError(f'(from file: {filepath}) {err.__class__.__name__}: {err}')
 

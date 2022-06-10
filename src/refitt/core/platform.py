@@ -6,12 +6,13 @@
 
 # standard libs
 import os
+import stat
 
 # external libs
 from cmdkit.config import Namespace
 
 # public interface
-__all__ = ['cwd', 'home', 'root', 'site', 'path', 'default_path']
+__all__ = ['cwd', 'home', 'root', 'site', 'path', 'default_path', 'file_permissions', 'check_private']
 
 
 cwd = os.getcwd()
@@ -42,3 +43,13 @@ default_path = path.system if root else path.user
 os.makedirs(default_path.lib, exist_ok=True)
 os.makedirs(default_path.run, exist_ok=True)
 os.makedirs(default_path.log, exist_ok=True)
+
+
+def file_permissions(filepath: str) -> str:
+    """File permissions mask as a string."""
+    return stat.filemode(os.stat(filepath).st_mode)
+
+
+def check_private(filepath: str) -> bool:
+    """Check that `filepath` has '-rw-------' permissions."""
+    return file_permissions(filepath) == '-rw-------'
