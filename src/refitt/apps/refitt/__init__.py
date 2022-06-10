@@ -39,6 +39,17 @@ Application.exceptions = {
 }
 
 
+# logging setup for command-line interface
+ApplicationGroup.log_critical = log.critical
+ApplicationGroup.log_exception = log.exception
+ApplicationGroup.exceptions = {
+    **ApplicationGroup.exceptions,
+    ConfigurationError: functools.partial(handle_exception, logger=log, status=exit_status.bad_config),
+    RuntimeError: functools.partial(handle_exception, logger=log, status=exit_status.runtime_error),
+    Exception: functools.partial(write_traceback, logger=log),
+}
+
+
 # NOTE: delayed imports to allow Application class modifications
 from . import (config, database, service, auth, login, whoami, api, notify,
                recommendation, forecast, object, epoch)  # noqa
