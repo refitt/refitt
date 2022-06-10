@@ -24,7 +24,7 @@ from contextlib import contextmanager
 import requests as __requests
 
 # internal libs
-from ..core.config import config, update_config
+from ..core.config import config, update as update_config
 from .token import Key, Secret, Token
 from .api.response import STATUS
 

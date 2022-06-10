@@ -23,7 +23,7 @@ from rich.syntax import Syntax
 # internal libs
 from ...database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
 from ...core.exceptions import handle_exception
-from ...core.config import update_config
+from ...core.config import update as update_config
 from ...web.token import Cipher
 
 # public interface

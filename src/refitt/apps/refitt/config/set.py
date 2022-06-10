@@ -17,7 +17,7 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ....core.config import update_config
+from ....core.config import update as update_config
 from ....core.platform import site, path, default_path
 
 # public interface
