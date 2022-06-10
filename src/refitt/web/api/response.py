@@ -16,6 +16,7 @@ from functools import wraps
 from flask import Response, request, send_file
 
 # internal libs
+from ...core.logging import Logger
 from ...database.model import NotFound as RecordNotFound
 from ..token import TokenNotFound, TokenInvalid, TokenExpired
 from .auth import AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
@@ -27,7 +28,7 @@ __all__ = ['STATUS', 'STATUS_CODE', 'WebException', 'NotFound', 'PayloadTooLarge
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 # NOTE: codes and notes from Wikipedia (2020-05-08)

@@ -23,6 +23,7 @@ from rich.syntax import Syntax
 # internal libs
 from ...database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
 from ...core.exceptions import handle_exception
+from ...core.logging import Logger
 from ...core.config import update as update_config
 from ...web.token import Cipher
 
@@ -64,7 +65,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 class AuthApp(Application):

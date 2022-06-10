@@ -16,13 +16,14 @@ import logging
 
 # internal libs
 from ..core.platform import default_path
+from ..core.logging import Logger
 
 # public interface
 __all__ = ['Daemon', ]
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 class Daemon(abc.ABC):

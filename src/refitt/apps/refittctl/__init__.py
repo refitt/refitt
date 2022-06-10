@@ -23,6 +23,9 @@ from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 from streamkit.core.logging import _ANSI_RESET, _ANSI_CODES  # noqa: protected-members
 
+# internal lib
+from ...core.logging import Logger
+
 # public interface
 __all__ = ['RefittControllerApp', ]
 
@@ -56,7 +59,7 @@ options:
 
 
 # initialize top-level controller logger
-log = logging.getLogger('refittctl')
+log = Logger.with_name('refittctl')
 
 
 # colors

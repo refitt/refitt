@@ -25,6 +25,7 @@ from ...daemon import Daemon, DaemonService, DaemonServer
 from ...core.platform import default_path
 from ...core.config import config as base_config, get_config, ConfigurationError, Namespace
 from ...core.exceptions import write_traceback
+from ...core.logging import Logger
 from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
 
 # public interface
@@ -63,7 +64,7 @@ options:
 
 
 # initialize top-level daemon logger
-log = logging.getLogger('refittd')
+log = Logger.with_name('refittd')
 
 
 # logging setup for command-line interface

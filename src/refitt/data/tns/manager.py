@@ -15,6 +15,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 
 # internal libs
+from ...core.logging import Logger
 from ...database.model import Object, ObjectType
 from .interface import TNSInterface, TNSError, TNSConfig, TNSObjectSearchResult
 from .catalog import TNSCatalog, TNSRecord
@@ -24,7 +25,7 @@ __all__ = ['TNSManager', 'TNSQueryManager', 'TNSCatalogManager', ]
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 class TNSManager(ABC):

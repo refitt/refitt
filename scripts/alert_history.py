@@ -26,6 +26,7 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 
 # internal libs
+from refitt.core.logging import Logger
 from refitt.database.model import Observation, Source
 from refitt.database.interface import Session
 
@@ -34,7 +35,7 @@ from refitt.database.interface import Session
 __all__ = ['LogData', 'AlertChart', 'AlertHistoryApp', ]
 
 
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 Application.log_critical = log.critical
 Application.log_exception = log.critical
 

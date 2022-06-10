@@ -15,13 +15,14 @@ from multiprocessing.managers import BaseManager
 
 # internal libs
 from ..core.config import config
+from ..core.logging import Logger
 
 # public interface
 __all__ = ['DaemonClient', ]
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 class DaemonClient(BaseManager):

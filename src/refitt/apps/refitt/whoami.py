@@ -24,6 +24,7 @@ from rich.syntax import Syntax
 from ...web import request
 from ...web.api.response import STATUS_CODE
 from ...core.exceptions import handle_exception
+from ...core.logging import Logger
 from ...core import ansi
 
 # public interface
@@ -45,7 +46,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 class WhoAmIApp(Application):

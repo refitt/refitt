@@ -13,13 +13,14 @@ import os
 import logging
 
 # external libs
+import toml
 from cmdkit.app import Application
 from cmdkit.cli import Interface
 from cmdkit.config import Namespace
-import toml
 
 # internal libs
 from ....core.platform import path, default_path
+from ....core.logging import Logger
 
 # public interface
 __all__ = ['GetConfigApp', ]
@@ -47,7 +48,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 class GetConfigApp(Application):

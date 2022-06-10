@@ -19,6 +19,7 @@ from cmdkit.cli import Interface, ArgumentError
 # internal libs
 from ....core.config import update as update_config
 from ....core.platform import site, path, default_path
+from ....core.logging import Logger
 
 # public interface
 __all__ = ['SetConfigApp', ]
@@ -46,7 +47,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 SmartType = TypeVar('SmartType', int, float, str)

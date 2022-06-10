@@ -23,13 +23,14 @@ from pandas import DataFrame, read_csv
 # internal libs
 from .interface import TNSInterface, TNSQueryCatalogResult, TNSError
 from ...core.platform import default_path
+from ...core.logging import Logger
 
 # public interface
 __all__ = ['TNSCatalog', 'TNSRecord', ]
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 # object name provider pattern matching

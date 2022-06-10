@@ -18,6 +18,7 @@ from flask import request
 from cryptography.hazmat.primitives.constant_time import bytes_eq
 
 # internal libs
+from ...core.logging import Logger
 from ...database.model import Client
 from ..token import Secret, JWT, AuthError, TokenNotFound, TokenExpired
 
@@ -27,7 +28,7 @@ __all__ = ['ClientInvalid', 'ClientInsufficient', 'AuthenticationNotFound', 'Aut
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 class ClientInvalid(AuthError):

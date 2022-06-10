@@ -23,6 +23,7 @@ from sqlalchemy.exc import IntegrityError
 # internal libs
 from ....core import typing
 from ....core.exceptions import handle_exception
+from ....core.logging import Logger
 from ....database.model import (Recommendation, Epoch, RecommendationTag, Observation,
                                 User, Facility, Object, NotFound, )
 
@@ -76,7 +77,7 @@ In single recommendation mode, it is the discrete value
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 REQUIRED_FIELDS = ['object_id', 'user_id', 'facility_id', 'priority', 'prediction_id']

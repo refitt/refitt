@@ -35,6 +35,7 @@ from pandas import DataFrame
 
 # internal libs
 from ....core.exceptions import handle_exception
+from ....core.logging import Logger
 from ....database.model import ModelInterface, tables
 from ....database.interface import Session
 
@@ -70,7 +71,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 class QueryDatabaseApp(Application):

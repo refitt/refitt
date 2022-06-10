@@ -25,6 +25,7 @@ import requests as __requests
 
 # internal libs
 from ..core.config import config, update as update_config
+from ..core.logging import Logger
 from .token import Key, Secret, Token
 from .api.response import STATUS
 
@@ -39,7 +40,7 @@ Response = __requests.Response
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 class APIError(Exception):

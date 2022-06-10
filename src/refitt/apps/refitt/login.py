@@ -14,6 +14,7 @@ from cmdkit.cli import Interface
 # internal libs
 from ...web import request
 from ...core.config import config
+from ...core.logging import Logger
 
 # public interface
 __all__ = ['LoginApp', ]
@@ -35,7 +36,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 class LoginApp(Application):

@@ -21,6 +21,7 @@ from cmdkit.config import ConfigurationError
 
 # internal libs
 from ...core.config import config
+from ...core.logging import Logger
 from ...core.schema import DictSchema, SchemaError, ListSchema
 
 # public interface
@@ -29,7 +30,7 @@ __all__ = ['TNSInterface', 'TNSError', 'TNSConfig', 'TNSNameSearchResult', 'TNSO
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 @dataclass

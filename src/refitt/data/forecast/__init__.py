@@ -12,7 +12,7 @@ import json
 import logging
 
 # internal libs
-from ...core.typing import JsonDict
+from ...core.logging import Logger
 from .model import ModelData
 from .conv_auto_encoder import ConvAutoEncoder
 from .core_collapse_inference import CoreCollapseInference
@@ -22,7 +22,7 @@ __all__ = ['model_types', 'load_model',
            'ConvAutoEncoder', 'CoreCollapseInference', ]
 
 # module logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 model_types: Dict[str, Type[ModelData]] = {

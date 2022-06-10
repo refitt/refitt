@@ -8,12 +8,21 @@
 from __future__ import annotations
 from typing import Optional
 
+# standard libs
+import functools
+import logging
+
 # internal libs
 from ...core.schema import ListSchema
+from ...core.logging import Logger
+from ...database.model import ObjectType
 from .model import ModelData, ModelSchema
 
 # public interface
 __all__ = ['ConvAutoEncoder', ]
+
+# module logger
+log = Logger.with_name(__name__)
 
 
 class ConvAutoEncoder(ModelData):

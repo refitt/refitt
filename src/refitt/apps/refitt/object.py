@@ -23,6 +23,7 @@ from rich.syntax import Syntax
 
 # internal libs
 from ...core.exceptions import handle_exception
+from ...core.logging import Logger
 from ...database.model import Object
 
 # public interface
@@ -48,7 +49,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 class QueryObjectApp(Application):

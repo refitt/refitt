@@ -19,6 +19,7 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
+from ....core.logging import Logger
 from ....web.api import application as api
 
 # public interface
@@ -49,7 +50,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 # global reference to hostname

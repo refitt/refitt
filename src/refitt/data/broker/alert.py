@@ -15,6 +15,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 
 # internal libs
+from ...core.logging import Logger
 from ...database.model import Epoch, ObjectType, Object, Source, ObservationType, Observation, Alert
 from ...database.interface import Session
 
@@ -22,7 +23,7 @@ from ...database.interface import Session
 __all__ = ['AlertInterface', 'AlertError', ]
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 class AlertError(Exception):

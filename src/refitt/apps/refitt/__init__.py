@@ -16,6 +16,7 @@ from cmdkit.config import ConfigurationError
 
 # internal libs
 from ...core.exceptions import handle_exception, write_traceback
+from ...core.logging import Logger
 from ...__meta__ import (__version__, __description__, __copyright__, __developer__,
                          __contact__, __website__, __ascii_art__)
 
@@ -24,7 +25,7 @@ __all__ = ['RefittApp', 'main', ]
 
 
 # initialize application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 # logging setup for command-line interface

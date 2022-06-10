@@ -14,13 +14,14 @@ from multiprocessing.managers import BaseManager
 
 # internal libs
 from ..core.config import config
+from ..core.logging import Logger
 
 # public interface
 __all__ = ['DaemonServer', ]
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 # time between keep alive requests (seconds)

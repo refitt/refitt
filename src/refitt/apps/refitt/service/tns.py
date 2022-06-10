@@ -19,6 +19,7 @@ from cmdkit.cli import Interface, ArgumentError
 from streamkit.subscriber import Subscriber
 
 # internal libs
+from ....core.logging import Logger
 from ....data.tns import TNSService
 
 # public interface
@@ -48,7 +49,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 # Time to wait before reading a line from a file if persisting

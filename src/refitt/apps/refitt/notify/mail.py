@@ -22,6 +22,7 @@ from cmdkit.cli import Interface, ArgumentError
 from ....comm.mail import UserAuth, Mail, MailServer, templates, TEMPLATES
 from ....core.config import config, ConfigurationError
 from ....core.exceptions import handle_exception
+from ....core.logging import Logger
 
 # public interface
 __all__ = ['MailApp', ]
@@ -65,7 +66,7 @@ extras:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 def connection_refused(exc: ConnectionRefusedError) -> int:

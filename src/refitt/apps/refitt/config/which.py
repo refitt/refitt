@@ -14,6 +14,7 @@ from cmdkit.cli import Interface
 # internal libs
 from ....core.config import config
 from ....core.platform import path
+from ....core.logging import Logger
 
 # public interface
 __all__ = ['WhichConfigApp', ]
@@ -37,7 +38,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 class WhichConfigApp(Application):

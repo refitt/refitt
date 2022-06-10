@@ -15,6 +15,7 @@ from sqlalchemy.exc import DatabaseError
 
 # internal libs
 from ....core.exceptions import handle_exception
+from ....core.logging import Logger
 from ....database import create_all, drop_all, load_all
 
 # public interface
@@ -39,7 +40,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 class InitDatabaseApp(Application):

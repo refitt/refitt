@@ -19,6 +19,7 @@ from threading import Thread
 from streamkit.subscriber import Subscriber
 
 # internal libs
+from ...core.logging import Logger
 from .interface import TNSError
 from .manager import TNSManager, TNSQueryManager, TNSCatalogManager
 
@@ -27,7 +28,7 @@ __all__ = ['TNSServiceWorker', 'TNSServiceThread', 'TNSService', ]
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 # message pattern for alert ingest from brokers

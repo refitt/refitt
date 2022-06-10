@@ -21,6 +21,7 @@ from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from ....core.exceptions import handle_exception
+from ....core.logging import Logger
 
 # public interface
 __all__ = ['ForecastCreateApp', ]
@@ -46,7 +47,7 @@ options:
 
 
 # application logger
-log = logging.getLogger('refitt')
+log = Logger.with_name('refitt')
 
 
 class ForecastCreateApp(Application):

@@ -24,6 +24,7 @@ from cmdkit.config import Configuration, ConfigurationError
 
 # internal libs
 from ..core.config import config
+from ..core.logging import Logger
 
 # public interface
 __all__ = ['AuthError', 'TokenNotFound', 'TokenInvalid', 'TokenExpired', 'Cipher',
@@ -31,7 +32,7 @@ __all__ = ['AuthError', 'TokenNotFound', 'TokenInvalid', 'TokenExpired', 'Cipher
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 class AuthError(Exception):

@@ -13,6 +13,7 @@ import logging
 
 # internal libs
 from ...core.config import config, ConfigurationError
+from ...core.logging import Logger
 from .alert import AlertInterface
 from .client import ClientInterface
 from .antares import AntaresClient
@@ -22,7 +23,7 @@ __all__ = ['BrokerService', 'broker_map', ]
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 # available broker clients

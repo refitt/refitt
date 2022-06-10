@@ -15,15 +15,16 @@ import logging
 from flask import Flask, Response, request
 
 # internal libs
-from .response import STATUS
+from ...core.logging import Logger
 from ...database.interface import Session
+from .response import STATUS
 
 # public interface
 __all__ = ['application', ]
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 # flask application

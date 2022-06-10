@@ -20,13 +20,14 @@ from astropy.time import Time
 # internal libs
 from .client import ClientInterface
 from .alert import AlertInterface, AlertError
+from ...core.logging import Logger
 
 # public interface
 __all__ = ['AntaresAlert', 'AntaresClient', ]
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 class AntaresAlert(AlertInterface):

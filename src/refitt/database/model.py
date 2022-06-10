@@ -28,6 +28,7 @@ from sqlalchemy.schema import Sequence, CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 
 # internal libs
+from ..core.logging import Logger
 from .interface import schema, config, Session as _Session
 from ..web.token import Key, Secret, Token, JWT
 
@@ -41,7 +42,7 @@ __all__ = ['DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'Integri
 
 
 # initialize module level logger
-log = logging.getLogger(__name__)
+log = Logger.with_name(__name__)
 
 
 class DatabaseError(Exception):
