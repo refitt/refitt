@@ -9,17 +9,18 @@ services within the REFITT system.
 """
 
 
-from .__meta__ import (__appname__, __version__, __authors__, __contact__, __license__,
-                       __copyright__, __description__)
-
+# standard libs
+import sys
 
 # NOTE: forced logging import triggers configuration and logging setup
 from .core.config import config
 from .core import logging
+from .__meta__ import (__appname__, __version__, __authors__, __contact__, __license__,
+                       __copyright__, __description__)
+
+# external libs
+from rich.traceback import install as enable_rich_tracebacks
 
 
-# NOTE: render uncaught exceptions with highlighting
-import sys
-if sys.stdout.isatty():
-    from rich.traceback import install
-    install()
+if sys.stdout.isatty() and hasattr(sys, 'ps1'):
+    enable_rich_tracebacks()
