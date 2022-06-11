@@ -32,7 +32,7 @@ __all__ = ['Logger', 'StreamHandler', 'StreamKitHandler', 'HOSTNAME', 'INSTANCE'
 HOSTNAME = socket.gethostname()
 
 
-# Unique for every instance of hypershell
+# Unique for every instance of refitt
 INSTANCE = str(uuid.uuid4())
 
 
