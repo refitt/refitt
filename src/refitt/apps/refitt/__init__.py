@@ -95,6 +95,7 @@ commands:
 options:
 -h, --help                   Show this message and exit.
 -v, --version                Show the version and exit.
+    --ascii-art              Show ascii art and exit.
 
 {EPILOG}\
 """
