@@ -9,21 +9,20 @@ from __future__ import annotations
 
 # standard libs
 import json
-import logging
 
 # external libs
 from flask import Flask, Response, request
 
 # internal libs
-from .response import STATUS
-from ...database.interface import Session
+from refitt.core.logging import Logger
+from refitt.database.interface import Session
+from refitt.web.api.response import STATUS
 
 # public interface
 __all__ = ['application', ]
 
-
-# initialize module level logger
-log = logging.getLogger(__name__)
+# module logger
+log = Logger.with_name(__name__)
 
 
 # flask application

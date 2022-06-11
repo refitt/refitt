@@ -15,8 +15,8 @@ import functools
 from scipy.interpolate import interp1d
 
 # internal libs
-from ...core.schema import ListSchema, DictSchema, Size
-from .model import ModelData, ModelSchema
+from refitt.core.schema import ListSchema, DictSchema, Size
+from refitt.forecast.model import ModelData, ModelSchema
 
 # public interface
 __all__ = ['CoreCollapseInference', ]
@@ -57,4 +57,9 @@ class CoreCollapseInference(ModelData):
     @functools.cached_property
     def observation_error(self: CoreCollapseInference) -> Optional[float]:
         """Error for published observation record."""
+        return None
+
+    @property
+    def object_pred_type(self: CoreCollapseInference) -> Optional[dict]:
+        """Always None because this model does not predict type."""
         return None

@@ -3,12 +3,13 @@
 
 """REFITT's REST-API endpoint implementations."""
 
+
 # internal libs
-from ....database.model import Client
-from ..app import application
-from ..response import endpoint, NotFound
-from ..auth import authenticated, authorization
-from . import client, token, facility, user, object, source, observation, recommendation, epoch
+from refitt.database.model import Client
+from refitt.web.api.app import application
+from refitt.web.api.response import endpoint, NotFound
+from refitt.web.api.auth import authenticated, authorization
+from refitt.web.api.endpoint import client, token, facility, user, object, source, observation, recommendation, epoch
 
 # public interface
 __all__ = ['INFO', ]

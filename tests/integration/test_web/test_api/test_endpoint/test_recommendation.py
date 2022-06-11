@@ -7,7 +7,7 @@
 # standard libs
 from io import BytesIO
 from datetime import datetime
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 
 # external libs
@@ -283,7 +283,8 @@ class RecommendationEndpoint(Endpoint, ABC):
     admin: str = 'superman'
     user: str = 'tomb_raider'
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def relation(self) -> str:
         """E.g., 'object/type'."""
 

@@ -9,7 +9,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import publish
+from refitt.apps.refitt.recommendation import publish
 
 # public interface
 __all__ = ['RecommendationApp']

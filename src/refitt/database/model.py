@@ -11,7 +11,6 @@ from typing import List, Tuple, Dict, Any, Type, Optional, Callable, TypeVar, Un
 # standard libs
 import re
 import random
-import logging
 from base64 import encodebytes as base64_encode, decodebytes as base64_decode
 from datetime import datetime, timedelta
 from functools import lru_cache, cached_property
@@ -28,8 +27,9 @@ from sqlalchemy.schema import Sequence, CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 
 # internal libs
-from .interface import schema, config, Session as _Session
-from ..web.token import Key, Secret, Token, JWT
+from refitt.core.logging import Logger
+from refitt.database.interface import schema, config, Session as _Session
+from refitt.web.token import Key, Secret, Token, JWT
 
 # public interface
 __all__ = ['DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'IntegrityError',
@@ -39,9 +39,8 @@ __all__ = ['DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'Integri
            'RecommendationTag', 'Epoch', 'Recommendation', 'ModelType', 'Model',
            'Client', 'Session', 'tables', 'indices', 'DEFAULT_EXPIRE_TIME', 'DEFAULT_CLIENT_LEVEL', ]
 
-
-# initialize module level logger
-log = logging.getLogger(__name__)
+# module logger
+log = Logger.with_name(__name__)
 
 
 class DatabaseError(Exception):
@@ -215,7 +214,7 @@ class ModelBase:
             session.add_all(records)
             session.commit()
             for record in records:
-                log.info(f'Added {cls.__tablename__} ({record.id})')
+                log.debug(f'Added {cls.__tablename__} ({record.id})')
             return records
         except (IntegrityError, DatabaseError):
             session.rollback()
@@ -652,11 +651,12 @@ class Object(ModelInterface):
 
     id = Column('id', Integer(), primary_key=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(ObjectType.id), nullable=True)
-    pred_type_id = Column('pred_type_id', Integer(), ForeignKey(ObjectType.id), nullable=True)
+    pred_type = Column('pred_type', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     aliases = Column('aliases', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     ra = Column('ra', Float(), nullable=False)
     dec = Column('dec', Float(), nullable=False)
     redshift = Column('redshift', Float(), nullable=True)
+    history = Column('history', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
     data = Column('data', JSON().with_variant(JSONB(), 'postgresql'), nullable=False, default={})
 
     type = relationship(ObjectType, foreign_keys=[type_id, ])
@@ -665,11 +665,12 @@ class Object(ModelInterface):
     columns = {
         'id': int,
         'type_id': int,
-        'pred_type_id': int,
+        'pred_type': dict,
         'aliases': dict,
         'ra': float,
         'dec': float,
         'redshift': float,
+        'history': dict,
         'data': dict,
     }
 

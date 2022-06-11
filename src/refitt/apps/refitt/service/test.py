@@ -10,14 +10,19 @@ from __future__ import annotations
 # standard libs
 import time
 import random
-import logging
 
 # external libs
 from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
+# internal libs
+from refitt.core.logging import Logger
+
 # public interface
 __all__ = ['TestApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt service test'
@@ -35,10 +40,6 @@ options:
 -f, --failure   RATE     Percentage rate [0, 1].
 -h, --help               Show this message and exit.\
 """
-
-
-# application logger
-log = logging.getLogger('refitt')
 
 
 class TestApp(Application):

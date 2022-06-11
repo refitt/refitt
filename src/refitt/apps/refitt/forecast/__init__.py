@@ -9,7 +9,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import create, publish
+from refitt.apps.refitt.forecast import create, publish
 
 # public interface
 __all__ = ['ForecastApp', ]

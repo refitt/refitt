@@ -4,19 +4,20 @@
 """Request client key/secret for API."""
 
 
-# standard libs
-import logging
-
 # external libs
 from cmdkit.app import Application
 from cmdkit.cli import Interface
 
 # internal libs
-from ...web import request
-from ...core.config import config
+from refitt.core.config import config
+from refitt.core.logging import Logger
+from refitt.web import request
 
 # public interface
 __all__ = ['LoginApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt login'
@@ -32,10 +33,6 @@ options:
     --force                  Ignore existing key and secret.
 -h, --help                   Show this message and exit.\
 """
-
-
-# application logger
-log = logging.getLogger('refitt')
 
 
 class LoginApp(Application):

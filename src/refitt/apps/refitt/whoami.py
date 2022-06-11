@@ -11,7 +11,6 @@ from __future__ import annotations
 import sys
 import json
 import functools
-import logging
 
 # external libs
 from requests.exceptions import ConnectionError
@@ -21,13 +20,17 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 # internal libs
-from ...web import request
-from ...web.api.response import STATUS_CODE
-from ...core.exceptions import log_exception
-from ...core import ansi
+from refitt.web import request
+from refitt.web.api.response import STATUS_CODE
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
+from refitt.core import ansi
 
 # public interface
 __all__ = ['WhoAmIApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt whoami'
@@ -44,10 +47,6 @@ options:
 """
 
 
-# application logger
-log = logging.getLogger('refitt')
-
-
 class WhoAmIApp(Application):
     """Application class for /whoami api call."""
 
@@ -55,7 +54,7 @@ class WhoAmIApp(Application):
     ALLOW_NOARGS = True
 
     exceptions = {
-        ConnectionError: functools.partial(log_exception, logger=log.error,
+        ConnectionError: functools.partial(handle_exception, logger=log,
                                            status=exit_status.runtime_error),
         **Application.exceptions,
     }

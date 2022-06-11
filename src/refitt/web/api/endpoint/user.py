@@ -11,11 +11,11 @@ from typing import Union
 from flask import request
 
 # internal libs
-from ....database.model import Client, User, IntegrityError, NotFound
-from ..app import application
-from ..auth import authenticated, authorization
-from ..response import endpoint, ConstraintViolation, ParameterNotFound, ParameterInvalid
-from ..tools import require_data, collect_parameters, disallow_parameters
+from refitt.database.model import Client, User, IntegrityError, NotFound
+from refitt.web.api.app import application
+from refitt.web.api.auth import authenticated, authorization
+from refitt.web.api.response import endpoint, ConstraintViolation, ParameterNotFound, ParameterInvalid
+from refitt.web.api.tools import require_data, collect_parameters, disallow_parameters
 
 # public interface
 __all__ = []

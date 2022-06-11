@@ -12,14 +12,15 @@ import os
 import re
 import fnmatch
 import functools
-import logging
+
+# internal libs
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['find_files', 'open_asset', 'load_asset', 'load_assets', ]
 
-
-# initialize module level logger
-log = logging.getLogger(__name__)
+# module logger
+log = Logger.with_name(__name__)
 
 
 # either bytes or str depending on how the file was opened

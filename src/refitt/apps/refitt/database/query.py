@@ -12,8 +12,7 @@ from typing import List, Tuple, Type, Union, TypeVar, Any
 import re
 import sys
 import json
-import logging
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import partial, cached_property
 from dataclasses import dataclass
@@ -34,12 +33,16 @@ from rich.table import Table
 from pandas import DataFrame
 
 # internal libs
-from ....core.exceptions import log_exception
-from ....database.model import ModelInterface, tables
-from ....database.interface import Session
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
+from refitt.database.model import ModelInterface, tables
+from refitt.database.interface import Session
 
 # public interface
 __all__ = ['QueryDatabaseApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt database query'
@@ -67,10 +70,6 @@ options:
     --dry-run                Show SQL query, do not execute.
 -h, --help                   Show this message and exit.\
 """
-
-
-# application logger
-log = logging.getLogger('refitt')
 
 
 class QueryDatabaseApp(Application):
@@ -106,11 +105,11 @@ class QueryDatabaseApp(Application):
     interface.add_argument('-x', '--extract-values', action='store_true')
 
     exceptions = {
-        InvalidRequestError: partial(log_exception, logger=log.critical,
+        InvalidRequestError: partial(handle_exception, logger=log,
                                      status=exit_status.bad_argument),
-        ProgrammingError: partial(log_exception, logger=log.critical,
+        ProgrammingError: partial(handle_exception, logger=log,
                                   status=exit_status.bad_argument),
-        DataError: partial(log_exception, logger=log.critical,
+        DataError: partial(handle_exception, logger=log,
                            status=exit_status.bad_argument),
         **Application.exceptions,
     }
@@ -182,7 +181,8 @@ class Selector(ABC):
         """Build entities first from arguments."""
         return cls([EntityRelation.from_arg(arg) for arg in args])
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def model(self) -> Type[ModelInterface]:
         """The primary model interface for the selector."""
 

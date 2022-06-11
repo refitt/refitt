@@ -6,7 +6,6 @@
 
 # standard libs
 import sys
-import logging
 import functools
 
 # external libs
@@ -15,16 +14,15 @@ from cmdkit.cli import Interface
 from cmdkit.config import ConfigurationError
 
 # internal libs
-from ...core.exceptions import log_exception, handle_exception
-from ...__meta__ import (__version__, __description__, __copyright__, __developer__,
-                         __contact__, __website__, __ascii_art__)
+from refitt import __version__, __developer__, __contact__, __website__, __copyright__, __description__, __ascii_art__
+from refitt.core.exceptions import handle_exception, write_traceback
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['RefittApp', 'main', ]
 
-
-# initialize application logger
-log = logging.getLogger('refitt')
+# application logger
+log = Logger.with_name('refitt')
 
 
 # logging setup for command-line interface
@@ -32,15 +30,26 @@ Application.log_critical = log.critical
 Application.log_exception = log.exception
 Application.exceptions = {
     **Application.exceptions,
-    ConfigurationError: functools.partial(log_exception, logger=log.critical, status=exit_status.bad_config),
-    RuntimeError: functools.partial(log_exception, logger=log.error, status=exit_status.runtime_error),
-    Exception: functools.partial(handle_exception, log),
+    ConfigurationError: functools.partial(handle_exception, logger=log, status=exit_status.bad_config),
+    RuntimeError: functools.partial(handle_exception, logger=log, status=exit_status.runtime_error),
+    Exception: functools.partial(write_traceback, logger=log),
+}
+
+
+# logging setup for command-line interface
+ApplicationGroup.log_critical = log.critical
+ApplicationGroup.log_exception = log.exception
+ApplicationGroup.exceptions = {
+    **ApplicationGroup.exceptions,
+    ConfigurationError: functools.partial(handle_exception, logger=log, status=exit_status.bad_config),
+    RuntimeError: functools.partial(handle_exception, logger=log, status=exit_status.runtime_error),
+    Exception: functools.partial(write_traceback, logger=log),
 }
 
 
 # NOTE: delayed imports to allow Application class modifications
-from . import (config, database, service, auth, login, whoami, api, notify,
-               recommendation, forecast, object, epoch)  # noqa
+from refitt.apps.refitt import (config, database, service, auth, login, whoami, api, notify,
+                                recommendation, forecast, object, epoch)  # noqa
 
 
 PROGRAM = 'refitt'
@@ -83,6 +92,7 @@ commands:
 options:
 -h, --help                   Show this message and exit.
 -v, --version                Show the version and exit.
+    --ascii-art              Show ascii art and exit.
 
 {EPILOG}\
 """

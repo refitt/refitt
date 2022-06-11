@@ -11,7 +11,6 @@ from typing import List, Dict, Tuple
 # standard libs
 import os
 import sys
-import logging
 import subprocess
 import functools
 from queue import Empty
@@ -21,13 +20,18 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ...daemon import Daemon, DaemonService, DaemonServer
-from ...core.config import config as base_config, get_site, get_config, ConfigurationError, Namespace
-from ...core.exceptions import handle_exception
-from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
+from refitt import __version__, __developer__, __contact__, __website__, __copyright__
+from refitt.core.platform import default_path
+from refitt.core.exceptions import write_traceback
+from refitt.core.config import reload as reload_config, LOGGING_STYLES, ConfigurationError, Namespace
+from refitt.core.logging import Logger
+from refitt.daemon import Daemon, DaemonService, DaemonServer
 
 # public interface
 __all__ = ['RefittDaemonApp', ]
+
+# application logger
+log = Logger.with_name('refittd')
 
 
 PROGRAM = 'refittd'
@@ -61,10 +65,6 @@ options:
 """
 
 
-# initialize top-level daemon logger
-log = logging.getLogger('refittd')
-
-
 # logging setup for command-line interface
 Application.log_critical = log.critical
 Application.log_exception = log.exception
@@ -94,21 +94,20 @@ class RefittDaemonApp(Application, Daemon):
     actions: Tuple[str] = ('restart', 'reload', 'flush')
 
     exceptions = {
-        Exception: functools.partial(handle_exception, log),
+        Exception: functools.partial(write_traceback, logger=log),
     }
 
     def run(self) -> None:
         """Start the refitt service daemon."""
         log.info('Started master daemon')
-        self.start_services()
-        self.serve_forever()
+        if self.daemon_mode:
+            self.run_daemon()
+        else:
+            self.start_services()
+            self.serve_forever()
 
     def start_services(self) -> None:
         """Load definitions and start services."""
-
-        if self.daemon_mode:
-            self.run_daemon()
-
         config = self.get_config()
         if not self.services_requested:
             self.services_requested = list(config)
@@ -116,7 +115,6 @@ class RefittDaemonApp(Application, Daemon):
             for service in self.services_requested:
                 if service not in config:
                     raise ArgumentError(f'Service \'{service}\' not in configuration')
-
         for name in self.services_requested:
             self.services[name] = DaemonService(name, **config[name])
             self.services[name].start()
@@ -204,7 +202,7 @@ class RefittDaemonApp(Application, Daemon):
     @staticmethod
     def get_config() -> Dict[str, Namespace]:
         """Load services from configuration."""
-        config = get_config()
+        config = reload_config()
         try:
             services = config.service
         except KeyError as error:
@@ -216,11 +214,9 @@ class RefittDaemonApp(Application, Daemon):
         # NOTE: A simple way of running as a daemon while also seamlessly redirecting
         #       all stderr is to subprocess with a redirect in normal mode
         self.daemonize()
-        logpath = os.path.join(get_site()['log'], 'refittd.log')
-        env = {**os.environ,
-               'REFITT_LOGGING_FORMAT': '%(asctime)s.%(msecs)03d %(hostname)s %(levelname)-8s [%(name)s] %(msg)s',
-               'REFITT_LOGGING_DATEFMT': '%Y-%m-%d %H:%M:%S',
-               'REFITT_LOGGING_LEVEL': 'DEBUG' if base_config.logging.level.upper() == 'DEBUG' else 'INFO'}
+        logpath = os.path.join(default_path.log, 'refittd.log')
+        logconf = Namespace({'logging': {'level': 'DEBUG', **LOGGING_STYLES['system']}})
+        env = {**os.environ, **logconf.to_env().flatten(prefix='REFITT')}
         with open(logpath, mode='a') as logfile:
             subprocess.run(['refittd', '--all', '--keep-alive'], stderr=logfile, env=env)
 

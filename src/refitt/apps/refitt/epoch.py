@@ -6,25 +6,21 @@
 
 # type annotations
 from __future__ import annotations
-
-import json
-from typing import IO, Dict, Callable
+from typing import Dict, Callable
 
 # standard libs
-import os
 import sys
-import logging
+import json
 from functools import cached_property
 
 # external libs
-from cmdkit.app import Application, exit_status
+from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 from rich.console import Console
 from rich.syntax import Syntax
 
 # internal libs
-from ...database.model import Epoch
-from ...core.exceptions import log_exception
+from refitt.database.model import Epoch
 
 # public interface
 __all__ = ['EpochApp', ]

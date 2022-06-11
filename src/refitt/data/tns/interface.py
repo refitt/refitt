@@ -10,7 +10,6 @@ from typing import Dict, Any, Optional, Union, Type, Tuple
 
 # standard libs
 import json
-import logging
 from dataclasses import dataclass
 from functools import cached_property
 from abc import ABC, abstractclassmethod
@@ -20,16 +19,16 @@ import requests
 from cmdkit.config import ConfigurationError
 
 # internal libs
-from ...core.config import config
-from ...core.schema import DictSchema, SchemaError, ListSchema
+from refitt.core.config import config
+from refitt.core.logging import Logger
+from refitt.core.schema import DictSchema, SchemaError, ListSchema
 
 # public interface
 __all__ = ['TNSInterface', 'TNSError', 'TNSConfig', 'TNSNameSearchResult', 'TNSObjectSearchResult',
            'TNSQueryCatalogResult', ]
 
-
-# initialize module level logger
-log = logging.getLogger(__name__)
+# module logger
+log = Logger.with_name(__name__)
 
 
 @dataclass

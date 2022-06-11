@@ -9,23 +9,22 @@ from typing import Tuple, Dict, Type, Callable
 
 # standard libs
 import os
-import logging
 
 # internal libs
-from ...core.config import config, ConfigurationError
-from .alert import AlertInterface
-from .client import ClientInterface
-from .antares import AntaresClient
+from refitt.core.config import config, ConfigurationError
+from refitt.core.logging import Logger
+from refitt.data.broker.alert import AlertInterface
+from refitt.data.broker.client import ClientInterface
+from refitt.data.broker.antares import AntaresClient
 
 # public interface
 __all__ = ['BrokerService', 'broker_map', ]
 
+# module logger
+log = Logger.with_name(__name__)
 
-# initialize module level logger
-log = logging.getLogger(__name__)
 
-
-# available broker clients
+# Available broker clients
 broker_map: Dict[str, Type[ClientInterface]] = {
     'antares': AntaresClient,
 }
@@ -66,8 +65,8 @@ class BrokerService:
         alert_filter = self.get_filter(client_interface)
         log.info(f'Connecting to {self.broker} (topic={self.topic}, filter={self.filter_name})')
         with client_interface(self.topic, (key, secret)) as stream:
-            for __alert in stream:
-                self.process_alert(__alert, alert_filter)
+            for alert_instance in stream:
+                self.process_alert(alert_instance, alert_filter)
 
     def get_credential(self, name: str) -> str:
         """Fetch from command-line argument or configuration file."""
@@ -89,36 +88,36 @@ class BrokerService:
         except KeyError as error:
             raise NameError(f'No broker with name \'{self.broker}\'') from error
 
-    def get_filter(self, __client: Type[ClientInterface]) -> Callable[[AlertInterface], bool]:
-        """Return bound method of `__client` for requested local filter by name."""
+    def get_filter(self, client_interface: Type[ClientInterface]) -> Callable[[AlertInterface], bool]:
+        """Return bound method of `client_interface` for requested local filter by name."""
         try:
-            return getattr(__client, f'filter_{self.filter_name}')
+            return getattr(client_interface, f'filter_{self.filter_name}')
         except AttributeError as error:
             raise AttributeError(f'Local filter \'{self.filter_name}\' not implemented for {self.broker}') from error
 
-    def process_alert(self, __alert: AlertInterface, filter_alert: Callable[[AlertInterface], bool]) -> None:
-        """Process incoming `alert`, optionally persist to disk and/or database."""
-        name = f'{self.broker}::{__alert.id}'
+    def process_alert(self, alert_instance: AlertInterface, filter_alert: Callable[[AlertInterface], bool]) -> None:
+        """Process incoming `alert_instance`, optionally persist to disk and/or database."""
+        name = f'{self.broker}::{alert_instance.id}'
         log.info(f'Received {name}')
-        if filter_alert(__alert) is False:
+        if filter_alert(alert_instance) is False:
             log.info(f'Rejected by filter \'{self.filter_name}\' ({name})')
         else:
             log.info(f'Accepted by filter \'{self.filter_name}\' ({name})')
             if not self.database_only:
-                self.persist_to_disk(__alert)
+                self.persist_to_disk(alert_instance)
             if not self.local_only:
-                self.persist_to_database(__alert, name)
+                self.persist_to_database(alert_instance, name)
 
-    def persist_to_disk(self, __alert: AlertInterface) -> None:
+    def persist_to_disk(self, alert_instance: AlertInterface) -> None:
         """Save `alert` to local file."""
-        filepath = os.path.join(self.output_dir, f'{__alert.id}.json')
-        __alert.to_local(filepath)
+        filepath = os.path.join(self.output_dir, f'{alert_instance.id}.json')
+        alert_instance.to_local(filepath)
         log.info(f'Written to file ({filepath})')
 
-    def persist_to_database(self, __alert: AlertInterface, name: str) -> None:
+    def persist_to_database(self, alert_instance: AlertInterface, name: str) -> None:
         """Save `alert` to database (backfill if requested)."""
-        __alert.to_database()
+        alert_instance.to_database()
         log.info(f'Written to database ({name})')
         if self.enable_backfill:
             log.debug(f'Backfilling observations ({name})')
-            __alert.backfill_database()
+            alert_instance.backfill_database()

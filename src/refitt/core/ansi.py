@@ -1,44 +1,70 @@
-# This program is free software: you can redistribute it and/or modify it under the
-# terms of the Apache License (v2.0) as published by the Apache Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE. See the Apache License for more details.
-#
-# You should have received a copy of the Apache License along with this program.
-# If not, see <https://www.apache.org/licenses/LICENSE-2.0>.
+# SPDX-FileCopyrightText: 2019-2022 REFITT Team
+# SPDX-License-Identifier: Apache-2.0
 
-"""ANSI escape sequences for colorizing text output."""
+"""ANSI color codes and methods."""
 
 
-# standard library
+# type annotations
+from __future__ import annotations
+
+# standard libs
+import os
+import sys
 import functools
+from enum import Enum
 
 # public interface
-__all__ = ['ANSI_RESET', 'ANSI_CODES', 'colorize',
-           'red', 'green', 'yellow', 'blue', 'magenta', 'cyan']
+__all__ = ['NO_TTY', 'Ansi', 'format_ansi',
+           'bold', 'faint', 'italic', 'underline',
+           'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white']
 
 
-# escape sequences
-ANSI_RESET = '\033[0m'
-ANSI_CODES = {
-    prefix: {
-        color: '\033[{prefix}{num}m'.format(prefix=i + 3, num=j)
-        for j, color in enumerate(['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'])
-    }
-    for i, prefix in enumerate(['foreground', 'background'])
-}
+# Automatically disable colors if necessary
+NO_TTY = False
+if not sys.stderr.isatty():
+    NO_TTY = True
+if 'REFITT_FORCE_COLOR' in os.environ:
+    NO_TTY = False
 
 
-def colorize(text: str, color: str) -> str:
-    """Apply a foreground `color` code to the given `text`."""
-    return ANSI_CODES['foreground'][color] + text + ANSI_RESET
+class Ansi(Enum):
+    """ANSI escape sequences for colors."""
+    NULL = ''
+    RESET = '\033[0m' if not NO_TTY else ''
+    BOLD = '\033[1m' if not NO_TTY else ''
+    FAINT = '\033[2m' if not NO_TTY else ''
+    ITALIC = '\033[3m' if not NO_TTY else ''
+    UNDERLINE = '\033[4m' if not NO_TTY else ''
+    BLACK = '\033[30m' if not NO_TTY else ''
+    RED = '\033[31m' if not NO_TTY else ''
+    GREEN = '\033[32m' if not NO_TTY else ''
+    YELLOW = '\033[33m' if not NO_TTY else ''
+    BLUE = '\033[34m' if not NO_TTY else ''
+    MAGENTA = '\033[35m' if not NO_TTY else ''
+    CYAN = '\033[36m' if not NO_TTY else ''
+    WHITE = '\033[37m' if not NO_TTY else ''
 
 
-# named color formats format
-red = functools.partial(colorize, color='red')
-green = functools.partial(colorize, color='green')
-yellow = functools.partial(colorize, color='yellow')
-blue = functools.partial(colorize, color='blue')
-magenta = functools.partial(colorize, color='magenta')
-cyan = functools.partial(colorize, color='cyan')
+def format_ansi(seq: Ansi, text: str) -> str:
+    """Apply escape sequence with reset afterward."""
+    if NO_TTY:
+        return text
+    elif text.endswith(Ansi.RESET.value):
+        return f'{seq.value}{text}'
+    else:
+        return f'{seq.value}{text}{Ansi.RESET.value}'
+
+
+# shorthand formatting methods
+bold = functools.partial(format_ansi, Ansi.BOLD)
+faint = functools.partial(format_ansi, Ansi.FAINT)
+italic = functools.partial(format_ansi, Ansi.ITALIC)
+underline = functools.partial(format_ansi, Ansi.UNDERLINE)
+black = functools.partial(format_ansi, Ansi.BLACK)
+red = functools.partial(format_ansi, Ansi.RED)
+green = functools.partial(format_ansi, Ansi.GREEN)
+yellow = functools.partial(format_ansi, Ansi.YELLOW)
+blue = functools.partial(format_ansi, Ansi.BLUE)
+magenta = functools.partial(format_ansi, Ansi.MAGENTA)
+cyan = functools.partial(format_ansi, Ansi.CYAN)
+white = functools.partial(format_ansi, Ansi.WHITE)

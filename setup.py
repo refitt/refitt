@@ -9,13 +9,13 @@ import re
 from setuptools import setup, find_packages
 
 
-# get long description from README.rst
+# Long description from README.rst
 with open('README.rst', mode='r') as readme:
     long_description = readme.read()
 
 
-# get package metadata by parsing __meta__ module
-with open('src/refitt/__meta__.py', mode='r') as source:
+# Package metadata from parsed __init__
+with open('src/refitt/__init__.py', mode='r') as source:
     content = source.read().strip()
     metadata = {key: re.search(key + r'\s*=\s*[\'"]([^\'"]*)[\'"]', content).group(1)
                 for key in ['__version__', '__developer__', '__contact__',

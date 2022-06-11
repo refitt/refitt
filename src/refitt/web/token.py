@@ -14,7 +14,6 @@ import json
 import string
 import random
 import hashlib
-import logging
 import functools
 from datetime import datetime, timedelta
 
@@ -23,15 +22,15 @@ from cryptography.fernet import Fernet, InvalidToken
 from cmdkit.config import Configuration, ConfigurationError
 
 # internal libs
-from ..core.config import config
+from refitt.core.config import config
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['AuthError', 'TokenNotFound', 'TokenInvalid', 'TokenExpired', 'Cipher',
            'CryptoDigits', 'RootKey', 'Key', 'Secret', 'Token', 'JWT', ]
 
-
-# initialize module level logger
-log = logging.getLogger(__name__)
+# module logger
+log = Logger.with_name(__name__)
 
 
 class AuthError(Exception):
@@ -42,13 +41,13 @@ class TokenNotFound(AuthError):
     """The access token was not found."""
 
 
-# NOTE: piggy back on cryptography
+# NOTE: piggyback on cryptography
 class TokenInvalid(AuthError):
     """The token is not legitimate."""
 
 
 class TokenExpired(AuthError):
-    """The token is past it's expiration datetime."""
+    """The token is past its expiration datetime."""
 
 
 class Cipher:
@@ -85,10 +84,10 @@ class Cipher:
         return cls(cls.load_rootkey(config))
 
     @staticmethod
-    def load_rootkey(__config: Configuration) -> RootKey:
+    def load_rootkey(cfg: Configuration) -> RootKey:
         """Load rootkey from configuration."""
         try:
-            return RootKey(__config.api.rootkey)
+            return RootKey(cfg.api.rootkey)
         except AttributeError as error:
             raise ConfigurationError('Missing \'api.rootkey\'') from error
 
@@ -118,7 +117,6 @@ class CryptoDigits:
     def __init__(self, value: Union[str, bytes, CryptoDigits]) -> None:
         """Direct initialization with `value`."""
 
-        # allow passive coercion
         if isinstance(value, CryptoDigits):
             self._size = len(value)
             self.value = value.value

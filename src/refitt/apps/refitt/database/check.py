@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import List, Dict
 
 # standard libs
-import logging
 import functools
 
 # external libs
@@ -17,11 +16,15 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ....database.model import ModelInterface
-from ....database.interface import engine, schema, Session
+from refitt.core.logging import Logger
+from refitt.database.model import ModelInterface
+from refitt.database.interface import engine, schema, Session
 
 # public interface
 __all__ = ['CheckDatabaseApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt database check'
@@ -41,10 +44,6 @@ options:
 -c, --count            Display row count with table check.
 -h, --help             Show this message and exit.\
 """
-
-
-# application logger
-log = logging.getLogger('refitt')
 
 
 @functools.lru_cache(maxsize=None)

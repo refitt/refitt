@@ -10,22 +10,21 @@ from typing import List, Dict, Any, Type
 
 # standard libs
 import json
-import logging
 
 # external libs
 from sqlalchemy.engine import Engine
 
 # internal libs
-from .. import assets
-from .interface import engine as __engine, Session, config
-from .model import ModelInterface, tables
+from refitt import assets
+from refitt.core.logging import Logger
+from refitt.database.interface import engine as __engine, Session, config
+from refitt.database.model import ModelInterface, tables
 
 # public interface
 __all__ = ['create_all', 'drop_all', 'load_all', 'config', ]
 
-
-# initialize module level logger
-log = logging.getLogger(__name__)
+# module logger
+log = Logger.with_name(__name__)
 
 
 def create_all(base: Type[ModelInterface] = ModelInterface, engine: Engine = __engine) -> None:

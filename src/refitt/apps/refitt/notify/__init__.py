@@ -9,7 +9,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import mail, slack
+from refitt.apps.refitt.notify import mail, slack
 
 # public interface
 __all__ = ['NotifyApp', ]
@@ -34,6 +34,7 @@ options:
 Use the -h/--help flag with the above groups/commands to
 learn more about their usage.\
 """
+
 
 class NotifyApp(ApplicationGroup):
     """Application class for database command group."""

@@ -11,7 +11,6 @@ from typing import IO
 # standard libs
 import os
 import sys
-import logging
 from functools import partial, cached_property
 
 # external libs
@@ -20,10 +19,14 @@ from cmdkit.cli import Interface
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from ....core.exceptions import log_exception
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['ForecastCreateApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt forecast create'
@@ -45,10 +48,6 @@ options:
 """
 
 
-# application logger
-log = logging.getLogger('refitt')
-
-
 class ForecastCreateApp(Application):
     """Application class for forecast creation."""
 
@@ -61,7 +60,7 @@ class ForecastCreateApp(Application):
     interface.add_argument('--print', action='store_true', dest='verbose')
 
     exceptions = {
-        IntegrityError: partial(log_exception, logger=log.critical,
+        IntegrityError: partial(handle_exception, logger=log,
                                 status=exit_status.runtime_error),
     }
 

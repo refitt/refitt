@@ -9,12 +9,12 @@ Only relative-paths need be specified and the token-based authentication
 is handled automatically.
 """
 
+
 # type annotations
 from typing import Tuple, Dict, Any, Union, Callable, Optional, Type, TypeVar
 
 # standard libs
 import re
-import logging
 import functools
 import webbrowser
 from urllib.request import urljoin  # noqa: missing stub for urllib
@@ -24,22 +24,22 @@ from contextlib import contextmanager
 import requests as __requests
 
 # internal libs
-from ..core.config import config, update_config
-from .token import Key, Secret, Token
-from .api.response import STATUS
+from refitt.core.config import config, update as update_config
+from refitt.core.logging import Logger
+from refitt.web.token import Key, Secret, Token
+from refitt.web.api.response import STATUS
 
 # public interface
 __all__ = ['APIError', 'KEY', 'SECRET', 'TOKEN', 'login', 'format_request', 'refresh_token',
            'authenticated', 'get_content', 'get_protocol', 'get_protocol_version',
            'request', 'get', 'put', 'post', 'delete', 'use_auth', 'use_token', ]
 
+# module logger
+log = Logger.with_name(__name__)
+
 # type defs
 Request = __requests.Request
 Response = __requests.Response
-
-
-# initialize module level logger
-log = logging.getLogger(__name__)
 
 
 class APIError(Exception):

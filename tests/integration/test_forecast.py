@@ -14,8 +14,8 @@ import pytest
 # internal libs
 from refitt.core.typing import JsonDict
 from refitt.database.model import Observation as ObservationModel, Model
-from refitt.data.forecast import ConvAutoEncoder, CoreCollapseInference
-from refitt.data.forecast.model import ModelData
+from refitt.forecast import ConvAutoEncoder, CoreCollapseInference
+from refitt.forecast.model import ModelData
 
 # testing libs
 from tests.unit.test_forecast import ModelTestBase

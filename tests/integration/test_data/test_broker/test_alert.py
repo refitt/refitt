@@ -4,7 +4,12 @@
 """Data broker alert integration tests."""
 
 
+# external libs
+import pytest
+from antares_client.search import get_by_id
+
 # internal libs
+from refitt.data.broker.antares import AntaresAlert
 from refitt.database.model import Observation, Alert
 from tests.unit.test_data.test_broker.test_alert import MockAlert
 
@@ -48,3 +53,16 @@ class TestMockAlert:
         alert.backfill_database()
         assert Observation.count() == obs_count + 2
         assert Alert.count() == alert_count + 2
+
+
+class TestAntaresService:
+    """Test issues with Antares client library."""
+
+    @pytest.mark.skip(reason='Invokes external API; only needed to test service')
+    def test_alert_history(self) -> None:
+        """Check specific antares locus/alerts."""
+        locus = get_by_id('ANT2020ky6q')
+        assert len(locus.alerts) == 1789
+        alert = AntaresAlert.from_locus(locus)
+        assert len(alert.previous) == 664  # alerts missing necessary properties
+

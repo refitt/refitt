@@ -11,20 +11,17 @@ from typing import Type
 # standard libs
 import io
 import json
-import string
 import random
 from abc import ABC, abstractstaticmethod
 
 # external libs
 import numpy as np
-# from astropy.time import Time
-# from hypothesis import given, strategies as st
 
 # internal libs
 from refitt.core.typing import JsonDict
 from refitt.core.schema import SchemaError
-from refitt.data.forecast.model import ModelData
-from refitt.data.forecast import ConvAutoEncoder, CoreCollapseInference
+from refitt.forecast.model import ModelData
+from refitt.forecast import ConvAutoEncoder, CoreCollapseInference
 
 
 class ModelTestBase(ABC):
@@ -134,7 +131,7 @@ class TestConvAutoEncoder(ModelTestBase):
             'mjd': random.uniform(59_260, 60_000),
             'num_obs': random.randint(3, 20),
             'filter': random.choice(['g-ztf', 'r-ztf']),
-            'class': [random.choices(string.ascii_uppercase, k=3), random.random()],
+            'class': [['SN Ia', ], 0.793],
             'phase': 'rising',
             'next_mag_mean': random.uniform(14, 20),
             'next_mag_sigma': random.random(),

@@ -5,7 +5,7 @@
 
 
 # internal libs
-from .daemon import Daemon
-from .server import DaemonServer
-from .service import DaemonService
-from .client import DaemonClient
+from refitt.daemon.daemon import Daemon
+from refitt.daemon.server import DaemonServer
+from refitt.daemon.service import DaemonService
+from refitt.daemon.client import DaemonClient

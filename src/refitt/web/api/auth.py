@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import Callable
 
 # standard libs
-import logging
 import functools
 from datetime import datetime
 
@@ -18,16 +17,16 @@ from flask import request
 from cryptography.hazmat.primitives.constant_time import bytes_eq
 
 # internal libs
-from ...database.model import Client
-from ..token import Secret, JWT, AuthError, TokenNotFound, TokenExpired
+from refitt.core.logging import Logger
+from refitt.database.model import Client
+from refitt.web.token import Secret, JWT, AuthError, TokenNotFound, TokenExpired
 
 # public interface
 __all__ = ['ClientInvalid', 'ClientInsufficient', 'AuthenticationNotFound', 'AuthenticationInvalid',
            'PermissionDenied', 'authenticated', 'authenticate', 'authorization']
 
-
-# initialize module level logger
-log = logging.getLogger(__name__)
+# module logger
+log = Logger.with_name(__name__)
 
 
 class ClientInvalid(AuthError):

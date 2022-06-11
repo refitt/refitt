@@ -11,7 +11,6 @@ from typing import Callable, Dict
 # standard libs
 import sys
 import json
-import logging
 from functools import partial, cached_property
 
 # external libs
@@ -22,11 +21,15 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 # internal libs
-from ...core.exceptions import log_exception
-from ...database.model import Object
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
+from refitt.database.model import Object
 
 # public interface
 __all__ = ['QueryObjectApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt object'
@@ -47,10 +50,6 @@ options:
 """
 
 
-# application logger
-log = logging.getLogger('refitt')
-
-
 class QueryObjectApp(Application):
     """Application class for object query entry-point."""
 
@@ -62,14 +61,25 @@ class QueryObjectApp(Application):
     format_json: bool = False
     interface.add_argument('--json', action='store_true', dest='format_json')
 
+    include_data: bool = False
+    interface.add_argument('-d', '--data', action='store_true', dest='include_data')
+
+    include_history: bool = False
+    interface.add_argument('-l', '--history', action='store_true', dest='include_history')
+
     exceptions = {
-        Object.NotFound: partial(log_exception, logger=log.critical, status=exit_status.runtime_error),
+        Object.NotFound: partial(handle_exception, logger=log, status=exit_status.runtime_error),
         **Application.exceptions,
     }
 
     def run(self) -> None:
         """Business logic of command."""
-        self.write(self.load_object().to_json())
+        info = self.load_object().to_json()
+        if not self.include_data:
+            info.pop('data')
+        if not self.include_history:
+            info.pop('history')
+        self.write(info)
 
     def load_object(self) -> Object:
         """Load object from database."""

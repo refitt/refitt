@@ -11,7 +11,6 @@ from __future__ import annotations
 import os
 import sys
 import socket
-import logging
 import subprocess
 
 # external libs
@@ -19,10 +18,14 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ....web.api import application as api
+from refitt.core.logging import Logger
+from refitt.web.api import application as api
 
 # public interface
 __all__ = ['WebApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt service api'
@@ -46,10 +49,6 @@ options:
     --dev                Run in development mode.
 -h, --help               Show this message and exit.\
 """
-
-
-# application logger
-log = logging.getLogger('refitt')
 
 
 # global reference to hostname

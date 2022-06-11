@@ -10,7 +10,6 @@ from typing import Tuple, List, Optional
 
 # standard libs
 import sys
-import logging
 import functools
 from smtplib import SMTPAuthenticationError
 
@@ -19,12 +18,16 @@ from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ....comm.mail import UserAuth, Mail, MailServer, templates, TEMPLATES
-from ....core.config import config, ConfigurationError
-from ....core.exceptions import log_exception
+from refitt.comm.mail import UserAuth, Mail, MailServer, templates, TEMPLATES
+from refitt.core.config import config, ConfigurationError
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['MailApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = f'refitt notify mail'
@@ -62,10 +65,6 @@ options:
 extras:
     --list-templates         Show available templates and exit.\
 """
-
-
-# application logger
-log = logging.getLogger('refitt')
 
 
 def connection_refused(exc: ConnectionRefusedError) -> int:
@@ -113,8 +112,8 @@ class MailApp(Application):
     message_interface.add_argument('--text', action='store_true', dest='message_text')
     message_interface.add_argument('--html', action='store_true', dest='message_html')
 
-    attachments: List[str] = []
-    interface.add_argument('-a', '--attach', nargs='+', default=attachments, dest='attachments')
+    attachments: List[str] = None
+    interface.add_argument('-a', '--attach', nargs='+', default=None, dest='attachments')
 
     template: str = None
     interface.add_argument('-t', '--template', default=None)
@@ -145,7 +144,7 @@ class MailApp(Application):
         SMTPAuthenticationError: authentication_failed,
         TimeoutError: connection_timeout,
         ConnectionRefusedError: connection_refused,
-        Mail.Error: functools.partial(log_exception, logger=log.error, status=exit_status.bad_argument),
+        Mail.Error: functools.partial(handle_exception, logger=log, status=exit_status.bad_argument),
         **Application.exceptions,
     }
 

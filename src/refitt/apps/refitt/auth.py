@@ -12,7 +12,6 @@ from typing import Dict, Optional, Union, Callable
 import sys
 import json
 import functools
-import logging
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -21,13 +20,17 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 # internal libs
-from ...database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
-from ...core.exceptions import log_exception
-from ...core.config import update_config
-from ...web.token import Cipher
+from refitt.core.exceptions import handle_exception
+from refitt.core.config import update as update_config
+from refitt.core.logging import Logger
+from refitt.database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
+from refitt.web.token import Cipher
 
 # public interface
 __all__ = ['AuthApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt auth'
@@ -63,10 +66,6 @@ options:
 """
 
 
-# application logger
-log = logging.getLogger('refitt')
-
-
 class AuthApp(Application):
     """Generate new authentication keys/tokens."""
 
@@ -100,7 +99,7 @@ class AuthApp(Application):
     interface.add_argument('--update-config', action='store_true')
 
     exceptions = {
-        NotFound: functools.partial(log_exception, logger=log.critical, status=exit_status.runtime_error),
+        NotFound: functools.partial(handle_exception, logger=log, status=exit_status.runtime_error),
         **Application.exceptions,
     }
 

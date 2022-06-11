@@ -5,10 +5,10 @@
 
 
 # internal libs
-from ....database.model import Client
-from ..app import application
-from ..response import endpoint
-from ..auth import authenticated, authorization
+from refitt.database.model import Client
+from refitt.web.api.app import application
+from refitt.web.api.response import endpoint
+from refitt.web.api.auth import authenticated, authorization
 
 # public interface
 __all__ = []

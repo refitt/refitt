@@ -11,23 +11,26 @@ from typing import Tuple, List, Dict, Union, Optional, Callable, IO
 # standard libs
 import os
 import sys
-import logging
 from functools import partial, cached_property, wraps
 
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
-from pandas import DataFrame, read_csv, read_json, read_hdf
 from sqlalchemy.exc import IntegrityError
+from pandas import DataFrame, read_csv, read_json, read_hdf
 
 # internal libs
-from ....core import typing
-from ....core.exceptions import log_exception
-from ....database.model import (Recommendation, Epoch, RecommendationTag, Observation,
-                                User, Facility, Object, NotFound, )
+from refitt.core import typing
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
+from refitt.database.model import (Recommendation, Epoch, RecommendationTag, Observation,
+                                   User, Facility, Object, NotFound, )
 
 # public interface
 __all__ = ['RecommendationPublishApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt recommendation publish'
@@ -73,10 +76,6 @@ In file mode, the value (e.g., '--extra-fields maxalt[=int]') is the data type.
 In single recommendation mode, it is the discrete value 
 (e.g., '--extra-fields maxalt=42).\
 """
-
-
-# application logger
-log = logging.getLogger('refitt')
 
 
 REQUIRED_FIELDS = ['object_id', 'user_id', 'facility_id', 'priority', 'prediction_id']
@@ -159,13 +158,13 @@ class RecommendationPublishApp(Application):
     interface.add_argument('--print', action='store_true', dest='verbose')
 
     exceptions = {
-        FileNotFoundError: partial(log_exception, logger=log.critical,
+        FileNotFoundError: partial(handle_exception, logger=log,
                                    status=exit_status.bad_argument),
-        IOError: partial(log_exception, logger=log.critical,
+        IOError: partial(handle_exception, logger=log,
                          status=exit_status.bad_argument),
-        NotFound: partial(log_exception, logger=log.critical,
+        NotFound: partial(handle_exception, logger=log,
                           status=exit_status.runtime_error),
-        IntegrityError: partial(log_exception, logger=log.critical,
+        IntegrityError: partial(handle_exception, logger=log,
                                 status=exit_status.runtime_error),
         **Application.exceptions,
     }

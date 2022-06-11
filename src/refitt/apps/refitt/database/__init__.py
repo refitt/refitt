@@ -9,7 +9,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import init, check, query
+from refitt.apps.refitt.database import init, check, query
 
 # public interface
 __all__ = ['DatabaseApp', ]
@@ -35,6 +35,7 @@ options:
 Use the -h/--help flag with the above groups/commands to
 learn more about their usage.\
 """
+
 
 class DatabaseApp(ApplicationGroup):
     """Application class for database command group."""

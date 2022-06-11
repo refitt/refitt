@@ -81,7 +81,7 @@ class TestTNSQueryManager:
         assert new.redshift == FAKE_TNS_REDSHIFT
         assert new.type.name == FAKE_TNS_TYPE_NAME
         assert new.data['tns'] == FAKE_TNS_OBJECT_DATA['data']['reply']
-        assert len(new.data['history']) == 1
+        assert len(new.history) == 1
         Object.delete(new.id)
 
 
@@ -119,5 +119,5 @@ class TestTNSCatalogManager:
         assert new.redshift == record.redshift
         assert new.type.name == 'Unknown'
         assert new.data['tns'] == record.to_json()
-        assert len(new.data['history']) == 1  # NOTE: the redshift has changed (see MockTNSCatalogManager.catalog).
+        assert len(new.history) == 1  # NOTE: the redshift has changed (see MockTNSCatalogManager.catalog).
         Object.delete(new.id)

@@ -15,13 +15,13 @@ from datetime import datetime
 from flask import request
 
 # internal libs
-from ....database.model import (Client, Recommendation, File, FileType, Observation,
-                                Source, ModelInterface, Epoch)
-from ..app import application
-from ..response import (endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid,
-                        PayloadMalformed, NotFound)
-from ..auth import authenticated, authorization
-from ..tools import collect_parameters, disallow_parameters, require_file, require_data
+from refitt.database.model import (Client, Recommendation, File, FileType, Observation,
+                                   Source, ModelInterface, Epoch)
+from refitt.web.api.app import application
+from refitt.web.api.auth import authenticated, authorization
+from refitt.web.api.tools import collect_parameters, disallow_parameters, require_file, require_data
+from refitt.web.api.response import (endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid,
+                                     PayloadMalformed, NotFound)
 
 # public interface
 __all__ = ['info', 'recommendation_slices', ]

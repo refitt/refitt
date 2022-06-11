@@ -12,26 +12,25 @@ import os
 import abc
 import sys
 import atexit
-import logging
 
 # internal libs
-from ..core.config import get_site
+from refitt.core.platform import default_path
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['Daemon', ]
 
-
-# initialize module level logger
-log = logging.getLogger(__name__)
+# module logger
+log = Logger.with_name(__name__)
 
 
 class Daemon(abc.ABC):
-    """Abstract base class for Daemon processes."""
+    """Abstract base class for daemon processes."""
 
     @property
     def pidfile(self) -> str:
         """Path to the refitt daemon pidfile."""
-        return os.path.join(get_site()['run'], 'refittd.pid')
+        return os.path.join(default_path.run, 'refittd.pid')
 
     def daemonize(self) -> None:
         """Daemonize class. UNIX double fork mechanism."""
@@ -39,14 +38,14 @@ class Daemon(abc.ABC):
         if os.path.exists(self.pidfile):
             with open(self.pidfile, mode='r') as pidfile:
                 pid = int(pidfile.read().strip())
-                raise RuntimeError(f'already running (pid={pid})')
+                raise RuntimeError(f'Daemon already running (pid={pid})')
         try:
             pid = os.fork()
             if pid > 0:
                 sys.exit(0)  # exit first parent
 
         except OSError as error:
-            raise RuntimeError(f'failed to create first fork: {error.args}.')
+            raise RuntimeError(f'Failed to create first fork: {error.args}.')
 
         # decouple from parent environment
         os.chdir('/')
@@ -60,7 +59,7 @@ class Daemon(abc.ABC):
                 sys.exit(0)  # exit second parent
 
         except OSError as error:
-            raise RuntimeError(f'failed to create second fork: {error.args}.')
+            raise RuntimeError(f'Failed to create second fork: {error.args}.')
 
         # redirect standard file descriptors
         sys.stdout.flush()

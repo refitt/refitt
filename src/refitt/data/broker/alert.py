@@ -14,11 +14,15 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 
 # internal libs
-from ...database.model import Epoch, ObjectType, Object, Source, ObservationType, Observation, Alert
-from ...database.interface import Session
+from refitt.core.logging import Logger
+from refitt.database.model import Epoch, ObjectType, Object, Source, ObservationType, Observation, Alert
+from refitt.database.interface import Session
 
 # public interface
 __all__ = ['AlertInterface', 'AlertError', ]
+
+# module logger
+log = Logger.with_name(__name__)
 
 
 class AlertError(Exception):
@@ -226,4 +230,5 @@ class AlertInterface(ABC):
         observation_times = [observation.time.astimezone() for observation in query.all()]
         alert_times = [alert.observation_time.astimezone() for alert in self.previous]
         missing_alerts = [alert for alert, time in zip(self.previous, alert_times) if time not in observation_times]
+        log.info(f'Backfilling {len(missing_alerts)} previous alerts')
         return [alert.to_database() for alert in missing_alerts]

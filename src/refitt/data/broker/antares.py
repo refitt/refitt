@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import List, Dict, Iterator, Union, Optional
 
 # standard libs
-import logging
 from datetime import datetime
 
 # external libs
@@ -18,15 +17,15 @@ from antares_client.models import Locus
 from astropy.time import Time
 
 # internal libs
-from .client import ClientInterface
-from .alert import AlertInterface, AlertError
+from refitt.data.broker.client import ClientInterface
+from refitt.data.broker.alert import AlertInterface, AlertError
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['AntaresAlert', 'AntaresClient', ]
 
-
-# initialize module level logger
-log = logging.getLogger(__name__)
+# module logger
+log = Logger.with_name(__name__)
 
 
 class AntaresAlert(AlertInterface):
@@ -42,10 +41,11 @@ class AntaresAlert(AlertInterface):
         base = {'locus_id': locus.locus_id,
                 'ra': locus.ra,
                 'dec': locus.dec,
-                'properties': locus.properties}
+                'properties': locus.properties,
+                'catalogs': locus.catalogs}
 
         # NOTE: we pre-filter prior history to check that we have necessary properties
-        #       e.g., missing `ztf_magpsf` indicates a upper/lower limit event (so we throw it out)
+        #       e.g., missing `ztf_magpsf` indicates an upper/lower limit event (so we throw it out)
         previous = [{'alert_id': alert.alert_id, 'mjd': alert.mjd,
                      'ra': locus.ra, 'dec': locus.dec,
                      'properties': alert.properties}
@@ -56,7 +56,7 @@ class AntaresAlert(AlertInterface):
             raise AlertError(f'Missing necessary properties on all alerts ({locus.locus_id})')
         elif len(previous) < len(locus.alerts):
             missing = len(locus.alerts) - len(previous)
-            log.debug(f'{missing} alert(s) not included because of missing properties ({locus.locus_id})')
+            log.info(f'{missing} alert(s) not included because of missing properties ({locus.locus_id})')
 
         alert = cls.from_dict({**base, 'new_alert': previous[0]})
         if len(previous) > 1:
@@ -172,3 +172,11 @@ class AntaresClient(ClientInterface):
         except KeyError:
             log.error(f'Missing necessary data for filter=not_extragalactic_sso')
             return False
+
+    @staticmethod
+    def filter_neargaia(alert: AntaresAlert) -> bool:
+        """Rejects all `ztf_neargaia <= 2` (arc seconds)."""
+        try:
+            return alert['new_alert']['properties']['ztf_neargaia'] > 2
+        except KeyError as exc:
+            log.error(f'Missing necessary data for filter=neargaia ({exc})')

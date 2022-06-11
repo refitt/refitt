@@ -12,28 +12,26 @@ from typing import Union, IO, NamedTuple, Dict, TypeVar, Type
 import os
 import re
 import json
-import logging
 from io import BytesIO
 from zipfile import ZipFile
 from datetime import datetime, timedelta
 
 # external libs
-import numpy as np
 from pandas import DataFrame, read_csv
 
 # internal libs
-from .interface import TNSInterface, TNSQueryCatalogResult, TNSError
-from ...core.config import get_site
+from refitt.data.tns.interface import TNSInterface, TNSQueryCatalogResult, TNSError
+from refitt.core.platform import default_path
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['TNSCatalog', 'TNSRecord', ]
 
+# module logger
+log = Logger.with_name(__name__)
 
-# initialize module level logger
-log = logging.getLogger(__name__)
 
-
-# object name provider pattern matching
+# Object name provider pattern matching
 OBJECT_NAMING_PATTERNS: Dict[str, re.Pattern] = {
     'ztf': re.compile(r'ZTF.*'),
     'iau': re.compile(r'20[2-3][0-9][a-zA-Z]+'),
@@ -63,7 +61,7 @@ class TNSCatalog:
         return cls(dataframe)
 
     DEFAULT_EXPIRED_AFTER = timedelta(days=1)
-    DEFAULT_CACHE_DIR = os.path.join(get_site().lib, 'tns')
+    DEFAULT_CACHE_DIR = os.path.join(default_path.lib, 'tns')
     DEFAULT_CACHE_PATH = os.path.join(DEFAULT_CACHE_DIR, 'tns_public_objects.csv')
 
     @classmethod
