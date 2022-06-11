@@ -172,3 +172,11 @@ class AntaresClient(ClientInterface):
         except KeyError:
             log.error(f'Missing necessary data for filter=not_extragalactic_sso')
             return False
+
+    @staticmethod
+    def filter_neargaia(alert: AntaresAlert) -> bool:
+        """Rejects all `ztf_neargaia <= 2` (arc seconds)."""
+        try:
+            return alert['new_alert']['properties']['ztf_neargaia'] > 2
+        except KeyError as exc:
+            log.error(f'Missing necessary data for filter=neargaia ({exc})')
