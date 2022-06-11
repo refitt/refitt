@@ -26,7 +26,7 @@ from ...core.platform import default_path
 from ...core.config import config as base_config, get_config, ConfigurationError, Namespace
 from ...core.exceptions import write_traceback
 from ...core.logging import Logger
-from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
+from ... import __version__, __developer__, __contact__, __website__, __copyright__
 
 # public interface
 __all__ = ['RefittDaemonApp', ]

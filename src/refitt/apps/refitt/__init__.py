@@ -17,8 +17,8 @@ from cmdkit.config import ConfigurationError
 # internal libs
 from ...core.exceptions import handle_exception, write_traceback
 from ...core.logging import Logger
-from ...__meta__ import (__version__, __description__, __copyright__, __developer__,
-                         __contact__, __website__, __ascii_art__)
+from ... import (__version__, __developer__, __contact__, __website__, __copyright__,
+                 __description__, __ascii_art__)
 
 # public interface
 __all__ = ['RefittApp', 'main', ]

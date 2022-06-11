@@ -16,7 +16,7 @@ import subprocess
 # internal libs
 from ...daemon.client import DaemonClient
 from ...core.exceptions import handle_exception, write_traceback
-from ...__meta__ import __version__, __copyright__, __developer__, __contact__, __website__
+from ... import __version__, __developer__, __contact__, __website__, __copyright__
 
 # external libs
 from cmdkit.app import Application, exit_status
