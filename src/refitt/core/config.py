@@ -23,19 +23,23 @@ from refitt.core.platform import path, default_path, check_private
 from refitt.core.exceptions import write_traceback, display_warning
 
 # public interface
-__all__ = ['config', 'update', 'default', 'ConfigurationError', 'Namespace', 'blame', ]
+__all__ = ['config', 'update', 'default', 'ConfigurationError', 'Namespace', 'blame',
+           'load', 'reload', 'DEFAULT_LOGGING_STYLE', 'DEFAULT_DATABASE', 'LOGGING_STYLES', ]
 
 
 DEFAULT_LOGGING_STYLE = 'default'
 LOGGING_STYLES = {
     'default': {
+        'datefmt': '%Y-%m-%d %H:%M:%S',
         'format': ('%(ansi_bold)s%(ansi_level)s%(levelname)8s%(ansi_reset)s %(ansi_faint)s[%(name)s]%(ansi_reset)s'
                    ' %(message)s'),
     },
     'system': {
+        'datefmt': '%Y-%m-%d %H:%M:%S',
         'format': '%(asctime)s.%(msecs)03d %(hostname)s %(levelname)8s [%(app_id)s] [%(name)s] %(message)s',
     },
     'detailed': {
+        'datefmt': '%Y-%m-%d %H:%M:%S',
         'format': ('%(ansi_faint)s%(asctime)s.%(msecs)03d %(hostname)s %(ansi_reset)s'
                    '%(ansi_level)s%(ansi_bold)s%(levelname)8s%(ansi_reset)s '
                    '%(ansi_faint)s[%(name)s]%(ansi_reset)s %(message)s'),
@@ -59,15 +63,12 @@ default = Namespace({
 
     'logging': {
         'level': 'warning',
-        'format': '%(asctime)s %(hostname)s %(levelname)-8s [%(name)s] %(msg)s',
-        'datefmt': '%Y-%m-%d %H:%M:%S',
         'stream': {
             'enabled': False,
             'batchsize': 10,
             'timeout': 5
         },
-        # NOTE: If a 'style' is defined then other parameters can be overridden
-        # See `auto_logging` below
+        # NOTE: If a 'style' is defined than other parameters can be overridden
         'style': DEFAULT_LOGGING_STYLE,
         **LOGGING_STYLES.get(DEFAULT_LOGGING_STYLE),
     },

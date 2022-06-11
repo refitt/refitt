@@ -15,10 +15,11 @@ import subprocess
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
-from streamkit.core.logging import _ANSI_RESET, _ANSI_CODES  # noqa: protected-members
+# from streamkit.core.logging import _ANSI_RESET, _ANSI_CODES  # noqa: protected-members
 
 # internal lib
 from refitt import __version__, __developer__, __contact__, __website__, __copyright__
+from refitt.core import ansi
 from refitt.core.exceptions import handle_exception, write_traceback
 from refitt.core.logging import Logger
 from refitt.daemon.client import DaemonClient
@@ -58,13 +59,6 @@ options:
 """
 
 
-# colors
-ANSI_BOLD = '\033[1m'
-ANSI_GREEN = _ANSI_CODES['foreground']['green']
-ANSI_RED = _ANSI_CODES['foreground']['red']
-ANSI_RESET = _ANSI_RESET
-
-
 def daemon_unavailable(exc: Exception) -> int:  # noqa: exception not used
     """The daemon refused the connection, likely not running."""
     log.critical('Daemon refused connection - is it running?')
@@ -90,7 +84,7 @@ class RefittControllerApp(Application):
             functools.partial(handle_exception, logger=log,
                               status=exit_status.runtime_error),
         ConnectionRefusedError: daemon_unavailable,
-        Exception: functools.partial(write_traceback, log),
+        Exception: functools.partial(write_traceback, logger=log),
     }
 
     def run(self) -> None:
@@ -116,10 +110,10 @@ class RefittControllerApp(Application):
 
         for service, status in info.items():
             alive = status.pop('alive')
-            color = ANSI_GREEN if alive else ANSI_RED
+            color = ansi.green if alive else ansi.red
             state = 'alive' if alive else 'dead'
             pid = status.pop('pid')
-            print(f'{color}● {service}: {state} ({pid}){ANSI_RESET}')
+            print(color(f'● {service}: {state} ({pid})'))
             for key, value in status.items():
                 print(f'{key:>10}: {value}')
 

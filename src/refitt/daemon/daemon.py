@@ -38,14 +38,14 @@ class Daemon(abc.ABC):
         if os.path.exists(self.pidfile):
             with open(self.pidfile, mode='r') as pidfile:
                 pid = int(pidfile.read().strip())
-                raise RuntimeError(f'already running (pid={pid})')
+                raise RuntimeError(f'Daemon already running (pid={pid})')
         try:
             pid = os.fork()
             if pid > 0:
                 sys.exit(0)  # exit first parent
 
         except OSError as error:
-            raise RuntimeError(f'failed to create first fork: {error.args}.')
+            raise RuntimeError(f'Failed to create first fork: {error.args}.')
 
         # decouple from parent environment
         os.chdir('/')
@@ -59,7 +59,7 @@ class Daemon(abc.ABC):
                 sys.exit(0)  # exit second parent
 
         except OSError as error:
-            raise RuntimeError(f'failed to create second fork: {error.args}.')
+            raise RuntimeError(f'Failed to create second fork: {error.args}.')
 
         # redirect standard file descriptors
         sys.stdout.flush()

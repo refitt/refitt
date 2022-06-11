@@ -22,8 +22,8 @@ from cmdkit.cli import Interface, ArgumentError
 # internal libs
 from refitt import __version__, __developer__, __contact__, __website__, __copyright__
 from refitt.core.platform import default_path
-from refitt.core.config import config as base_config, get_config, ConfigurationError, Namespace
 from refitt.core.exceptions import write_traceback
+from refitt.core.config import reload as reload_config, LOGGING_STYLES, ConfigurationError, Namespace
 from refitt.core.logging import Logger
 from refitt.daemon import Daemon, DaemonService, DaemonServer
 
@@ -100,15 +100,14 @@ class RefittDaemonApp(Application, Daemon):
     def run(self) -> None:
         """Start the refitt service daemon."""
         log.info('Started master daemon')
-        self.start_services()
-        self.serve_forever()
+        if self.daemon_mode:
+            self.run_daemon()
+        else:
+            self.start_services()
+            self.serve_forever()
 
     def start_services(self) -> None:
         """Load definitions and start services."""
-
-        if self.daemon_mode:
-            self.run_daemon()
-
         config = self.get_config()
         if not self.services_requested:
             self.services_requested = list(config)
@@ -116,7 +115,6 @@ class RefittDaemonApp(Application, Daemon):
             for service in self.services_requested:
                 if service not in config:
                     raise ArgumentError(f'Service \'{service}\' not in configuration')
-
         for name in self.services_requested:
             self.services[name] = DaemonService(name, **config[name])
             self.services[name].start()
@@ -204,7 +202,7 @@ class RefittDaemonApp(Application, Daemon):
     @staticmethod
     def get_config() -> Dict[str, Namespace]:
         """Load services from configuration."""
-        config = get_config()
+        config = reload_config()
         try:
             services = config.service
         except KeyError as error:
@@ -217,10 +215,8 @@ class RefittDaemonApp(Application, Daemon):
         #       all stderr is to subprocess with a redirect in normal mode
         self.daemonize()
         logpath = os.path.join(default_path.log, 'refittd.log')
-        env = {**os.environ,
-               'REFITT_LOGGING_FORMAT': '%(asctime)s.%(msecs)03d %(hostname)s %(levelname)-8s [%(name)s] %(msg)s',
-               'REFITT_LOGGING_DATEFMT': '%Y-%m-%d %H:%M:%S',
-               'REFITT_LOGGING_LEVEL': 'DEBUG' if base_config.logging.level.upper() == 'DEBUG' else 'INFO'}
+        logconf = Namespace({'logging': {'level': 'DEBUG', **LOGGING_STYLES['system']}})
+        env = {**os.environ, **logconf.to_env().flatten(prefix='REFITT')}
         with open(logpath, mode='a') as logfile:
             subprocess.run(['refittd', '--all', '--keep-alive'], stderr=logfile, env=env)
 
