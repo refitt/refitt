@@ -24,7 +24,8 @@ from refitt.core.exceptions import write_traceback, display_warning
 
 # public interface
 __all__ = ['config', 'update', 'default', 'ConfigurationError', 'Namespace', 'blame',
-           'load', 'reload', 'DEFAULT_LOGGING_STYLE', 'DEFAULT_DATABASE', 'LOGGING_STYLES', ]
+           'load', 'reload', 'load_file', 'reload_file', 'load_env', 'reload_env',
+           'DEFAULT_LOGGING_STYLE', 'DEFAULT_DATABASE', 'LOGGING_STYLES', ]
 
 
 DEFAULT_LOGGING_STYLE = 'default'
@@ -89,7 +90,11 @@ default = Namespace({
     'plasma': {
         'memory': 1_000_000,  # 1 MB
         'socket': ''
-    }
+    },
+
+    'console': {
+        'theme': 'solarized-dark',
+    },
 })
 
 
