@@ -7,7 +7,8 @@ Runtime configuration.
 
 
 # type annotations
-from typing import Optional
+from __future__ import annotations
+from typing import Optional, Protocol
 
 # standard libs
 import os
@@ -93,9 +94,8 @@ default = Namespace({
 })
 
 
-@functools.lru_cache(maxsize=None)
-def load_file(filepath: str) -> Namespace:
-    """Load configuration file manually."""
+def reload_file(filepath: str) -> Namespace:
+    """Force reloading configuration file."""
     if not os.path.exists(filepath):
         return Namespace({})
     if not check_private(filepath):
@@ -107,15 +107,26 @@ def load_file(filepath: str) -> Namespace:
 
 
 @functools.lru_cache(maxsize=None)
-def load_env() -> Environ:
-    """Load environment variables and expand hierarchy as namespace."""
+def load_file(filepath: str) -> Namespace:
+    """Load configuration file."""
+    return reload_file(filepath)
+
+
+def reload_env() -> Environ:
+    """Force reloading environment variables and expanding hierarchy as namespace."""
     return Environ(prefix='REFITT').expand()
 
 
-def load(**preload: Namespace) -> Configuration:
+@functools.lru_cache(maxsize=None)
+def load_env() -> Environ:
+    """Load environment variables and expand hierarchy as namespace."""
+    return reload_env()
+
+
+def partial_load(**preload: Namespace) -> Configuration:
     """Load configuration from files and merge environment variables."""
     return Configuration(**{
-        'default': default, **preload,  # preloads AFTER defaults
+        'default': default, **preload,
         'system': load_file(path.system.config),
         'user': load_file(path.user.config),
         'local': load_file(path.local.config),
@@ -123,16 +134,20 @@ def load(**preload: Namespace) -> Configuration:
     })
 
 
-try:
-    config = load()
-except Exception as error:
-    write_traceback(error, module=__name__)
-    sys.exit(exit_status.bad_config)
+def partial_reload(**preload: Namespace) -> Configuration:
+    """Force reload configuration from files and merge environment variables."""
+    return Configuration(**{
+        'default': default, **preload,
+        'system': reload_file(path.system.config),
+        'user': reload_file(path.user.config),
+        'local': reload_file(path.local.config),
+        'env': reload_env(),
+    })
 
 
-def blame(*varpath: str) -> Optional[str]:
+def blame(base: Configuration, *varpath: str) -> Optional[str]:
     """Construct filename or variable assignment string based on precedent of `varpath`"""
-    source = config.which(*varpath)
+    source = base.which(*varpath)
     if not source:
         return None
     if source in ('system', 'user', 'local'):
@@ -143,10 +158,10 @@ def blame(*varpath: str) -> Optional[str]:
         return f'from: <{source}>'
 
 
-def get_logging_style() -> str:
+def get_logging_style(base: Configuration) -> str:
     """Get and check valid on `config.logging.style`."""
-    style = config.logging.style
-    label = blame('logging', 'style')
+    style = base.logging.style
+    label = blame(base, 'logging', 'style')
     if not isinstance(style, str):
         raise ConfigurationError(f'Expected string for `logging.style` ({label})')
     style = style.lower()
@@ -156,21 +171,38 @@ def get_logging_style() -> str:
         raise ConfigurationError(f'Unrecognized `logging.style` \'{style}\' ({label})')
 
 
-# Define default database location if none given
-if config.database == default.database:
-    display_warning(f'Using default database ({DEFAULT_DATABASE})')
-    auto_database = Namespace({'database': {'file': DEFAULT_DATABASE}})
-else:
-    auto_database = Namespace()
+def build_preloads(base: Configuration) -> Namespace:
+    """Build 'preload' namespace from base configuration."""
+    ns = Namespace()
+    ns.update({'logging': LOGGING_STYLES.get(get_logging_style(base))})
+    if base.database == default.database:
+        display_warning(f'Using default database ({DEFAULT_DATABASE})')
+        ns.update({'database': {'file': DEFAULT_DATABASE}})
+    return ns
 
 
-# Updated logging configuration based on given 'style'
-auto_logging = Namespace({'logging': LOGGING_STYLES.get(get_logging_style()), })
+class LoaderImpl(Protocol):
+    """Loader interface for building configuration."""
+    def __call__(self: LoaderImpl, **preloads: Namespace) -> Configuration: ...
+
+
+def build_configuration(loader: LoaderImpl) -> Configuration:
+    """Construct full configuration."""
+    return loader(preload=build_preloads(base=loader()))
+
+
+def load() -> Configuration:
+    """Load configuration from files and merge environment variables."""
+    return build_configuration(loader=partial_load)
+
+
+def reload() -> Configuration:
+    """Load configuration from files and merge environment variables."""
+    return build_configuration(loader=partial_reload)
 
 
 try:
-    # Rebuild configuration with injected preloads
-    config = load(auto_logging=auto_logging, auto_database=auto_database)
+    config = load()
 except Exception as error:
     write_traceback(error, module=__name__)
     sys.exit(exit_status.bad_config)
