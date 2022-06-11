@@ -16,8 +16,8 @@ import sys
 from rich.traceback import install as enable_rich_tracebacks
 
 # internal libs (forced initialization)
-from .core.config import config
-from .core import logging
+from refitt.core.config import config
+from refitt.core import logging
 
 # public interface
 __all__ = ['__appname__', '__version__', '__authors__', '__developer__', '__contact__',

@@ -12,22 +12,20 @@ import os
 import abc
 import sys
 import atexit
-import logging
 
 # internal libs
-from ..core.platform import default_path
-from ..core.logging import Logger
+from refitt.core.platform import default_path
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['Daemon', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 
 class Daemon(abc.ABC):
-    """Abstract base class for Daemon processes."""
+    """Abstract base class for daemon processes."""
 
     @property
     def pidfile(self) -> str:

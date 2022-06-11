@@ -8,11 +8,11 @@
 from flask import request
 
 # internal libs
-from ....database.model import Client, Source, SourceType
-from ..app import application
-from ..response import endpoint, NotFound, PermissionDenied
-from ..auth import authenticated, authorization
-from ..tools import collect_parameters, disallow_parameters
+from refitt.database.model import Client, Source, SourceType
+from refitt.web.api.app import application
+from refitt.web.api.response import endpoint, NotFound, PermissionDenied
+from refitt.web.api.auth import authenticated, authorization
+from refitt.web.api.tools import collect_parameters, disallow_parameters
 
 # public interface
 __all__ = []

@@ -3,31 +3,30 @@
 
 """REFITT's REST-API implementation."""
 
+
 # type annotations
 from __future__ import annotations
 from typing import Tuple, Dict, Type, Callable, Union, IO
 
 # standard libs
 import json
-import logging
 from functools import wraps
 
 # external libs
 from flask import Response, request, send_file
 
 # internal libs
-from ...core.logging import Logger
-from ...database.model import NotFound as RecordNotFound
-from ..token import TokenNotFound, TokenInvalid, TokenExpired
-from .auth import AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
+from refitt.core.logging import Logger
+from refitt.database.model import NotFound as RecordNotFound
+from refitt.web.token import TokenNotFound, TokenInvalid, TokenExpired
+from refitt.web.api.auth import AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
 
 # public interface
 __all__ = ['STATUS', 'STATUS_CODE', 'WebException', 'NotFound', 'PayloadTooLarge', 'PayloadInvalid',
            'PermissionDenied', 'PayloadMalformed', 'PayloadNotFound', 'ConstraintViolation',
            'ParameterNotFound', 'ParameterInvalid', 'RESPONSE_MAP', 'endpoint', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

@@ -5,7 +5,6 @@
 
 
 # standard libs
-import logging
 from functools import partial
 
 # external libs
@@ -14,12 +13,15 @@ from cmdkit.cli import Interface
 from sqlalchemy.exc import DatabaseError
 
 # internal libs
-from ....core.exceptions import handle_exception
-from ....core.logging import Logger
-from ....database import create_all, drop_all, load_all
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
+from refitt.database import create_all, drop_all, load_all
 
 # public interface
 __all__ = ['InitDatabaseApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt database init'
@@ -37,10 +39,6 @@ options:
     --test             Load test data.
 -h, --help             Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class InitDatabaseApp(Application):

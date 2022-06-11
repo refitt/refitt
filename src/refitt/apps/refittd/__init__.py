@@ -11,7 +11,6 @@ from typing import List, Dict, Tuple
 # standard libs
 import os
 import sys
-import logging
 import subprocess
 import functools
 from queue import Empty
@@ -21,15 +20,18 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ...daemon import Daemon, DaemonService, DaemonServer
-from ...core.platform import default_path
-from ...core.config import config as base_config, get_config, ConfigurationError, Namespace
-from ...core.exceptions import write_traceback
-from ...core.logging import Logger
-from ... import __version__, __developer__, __contact__, __website__, __copyright__
+from refitt import __version__, __developer__, __contact__, __website__, __copyright__
+from refitt.core.platform import default_path
+from refitt.core.config import config as base_config, get_config, ConfigurationError, Namespace
+from refitt.core.exceptions import write_traceback
+from refitt.core.logging import Logger
+from refitt.daemon import Daemon, DaemonService, DaemonServer
 
 # public interface
 __all__ = ['RefittDaemonApp', ]
+
+# application logger
+log = Logger.with_name('refittd')
 
 
 PROGRAM = 'refittd'
@@ -61,10 +63,6 @@ options:
 
 {EPILOG}\
 """
-
-
-# initialize top-level daemon logger
-log = Logger.with_name('refittd')
 
 
 # logging setup for command-line interface

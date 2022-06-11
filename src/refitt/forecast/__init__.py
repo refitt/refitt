@@ -9,13 +9,12 @@ from typing import Dict, Type, IO, Union
 
 # standard libs
 import json
-import logging
 
 # internal libs
-from ..core.logging import Logger
-from .model import ModelData
-from .conv_auto_encoder import ConvAutoEncoder
-from .core_collapse_inference import CoreCollapseInference
+from refitt.core.logging import Logger
+from refitt.forecast.model import ModelData
+from refitt.forecast.conv_auto_encoder import ConvAutoEncoder
+from refitt.forecast.core_collapse_inference import CoreCollapseInference
 
 # public interface
 __all__ = ['model_types', 'load_model',

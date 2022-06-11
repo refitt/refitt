@@ -10,7 +10,6 @@ from typing import Mapping, Any
 
 # standard libs
 import os
-import logging
 
 # external libs
 import toml
@@ -19,11 +18,14 @@ from cmdkit.cli import Interface
 from cmdkit.config import Namespace
 
 # internal libs
-from ....core.platform import path, default_path
-from ....core.logging import Logger
+from refitt.core.platform import path, default_path
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['GetConfigApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt config get'
@@ -45,10 +47,6 @@ options:
 -x, --expand              Expand variable.
 -h, --help                Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class GetConfigApp(Application):

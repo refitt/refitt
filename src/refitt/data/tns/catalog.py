@@ -12,7 +12,6 @@ from typing import Union, IO, NamedTuple, Dict, TypeVar, Type
 import os
 import re
 import json
-import logging
 from io import BytesIO
 from zipfile import ZipFile
 from datetime import datetime, timedelta
@@ -21,19 +20,18 @@ from datetime import datetime, timedelta
 from pandas import DataFrame, read_csv
 
 # internal libs
-from .interface import TNSInterface, TNSQueryCatalogResult, TNSError
-from ...core.platform import default_path
-from ...core.logging import Logger
+from refitt.data.tns.interface import TNSInterface, TNSQueryCatalogResult, TNSError
+from refitt.core.platform import default_path
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['TNSCatalog', 'TNSRecord', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 
-# object name provider pattern matching
+# Object name provider pattern matching
 OBJECT_NAMING_PATTERNS: Dict[str, re.Pattern] = {
     'ztf': re.compile(r'ZTF.*'),
     'iau': re.compile(r'20[2-3][0-9][a-zA-Z]+'),

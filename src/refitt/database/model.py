@@ -11,7 +11,6 @@ from typing import List, Tuple, Dict, Any, Type, Optional, Callable, TypeVar, Un
 # standard libs
 import re
 import random
-import logging
 from base64 import encodebytes as base64_encode, decodebytes as base64_decode
 from datetime import datetime, timedelta
 from functools import lru_cache, cached_property
@@ -28,9 +27,9 @@ from sqlalchemy.schema import Sequence, CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 
 # internal libs
-from ..core.logging import Logger
-from .interface import schema, config, Session as _Session
-from ..web.token import Key, Secret, Token, JWT
+from refitt.core.logging import Logger
+from refitt.database.interface import schema, config, Session as _Session
+from refitt.web.token import Key, Secret, Token, JWT
 
 # public interface
 __all__ = ['DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'IntegrityError',
@@ -40,8 +39,7 @@ __all__ = ['DatabaseError', 'NotFound', 'NotDistinct', 'AlreadyExists', 'Integri
            'RecommendationTag', 'Epoch', 'Recommendation', 'ModelType', 'Model',
            'Client', 'Session', 'tables', 'indices', 'DEFAULT_EXPIRE_TIME', 'DEFAULT_CLIENT_LEVEL', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

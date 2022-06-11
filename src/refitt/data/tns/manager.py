@@ -10,21 +10,19 @@ from typing import Union, Dict
 
 # standard libs
 import re
-import logging
 from datetime import datetime
 from abc import ABC, abstractmethod
 
 # internal libs
-from ...core.logging import Logger
-from ...database.model import Object, ObjectType
-from .interface import TNSInterface, TNSError, TNSConfig, TNSObjectSearchResult
-from .catalog import TNSCatalog, TNSRecord
+from refitt.core.logging import Logger
+from refitt.database.model import Object, ObjectType
+from refitt.data.tns.interface import TNSInterface, TNSError, TNSConfig, TNSObjectSearchResult
+from refitt.data.tns.catalog import TNSCatalog, TNSRecord
 
 # public interface
 __all__ = ['TNSManager', 'TNSQueryManager', 'TNSCatalogManager', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

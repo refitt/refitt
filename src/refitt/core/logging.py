@@ -1,12 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""
-Logging configuration.
-
-Enables custom logging format and level by configuration as well as streaming
-messages to the database.
-"""
+"""Logging configuration."""
 
 
 # type annotations
@@ -30,8 +25,7 @@ from refitt.core.config import config, blame
 from refitt.core.exceptions import write_traceback
 
 # public interface
-__all__ = ['Logger', 'StreamHandler', 'StreamKitHandler', 'initialize_logging',
-           'HOSTNAME', 'INSTANCE', ]
+__all__ = ['Logger', 'StreamHandler', 'StreamKitHandler', 'HOSTNAME', 'INSTANCE', ]
 
 
 # Cached for later use

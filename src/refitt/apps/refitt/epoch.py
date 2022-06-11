@@ -6,12 +6,11 @@
 
 # type annotations
 from __future__ import annotations
-
-import json
 from typing import Dict, Callable
 
 # standard libs
 import sys
+import json
 from functools import cached_property
 
 # external libs
@@ -21,7 +20,7 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 # internal libs
-from ...database.model import Epoch
+from refitt.database.model import Epoch
 
 # public interface
 __all__ = ['EpochApp', ]

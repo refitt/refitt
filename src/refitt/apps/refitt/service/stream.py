@@ -15,7 +15,7 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface
 
 # internal libs
-from ....data.broker import BrokerService
+from refitt.data.broker import BrokerService
 
 # public interface
 __all__ = ['StreamApp', ]

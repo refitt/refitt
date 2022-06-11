@@ -11,7 +11,6 @@ from typing import IO, Iterator
 # standard libs
 import sys
 import time
-import logging
 
 # external libs
 from cmdkit.app import Application
@@ -19,11 +18,14 @@ from cmdkit.cli import Interface, ArgumentError
 from streamkit.subscriber import Subscriber
 
 # internal libs
-from ....core.logging import Logger
-from ....data.tns import TNSService
+from refitt.core.logging import Logger
+from refitt.data.tns import TNSService
 
 # public interface
 __all__ = ['TNSApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt service tns'
@@ -46,10 +48,6 @@ options:
     --no-catalog            Use API queries for every update.
 -h, --help                  Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 # Time to wait before reading a line from a file if persisting

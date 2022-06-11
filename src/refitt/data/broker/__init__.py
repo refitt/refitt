@@ -9,24 +9,22 @@ from typing import Tuple, Dict, Type, Callable
 
 # standard libs
 import os
-import logging
 
 # internal libs
-from ...core.config import config, ConfigurationError
-from ...core.logging import Logger
-from .alert import AlertInterface
-from .client import ClientInterface
-from .antares import AntaresClient
+from refitt.core.config import config, ConfigurationError
+from refitt.core.logging import Logger
+from refitt.data.broker.alert import AlertInterface
+from refitt.data.broker.client import ClientInterface
+from refitt.data.broker.antares import AntaresClient
 
 # public interface
 __all__ = ['BrokerService', 'broker_map', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 
-# available broker clients
+# Available broker clients
 broker_map: Dict[str, Type[ClientInterface]] = {
     'antares': AntaresClient,
 }

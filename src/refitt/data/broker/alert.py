@@ -10,19 +10,18 @@ from typing import List, Dict, Union, Any, Optional
 
 # standard libs
 import json
-import logging
 from datetime import datetime
 from abc import ABC, abstractmethod
 
 # internal libs
-from ...core.logging import Logger
-from ...database.model import Epoch, ObjectType, Object, Source, ObservationType, Observation, Alert
-from ...database.interface import Session
+from refitt.core.logging import Logger
+from refitt.database.model import Epoch, ObjectType, Object, Source, ObservationType, Observation, Alert
+from refitt.database.interface import Session
 
 # public interface
 __all__ = ['AlertInterface', 'AlertError', ]
 
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

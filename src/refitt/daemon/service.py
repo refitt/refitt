@@ -11,7 +11,6 @@ from __future__ import annotations
 import os
 import sys
 import shlex
-import logging
 from signal import SIGINT
 from datetime import datetime, timedelta
 from subprocess import Popen, TimeoutExpired
@@ -27,8 +26,7 @@ from refitt.core.logging import Logger
 # public interface
 __all__ = ['DaemonService', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

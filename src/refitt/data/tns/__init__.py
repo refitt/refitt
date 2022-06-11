@@ -5,10 +5,10 @@
 
 
 # internal libs
-from .interface import TNSInterface, TNSError, TNSConfig, TNSNameSearchResult, TNSObjectSearchResult
-from .manager import TNSQueryManager, TNSCatalogManager
-from .service import TNSService
-from .catalog import TNSCatalog
+from refitt.data.tns.interface import TNSInterface, TNSError, TNSConfig, TNSNameSearchResult, TNSObjectSearchResult
+from refitt.data.tns.manager import TNSQueryManager, TNSCatalogManager
+from refitt.data.tns.service import TNSService
+from refitt.data.tns.catalog import TNSCatalog
 
 # public interface
 __all__ = ['TNSInterface', 'TNSError', 'TNSConfig', 'TNSNameSearchResult', 'TNSObjectSearchResult',

@@ -4,20 +4,20 @@
 """Check origin of configuration variable."""
 
 
-# standard libs
-import logging
-
 # external libs
 from cmdkit.app import Application
 from cmdkit.cli import Interface
 
 # internal libs
-from ....core.config import config
-from ....core.platform import path
-from ....core.logging import Logger
+from refitt.core.config import config
+from refitt.core.platform import path
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['WhichConfigApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt config which'
@@ -35,10 +35,6 @@ SECTION[...].VAR        Path to variable.
 options:
 -h, --help              Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class WhichConfigApp(Application):

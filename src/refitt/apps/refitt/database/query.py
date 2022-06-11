@@ -12,7 +12,6 @@ from typing import List, Tuple, Type, Union, TypeVar, Any
 import re
 import sys
 import json
-import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from functools import partial, cached_property
@@ -34,13 +33,16 @@ from rich.table import Table
 from pandas import DataFrame
 
 # internal libs
-from ....core.exceptions import handle_exception
-from ....core.logging import Logger
-from ....database.model import ModelInterface, tables
-from ....database.interface import Session
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
+from refitt.database.model import ModelInterface, tables
+from refitt.database.interface import Session
 
 # public interface
 __all__ = ['QueryDatabaseApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt database query'
@@ -68,10 +70,6 @@ options:
     --dry-run                Show SQL query, do not execute.
 -h, --help                   Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class QueryDatabaseApp(Application):

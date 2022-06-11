@@ -5,5 +5,5 @@
 
 
 # internal libs
-from .app import application
-from .endpoint import token, client, user, facility, object, source, observation, epoch, recommendation
+from refitt.web.api.app import application
+from refitt.web.api.endpoint import token, client, user, facility, object, source, observation, epoch, recommendation

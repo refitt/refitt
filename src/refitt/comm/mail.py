@@ -1,9 +1,8 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""
-Send electronic mail.
-"""
+"""Send electronic mail."""
+
 
 # type annotations
 from __future__ import annotations
@@ -12,7 +11,6 @@ from typing import List, Dict, Union, Optional
 # standard libs
 import os
 import io
-import logging
 from abc import abstractmethod
 from datetime import datetime
 from smtplib import SMTP
@@ -35,8 +33,7 @@ from refitt.core.logging import Logger
 __all__ = ['UserAuth', 'Mail', 'MailServer', 'MailTemplate', 'TestMail', 'RecommendationMail',
            'templates', 'TEMPLATES', 'email_exception']
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

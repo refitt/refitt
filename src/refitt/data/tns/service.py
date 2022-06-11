@@ -10,7 +10,6 @@ from typing import List, Dict, IO, Iterable, Iterator, Type
 
 # standard libs
 import re
-import logging
 from abc import ABC
 from queue import Queue
 from threading import Thread
@@ -19,23 +18,22 @@ from threading import Thread
 from streamkit.subscriber import Subscriber
 
 # internal libs
-from ...core.logging import Logger
-from .interface import TNSError
-from .manager import TNSManager, TNSQueryManager, TNSCatalogManager
+from refitt.core.logging import Logger
+from refitt.data.tns.interface import TNSError
+from refitt.data.tns.manager import TNSManager, TNSQueryManager, TNSCatalogManager
 
 # public interface
 __all__ = ['TNSServiceWorker', 'TNSServiceThread', 'TNSService', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 
-# message pattern for alert ingest from brokers
+# Message pattern for alert ingest from brokers
 MESSAGE_PATTERN = re.compile(r'Written to database \(([a-z]+)::([a-zA-Z0-9]+)\)')
 
 
-# sentinel value signalling stop iteration on queue-based service workers
+# Sentinel value signalling stop iteration on queue-based service workers
 STOP_ITER = ''
 
 

@@ -14,13 +14,12 @@ import fnmatch
 import functools
 
 # internal libs
-from ..core.logging import Logger
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['find_files', 'open_asset', 'load_asset', 'load_assets', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

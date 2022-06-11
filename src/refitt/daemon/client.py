@@ -9,19 +9,17 @@ from __future__ import annotations
 from typing import Optional, Callable
 
 # standard libs
-import logging
 from multiprocessing import JoinableQueue, TimeoutError
 from multiprocessing.managers import BaseManager
 
 # internal libs
-from ..core.config import config
-from ..core.logging import Logger
+from refitt.core.config import config
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['DaemonClient', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

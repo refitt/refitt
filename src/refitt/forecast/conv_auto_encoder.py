@@ -10,13 +10,12 @@ from typing import Optional
 
 # standard libs
 import functools
-import logging
 
 # internal libs
-from ..core.schema import ListSchema
-from ..core.logging import Logger
-from ..database.model import ObjectType
-from .model import ModelData, ModelSchema
+from refitt.core.schema import ListSchema
+from refitt.core.logging import Logger
+from refitt.database.model import ObjectType
+from refitt.forecast.model import ModelData, ModelSchema
 
 # public interface
 __all__ = ['ConvAutoEncoder', ]

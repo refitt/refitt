@@ -11,7 +11,6 @@ from typing import IO
 # standard libs
 import os
 import sys
-import logging
 from functools import partial, cached_property
 
 # external libs
@@ -20,11 +19,14 @@ from cmdkit.cli import Interface
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from ....core.exceptions import handle_exception
-from ....core.logging import Logger
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['ForecastCreateApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt forecast create'
@@ -44,10 +46,6 @@ options:
     --print           Print ID of published model. 
 -h, --help            Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class ForecastCreateApp(Application):

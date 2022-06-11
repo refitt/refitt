@@ -24,7 +24,7 @@ class SchemaDefinitionError(Exception):
     """A malformed definition of the schema itself."""
 
 
-# allowable non-container types
+# Allowable non-container types
 V = TypeVar('V', bool, int, float, str)
 Value_T = Union[V, List['Value_T'], Dict[str, 'Value_T']]
 Schema_T = Union[Type[V], 'ListSchema', 'DictSchema']

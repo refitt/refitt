@@ -16,7 +16,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import get, set, edit, which
+from refitt.apps.refitt.config import get, set, edit, which
 
 # public interface
 __all__ = ['ConfigApp', ]

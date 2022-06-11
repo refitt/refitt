@@ -9,7 +9,7 @@ from cmdkit.app import ApplicationGroup
 from cmdkit.cli import Interface
 
 # internal libs
-from . import api, stream, test, tns
+from refitt.apps.refitt.service import api, stream, test, tns
 
 
 PROGRAM = 'refitt service'
@@ -32,6 +32,7 @@ options:
 Use the -h/--help flag with the above groups/commands to
 learn more about their usage.\
 """
+
 
 class ServiceApp(ApplicationGroup):
     """Application class for service command group."""

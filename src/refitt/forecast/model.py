@@ -18,9 +18,9 @@ from abc import ABC, abstractmethod
 from astropy.time import Time
 
 # internal libs
-from ..core.schema import DictSchema, SchemaDefinitionError
-from ..core.typing import JsonDict, JsonObject
-from ..database.model import Model as ModelRecord, ModelType, Epoch, Source, Object, ObservationType, Observation
+from refitt.core.schema import DictSchema, SchemaDefinitionError
+from refitt.core.typing import JsonDict, JsonObject
+from refitt.database.model import Model as ModelRecord, ModelType, Epoch, Source, Object, ObservationType, Observation
 
 # public interface
 __all__ = ['ModelData', 'ModelSchema', ]

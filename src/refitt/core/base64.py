@@ -4,7 +4,7 @@
 """Base64 encoding/decoding for representing raw data streams."""
 
 
-# standard library
+# standard libs
 from base64 import encodebytes as _encode, decodebytes as _decode
 
 # public interface

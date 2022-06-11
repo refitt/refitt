@@ -12,7 +12,6 @@ from typing import Dict, Optional, Union, Callable
 import sys
 import json
 import functools
-import logging
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -21,14 +20,17 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 # internal libs
-from ...database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
-from ...core.exceptions import handle_exception
-from ...core.logging import Logger
-from ...core.config import update as update_config
-from ...web.token import Cipher
+from refitt.core.exceptions import handle_exception
+from refitt.core.config import update as update_config
+from refitt.core.logging import Logger
+from refitt.database.model import User, Client, Session, NotFound, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
+from refitt.web.token import Cipher
 
 # public interface
 __all__ = ['AuthApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt auth'
@@ -62,10 +64,6 @@ options:
     --update-config          Update user configuration with new credentials.
 -h, --help                   Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class AuthApp(Application):

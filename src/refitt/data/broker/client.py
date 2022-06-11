@@ -6,13 +6,13 @@
 
 # type annotations
 from __future__ import annotations
+from typing import Tuple, Iterator
 
 # standard libs
 from abc import ABC, abstractmethod
-from typing import Tuple, Iterator
 
 # internal libs
-from .alert import AlertInterface
+from refitt.data.broker.alert import AlertInterface
 
 # public interface
 __all__ = ['ClientInterface', ]

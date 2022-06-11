@@ -13,7 +13,6 @@ import os
 import sys
 import json
 import functools
-import logging
 from io import BytesIO
 from functools import cached_property
 
@@ -25,15 +24,18 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 # internal libs
-from ...web import request
-from ...web.api.response import STATUS_CODE
-from ...core.exceptions import handle_exception
-from ...core.logging import Logger
-from ...core.config import config
-from ...core import typing, ansi
+from refitt.core import typing, ansi
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
+from refitt.core.config import config
+from refitt.web import request
+from refitt.web.api.response import STATUS_CODE
 
 # public interface
 __all__ = ['APIClientApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt api'
@@ -75,10 +77,6 @@ options:
     --admin      TOKEN         Use alternate token (or use `config.api.admin_token`).          
 -h, --help                     Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class APIClientApp(Application):

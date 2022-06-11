@@ -20,15 +20,18 @@ from cmdkit.cli import Interface, ArgumentError
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from ....core.exceptions import handle_exception
-from ....core.logging import Logger
-from ....core.schema import SchemaError
-from ....forecast import load_model
-from ....forecast.model import ModelData
-from ....database.model import Object
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
+from refitt.core.schema import SchemaError
+from refitt.forecast import load_model
+from refitt.forecast.model import ModelData
+from refitt.database.model import Object
 
 # public interface
 __all__ = ['ForecastPublishApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt forecast publish'
@@ -47,10 +50,6 @@ options:
     --print           Print ID of published model(s). 
 -h, --help            Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class ForecastPublishApp(Application):

@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import List, Dict, Iterator, Union, Optional
 
 # standard libs
-import logging
 from datetime import datetime
 
 # external libs
@@ -18,15 +17,14 @@ from antares_client.models import Locus
 from astropy.time import Time
 
 # internal libs
-from .client import ClientInterface
-from .alert import AlertInterface, AlertError
-from ...core.logging import Logger
+from refitt.data.broker.client import ClientInterface
+from refitt.data.broker.alert import AlertInterface, AlertError
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['AntaresAlert', 'AntaresClient', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

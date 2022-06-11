@@ -8,23 +8,21 @@
 from __future__ import annotations
 
 # standard libs
-import logging
 from multiprocessing import JoinableQueue
 from multiprocessing.managers import BaseManager
 
 # internal libs
-from ..core.config import config
-from ..core.logging import Logger
+from refitt.core.config import config
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['DaemonServer', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 
-# time between keep alive requests (seconds)
+# Time between keep alive requests (seconds)
 DAEMON_REFRESH_TIME = float(config.daemon.refresh)
 
 

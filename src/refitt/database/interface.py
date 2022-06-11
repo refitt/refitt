@@ -16,15 +16,15 @@ from sqlalchemy.exc import IntegrityError, ArgumentError
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 # internal libs
-from ..core.config import config, Namespace, ConfigurationError
-from .url import DatabaseURL
+from refitt.core.config import config, Namespace, ConfigurationError
+from refitt.database.url import DatabaseURL
 
 # public interface
 __all__ = ['providers', 'engine', 'schema', 'Session', 'config', ]
 
 
-# allowed database providers
-# mapping translates from name to library/package name (SQLAlchemy)
+# Allowed database providers
+# Mapping translates from name to library/package name (SQLAlchemy)
 providers = {
     'sqlite': 'sqlite',
     'postgres': 'postgresql',

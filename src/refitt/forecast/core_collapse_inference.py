@@ -15,8 +15,8 @@ import functools
 from scipy.interpolate import interp1d
 
 # internal libs
-from ..core.schema import ListSchema, DictSchema, Size
-from .model import ModelData, ModelSchema
+from refitt.core.schema import ListSchema, DictSchema, Size
+from refitt.forecast.model import ModelData, ModelSchema
 
 # public interface
 __all__ = ['CoreCollapseInference', ]

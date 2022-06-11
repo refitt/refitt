@@ -10,7 +10,6 @@ from typing import Tuple, List, Optional
 
 # standard libs
 import sys
-import logging
 import functools
 from smtplib import SMTPAuthenticationError
 
@@ -19,13 +18,16 @@ from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ....comm.mail import UserAuth, Mail, MailServer, templates, TEMPLATES
-from ....core.config import config, ConfigurationError
-from ....core.exceptions import handle_exception
-from ....core.logging import Logger
+from refitt.comm.mail import UserAuth, Mail, MailServer, templates, TEMPLATES
+from refitt.core.config import config, ConfigurationError
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['MailApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = f'refitt notify mail'
@@ -63,10 +65,6 @@ options:
 extras:
     --list-templates         Show available templates and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 def connection_refused(exc: ConnectionRefusedError) -> int:

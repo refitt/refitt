@@ -9,7 +9,6 @@ from __future__ import annotations
 
 # standard libs
 import os
-import logging
 from subprocess import run
 
 # external libs
@@ -17,11 +16,14 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface
 
 # internal libs
-from ....core.platform import path, default_path
-from ....core.logging import Logger
+from refitt.core.platform import path, default_path
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['EditConfigApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt config edit'
@@ -41,10 +43,6 @@ options:
     --site           Edit local configuration.
 -h, --help           Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class EditConfigApp(Application):

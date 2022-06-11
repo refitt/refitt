@@ -9,14 +9,8 @@ from __future__ import annotations
 
 # standard libs
 import sys
-import logging
 import functools
 import subprocess
-
-# internal libs
-from ...daemon.client import DaemonClient
-from ...core.exceptions import handle_exception, write_traceback
-from ... import __version__, __developer__, __contact__, __website__, __copyright__
 
 # external libs
 from cmdkit.app import Application, exit_status
@@ -24,10 +18,16 @@ from cmdkit.cli import Interface
 from streamkit.core.logging import _ANSI_RESET, _ANSI_CODES  # noqa: protected-members
 
 # internal lib
-from ...core.logging import Logger
+from refitt import __version__, __developer__, __contact__, __website__, __copyright__
+from refitt.core.exceptions import handle_exception, write_traceback
+from refitt.core.logging import Logger
+from refitt.daemon.client import DaemonClient
 
 # public interface
 __all__ = ['RefittControllerApp', ]
+
+# application logger
+log = Logger.with_name('refittctl')
 
 
 PROGRAM = 'refittctl'
@@ -56,10 +56,6 @@ options:
 
 {EPILOG}
 """
-
-
-# initialize top-level controller logger
-log = Logger.with_name('refittctl')
 
 
 # colors

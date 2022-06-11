@@ -11,7 +11,6 @@ from typing import Callable, Dict
 # standard libs
 import sys
 import json
-import logging
 from functools import partial, cached_property
 
 # external libs
@@ -22,12 +21,15 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 # internal libs
-from ...core.exceptions import handle_exception
-from ...core.logging import Logger
-from ...database.model import Object
+from refitt.core.exceptions import handle_exception
+from refitt.core.logging import Logger
+from refitt.database.model import Object
 
 # public interface
 __all__ = ['QueryObjectApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt object'
@@ -46,10 +48,6 @@ options:
     --json             Format output as JSON.
 -h, --help             Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 class QueryObjectApp(Application):

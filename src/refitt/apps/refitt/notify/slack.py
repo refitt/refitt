@@ -1,25 +1,25 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Post slack messages and files."""
+"""Post Slack messages and files."""
 
 
 # type annotations
 from __future__ import annotations
 from typing import List
 
-# standard libs
-import logging
-
 # external libs
 from cmdkit.app import Application
 from cmdkit.cli import Interface
 
 # internal libs
-from ....core.logging import Logger
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['SlackApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = f'refitt notify slack'
@@ -42,12 +42,8 @@ options:
 """
 
 
-# application logger
-log = Logger.with_name('refitt')
-
-
 class SlackApp(Application):
-    """Application class for slack notifications."""
+    """Application class for Slack notifications."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
 

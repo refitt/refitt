@@ -6,7 +6,6 @@
 
 # standard libs
 import sys
-import logging
 import functools
 
 # external libs
@@ -15,16 +14,14 @@ from cmdkit.cli import Interface
 from cmdkit.config import ConfigurationError
 
 # internal libs
-from ...core.exceptions import handle_exception, write_traceback
-from ...core.logging import Logger
-from ... import (__version__, __developer__, __contact__, __website__, __copyright__,
-                 __description__, __ascii_art__)
+from refitt import __version__, __developer__, __contact__, __website__, __copyright__, __description__, __ascii_art__
+from refitt.core.exceptions import handle_exception, write_traceback
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['RefittApp', 'main', ]
 
-
-# initialize application logger
+# application logger
 log = Logger.with_name('refitt')
 
 
@@ -51,8 +48,8 @@ ApplicationGroup.exceptions = {
 
 
 # NOTE: delayed imports to allow Application class modifications
-from . import (config, database, service, auth, login, whoami, api, notify,
-               recommendation, forecast, object, epoch)  # noqa
+from refitt.apps.refitt import (config, database, service, auth, login, whoami, api, notify,
+                                recommendation, forecast, object, epoch)  # noqa
 
 
 PROGRAM = 'refitt'

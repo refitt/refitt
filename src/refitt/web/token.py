@@ -14,7 +14,6 @@ import json
 import string
 import random
 import hashlib
-import logging
 import functools
 from datetime import datetime, timedelta
 
@@ -23,15 +22,14 @@ from cryptography.fernet import Fernet, InvalidToken
 from cmdkit.config import Configuration, ConfigurationError
 
 # internal libs
-from ..core.config import config
-from ..core.logging import Logger
+from refitt.core.config import config
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['AuthError', 'TokenNotFound', 'TokenInvalid', 'TokenExpired', 'Cipher',
            'CryptoDigits', 'RootKey', 'Key', 'Secret', 'Token', 'JWT', ]
 
-
-# initialize module level logger
+# module logger
 log = Logger.with_name(__name__)
 
 

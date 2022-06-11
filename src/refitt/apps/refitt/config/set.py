@@ -10,19 +10,21 @@ from typing import TypeVar
 
 # standard libs
 import os
-import logging
 
 # external libs
 from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from ....core.config import update as update_config
-from ....core.platform import site, path, default_path
-from ....core.logging import Logger
+from refitt.core.config import update as update_config
+from refitt.core.platform import site, path, default_path
+from refitt.core.logging import Logger
 
 # public interface
 __all__ = ['SetConfigApp', ]
+
+# application logger
+log = Logger.with_name('refitt')
 
 
 PROGRAM = 'refitt config set'
@@ -44,10 +46,6 @@ options:
     --local             Apply to local configuration.
 -h, --help              Show this message and exit.\
 """
-
-
-# application logger
-log = Logger.with_name('refitt')
 
 
 SmartType = TypeVar('SmartType', int, float, str)
