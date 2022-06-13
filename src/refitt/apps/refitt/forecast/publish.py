@@ -44,11 +44,14 @@ HELP = f"""\
 {USAGE}
 
 arguments:
-FILE                  Path to JSON file(s).
+FILE                         Path to JSON file(s).
 
 options:
-    --print           Print ID of published model(s). 
--h, --help            Show this message and exit.\
+-e, --epoch-id       ID      Epoch ID (default: <latest>).
+-p, --primary        FILE    Path to JSON file for primary model.
+-i, --observation-id ID      ID of existing observation.
+    --print                  Print ID of published model(s). 
+-h, --help                   Show this message and exit.\
 """
 
 
