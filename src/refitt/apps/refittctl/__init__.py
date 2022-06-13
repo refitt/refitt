@@ -15,7 +15,6 @@ import subprocess
 # external libs
 from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
-# from streamkit.core.logging import _ANSI_RESET, _ANSI_CODES  # noqa: protected-members
 
 # internal lib
 from refitt import __version__, __developer__, __contact__, __website__, __copyright__
