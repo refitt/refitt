@@ -158,7 +158,8 @@ refittctl_logger.addHandler(handler)
 stream_handler = None
 try:
     if config.logging.stream.enabled:
-        stream_handler = StreamKitHandler(batchsize=config.stream.batchsize, timeout=config.stream.timeout)
+        stream_handler = StreamKitHandler(batchsize=config.logging.stream.batchsize,
+                                          timeout=config.logging.stream.timeout)
         refitt_logger.addHandler(stream_handler)
         refittd_logger.addHandler(stream_handler)
         refittctl_logger.addHandler(stream_handler)
