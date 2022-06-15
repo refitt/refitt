@@ -23,7 +23,7 @@ from cmdkit.config import Namespace, Environ, Configuration, ConfigurationError
 from streamkit.core import config as _streamkit
 
 # internal libs
-from refitt.core.platform import path, default_path, check_private
+from refitt.core.platform import path, default_path, check_private, set_private
 from refitt.core.exceptions import write_traceback, display_warning
 
 # public interface
@@ -217,66 +217,27 @@ except Exception as error:
     sys.exit(exit_status.bad_config)
 
 
-DEFAULT_CONFIG_BODY = f"""\
-# Default configuration create on {datetime.now()}
-# Values are commented here for explanatory purposes
-
-# [database]
-# provider = '{default.database.provider}'
-# file = '{DEFAULT_DATABASE}'  # For SQLite only
-
-# [logging]
-# level = '{default.logging.level}'
-# style = '{default.logging.style}'
-
-# [logging.stream]
-# enabled = false  # Stream logging messages to the database
-# batchsize = {default.logging.stream.batchsize}  # Batch size for messages to accumulate between commits
-# timeout = {default.logging.stream.timeout}  # Force commit after some time in seconds
-
-# [api]
-# login = '{default.api.login}'
-# site = '{default.api.site}'
-# port = null
-
-# [daemon]
-# port = {default.daemon.port}
-# key = '{default.daemon.key}'  # Should be overridden
-# refresh = {default.daemon.refresh}  # Seconds to wait before issuing keep-alive to services
-# timeout = {default.daemon.timeout}  # Seconds to wait before hard kill services on failed interrupt
-
-# [memcache]
-# maxsize = {default.memcache.maxsize}  # Maximum bytes allowed in cache
-# socket = '{default.memcache.socket}'  # Path for socket file
-
-# [console]
-# theme = '{default.console.theme}'  # Color scheme for pretty-printing output
-
+DEFAULT_CONFIG_HEADERS = f"""\
+# File automatically created on {datetime.now()}
+# Settings here are merged automatically with defaults and environment variables
 """
-
-
-def init_default(scope: str) -> None:
-    """Write default configuration to disk."""
-    config_path = path[scope].config
-    if not os.path.exists(config_path):
-        with open(config_path, mode='w') as stream:
-            stream.write(DEFAULT_CONFIG_BODY)
 
 
 def update(scope: str, partial: dict) -> None:
     """Extend the current configuration and commit it to disk."""
     config_path = path[scope].config
-
     os.makedirs(os.path.dirname(config_path), exist_ok=True)
     if os.path.exists(config_path):
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        config_backup_path = os.path.join(os.path.dirname(config_path),
-                                          f'.{os.path.basename(config_path)}.{timestamp}.backup')
+        config_backup_path = os.path.join(os.path.dirname(config_path), f'.config.{timestamp}.toml')
         shutil.copy(config_path, config_backup_path)
         shutil.copystat(config_path, config_backup_path)
+        set_private(config_backup_path)
         log.debug(f'Created backup file ({config_backup_path})')
     else:
-        init_default()
+        with open(config_path, mode='w') as stream:
+            stream.write(DEFAULT_CONFIG_HEADERS)
+        set_private(config_path)
     with open(config_path, mode='r') as stream:
         new_config = tomlkit.parse(stream.read())
     _inplace_update(new_config, partial)
