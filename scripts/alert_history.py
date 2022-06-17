@@ -12,7 +12,6 @@ from typing import List, IO, Union
 # standard libs
 import os
 import sys
-import logging
 from functools import cached_property
 from datetime import datetime
 from dataclasses import dataclass
