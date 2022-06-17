@@ -170,12 +170,9 @@ class ConfigGetApp(Application):
         if self.expand:
             try:
                 value = getattr(config_section, variable)
+                self.print_output(value)
             except AttributeError as error:
-                raise ConfigurationError('') from error
-            if value is None:
-                raise ConfigurationError(f'"{variable}" not found in {config_path}')
-            self.print_output(value)
-            return
+                raise ConfigurationError(f'"{variable}" not found in {config_path}') from error
         elif variable in config_section:
             self.print_output(config_section[variable])
         else:
