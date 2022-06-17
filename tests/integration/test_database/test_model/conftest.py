@@ -12,7 +12,7 @@ import os
 import json
 
 # external libs
-import pytest
+from pytest import fixture
 
 # internal libs
 from refitt import assets
@@ -23,9 +23,9 @@ Record = Dict[str, __VT]
 TestData = Dict[str, List[Record]]
 
 
-@pytest.fixture(scope='package')
+@fixture(scope='package')
 def testdata() -> TestData:
-    """Load test data into in-memory dictionary."""
+    """Load test data as in-memory dictionary."""
 
     def _format_name(path: str) -> str:
         return os.path.splitext(os.path.basename(path))[0]

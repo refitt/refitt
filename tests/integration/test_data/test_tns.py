@@ -10,11 +10,11 @@ from typing import Union
 
 # standard libs
 import os
-from io import BytesIO
 import functools
+from io import BytesIO
 
 # external libs
-import pytest
+from pytest import mark
 from pandas import DataFrame
 
 # internal libs
@@ -26,7 +26,7 @@ from tests.unit.test_data.test_tns import (MockTNSInterface, MockTNSCatalog,
                                            FAKE_TNS_REDSHIFT, FAKE_TNS_OBJECT_DATA, FAKE_TNS_CATALOG_DATA)
 
 
-@pytest.mark.integration
+@mark.integration
 class TestTNSCatalog:
     """Integration tests for TNSCatalog."""
 
@@ -44,8 +44,7 @@ class TestTNSCatalog:
         TNSCatalog.remove_cache()
         assert not os.path.exists(TNSCatalog.DEFAULT_CACHE_PATH)
 
-    # NOTE: this test queries an external API and is not quick and occupies ~50MB.
-    @pytest.mark.skip(reason='External API call with heavy payload')
+    @mark.skip(reason='External API call with heavy payload (~50MB)')
     def test_from_web(self) -> None:
         """Query external TNS service for catalog."""
         TNSCatalog.remove_cache()
@@ -68,7 +67,7 @@ class MockTNSQueryManager(TNSQueryManager):
         return cls()
 
 
-@pytest.mark.integration
+@mark.integration
 class TestTNSQueryManager:
     """Integration tests for TNSManager."""
 
@@ -104,7 +103,7 @@ class MockTNSCatalogManager(TNSCatalogManager):
         return catalog
 
 
-@pytest.mark.integration
+@mark.integration
 class TestTNSCatalogManager:
     """Integration tests for TNSManager."""
 
