@@ -25,7 +25,8 @@ from refitt.core.config import config, blame
 from refitt.core.exceptions import write_traceback
 
 # public interface
-__all__ = ['Logger', 'StreamHandler', 'StreamKitHandler', 'HOSTNAME', 'INSTANCE', ]
+__all__ = ['Logger', 'handler', 'StreamHandler', 'StreamKitHandler', 'HOSTNAME', 'INSTANCE',
+           'TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
 
 
 # Cached for later use
@@ -48,8 +49,17 @@ level_color: Dict[str, Ansi] = {
 }
 
 
+# Lower level for development purposes
 TRACE: int = logging.DEBUG - 5
 logging.addLevelName(TRACE, 'TRACE')
+
+
+# Elevate existing logging levels
+DEBUG: int = logging.DEBUG
+INFO: int = logging.INFO
+WARNING: int = logging.WARNING
+ERROR: int = logging.ERROR
+CRITICAL: int = logging.CRITICAL
 
 
 class Logger(logging.Logger):
