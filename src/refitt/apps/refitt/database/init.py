@@ -14,8 +14,10 @@ from sqlalchemy.exc import DatabaseError
 
 # internal libs
 from refitt.core.exceptions import handle_exception
+from refitt.core.config import config
 from refitt.core.logging import Logger
 from refitt.database import create_all, drop_all, load_all
+from refitt.database.interface import engine
 
 # public interface
 __all__ = ['InitDatabaseApp', ]
@@ -64,6 +66,10 @@ class InitDatabaseApp(Application):
 
     def run(self) -> None:
         """Business logic of command."""
+        if 'host' in config.database and config.database.host not in ('localhost', '127.0.0.1'):
+            response = input(f'Connected to remote database ({engine.url}), proceed ([Y]/n): ')
+            if response.lower() not in ('y', 'yes'):
+                raise RuntimeError('Missing confirmation')
         if self.drop_tables:
             drop_all()
         create_all()
