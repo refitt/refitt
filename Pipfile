@@ -37,15 +37,15 @@ bs4 = "*"
 jinja2 = "*"
 refitt = {editable = true, path = "."}
 
-
 [dev-packages]
 pytest = "*"
 pytest-cov = "*"
 hypothesis = "*"
-ipython = "<8"  # 8.0.0 seems broken
+ipython = ">8.0.0"  # 8.0.0 seems broken
 twine = "*"
 sphinx = "*"
 pydata-sphinx-theme = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.9"
