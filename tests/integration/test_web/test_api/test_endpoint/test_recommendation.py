@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 
 # external libs
-import pytest
+from pytest import mark, raises
 
 # internal libs
 from refitt.database import config
@@ -38,6 +38,7 @@ def all_unseen(user_id: int, epoch_id: int) -> None:
             Recommendation.update(id, accepted=accepted, rejected=rejected)
 
 
+@mark.integration
 class TestGetNextRecommendation(Endpoint):
     """Tests for GET /recommendation endpoint."""
 
@@ -176,6 +177,7 @@ class TestGetNextRecommendation(Endpoint):
             )
 
 
+@mark.integration
 class TestGetRecommendation(Endpoint):
     """Tests for GET /recommendation/<id> endpoint."""
 
@@ -227,6 +229,7 @@ class TestGetRecommendation(Endpoint):
         )
 
 
+@mark.integration
 class TestPutRecommendationAttribute(Endpoint):
     """Tests for PUT /recommendation/<id> endpoint."""
 
@@ -341,90 +344,112 @@ class RecommendationEndpoint(Endpoint, ABC):
         )
 
 
+@mark.integration
 class TestGetEpoch(RecommendationEndpoint):
     relation = 'epoch'
 
 
+@mark.integration
 class TestGetTag(RecommendationEndpoint):
     relation = 'tag'
 
 
+@mark.integration
 class TestGetUser(RecommendationEndpoint):
     relation = 'user'
 
 
+@mark.integration
 class TestGetFacility(RecommendationEndpoint):
     relation = 'facility'
 
 
+@mark.integration
 class TestGetObject(RecommendationEndpoint):
     relation = 'object'
 
 
+@mark.integration
 class TestGetObjectType(RecommendationEndpoint):
     relation = 'object/type'
 
 
+@mark.integration
 class TestGetPredicted(RecommendationEndpoint):
     relation = 'predicted'
 
 
+@mark.integration
 class TestGetPredictedType(RecommendationEndpoint):
     relation = 'predicted/type'
 
 
+@mark.integration
 class TestGetPredictedObject(RecommendationEndpoint):
     relation = 'predicted/object'
 
 
+@mark.integration
 class TestGetPredictedObjectType(RecommendationEndpoint):
     relation = 'predicted/object/type'
 
 
+@mark.integration
 class TestGetPredictedSource(RecommendationEndpoint):
     relation = 'predicted/source'
 
 
+@mark.integration
 class TestGetPredictedSourceType(RecommendationEndpoint):
     relation = 'predicted/source/type'
 
 
+@mark.integration
 class TestGetPredictedUser(RecommendationEndpoint):
     relation = 'predicted/source/user'
 
 
+@mark.integration
 class TestGetObserved(RecommendationEndpoint):
     relation = 'observed'
 
 
+@mark.integration
 class TestGetObservedType(RecommendationEndpoint):
     relation = 'observed/type'
 
 
+@mark.integration
 class TestGetObservedObject(RecommendationEndpoint):
     relation = 'observed/object'
 
 
+@mark.integration
 class TestGetObservedObjectType(RecommendationEndpoint):
     relation = 'observed/object/type'
 
 
+@mark.integration
 class TestGetObservedSource(RecommendationEndpoint):
     relation = 'observed/source'
 
 
+@mark.integration
 class TestGetObservedSourceType(RecommendationEndpoint):
     relation = 'observed/source/type'
 
 
+@mark.integration
 class TestGetObservedUser(RecommendationEndpoint):
     relation = 'observed/source/user'
 
 
+@mark.integration
 class TestGetObservedFacility(RecommendationEndpoint):
     relation = 'observed/source/facility'
 
 
+@mark.integration
 class TestGetRecommendationHistory(Endpoint):
     """Tests for GET /recommendation/history endpoint."""
 
@@ -511,6 +536,7 @@ def temp_remove_file(file_id: int) -> None:
         File.add(data)
 
 
+@mark.integration
 class TestGetRecommendationObservedFile(Endpoint):
     """Tests for GET /recommendation/<id>/observed/file endpoint."""
 
@@ -573,6 +599,7 @@ class TestGetRecommendationObservedFile(Endpoint):
         )
 
 
+@mark.integration
 class TestPostRecommendationObservedFile(Endpoint):
     """Tests for POST /recommendation/<id>/observed/file endpoint."""
 
@@ -651,7 +678,7 @@ class TestPostRecommendationObservedFile(Endpoint):
             assert list(payload['Response']['file'].keys()) == ['id', ]
             new_file_id = int(payload['Response']['file']['id'])
             File.delete(new_file_id)  # NOTE: remove "new" file
-            with pytest.raises(File.NotFound):
+            with raises(File.NotFound):
                 File.from_id(new_file_id)
 
     def test_successful_post_file_with_uppercase_extension(self) -> None:
@@ -668,7 +695,7 @@ class TestPostRecommendationObservedFile(Endpoint):
             assert list(payload['Response']['file'].keys()) == ['id', ]
             new_file_id = int(payload['Response']['file']['id'])
             File.delete(new_file_id)  # NOTE: remove "new" file
-            with pytest.raises(File.NotFound):
+            with raises(File.NotFound):
                 File.from_id(new_file_id)
 
     def test_successful_update_file(self) -> None:
@@ -704,6 +731,7 @@ class TestPostRecommendationObservedFile(Endpoint):
         )
 
 
+@mark.integration
 class TestGetRecommendationObservedFileType(Endpoint):
     """Tests for GET /recommendation/<id>/observed/file/type endpoint."""
 
@@ -768,6 +796,7 @@ class TestGetRecommendationObservedFileType(Endpoint):
         )
 
 
+@mark.integration
 class TestPostRecommendationObserved(Endpoint):
     """Tests for POST /recommendation/<id>/observed endpoint."""
 
@@ -940,16 +969,17 @@ class TestPostRecommendationObserved(Endpoint):
         )
 
 
-class TestGetRecommendationModels(Endpoint):
-    """Tests for GET /recommendation/<id>/models endpoint."""
+@mark.integration
+class TestGetRecommendationModelInfo(Endpoint):
+    """Tests for GET /recommendation/<id>/model endpoint."""
 
-    route: str = '/recommendation/22/models'
+    route: str = '/recommendation/22/model'
     method: str = 'get'
     admin: str = 'superman'
     user: str = 'tomb_raider'
 
     def test_not_found(self) -> None:
-        assert self.get(f'/recommendation/0/models', client_id=self.get_client(self.user).id) == (
+        assert self.get(f'/recommendation/0/model', client_id=self.get_client(self.user).id) == (
             RESPONSE_MAP[NotFound], {
                 'Status': 'Error',
                 'Message': 'No recommendation with id=0'
@@ -957,7 +987,7 @@ class TestGetRecommendationModels(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        assert self.get('/recommendation/18/models', client_id=self.get_client(self.user).id) == (
+        assert self.get('/recommendation/18/model', client_id=self.get_client(self.user).id) == (
             RESPONSE_MAP[PermissionDenied], {
                 'Status': 'Error',
                 'Message': 'Recommendation is not public',
@@ -972,23 +1002,7 @@ class TestGetRecommendationModels(Endpoint):
             }
         )
 
-    def test_type_id_not_integer(self) -> None:
-        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id='abc') == (
-            RESPONSE_MAP[ParameterInvalid], {
-                'Status': 'Error',
-                'Message': 'Expected integer for parameter: type_id'
-            }
-        )
-
-    def test_include_data_not_boolean(self) -> None:
-        assert self.get(self.route, client_id=self.get_client(self.user).id, include_data='abc') == (
-            RESPONSE_MAP[ParameterInvalid], {
-                'Status': 'Error',
-                'Message': 'Expected type \'bool\' for parameter \'include_data\''
-            }
-        )
-
-    def test_get_models_without_data(self) -> None:
+    def test_get_model_info(self) -> None:
         models = Recommendation.from_id(22).model_info
         assert len(models) == 1
         assert self.get(self.route, client_id=self.get_client(self.user).id) == (
@@ -998,48 +1012,54 @@ class TestGetRecommendationModels(Endpoint):
             }
         )
 
-    def test_get_models_without_data_filter_by_type_id_1(self) -> None:
-        models = Recommendation.from_id(22).model_info
-        assert len(models) == 1
-        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=1) == (
-            STATUS['OK'], {
-                'Status': 'Success',
-                'Response': {'model': [model.to_json() for model in models]},
+
+@mark.integration
+class TestGetRecommendationModelData(Endpoint):
+    """Tests for GET /recommendation/<id>/model/<type_id> endpoint."""
+
+    route: str = '/recommendation/22/model/1'
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_recommendation_not_found(self) -> None:
+        assert self.get('/recommendation/0/model/1', client_id=self.get_client(self.user).id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No recommendation with id=0'
             }
         )
 
-    def test_get_models_without_data_filter_by_type_id_2(self) -> None:
-        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=2) == (
-            STATUS['OK'], {
-                'Status': 'Success',
-                'Response': {'model': []},
+    def test_model_not_found(self) -> None:
+        assert self.get('/recommendation/22/model/2', client_id=self.get_client(self.user).id) == (
+            RESPONSE_MAP[NotFound], {
+                'Status': 'Error',
+                'Message': 'No model with type_id=2 for recommendation with id=22'
             }
         )
 
-    def test_get_models_include_data(self) -> None:
+    def test_permission_denied(self) -> None:
+        assert self.get('/recommendation/18/model/1', client_id=self.get_client(self.user).id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'Recommendation is not public',
+            }
+        )
+
+    def test_invalid_parameter(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_get_model_data(self) -> None:
         models = Recommendation.from_id(22).models
         assert len(models) == 1
-        assert self.get(self.route, client_id=self.get_client(self.user).id, include_data=True) == (
+        assert self.get(self.route, client_id=self.get_client(self.user).id) == (
             STATUS['OK'], {
                 'Status': 'Success',
-                'Response': {'model': [model.to_json() for model in models]},
-            }
-        )
-
-    def test_get_models_include_data_filter_by_type_id_1(self) -> None:
-        models = Recommendation.from_id(22).models
-        assert len(models) == 1
-        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=1, include_data=True) == (
-            STATUS['OK'], {
-                'Status': 'Success',
-                'Response': {'model': [model.to_json() for model in models]},
-            }
-        )
-
-    def test_get_models_include_data_filter_by_type_id_2(self) -> None:
-        assert self.get(self.route, client_id=self.get_client(self.user).id, type_id=2, include_data=True) == (
-            STATUS['OK'], {
-                'Status': 'Success',
-                'Response': {'model': []},
+                'Response': {'model': models[0].to_json()},
             }
         )
