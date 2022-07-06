@@ -85,3 +85,22 @@ class TestModel:
         """Test observation foreign key relationship on model."""
         for i, record in enumerate(testdata['model']):
             assert Model.from_id(i + 1).observation.id == record['observation_id']
+
+    def test_for_object(self) -> None:
+        """Test query for all models for a given object."""
+        models = Model.for_object(8)
+        assert len(models) == 3  # nothing for epoch 4
+        assert [model.epoch_id for model in models] == [1, 2, 3]
+
+    def test_for_object_with_epoch_id(self) -> None:
+        """Test query for all recommendations for a given user and group."""
+        assert [] == Model.for_object(8, epoch_id=4)
+        assert [model.to_json() for model in Model.for_object(8, epoch_id=3)] == [
+            {
+                'id': 24,
+                'epoch_id': 3,
+                'type_id': 1,
+                'observation_id': 70,
+                'data': {},
+            }
+        ]
