@@ -1,11 +1,11 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Integration tests for /observation endpoints."""
+"""Integration tests for observation endpoints."""
 
 
 # internal libs
-from refitt.database.model import Source, Observation, ObservationType, Alert, ModelType, Model, File, FileType
+from refitt.database.model import Source, Observation, ObservationType, Alert, Model, File, FileType
 from refitt.web.api.response import STATUS, RESPONSE_MAP, NotFound, ParameterInvalid, PermissionDenied, PayloadTooLarge
 from tests.integration.test_web.test_api.test_endpoint import Endpoint
 

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Integration tests for /token endpoints."""
+"""Integration tests for token endpoints."""
 
 
 # standard libs
