@@ -16,7 +16,7 @@ from flask import request
 
 # internal libs
 from refitt.database.model import (Client, Recommendation, File, FileType, Observation,
-                                   Source, ModelInterface, Epoch)
+                                   Source, ModelInterface, Epoch, Model)
 from refitt.web.api.app import application
 from refitt.web.api.auth import authenticated, authorization
 from refitt.web.api.tools import collect_parameters, disallow_parameters, require_file, require_data
@@ -55,7 +55,8 @@ info: dict = {
         '/recommendation/<id>/observed/source/facility': {},
         '/recommendation/<id>/observed/file': {},
         '/recommendation/<id>/observed/file/type': {},
-        '/recommendation/<id>/models': {},
+        '/recommendation/<id>/model': {},
+        '/recommendation/<id>/model/<type_id>': {},
         '/recommendation/history': {},
     }
 }
@@ -146,7 +147,7 @@ info['Endpoints']['/recommendation']['GET'] = {
                 'Type': 'Float'
             },
             'limit': {
-                'Description': 'Limit on number of returned observations (default: none)',
+                'Description': 'Limit on number of returned recommendations (default: none)',
                 'Type': 'Integer'
             },
             'join': {
@@ -603,29 +604,18 @@ info['Endpoints']['/recommendation/<id>/observed']['POST'] = {
 }
 
 
-@application.route('/recommendation/<int:id>/models', methods=['GET'])
+@application.route('/recommendation/<int:id>/model', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
-def get_recommendation_models(client: Client, id: int) -> dict:
-    """Query for model info/data by recommendation ID."""
-    params = collect_parameters(request, optional=['type_id', 'include_data'], defaults={'include_data': False})
-    type_id = params.pop('type_id', None)
-    include_data = params.pop('include_data')
-    if type_id is not None and not isinstance(type_id, int):
-        raise ParameterInvalid(f'Expected integer for parameter: type_id')
-    recommendation = get(id, client)
-    if include_data:
-        models = recommendation.models
-    else:
-        models = recommendation.model_info
-    if type_id:
-        models = [model for model in models if model.type_id == type_id]
-    return {'model': [model.to_json() for model in models]}
+def get_recommendation_model_info(client: Client, id: int) -> dict:
+    """Query for model info by recommendation ID."""
+    disallow_parameters(request)
+    return {'model': [model.to_json() for model in get(id, client).model_info]}
 
 
-info['Endpoints'][f'/recommendation/<id>/models']['GET'] = {
-    'Description': f'Request model info and/or data for recommendation by ID',
+info['Endpoints']['/recommendation/<id>/model']['GET'] = {
+    'Description': f'Request model info for recommendation by ID',
     'Permissions': 'Owner',
     'Requires': {
         'Auth': 'Authorization Bearer Token',
@@ -636,23 +626,11 @@ info['Endpoints'][f'/recommendation/<id>/models']['GET'] = {
             }
         },
     },
-    'Optional': {
-        'Parameters': {
-            'type_id': {
-                'Description': 'Type ID of model to filter on',
-                'Type': 'Integer'
-            },
-            'include_data': {
-                'Description': 'Include data in payload.',
-                'Type': 'Boolean'
-            }
-        }
-    },
     'Responses': {
         200: {
             'Description': 'Success',
             'Payload': {
-                'Description': f'Model data for recommendation',
+                'Description': f'Model info for recommendation',
                 'Type': 'application/json'
             },
         },
@@ -660,5 +638,50 @@ info['Endpoints'][f'/recommendation/<id>/models']['GET'] = {
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Recommendation not found'}
+    }
+}
+
+
+@application.route('/recommendation/<int:id>/model/<int:type_id>', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=None)
+def get_recommendation_model_by_type(client: Client, id: int, type_id: int) -> dict:
+    """Query for model data by recommendation ID and model type ID."""
+    disallow_parameters(request)
+    models = [model for model in get(id, client).model_info if model.type_id == type_id]
+    if not models:
+        raise NotFound(f'No model with type_id={type_id} for recommendation with id={id}')
+    return {'model': Model.from_id(models[0].id).to_json()}
+
+
+info['Endpoints']['/recommendation/<id>/model/<type_id>']['GET'] = {
+    'Description': 'Request model data for recommendation by ID and model type ID',
+    'Permissions': 'Owner',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+        'Path': {
+            'id': {
+                'Description': 'Unique ID for recommendation',
+                'Type': 'Integer',
+            },
+            'type_id': {
+                'Description': 'Unique ID for model type',
+                'Type': 'Integer',
+            }
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'Model data',
+                'Type': 'application/json'
+            },
+        },
+        400: {'Description': 'Parameter invalid'},
+        401: {'Description': 'Access revoked, token expired, or unauthorized'},
+        403: {'Description': 'Token not found or invalid'},
+        404: {'Description': 'Recommendation or model not found'}
     }
 }

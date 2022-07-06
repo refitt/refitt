@@ -5,7 +5,7 @@
 
 
 # external libs
-import pytest
+from pytest import mark, raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
@@ -15,6 +15,7 @@ from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
 
+@mark.integration
 class TestClient:
     """Tests for `Client` database model."""
 
@@ -73,12 +74,12 @@ class TestClient:
 
     def test_id_missing(self) -> None:
         """Test exception on missing client `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Client.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on client `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Client.add({'id': 1, 'user_id': 1, 'level': 10, 'key': 'abc...', 'secret': 'abc...', 'valid': True})
 
     def test_from_user(self) -> None:
@@ -88,12 +89,12 @@ class TestClient:
 
     def test_user_missing(self) -> None:
         """Test exception on missing client `user_id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Client.from_user(-1)
 
     def test_user_already_exists(self) -> None:
         """Test exception on client `user` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Client.add({'user_id': 1, 'level': 10, 'key': 'abc...', 'secret': 'abc...', 'valid': True})
 
     def test_from_key(self, testdata: TestData) -> None:
@@ -103,12 +104,12 @@ class TestClient:
 
     def test_key_missing(self) -> None:
         """Test exception on missing client `key`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Client.from_key('abc...')
 
     def test_key_already_exists(self) -> None:
         """Test exception on client `key` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             client_1 = Client.from_id(1)
             client_2 = Client.from_id(2)
             Client.update(client_1.id, key=client_2.key)

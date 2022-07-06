@@ -109,7 +109,8 @@ class AntaresAlert(AlertInterface):
     # ztf_fid property map
     obs_types: dict = {
         1: 'g-ztf',
-        2: 'r-ztf'
+        2: 'r-ztf',
+        3: 'i-ztf',
     }
 
     @property

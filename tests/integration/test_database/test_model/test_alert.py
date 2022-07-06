@@ -5,7 +5,7 @@
 
 
 # external libs
-import pytest
+from pytest import mark, raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
@@ -14,6 +14,7 @@ from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
 
+@mark.integration
 class TestAlert:
     """Tests for `Alert` database model."""
 
@@ -77,12 +78,12 @@ class TestAlert:
 
     def test_id_missing(self) -> None:
         """Test exception on missing alert `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Alert.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on alert `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Alert.add({'id': 1, 'observation_id': 11,  # NOTE: observation_id=11 is a forecast
                        'data': {}})
 
@@ -93,12 +94,12 @@ class TestAlert:
 
     def test_observation_missing(self) -> None:
         """Test exception on missing alert `observation`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Alert.from_observation(-1)
 
     def test_observation_already_exists(self) -> None:
         """Test exception on alert `observation_id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Alert.add({'id': -1, 'observation_id': 1, 'data': {}})
 
     def test_relationship_observation(self, testdata: TestData) -> None:

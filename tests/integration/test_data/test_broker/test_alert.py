@@ -5,7 +5,7 @@
 
 
 # external libs
-import pytest
+from pytest import mark
 from antares_client.search import get_by_id
 
 # internal libs
@@ -14,6 +14,7 @@ from refitt.database.model import Observation, Alert
 from tests.unit.test_data.test_broker.test_alert import MockAlert
 
 
+@mark.integration
 class TestMockAlert:
     """Integrations for data broker client interface."""
 
@@ -55,10 +56,11 @@ class TestMockAlert:
         assert Alert.count() == alert_count + 2
 
 
+@mark.integration
 class TestAntaresService:
     """Test issues with Antares client library."""
 
-    @pytest.mark.skip(reason='Invokes external API; only needed to test service')
+    @mark.skip(reason='Invokes external API; only needed to test service')
     def test_alert_history(self) -> None:
         """Check specific antares locus/alerts."""
         locus = get_by_id('ANT2020ky6q')

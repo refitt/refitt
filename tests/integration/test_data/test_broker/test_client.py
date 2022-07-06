@@ -4,12 +4,15 @@
 """Data broker client integration tests."""
 
 
+# external libs
+from pytest import mark
+
 # internal libs
 from refitt.database.model import ObjectType, Object, ObservationType, Observation, Alert
-from tests.unit.test_data.test_broker.test_alert import MockAlert
 from tests.unit.test_data.test_broker.test_client import MockClient
 
 
+@mark.integration
 class TestMockClient:
     """Integrations for data broker client interface."""
 

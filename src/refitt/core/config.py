@@ -11,21 +11,28 @@ from typing import Optional, Protocol
 # standard libs
 import os
 import sys
+import shutil
+import logging
 import functools
+from datetime import datetime
 
 # external libs
+import tomlkit
 from cmdkit.app import exit_status
 from cmdkit.config import Namespace, Environ, Configuration, ConfigurationError
 from streamkit.core import config as _streamkit
 
 # internal libs
-from refitt.core.platform import path, default_path, check_private
+from refitt.core.platform import path, default_path, check_private, set_private
 from refitt.core.exceptions import write_traceback, display_warning
 
 # public interface
 __all__ = ['config', 'update', 'default', 'ConfigurationError', 'Namespace', 'blame',
            'load', 'reload', 'load_file', 'reload_file', 'load_env', 'reload_env',
            'DEFAULT_LOGGING_STYLE', 'DEFAULT_DATABASE', 'LOGGING_STYLES', ]
+
+# partial logging (not yet configured - initialized afterward)
+log = logging.getLogger(__name__)
 
 
 DEFAULT_LOGGING_STYLE = 'default'
@@ -52,14 +59,12 @@ LOGGING_STYLES = {
 DEFAULT_DATABASE = os.path.join(default_path.lib, 'main.db')
 
 
-# environment variables and configuration files are automatically
-# depth-first merged with defaults
+# Environment variables and configuration files are automatically merged with defaults
 default = Namespace({
 
     'database': {
-            # NOTE: If not configured the default is ~/.refitt/lib/main.db
-            # See `auto_database` below
-            'provider': 'sqlite',
+        # NOTE: If not configured the default is ~/.refitt/lib/main.db
+        'provider': 'sqlite',
     },
 
     'logging': {
@@ -87,8 +92,8 @@ default = Namespace({
         'timeout': 4,   # Seconds to wait before hard kill services on failed interrupt
     },
 
-    'plasma': {
-        'memory': 1_000_000,  # 1 MB
+    'memcache': {
+        'maxsize': 1_000_000,  # 1 MB
         'socket': ''
     },
 
@@ -212,13 +217,46 @@ except Exception as error:
     sys.exit(exit_status.bad_config)
 
 
-def update(scope: str, data: dict) -> None:
+DEFAULT_CONFIG_HEADERS = f"""\
+# File automatically created on {datetime.now()}
+# Settings here are merged automatically with defaults and environment variables
+"""
+
+
+def update(scope: str, partial: dict) -> None:
     """Extend the current configuration and commit it to disk."""
     config_path = path[scope].config
     os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    new_config = Namespace.from_local(config_path)
-    new_config.update(data)
-    new_config.to_local(config_path)
+    if os.path.exists(config_path):
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        config_backup_path = os.path.join(os.path.dirname(config_path), f'.config.{timestamp}.toml')
+        shutil.copy(config_path, config_backup_path)
+        shutil.copystat(config_path, config_backup_path)
+        set_private(config_backup_path)
+        log.debug(f'Created backup file ({config_backup_path})')
+    else:
+        with open(config_path, mode='w') as stream:
+            stream.write(DEFAULT_CONFIG_HEADERS)
+        set_private(config_path)
+    with open(config_path, mode='r') as stream:
+        new_config = tomlkit.parse(stream.read())
+    _inplace_update(new_config, partial)
+    with open(config_path, mode='w') as stream:
+        tomlkit.dump(new_config, stream)
+
+
+# Re-implemented from `cmdkit.config.Namespace` (but works with `tomlkit`)
+def _inplace_update(original: dict, partial: dict) -> dict:
+    """
+    Like normal `dict.update` but if values in both are mappable, descend
+    a level deeper (recursive) and apply updates there instead.
+    """
+    for key, value in partial.items():
+        if isinstance(value, dict) and isinstance(original.get(key), dict):
+            original[key] = _inplace_update(original.get(key, {}), value)
+        else:
+            original[key] = value
+    return original
 
 
 # Inject configuration back into streamkit library

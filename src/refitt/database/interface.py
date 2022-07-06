@@ -8,14 +8,18 @@
 from __future__ import annotations
 
 # standard libs
+import sys
 from contextlib import contextmanager
 
 # external libs
+from cmdkit.app import exit_status
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.exc import IntegrityError, ArgumentError
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 # internal libs
+from refitt.core.exceptions import write_traceback
+from refitt.core.logging import Logger, handler, INFO
 from refitt.core.config import config, Namespace, ConfigurationError
 from refitt.database.url import DatabaseURL
 
@@ -36,20 +40,14 @@ providers = {
 
 config = Namespace(config.database)
 schema = config.pop('schema', None)
-echo = config.pop('echo', False)
+engine_echo = config.pop('echo', False)
 connect_args = config.pop('connect_args', {})
-
-
-if not isinstance(echo, bool):
-    raise ConfigurationError('\'database.echo\' must be true or false')
-
-
-if config.provider not in providers:
-    raise ConfigurationError(f'Unsupported database provider \'{config.provider}\'')
 
 
 def get_url() -> DatabaseURL:
     """Prepare DatabaseURL from configuration."""
+    if config.provider not in providers:
+        raise ConfigurationError(f'Unsupported database provider \'{config.provider}\'')
     try:
         params = Namespace(config)
         params.provider = providers[config.provider]
@@ -60,19 +58,25 @@ def get_url() -> DatabaseURL:
 
 def get_engine() -> Engine:
     """Create engine instance from DatabaseURL."""
-    url = get_url()
+    if not isinstance(engine_echo, bool):
+        raise ConfigurationError('\'database.echo\' must be true or false')
     try:
-        __engine = create_engine(url.encode(), connect_args=connect_args)
-        __engine.echo = echo
-        return __engine
+        if engine_echo:
+            log = Logger.with_name('sqlalchemy.engine')
+            log.addHandler(handler)
+            log.setLevel(INFO)
+        return create_engine(get_url().encode(), connect_args=connect_args)
     except ArgumentError as error:
-        raise ConfigurationError(f'Bad connection ({repr(url)})') from error
+        raise ConfigurationError(f'Database engine: ({error})') from error
 
 
-# create thread-local sessions
-engine = get_engine()
-factory = sessionmaker(bind=engine)
-Session = scoped_session(factory)
+try:
+    engine = get_engine()
+    factory = sessionmaker(bind=engine)
+    Session = scoped_session(factory)
+except Exception as exc:
+    write_traceback(exc, module=__name__)
+    sys.exit(exit_status.bad_config)
 
 
 @contextmanager

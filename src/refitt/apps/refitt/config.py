@@ -170,12 +170,9 @@ class ConfigGetApp(Application):
         if self.expand:
             try:
                 value = getattr(config_section, variable)
+                self.print_output(value)
             except AttributeError as error:
-                raise ConfigurationError('') from error
-            if value is None:
-                raise ConfigurationError(f'"{variable}" not found in {config_path}')
-            self.print_output(value)
-            return
+                raise ConfigurationError(f'"{variable}" not found in {config_path}') from error
         elif variable in config_section:
             self.print_output(config_section[variable])
         else:
@@ -190,7 +187,8 @@ class ConfigGetApp(Application):
                             background_color = 'default')
             Console().print(output)
         else:
-            print(value, file=sys.stdout, flush=True)
+            # NOTE: JSON formatting puts quotations - we don't want these on raw output
+            print(value.strip('"'), file=sys.stdout, flush=True)
 
     def format_output(self, value: Any) -> str:
         """Format `value` as appropriate text."""

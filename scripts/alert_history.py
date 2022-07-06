@@ -12,7 +12,6 @@ from typing import List, IO, Union
 # standard libs
 import os
 import sys
-import logging
 from functools import cached_property
 from datetime import datetime
 from dataclasses import dataclass
@@ -47,7 +46,7 @@ class LogData:
     records: List[datetime]
 
     @classmethod
-    def from_database(cls, since: Union[str, datetime] = '2022-01-01') -> LogData:
+    def from_database(cls, since: Union[str, datetime] = '2022-06-01') -> LogData:
         """Query database for timestamps of accepted alerts."""
         antares = Source.from_name('antares')
         since = since if isinstance(since, datetime) else datetime.fromisoformat(since)
@@ -140,7 +139,7 @@ class AlertHistoryApp(Application):
     freq: str = '5Min'
     interface.add_argument('-f', '--frequency', default=freq, dest='freq')
 
-    since: datetime = datetime.fromisoformat('2022-01-01')
+    since: datetime = datetime.fromisoformat('2022-06-01')
     interface.add_argument('-s', '--since', type=datetime.isoformat, default=since)
 
     output: str

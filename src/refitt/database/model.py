@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from names_generator.names import LEFT, RIGHT
 from sqlalchemy import Column, ForeignKey, Index, func, type_coerce, or_
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
-from sqlalchemy.orm import relationship, aliased, Query
+from sqlalchemy.orm import relationship, aliased, joinedload, Query
 from sqlalchemy.exc import IntegrityError, NoResultFound, MultipleResultsFound
 from sqlalchemy.types import Integer, BigInteger, DateTime, Float, Text, String, JSON, Boolean, LargeBinary
 from sqlalchemy.schema import Sequence, CheckConstraint
@@ -1112,6 +1112,15 @@ class Model(ModelInterface):
 
     class NotFound(NotFound):
         """NotFound exception specific to Model."""
+
+    @classmethod
+    def for_object(cls, object_id: int, epoch_id: int = None) -> List[Model]:
+        """Select models for the given object and epoch."""
+        query = cls.query().join(Observation).options(joinedload('observation'))
+        query = query.filter(Observation.object_id == object_id)
+        if epoch_id is not None:
+            query = query.filter(cls.epoch_id == epoch_id)
+        return query.all()
 
 
 class RecommendationTag(ModelInterface):

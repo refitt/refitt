@@ -12,7 +12,8 @@ import stat
 from cmdkit.config import Namespace
 
 # public interface
-__all__ = ['cwd', 'home', 'root', 'site', 'path', 'default_path', 'file_permissions', 'check_private']
+__all__ = ['cwd', 'home', 'root', 'site', 'path', 'default_path',
+           'file_permissions', 'check_private', 'set_private']
 
 
 cwd = os.getcwd()
@@ -53,3 +54,8 @@ def file_permissions(filepath: str) -> str:
 def check_private(filepath: str) -> bool:
     """Check that `filepath` has '-rw-------' permissions."""
     return file_permissions(filepath) == '-rw-------'
+
+
+def set_private(filepath: str) -> None:
+    """Update permissions to make private (i.e., go-rwx)."""
+    os.chmod(filepath, 33152)  # -rw-------

@@ -25,7 +25,7 @@ from refitt.core.logging import Logger
 from refitt.core.schema import SchemaError
 from refitt.forecast import load_model
 from refitt.forecast.model import ModelData
-from refitt.database.model import Object
+from refitt.database.model import Object, Observation
 
 # public interface
 __all__ = ['ForecastPublishApp', ]
@@ -44,11 +44,14 @@ HELP = f"""\
 {USAGE}
 
 arguments:
-FILE                  Path to JSON file(s).
+FILE                         Path to JSON file(s).
 
 options:
-    --print           Print ID of published model(s). 
--h, --help            Show this message and exit.\
+-e, --epoch-id       ID      Epoch ID (default: <latest>).
+-p, --primary        FILE    Path to JSON file for primary model.
+-i, --observation-id ID      ID of existing observation.
+    --print                  Print ID of published model(s). 
+-h, --help                   Show this message and exit.\
 """
 
 
@@ -89,13 +92,41 @@ class ForecastPublishApp(Application):
         self.check_args()
         self.check_sources()
         if self.observation_id:
-            models = [self.load(source) for source in self.sources]
+            models = self.load_by_observation()
         else:
-            primary_model = self.load(self.primary_filepath)
-            self.observation_id = primary_model.publish_observation(epoch_id=self.epoch_id).id
-            models = [primary_model, ] + [self.load(source) for source in self.sources]
+            models = self.load_by_primary()
         self.publish(*models)
         self.update_object(*models)
+
+    def load_by_observation(self) -> List[ModelData]:
+        """Load models with reference to given --observation-id."""
+        models = []
+        object_id = Observation.from_id(self.observation_id).object_id
+        for source in self.sources:
+            model = self.load(source)
+            if model.object_id == object_id:
+                models.append(model)
+            else:
+                raise RuntimeError(f'Expected object_id={object_id} '
+                                   f'(from --observation-id={self.observation_id}), '
+                                   f'found {model.object_id} for {model.name} (from file: {source})')
+        return models
+
+    def load_by_primary(self) -> List[ModelData]:
+        """Load models with reference to given --primary model."""
+        models = []
+        primary_model = self.load(self.primary_filepath)
+        models.append(primary_model)
+        self.observation_id = primary_model.publish_observation(epoch_id=self.epoch_id).id
+        for source in self.sources:
+            model = self.load(source)
+            if model.object_id == primary_model.object_id:
+                models.append(model)
+            else:
+                raise RuntimeError(f'Expected object_id={primary_model.object_id} '
+                                   f'(from --primary={self.primary_filepath}), '
+                                   f'found {model.object_id} for {model.name} (from file: {source})')
+        return models
 
     def check_args(self) -> None:
         """Ensure at least --observation-id or --primary."""

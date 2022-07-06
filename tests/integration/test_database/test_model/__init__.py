@@ -11,7 +11,3 @@ import json
 def json_roundtrip(data: dict) -> dict:
     """Input `data` is returned after JSON dump/load round trip."""
     return json.loads(json.dumps(data))
-
-
-# TODO: TestModelType
-# TODO: TestModel

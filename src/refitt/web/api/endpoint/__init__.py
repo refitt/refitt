@@ -9,7 +9,10 @@ from refitt.database.model import Client
 from refitt.web.api.app import application
 from refitt.web.api.response import endpoint, NotFound
 from refitt.web.api.auth import authenticated, authorization
-from refitt.web.api.endpoint import client, token, facility, user, object, source, observation, recommendation, epoch
+from refitt.web.api.endpoint import (
+    client, token, facility, user, epoch,
+    object, source, observation, recommendation, model
+)
 
 # public interface
 __all__ = ['INFO', ]
@@ -25,6 +28,7 @@ INFO = {
     'observation': observation.info,
     'recommendation': recommendation.info,
     'epoch': epoch.info,
+    'model': model.info,
 }
 
 
