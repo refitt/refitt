@@ -1533,7 +1533,7 @@ class Access(ModelInterface):
 
 
 # global registry of tables
-tables: Dict[str, ModelInterface] = {
+tables: Dict[str, Type[ModelInterface]] = {
     'facility': Facility,
     'user': User,
     'facility_map': FacilityMap,
