@@ -89,6 +89,9 @@ class QueryDatabaseApp(Application):
     order_by: str = None
     interface.add_argument('-s', '--order-by', default=None)
 
+    desc_mode: bool = False
+    interface.add_argument('--desc', action='store_true', dest='desc_mode')
+
     show_count: bool = False
     interface.add_argument('-c', '--count', dest='show_count', action='store_true')
 
@@ -133,8 +136,8 @@ class QueryDatabaseApp(Application):
             arg = self.order_by
             pattern = re.compile(r'^[a-z_]+\.')
             default_name = selector.model.__tablename__
-            field = EntityRelation.from_arg(arg if pattern.match(arg) else f'{default_name}.{arg}')
-            query = query.order_by(field.select())
+            field = EntityRelation.from_arg(arg if pattern.match(arg) else f'{default_name}.{arg}').select()
+            query = query.order_by(field if not self.desc_mode else field.desc())
         for cond in filters:
             query = query.filter(cond.compile())
         if self.limit is not None:
