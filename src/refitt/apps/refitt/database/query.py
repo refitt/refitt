@@ -49,7 +49,8 @@ PROGRAM = 'refitt database query'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 usage: {PROGRAM} [-h] ENTITY[.RELATION | ENTITY...] [-w COND [COND...]] 
-       {PADDING} [--count | --limit NUM] [-s ENTITY] [-x] [ --json | --csv] [--dry-run] 
+       {PADDING} [--order-by ENTITY [--desc]] [-x | --json | --csv]
+       {PADDING} [--count | --limit NUM] [--dry-run]
 {__doc__}\
 """
 
@@ -61,12 +62,13 @@ ENTITY[.RELATION ...]        Table name with relationship path.
 
 options:
 -w, --where           COND   Expressions to filter on (e.g., `user_id==2`).
+-s, --order-by       ENTITY  Sort results by specified column.
+    --desc                   Sort in descending order.
+-c, --count                  Print row count.
+-l, --limit          NUM     Limit number of returned rows.
+-x, --extract-values         Print values only (no formatting).
     --json                   Format output as JSON.
     --csv                    Format output as CSV.
--x, --extract-values         Print values only (no formatting).
--c, --count                  Print row count.
--l, --limit                  Limit number of returned rows.
--s, --order-by       ENTITY  Sort results by specified column.
     --dry-run                Show SQL query, do not execute.
 -h, --help                   Show this message and exit.\
 """
