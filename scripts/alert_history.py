@@ -46,7 +46,7 @@ class LogData:
     records: List[datetime]
 
     @classmethod
-    def from_database(cls, since: Union[str, datetime] = '2022-06-01') -> LogData:
+    def from_database(cls, since: Union[str, datetime] = '2022-07-01') -> LogData:
         """Query database for timestamps of accepted alerts."""
         antares = Source.from_name('antares')
         since = since if isinstance(since, datetime) else datetime.fromisoformat(since)
@@ -87,10 +87,13 @@ class AlertChart:
         local_tz = datetime.now().astimezone().tzinfo
         data = DataFrame({'time': [dt.astimezone(local_tz).replace(tzinfo=None) for dt in self.data.records]})
         data = data.sort_values(by='time').set_index('time').assign(count=1)
-        data = data.resample(self.freq).sum()
 
-        line_format = dict(color='steelblue', lw=1, alpha=1, zorder=40)
+        data = data.resample(self.freq).sum()
+        mean_rate = data.rolling('168H', center=True).mean()
+
+        line_format = dict(color='darkgray', lw=0.75, alpha=0.75, zorder=40)
         data.plot(y='count', ax=self.ax, legend=False, **line_format)
+        mean_rate.plot(y='count', ax=self.ax, legend=False, color='steelblue', lw=1.5, alpha=1, zorder=100)
 
         for side in 'top', 'bottom', 'left', 'right':
             self.ax.spines[side].set_color('gray')
@@ -103,7 +106,7 @@ class AlertChart:
         self.ax.grid(True, axis='x', which='minor', color='gray', lw=0.5, alpha=0.25, zorder=10)
         self.ax.tick_params(axis='both', which='both', direction='in', length=0)
         self.ax.set_xlabel('Time', x=1, ha='right', fontsize=10, fontweight='semibold')
-        self.ax.set_ylabel(f'Alerts Received ({self.freq})', y=1, ha='right',
+        self.ax.set_ylabel(f'Alerts Received (per {self.freq})', y=1, ha='right',
                            fontsize=10, labelpad=10, fontweight='semibold')
         self.ax.set_title(self.title, fontsize=14, x=0, ha='left', va='bottom', fontweight='semibold')
 
@@ -139,8 +142,8 @@ class AlertHistoryApp(Application):
     freq: str = '5Min'
     interface.add_argument('-f', '--frequency', default=freq, dest='freq')
 
-    since: datetime = datetime.fromisoformat('2022-06-01')
-    interface.add_argument('-s', '--since', type=datetime.isoformat, default=since)
+    since: datetime = datetime.fromisoformat('2022-07-01')
+    interface.add_argument('-s', '--since', type=datetime.fromisoformat, default=since)
 
     output: str
     interface.add_argument('-o', '--output', default=None)
