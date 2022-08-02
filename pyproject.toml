@@ -7,4 +7,5 @@ addopts = ["--strict-markers", ]
 markers = [
     "unit: Unit tests are short, interface driven tests on discrete components.",
     "integration: Integration tests are often longer and deal with the interaction between systems.",
+    "parameterize: Place holder for parameterized tests (not a real type).",
 ]

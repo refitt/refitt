@@ -58,6 +58,7 @@ info: dict = {
         '/recommendation/<id>/model': {},
         '/recommendation/<id>/model/<type_id>': {},
         '/recommendation/history': {},
+        '/recommendation/total': {},
     }
 }
 
@@ -683,5 +684,60 @@ info['Endpoints']['/recommendation/<id>/model/<type_id>']['GET'] = {
         401: {'Description': 'Access revoked, token expired, or unauthorized'},
         403: {'Description': 'Token not found or invalid'},
         404: {'Description': 'Recommendation or model not found'}
+    }
+}
+
+
+@application.route('/recommendation/total', methods=['GET'])
+@endpoint('application/json')
+@authenticated
+@authorization(level=1)
+def get_recommendation_totals(admin_client: Client, ) -> dict:  # noqa: unused client
+    """Query for recommendation statistics."""
+    params = collect_parameters(request, optional=['epoch_id', 'user_id', 'facility_id', ])
+    for opt in 'epoch_id', 'user_id', 'facility_id':
+        if opt in params and not isinstance(params[opt], int):
+            raise ParameterInvalid(f'Expected integer for {opt} (given {params[opt]})')
+    query = Recommendation.query()
+    for opt, value in params.items():
+        query = query.filter_by(**{opt: value})
+    return {
+        'count': query.count(),
+    }
+
+
+info['Endpoints']['/recommendation/total']['GET'] = {
+    'Description': 'Get recommendation statistics',
+    'Permissions': 'Admin',
+    'Requires': {
+        'Auth': 'Authorization Bearer Token',
+    },
+    'Optional': {
+        'Parameters': {
+            'epoch_id': {
+                'Description': 'Unique ID for epoch (defaults to any epoch)',
+                'Type': 'Integer'
+            },
+            'user_id': {
+                'Description': 'Unique ID for user (filters out other users)',
+                'Type': 'Integer'
+            },
+            'facility_id': {
+                'Description': 'Unique ID for facility (filters out other facilities)',
+                'Type': 'Integer'
+            },
+        },
+    },
+    'Responses': {
+        200: {
+            'Description': 'Success',
+            'Payload': {
+                'Description': 'Count of recommendations',
+                'Type': 'application/json'
+            },
+        },
+        400: {'Description': 'Parameter invalid'},
+        401: {'Description': 'Access revoked, token expired, or unauthorized'},
+        403: {'Description': 'Token not found or invalid'},
     }
 }
