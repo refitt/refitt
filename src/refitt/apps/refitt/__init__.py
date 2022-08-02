@@ -49,7 +49,7 @@ ApplicationGroup.exceptions = {
 
 # NOTE: delayed imports to allow Application class modifications
 from refitt.apps.refitt import (config, database, service, auth, login, whoami, api, notify,
-                                recommendation, forecast, object, epoch)  # noqa
+                                recommendation, observation, forecast, object, epoch)  # noqa
 
 
 PROGRAM = 'refitt'
@@ -86,6 +86,7 @@ commands:
       epoch                  {epoch.__doc__}
       notify                 {notify.__doc__}
       forecast               {forecast.__doc__}
+      observation            {observation.__doc__}
       recommendation         {recommendation.__doc__}
       pipeline               ...
 
@@ -118,6 +119,7 @@ class RefittApp(ApplicationGroup):
                 'notify': notify.NotifyApp,
                 'object': object.QueryObjectApp,
                 'forecast': forecast.ForecastApp,
+                'observation': observation.ObservationApp,
                 'recommendation': recommendation.RecommendationApp,
                 }
 

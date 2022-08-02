@@ -24,7 +24,7 @@ from refitt.web.api.response import (endpoint, PermissionDenied, ParameterNotFou
                                      PayloadMalformed, NotFound)
 
 # public interface
-__all__ = ['info', 'recommendation_slices', ]
+__all__ = ['info', 'recommendation_slices', 'FILE_SIZE_LIMIT', ]
 
 
 info: dict = {
