@@ -54,7 +54,7 @@ options:
 
 
 class PullTypeIIPApp(Application):
-    """Application class for prediction type updates."""
+    """Resolve next batch of Type IIP objects for modeling."""
 
     interface = Interface(PROGRAM, USAGE, HELP)
     ALLOW_NOARGS = True
