@@ -165,7 +165,7 @@ class PullTypeIIPApp(Application):
     def check_cache_valid(cls, expired_after: timedelta) -> bool:
         """Check cache file is expired or missing."""
         if not os.path.exists(cls.CACHE_PATH):
-            log.debug(f'Cache not found: {cls.CACHE_PATH}')
+            log.debug(f'Cache not found ({cls.CACHE_PATH})')
             return False
         age = datetime.now() - datetime.fromtimestamp(os.stat(cls.CACHE_PATH).st_mtime)
         if age > expired_after:
