@@ -2,12 +2,7 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""
-Query TNS for all confirmed IIP targets.
-Query database to sort by number of observations.
-Filter any with model outputs from previous epoch.
-Limit to finite number of targets.
-"""
+"""Resolve next batch of Type IIP objects for modeling."""
 
 
 # type annotations
@@ -141,7 +136,7 @@ class PullTypeIIPApp(Application):
 
     @classmethod
     def load_from_tns(cls: Type[PullTypeIIPApp], cache: bool = True) -> List[Object]:
-        """"""
+        """Pull TNS catalog down from the web and filter for type IIP objects."""
         tns = TNSCatalog.from_web()
         names = cls.filter_names_by_type(tns)
         log.info(f'Found {len(names)} type IIP objects')
