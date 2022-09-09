@@ -7,12 +7,13 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, Set, Optional, Type
+from typing import List, Set, Optional, Type, TextIO
 
 # standard libs
 import os
 import sys
 import json
+import functools
 from datetime import datetime, timedelta
 
 # external libs
@@ -68,22 +69,25 @@ class PullTypeIIPApp(Application):
     filter_epoch: int = 1
     interface.add_argument('-e', '--filter-epoch', type=int, default=filter_epoch)
 
+    outpath: str = '-'
+    interface.add_argument('-o', '--output', default=outpath, dest='outpath')
+
     def run(self: PullTypeIIPApp) -> None:
         """Run application."""
         objects = self.load_objects(cache=self.allow_cache)
         objects = self.sort_by_count(objects)
         objects = self.filter_previous(objects)
-        self.print_info(objects)
+        self.write_output(objects)
 
-    def print_info(self: PullTypeIIPApp, objects: List[Object]) -> None:
+    def write_output(self: PullTypeIIPApp, objects: List[Object]) -> None:
         """Show identifier and redshift if available."""
         log.info(f'Including {len(objects[:self.limit])} objects')
         for object in objects[:self.limit]:
             redshift = object.data.get('tns', {}).get('redshift', None)
             if redshift and redshift != 'None':
-                print(f'{object.aliases["ztf"]}  {object.data["tns"]["redshift"]:.3f}')
+                self.write(f'{object.aliases["ztf"]}  {object.data["tns"]["redshift"]:.3f}')
             else:
-                print(f'{object.aliases["ztf"]}  -')
+                self.write(f'{object.aliases["ztf"]}  -')
 
     def filter_previous(self: PullTypeIIPApp, objects: List[Object]) -> List[Object]:
         """Filter out any objects represented in recent epochs."""
@@ -107,9 +111,8 @@ class PullTypeIIPApp(Application):
     @staticmethod
     def sort_by_count(objects: List[Object], limit: int = 200) -> List[Object]:
         """
-        Query database for given objects aggregated by
-        number of observations for that object, in ascending order of count.
-        Only objects found in database will be returned.
+        Query database for given objects aggregated by number of observations for that object,
+        in ascending order of count. Only objects found in database will be returned.
         """
         return [
             Object.from_id(object_id)
@@ -196,6 +199,15 @@ class PullTypeIIPApp(Application):
         else:
             log.error(f'Failed to identify object ({iau_name})')
             return None
+
+    @functools.cached_property
+    def output(self: PullTypeIIPApp) -> TextIO:
+        """File stream for application output."""
+        return sys.stdout if self.outpath == '-' else open(self.outpath, mode='w')
+
+    def write(self: PullTypeIIPApp, text: str) -> None:
+        """Write `text` data to output stream."""
+        print(text, file=self.output)
 
 
 if __name__ == '__main__':
