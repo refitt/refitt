@@ -6,7 +6,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import IO, Tuple
+from typing import TextIO, Tuple
 
 # standard libs
 import os
@@ -128,7 +128,7 @@ class ObservationPublishApp(Application):
         else:
             file_basename, file_type = None, None
         if not self.mjd_value:
-            raise ArgumentError('No MJD provider')
+            raise ArgumentError('No MJD provided')
         observation = self.publish_observation(epoch, object, source)
         if recommendation is not None:
             log.info(f'Updating recommendation ({recommendation.id}) with observation ({observation.id})')
@@ -136,8 +136,9 @@ class ObservationPublishApp(Application):
         if self.file_path:
             log.info(f'Uploading file ({file_basename})')
             with open(self.file_path, mode='rb') as stream:
-                File.add({'observation_id': observation.id, 'epoch_id': epoch.id,
+                File.add({'observation_id': observation.id, 'epoch_id': epoch.id, 'name': file_basename,
                           'type_id': FileType.from_name(file_type).id, 'data': stream.read()})
+        self.write(observation.id)
 
     def get_epoch(self: ObservationPublishApp) -> Epoch:
         """Look up epoch in database."""
@@ -218,7 +219,7 @@ class ObservationPublishApp(Application):
         return observation
 
     @cached_property
-    def output(self) -> IO:
+    def output(self) -> TextIO:
         """File descriptor for writing output."""
         return sys.stdout if self.verbose else open(os.devnull, mode='w')
 
