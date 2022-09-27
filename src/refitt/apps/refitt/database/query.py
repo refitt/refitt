@@ -296,7 +296,11 @@ class SimpleColumnSelector(Selector):
         if extract_values and len(results[0]) == 1:
             for row in results:
                 value, = row
-                print(value)
+                if isinstance(value, bytes):
+                    sys.stdout.buffer.write(value)
+                    sys.stdout.buffer.flush()
+                else:
+                    print(value)
         else:
             table = Table(title=None)
             for entity in self.entities:
