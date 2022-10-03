@@ -1018,6 +1018,7 @@ class File(ModelInterface):
     observation_id = Column('observation_id', Integer().with_variant(BigInteger(), 'postgresql'),
                             ForeignKey(Observation.id), unique=True, nullable=False)
     type_id = Column('type_id', Integer(), ForeignKey(FileType.id), nullable=False)
+    name = Column('name', Text(), nullable=False)
     data = Column('data', LargeBinary(), nullable=False)
 
     epoch = relationship(Epoch, backref='file')
@@ -1030,6 +1031,7 @@ class File(ModelInterface):
         'epoch_id': int,
         'observation_id': int,
         'type_id': int,
+        'name': str,
         'data': bytes,
     }
 

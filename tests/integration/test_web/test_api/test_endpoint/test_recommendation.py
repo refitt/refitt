@@ -705,7 +705,7 @@ class TestPostRecommendationObservedFile(Endpoint):
         route = f'/recommendation/{self.recommendation_id}/observed/file'
         # check original file
         assert self.get(route, client_id=client.id, response_type='file') == (
-            STATUS['OK'], {f'observation_{file.observation_id}.fits.gz': file.data}
+            STATUS['OK'], {file.name: file.data}
         )
         # post new file
         assert self.post(route, client_id=client.id,
@@ -716,18 +716,18 @@ class TestPostRecommendationObservedFile(Endpoint):
         )
         # check new file content is persisted
         assert self.get(route, client_id=client.id, response_type='file') == (
-            STATUS['OK'], {f'observation_{file.observation_id}.fits.gz': b'abc'}
+            STATUS['OK'], {'obs.fits.gz': b'abc'}
         )
         # restore original file
         assert self.post(route, client_id=client.id,
-                         files={'obs.fits.gz': BytesIO(file.data), }) == (
+                         files={file.name: BytesIO(file.data), }) == (
             STATUS['OK'],
             {'Status': 'Success',
              'Response': {'file': {'id': file.id}}}  # NOTE: original file ID
         )
         # check original file is restored
         assert self.get(route, client_id=client.id, response_type='file') == (
-            STATUS['OK'], {f'observation_{file.observation_id}.fits.gz': file.data}
+            STATUS['OK'], {file.name: file.data}
         )
 
 

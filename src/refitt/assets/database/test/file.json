@@ -4,6 +4,7 @@
     "epoch_id": 2,
     "observation_id": 19,
     "type_id": 1,
+    "name": "observation_19.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzMuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -16,6 +17,7 @@
     "epoch_id": 2,
     "observation_id": 20,
     "type_id": 1,
+    "name":  "observation_20.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzMuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -28,6 +30,7 @@
     "epoch_id": 2,
     "observation_id": 21,
     "type_id": 1,
+    "name":  "observation_21.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzQuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -40,6 +43,7 @@
     "epoch_id": 2,
     "observation_id": 22,
     "type_id": 1,
+    "name":  "observation_22.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzQuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -52,6 +56,7 @@
     "epoch_id": 2,
     "observation_id": 23,
     "type_id": 1,
+    "name":  "observation_23.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzUuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -64,6 +69,7 @@
     "epoch_id": 2,
     "observation_id": 24,
     "type_id": 1,
+    "name":  "observation_24.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzUuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -76,6 +82,7 @@
     "epoch_id": 2,
     "observation_id": 25,
     "type_id": 1,
+    "name":  "observation_25.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzYuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -88,6 +95,7 @@
     "epoch_id": 2,
     "observation_id": 26,
     "type_id": 1,
+    "name":  "observation_26.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzYuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -100,6 +108,7 @@
     "epoch_id": 3,
     "observation_id": 45,
     "type_id": 1,
+    "name":  "observation_45.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzMuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -112,6 +121,7 @@
     "epoch_id": 3,
     "observation_id": 46,
     "type_id": 1,
+    "name":  "observation_46.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzMuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -124,6 +134,7 @@
     "epoch_id": 3,
     "observation_id": 47,
     "type_id": 1,
+    "name":  "observation_47.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzQuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -136,6 +147,7 @@
     "epoch_id": 3,
     "observation_id": 48,
     "type_id": 1,
+    "name":  "observation_48.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzQuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -148,6 +160,7 @@
     "epoch_id": 3,
     "observation_id": 49,
     "type_id": 1,
+    "name":  "observation_49.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzUuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -160,6 +173,7 @@
     "epoch_id": 3,
     "observation_id": 50,
     "type_id": 1,
+    "name":  "observation_50.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzUuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -172,6 +186,7 @@
     "epoch_id": 3,
     "observation_id": 51,
     "type_id": 1,
+    "name":  "observation_51.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzYuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -184,6 +199,7 @@
     "epoch_id": 3,
     "observation_id": 52,
     "type_id": 1,
+    "name":  "observation_52.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzYuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -196,6 +212,7 @@
     "epoch_id": 4,
     "observation_id": 71,
     "type_id": 1,
+    "name":  "observation_71.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzMuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -208,6 +225,7 @@
     "epoch_id": 4,
     "observation_id": 72,
     "type_id": 1,
+    "name":  "observation_72.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzMuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -220,6 +238,7 @@
     "epoch_id": 4,
     "observation_id": 73,
     "type_id": 1,
+    "name":  "observation_73.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzQuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -232,6 +251,7 @@
     "epoch_id": 4,
     "observation_id": 74,
     "type_id": 1,
+    "name":  "observation_74.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzQuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -244,6 +264,7 @@
     "epoch_id": 4,
     "observation_id": 75,
     "type_id": 1,
+    "name":  "observation_75.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzUuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -256,6 +277,7 @@
     "epoch_id": 4,
     "observation_id": 76,
     "type_id": 1,
+    "name":  "observation_76.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzUuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -268,6 +290,7 @@
     "epoch_id": 4,
     "observation_id": 77,
     "type_id": 1,
+    "name":  "observation_77.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzYuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",
@@ -280,6 +303,7 @@
     "epoch_id": 4,
     "observation_id": 78,
     "type_id": 1,
+    "name":  "observation_78.fits.gz",
     "data": [
       "H4sICIVdxV8C/2xvY2FsXzYuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE",
       "kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6",

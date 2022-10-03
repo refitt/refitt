@@ -65,6 +65,7 @@ info: dict = {
 
 def is_owner(recommendation: Recommendation, client: Client) -> bool:
     """Permission denied for recommendations that do not belong to you (and not admin)."""
+    # TODO: is this right?
     return recommendation.user_id == client.user_id or client.level <= 1
 
 
@@ -78,7 +79,6 @@ def get(id: int, client: Client) -> Recommendation:
 
 
 recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInterface]]] = {
-
     'epoch':                     ('epoch',                lambda r: r.epoch),
     'tag':                       ('recommendation_tag',   lambda r: r.tag),
     'user':                      ('user',                 lambda r: r.user),
@@ -380,23 +380,21 @@ FILE_SIZE_LIMIT: int = 800 * 1024**2
 # Larger collections in size and number can be included if compressed
 
 
-@application.route('/recommendation/<id>/observed/file', methods=['GET'])
+@application.route('/recommendation/<int:id>/observed/file', methods=['GET'])
 @endpoint('application/octet-stream')
 @authenticated
 @authorization(level=None)
 def get_recommendation_observed_file(client: Client, id: int) -> Tuple[IO, dict]:
     """Query for observation file by recommendation `id`."""
     recommendation = Recommendation.from_id(id)
-    if recommendation.user_id != client.user_id:
+    if recommendation.user_id != client.user_id and client.level > 1:
         raise PermissionDenied('Recommendation is not public')
     if recommendation.observation_id is None:
         raise NotFound('Missing observation record, cannot get file')
     disallow_parameters(request)
     file = File.from_observation(recommendation.observation_id)
     return BytesIO(file.data), {
-        'as_attachment': True,
-        'attachment_filename': f'observation_{file.observation_id}.{file.type.name}',
-        'conditional': False,
+        'as_attachment': True, 'download_name': file.name, 'conditional': False,
     }
 
 
@@ -427,7 +425,7 @@ info['Endpoints']['/recommendation/<id>/observed/file']['GET'] = {
 }
 
 
-@application.route('/recommendation/<id>/observed/file', methods=['POST'])
+@application.route('/recommendation/<int:id>/observed/file', methods=['POST'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
@@ -439,14 +437,15 @@ def add_recommendation_observed_file(client: Client, id: int) -> dict:
     if recommendation.observation_id is None:
         raise NotFound('Missing observation record, cannot upload file')
     disallow_parameters(request)
-    file_type, file_data = require_file(request, allowed_extensions=FileType.all_names(), size_limit=FILE_SIZE_LIMIT)
+    file_name, file_type, file_data = require_file(request, allowed_extensions=FileType.all_names(),
+                                                   size_limit=FILE_SIZE_LIMIT)
     type_id = FileType.from_name(file_type).id
     try:
         file = File.from_observation(recommendation.observation_id)
-        File.update(file.id, type_id=type_id, data=file_data)
+        File.update(file.id, type_id=type_id, name=file_name, data=file_data)
     except File.NotFound:
-        file = File.add({'observation_id': recommendation.observation_id,
-                         'epoch_id': Epoch.latest().id, 'type_id': type_id, 'data': file_data})
+        file = File.add({'observation_id': recommendation.observation_id, 'epoch_id': Epoch.latest().id,
+                         'type_id': type_id, 'name': file_name, 'data': file_data})
     return {'file': {'id': file.id}}
 
 
@@ -482,7 +481,7 @@ info['Endpoints']['/recommendation/<id>/observed/file']['POST'] = {
 }
 
 
-@application.route('/recommendation/<id>/observed/file/type', methods=['GET'])
+@application.route('/recommendation/<int:id>/observed/file/type', methods=['GET'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
@@ -525,7 +524,7 @@ info['Endpoints']['/recommendation/<id>/observed/file/type']['GET'] = {
 }
 
 
-@application.route('/recommendation/<id>/observed', methods=['POST'])
+@application.route('/recommendation/<int:id>/observed', methods=['POST'])
 @endpoint('application/json')
 @authenticated
 @authorization(level=None)
@@ -694,11 +693,18 @@ info['Endpoints']['/recommendation/<id>/model/<type_id>']['GET'] = {
 @authorization(level=1)
 def get_recommendation_totals(admin_client: Client, ) -> dict:  # noqa: unused client
     """Query for recommendation statistics."""
-    params = collect_parameters(request, optional=['epoch_id', 'user_id', 'facility_id', ])
+    params = collect_parameters(request, optional=['epoch_id', 'user_id', 'facility_id',
+                                                   'accepted', 'rejected', 'fulfilled'])
+    for opt in 'accepted', 'rejected', 'fulfilled':
+        if opt in params and not isinstance(params[opt], bool):
+            raise ParameterInvalid(f'Expected true/false for {opt} (given {params[opt]})')
     for opt in 'epoch_id', 'user_id', 'facility_id':
         if opt in params and not isinstance(params[opt], int):
             raise ParameterInvalid(f'Expected integer for {opt} (given {params[opt]})')
     query = Recommendation.query()
+    fulfilled = params.pop('fulfilled', False)
+    if fulfilled:
+        query = query.filter(Recommendation.observation_id.isnot(None))
     for opt, value in params.items():
         query = query.filter_by(**{opt: value})
     return {

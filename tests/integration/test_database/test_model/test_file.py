@@ -48,6 +48,7 @@ class TestFile:
             'epoch_id': 2,
             'observation_id': 19,
             'type_id': 1,
+            'name': 'observation_19.fits.gz',
             'data': ['H4sICIVdxV8C/2xvY2FsXzMuZml0cwAAAAD//+zRMQrCMBjF8au8G2iLuDkoRghoKSRD1mhS6JBE',
                      'kjj09lbBLUEKHb/fAf48eILf+isDDiiQ2OAR/BCiS8gBFy4FUtbe6GhQdOKy56rc2+/mno5RTzA6',
                      'a+TpafFHd1RcoLKvnXv+5e42Igy/8uisT2Pwqd5ryr1mi8W+vXa9HlOSdefqH8t7nxghhBBCCFnN',
