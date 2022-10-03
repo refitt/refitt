@@ -21,6 +21,7 @@ class TestMockAlert:
     def test_backfill(self) -> None:
         """Create alert with prior history and test backfill."""
 
+        # Prepare mock alerts
         alert = MockAlert.from_random()
         alert.previous = [MockAlert.from_random() for _ in range(10)]
         for a in alert.previous:
@@ -31,6 +32,7 @@ class TestMockAlert:
 
         alert.previous = sorted(alert.previous, key=(lambda _a: _a.observation_time))
 
+        # Full backfill adds alert and all previous
         obs_count = Observation.count()
         alert_count = Alert.count()
 
@@ -38,6 +40,7 @@ class TestMockAlert:
         assert Observation.count() == obs_count + len(alert.previous) + 1
         assert Alert.count() == alert_count + len(alert.previous) + 1
 
+        # If you delete the last two then only those will be filled back in
         obs_count = Observation.count()
         alert_count = Alert.count()
 
@@ -45,15 +48,27 @@ class TestMockAlert:
             Alert.delete(a.id)
             Observation.delete(a.observation_id)
 
+        del records[-2]
+        del records[-1]
+
         assert Observation.count() == obs_count - 2
         assert Alert.count() == alert_count - 2
 
         obs_count = Observation.count()
         alert_count = Alert.count()
 
-        alert.backfill_database()
+        records.extend(alert.backfill_database())
         assert Observation.count() == obs_count + 2
         assert Alert.count() == alert_count + 2
+
+        # Clean up all added records
+        for a in records:
+            Alert.delete(a.id)
+            Observation.delete(a.observation_id)
+
+        a = alert._record
+        Alert.delete(a.id)
+        Observation.delete(a.observation_id)
 
 
 @mark.integration
