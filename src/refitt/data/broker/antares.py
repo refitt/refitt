@@ -181,3 +181,4 @@ class AntaresClient(ClientInterface):
             return alert['new_alert']['properties']['ztf_neargaia'] > 2
         except KeyError as exc:
             log.error(f'Missing necessary data for filter=neargaia ({exc})')
+            return False
