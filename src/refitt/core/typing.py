@@ -7,12 +7,15 @@
 # type annotations
 from typing import Dict, List, Union, Any
 
+# standard libs
+from datetime import datetime
+
 # public interface
 __all__ = ['coerce', 'ValueType', 'JsonObject', 'JsonArray', 'JsonDict']
 
 
 # Core value types
-ValueType = Union[bool, str, int, float, None]
+ValueType = Union[bool, str, int, float, datetime, None]
 
 
 # JSON structures (so much can be said here: https://github.com/python/typing/issues/182)
@@ -29,6 +32,10 @@ def coerce(value: str) -> ValueType:
         pass
     try:
         return float(value)
+    except ValueError:
+        pass
+    try:
+        return datetime.fromisoformat(value)
     except ValueError:
         pass
     if value.lower() in ('null', 'none', ):

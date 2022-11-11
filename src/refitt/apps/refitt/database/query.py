@@ -49,7 +49,8 @@ PROGRAM = 'refitt database query'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 usage: {PROGRAM} [-h] ENTITY[.RELATION | ENTITY...] [-w COND [COND...]] 
-       {PADDING} [--count | --limit NUM] [-s ENTITY] [-x] [ --json | --csv] [--dry-run] 
+       {PADDING} [--order-by ENTITY [--desc]] [-x | --json | --csv]
+       {PADDING} [--count | --limit NUM] [--dry-run]
 {__doc__}\
 """
 
@@ -61,12 +62,13 @@ ENTITY[.RELATION ...]        Table name with relationship path.
 
 options:
 -w, --where           COND   Expressions to filter on (e.g., `user_id==2`).
+-s, --order-by       ENTITY  Sort results by specified column.
+    --desc                   Sort in descending order.
+-c, --count                  Print row count.
+-l, --limit          NUM     Limit number of returned rows.
+-x, --extract-values         Print values only (no formatting).
     --json                   Format output as JSON.
     --csv                    Format output as CSV.
--x, --extract-values         Print values only (no formatting).
--c, --count                  Print row count.
--l, --limit                  Limit number of returned rows.
--s, --order-by       ENTITY  Sort results by specified column.
     --dry-run                Show SQL query, do not execute.
 -h, --help                   Show this message and exit.\
 """
@@ -88,6 +90,9 @@ class QueryDatabaseApp(Application):
 
     order_by: str = None
     interface.add_argument('-s', '--order-by', default=None)
+
+    desc_mode: bool = False
+    interface.add_argument('--desc', action='store_true', dest='desc_mode')
 
     show_count: bool = False
     interface.add_argument('-c', '--count', dest='show_count', action='store_true')
@@ -133,8 +138,8 @@ class QueryDatabaseApp(Application):
             arg = self.order_by
             pattern = re.compile(r'^[a-z_]+\.')
             default_name = selector.model.__tablename__
-            field = EntityRelation.from_arg(arg if pattern.match(arg) else f'{default_name}.{arg}')
-            query = query.order_by(field.select())
+            field = EntityRelation.from_arg(arg if pattern.match(arg) else f'{default_name}.{arg}').select()
+            query = query.order_by(field if not self.desc_mode else field.desc())
         for cond in filters:
             query = query.filter(cond.compile())
         if self.limit is not None:
@@ -291,7 +296,11 @@ class SimpleColumnSelector(Selector):
         if extract_values and len(results[0]) == 1:
             for row in results:
                 value, = row
-                print(value)
+                if isinstance(value, bytes):
+                    sys.stdout.buffer.write(value)
+                    sys.stdout.buffer.flush()
+                else:
+                    print(value)
         else:
             table = Table(title=None)
             for entity in self.entities:

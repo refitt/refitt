@@ -705,7 +705,7 @@ class TestPostRecommendationObservedFile(Endpoint):
         route = f'/recommendation/{self.recommendation_id}/observed/file'
         # check original file
         assert self.get(route, client_id=client.id, response_type='file') == (
-            STATUS['OK'], {f'observation_{file.observation_id}.fits.gz': file.data}
+            STATUS['OK'], {file.name: file.data}
         )
         # post new file
         assert self.post(route, client_id=client.id,
@@ -716,18 +716,18 @@ class TestPostRecommendationObservedFile(Endpoint):
         )
         # check new file content is persisted
         assert self.get(route, client_id=client.id, response_type='file') == (
-            STATUS['OK'], {f'observation_{file.observation_id}.fits.gz': b'abc'}
+            STATUS['OK'], {'obs.fits.gz': b'abc'}
         )
         # restore original file
         assert self.post(route, client_id=client.id,
-                         files={'obs.fits.gz': BytesIO(file.data), }) == (
+                         files={file.name: BytesIO(file.data), }) == (
             STATUS['OK'],
             {'Status': 'Success',
              'Response': {'file': {'id': file.id}}}  # NOTE: original file ID
         )
         # check original file is restored
         assert self.get(route, client_id=client.id, response_type='file') == (
-            STATUS['OK'], {f'observation_{file.observation_id}.fits.gz': file.data}
+            STATUS['OK'], {file.name: file.data}
         )
 
 
@@ -1061,5 +1061,87 @@ class TestGetRecommendationModelData(Endpoint):
             STATUS['OK'], {
                 'Status': 'Success',
                 'Response': {'model': models[0].to_json()},
+            }
+        )
+
+
+@mark.integration
+class TestGetRecommendationTotal(Endpoint):
+    """Tests for GET /recommendation/total endpoint."""
+
+    route: str = '/recommendation/total'
+    method: str = 'get'
+    admin: str = 'superman'
+    user: str = 'tomb_raider'
+
+    def test_permission_denied(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.user).id) == (
+            RESPONSE_MAP[PermissionDenied], {
+                'Status': 'Error',
+                'Message': 'Authorization level insufficient',
+            }
+        )
+
+    def test_invalid_parameter(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.admin).id, foo='42') == (
+            RESPONSE_MAP[ParameterInvalid], {
+                'Status': 'Error',
+                'Message': 'Unexpected parameter: foo'
+            }
+        )
+
+    def test_get_total(self) -> None:
+        assert self.get(self.route, client_id=self.get_client(self.admin).id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'count': 24},
+            }
+        )
+
+    @mark.parametrize('epoch_id', [1, 2, 3])
+    def test_get_total_for_epoch(self, epoch_id: int) -> None:
+        count = Recommendation.query().filter_by(epoch_id=epoch_id).count()
+        assert self.get(self.route, client_id=self.get_client(self.admin).id, epoch_id=epoch_id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'count': count},
+            }
+        )
+
+    def test_get_total_for_facility(self) -> None:
+        count = Recommendation.query().filter_by(facility_id=3).count()
+        assert self.get(self.route, client_id=self.get_client(self.admin).id, facility_id=3) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'count': count},
+            }
+        )
+
+    def test_get_total_for_user(self) -> None:
+        count = Recommendation.query().filter_by(user_id=3).count()
+        assert self.get(self.route, client_id=self.get_client(self.admin).id, user_id=3) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'count': count},
+            }
+        )
+
+    def test_get_total_for_user_and_facility(self) -> None:
+        count = Recommendation.query().filter_by(user_id=3, facility_id=3).count()
+        assert self.get(self.route, client_id=self.get_client(self.admin).id, user_id=3, facility_id=3) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'count': count},
+            }
+        )
+
+    @mark.parametrize('epoch_id', [1, 2, 3])
+    def test_get_total_for_user_and_facility_and_epoch(self, epoch_id: int) -> None:
+        count = Recommendation.query().filter_by(user_id=3, facility_id=3, epoch_id=epoch_id).count()
+        assert self.get(self.route, client_id=self.get_client(self.admin).id,
+                        user_id=3, facility_id=3, epoch_id=epoch_id) == (
+            STATUS['OK'], {
+                'Status': 'Success',
+                'Response': {'count': count},
             }
         )

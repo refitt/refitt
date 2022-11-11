@@ -46,7 +46,13 @@ class LoginApp(Application):
 
     def run(self) -> None:
         """Run login method."""
-        if 'key' in config.api and 'secret' in config.api and not self.force:
-            log.info('Already logged in, use --force to get new credentials')
+        if self.force:
+            request.login(force=True)
+            return
+        try:
+            getattr(config.api, 'key')
+            getattr(config.api, 'secret')
+        except AttributeError:
+            request.login()
         else:
-            request.login(force=self.force)
+            log.info('Already logged in, use --force to get new credentials')

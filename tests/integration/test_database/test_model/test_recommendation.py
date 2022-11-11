@@ -5,13 +5,13 @@
 
 
 # external libs
-import pytest
+from pytest import mark, raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database import config
 from refitt.database.model import (Epoch, Recommendation, RecommendationTag,
-                                   User, Facility, Object, ModelType, Model, Observation, NotFound)
+                                   User, Facility, Object, Observation, NotFound)
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
@@ -76,12 +76,12 @@ class TestRecommendation:
 
     def test_id_missing(self) -> None:
         """Test exception on missing recommendation `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Recommendation.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on recommendation `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Recommendation.add({'id': 1, 'epoch_id': 1, 'tag_id': 1, 'priority': 1, 'object_id': 1,
                                 'facility_id': 1, 'user_id': 2})
 
@@ -139,8 +139,14 @@ class TestRecommendation:
             assert record.user_id == user_id
             assert record.epoch_id == 2
 
-    def test_next(self) -> None:
-        """Test query for latest recommendation."""
+    def test_next_invalid_mode(self) -> None:
+        """Test query for latest recommendation invalid mode"""
+        user_id = User.from_alias('tomb_raider').id
+        with raises(NotImplementedError):
+            Recommendation.next(user_id=user_id, mode='foo')
+
+    def test_next_normal(self) -> None:
+        """Test query for latest recommendation in 'normal' mode."""
 
         user_id = User.from_alias('tomb_raider').id
         response = Recommendation.next(user_id=user_id, epoch_id=3)
@@ -155,6 +161,14 @@ class TestRecommendation:
         Recommendation.update(rec_id, accepted=True)
         response = Recommendation.next(user_id=user_id, epoch_id=3)
         assert len(response) == 0
+
+    @mark.skip(reason='No test data allowing for realtime mode')
+    def test_next_realtime(self) -> None:
+        """Test query for latest recommendation in 'realtime' mode."""
+        # user_id = User.from_alias('glentner').id
+        # epoch_id = Epoch.latest().id
+        # response = Recommendation.next(user_id=user_id, epoch_id=epoch_id, mode='realtime')
+        # TODO: Fix testing dataset to allow realtime mode testing
 
     def test_history(self) -> None:
         """Test query for previously interacted with recommendations."""

@@ -1,5 +1,0 @@
-include src/refitt/assets/cluster/*
-include src/refitt/assets/config/*.toml
-include src/refitt/assets/database/core/*.json
-include src/refitt/assets/database/test/*.json
-include src/refitt/assets/systemd/*.service

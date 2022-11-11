@@ -76,7 +76,8 @@ def require_data(request: Request, data_format: str = 'json', required_fields: L
     return data
 
 
-def require_file(request: Request, allowed_extensions: List[str] = None, size_limit: int = None) -> Tuple[str, bytes]:
+def require_file(request: Request, allowed_extensions: List[str] = None,
+                 size_limit: int = None) -> Tuple[str, str, bytes]:
     """Inspect `request` for files and return file type and contents."""
     if len(request.files) < 1:
         raise PayloadMalformed('No file attached to request')
@@ -87,8 +88,8 @@ def require_file(request: Request, allowed_extensions: List[str] = None, size_li
         raise PayloadMalformed('Missing name for file attachment')
     if '.' not in name:
         raise PayloadMalformed('Missing file extension for name')
-    file_basename, file_type = os.path.splitext(os.path.basename(name))
-    file_type = file_type.lower().strip('.')
+    file_basename = os.path.basename(name)
+    file_type = os.path.splitext(file_basename)[1].lower().strip('.')
     if allowed_extensions is not None:
         # FIXME: better support for compound types (e.g., '.fits.gz')
         for extension in allowed_extensions:
@@ -100,7 +101,7 @@ def require_file(request: Request, allowed_extensions: List[str] = None, size_li
     data = stream.read()
     if size_limit is not None and len(data) > size_limit:
         raise PayloadTooLarge(f'File exceeds maximum size of {size_limit} bytes')
-    return file_type, data
+    return file_basename, file_type, data
 
 
 def coerce_types(args: Dict[str, str]) -> Dict[str, typing.ValueType]:
