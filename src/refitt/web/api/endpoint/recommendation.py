@@ -112,11 +112,11 @@ recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInte
 def get_next(client: Client) -> dict:
     """Query for recommendations for user."""
     optional = ['epoch_id', 'facility_id', 'limiting_magnitude', 'limit', 'mode', 'join']
-    params = collect_parameters(request, optional=optional, defaults={'join': False, 'mode': 'priority'})
+    params = collect_parameters(request, optional=optional, defaults={'join': False, 'mode': 'normal'})
     join = params.pop('join')
     mode = params.pop('mode')
     if mode not in Recommendation.QUERY_MODES:
-        raise ParameterInvalid(f'Invalid mode: {mode}')
+        raise ParameterInvalid(f'Invalid recommendation mode: {mode}')
     if 'limiting_magnitude' in params and not isinstance(params['limiting_magnitude'], float):
         raise ParameterInvalid(f'Expected decimal number for \'limiting_magnitude\' '
                                f'(given {params["limiting_magnitude"]})')
