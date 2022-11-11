@@ -10,6 +10,7 @@ from typing import List, Tuple, Dict, Any, Type, Optional, Callable, TypeVar, Un
 
 # standard libs
 import re
+import json
 import random
 from base64 import encodebytes as base64_encode, decodebytes as base64_decode
 from datetime import datetime, timedelta
@@ -17,6 +18,7 @@ from functools import lru_cache, cached_property
 from dataclasses import dataclass
 
 # external libs
+from pandas import DataFrame
 from names_generator.names import LEFT, RIGHT
 from sqlalchemy import Column, ForeignKey, Index, func, type_coerce, or_
 from sqlalchemy.ext.declarative import declared_attr, declarative_base
@@ -1282,8 +1284,10 @@ class Recommendation(ModelInterface):
         return (session.query(cls).order_by(cls.priority)
                 .filter(cls.epoch_id == epoch_id, cls.user_id == user_id)).all()
 
+    DEFAULT_QUERY_MODE: str = 'normal'
     QUERY_MODES: List[str] = [
-        'priority',
+        'normal',
+        'realtime',
     ]
 
     @classmethod
@@ -1295,7 +1299,7 @@ class Recommendation(ModelInterface):
             raise NotImplementedError(f'Recommendation query mode not implemented: {mode}')
 
     @classmethod
-    def next(cls, user_id: int, epoch_id: int = None, limit: int = None, mode: str = 'priority',
+    def next(cls, user_id: int, epoch_id: int = None, limit: int = None, mode: str = DEFAULT_QUERY_MODE,
              facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
         """
         Select next recommendation(s) for the given user and epoch, in priority order,
@@ -1310,15 +1314,56 @@ class Recommendation(ModelInterface):
                             facility_id=facility_id, limiting_magnitude=limiting_magnitude)
 
     @classmethod
-    def _query_priority(cls, user_id: int, epoch_id: int = None, limit: int = None,
-                        facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
-        """Simple 'priority' ordering."""
+    def _query_normal(cls, user_id: int, epoch_id: int = None, limit: int = None,
+                      facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
+        """Simple priority ordering."""
         query = cls._base_query(user_id, epoch_id=epoch_id, facility_id=facility_id,
                                 limiting_magnitude=limiting_magnitude)
         query = query.order_by(cls.priority)
         if limit:
             query = query.limit(limit)
         return query.all()
+
+    @classmethod
+    def _query_realtime(cls, user_id: int, epoch_id: int = None, limit: int = None,
+                        facility_id: int = None, limiting_magnitude: float = None) -> List[Recommendation]:
+        """Facility-based 'realtime' ordering, epoch=<latest> always."""
+        now = datetime.now().astimezone()
+        query = cls._base_query(user_id, epoch_id=epoch_id, facility_id=facility_id,
+                                limiting_magnitude=limiting_magnitude)
+        targets = []
+        for record in query.all():
+            try:
+                airmass = json.loads(record.data['airmass'])
+            except KeyError:
+                log.warning(f'Missing airmass for recommendation ({record.id})')
+            except Exception as err:
+                log.warning(f'Failed to decode airmass data for recommendation ({record.id}): {err}')
+            else:
+                # Note: converting to datetime first retains TZ-info within dataframe
+                df = DataFrame({'time': [datetime.fromisoformat(time) for time in airmass.keys()],
+                                'value': airmass.values()})
+                prev_df = df.loc[df.time < now]
+                next_df = df.loc[df.time > now]
+                if prev_df.empty or next_df.empty:
+                    log.warning(f'No targets near current time ({now})')
+                    continue  # No surrounding timestamps
+                else:
+                    df = DataFrame([prev_df, next_df])
+                    df = df.set_index('time')
+                    df = df.reindex(pd.DatetimeIndex([df.iloc[0].time, now, df.iloc[-1].time]))
+                    df = df.interpolate()
+                    value = abs(df.loc[now].value)
+                    if value <= 1.4:  # NOTE: airmass cutoff of 1.4
+                        targets.append({'id': record.id, 'airmass': value, 'record': record})
+
+        if not targets:
+            log.warning(f'No immediate targets (user={user_id}, facility={facility_id}, epoch={epoch_id})')
+            return []
+
+        limit = limit or len(targets)
+        targets = pd.DataFrame(targets).sort_values(by='airmass', ascending=True)
+        return targets.head(limit).record.to_list()
 
     @classmethod
     def _base_query(cls, user_id: int, epoch_id: int = None, facility_id: int = None,
