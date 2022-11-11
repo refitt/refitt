@@ -403,7 +403,7 @@ class Facility(ModelInterface):
             log.info(f'Associated facility ({self.id}) with user ({user.id})')
 
     def delete_user(self, user_id: int) -> None:
-        """Dissociate `user` with this facility."""
+        """Dissociate user with this facility."""
         session = _Session()
         user = User.from_id(user_id, session)  # checks for User.NotFound
         for mapping in session.query(FacilityMap).filter(FacilityMap.user_id == user.id,
