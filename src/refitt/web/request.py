@@ -66,8 +66,15 @@ def __join_site(path: str) -> str:
 
 __CT = TypeVar('__CT', Key, Secret, Token)
 def __get(var: Type[__CT]) -> Optional[__CT]:
-    found = config.api.get(var.__name__.lower(), None)
-    return None if not found else var(found)
+    credential_name = var.__name__.lower()
+    try:
+        found = getattr(config.api, credential_name)
+    except AttributeError:
+        return None
+    else:
+        return var(found)
+    # found = config.api.get(var.__name__.lower(), None)
+    # return None if not found else var(found)
 
 
 # global reference to credentials
