@@ -7,21 +7,37 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.10'
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: refitt
+          POSTGRES_USER: refitt
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
+    steps:
+      - uses: actions/checkout@v3
       - name: Install Poetry
         run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+          curl -sSL https://install.python-poetry.org | python3 -
           echo "${HOME}/.poetry/bin" >> $GITHUB_PATH
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: poetry
 
       - name: Configure poetry
         run: |
           poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+          poetry config pypi-token.testpypi ${{ secrets.PYPI_TOKEN }}
 
       - name: Install virtual environment
         run: poetry install
@@ -29,7 +45,11 @@ jobs:
       - name: Run tests
         env:
           REFITT_LOGGING_LEVEL: DEBUG
-          REFITT_DATABASE_FILE: test.db
+          REFITT_DATABASE_PROVIDER: postgresql
+          REFITT_DATABASE_DATABASE: refitt
+          REFITT_DATABASE_HOST: localhost
+          REFITT_DATABASE_USER: refitt
+          REFITT_DATABASE_PASSWORD: postgres
           REFITT_API_SITE: localhost
           REFITT_API_PORT: 5050
           REFITT_API_ROOTKEY: ${{ secrets.API_ROOTKEY_FAKE }}
