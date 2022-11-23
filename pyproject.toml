@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "refitt"
-version = "0.26.0"
+version = "0.26.1"
 description = "Recommender Engine for Intelligent Transient Tracking"
 readme = "README.rst"
 homepage = "https://refitt.org"
