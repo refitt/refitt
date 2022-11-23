@@ -26,7 +26,7 @@ __all__ = ['__appname__', '__version__', '__authors__', '__developer__', '__cont
 
 # project metadata
 __appname__     = 'refitt'
-__version__     = '0.26.0'
+__version__     = '0.26.1'
 __authors__     = ['Dan Milisavljevic <dmilisav@purdue.edu>',
                    'Niharika Sravan <nsravan@purdue.edu>',
                    'Geoffrey Lentner <glentner@purdue.edu>',
