@@ -205,7 +205,7 @@ class RecommendationPublishApp(Application):
                 extra_fields[name.strip()] = value.strip()
             else:
                 raise ArgumentError('Missing required assignment in \'{field}\', from --extra-fields')
-        return {field: typing.coerce(value) for field, value in extra_fields.items()}
+        return {field: typing.coerce_json(value) for field, value in extra_fields.items()}
 
     @cached_property
     def file_mode(self) -> bool:

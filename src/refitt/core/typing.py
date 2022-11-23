@@ -11,7 +11,8 @@ from typing import Dict, List, Union, Any
 from datetime import datetime
 
 # public interface
-__all__ = ['coerce', 'ValueType', 'JsonObject', 'JsonArray', 'JsonDict']
+__all__ = ['coerce', 'coerce_json',
+           'ValueType', 'JSONValue', 'JsonObject', 'JsonArray', 'JsonDict']
 
 
 # Core value types
@@ -19,7 +20,8 @@ ValueType = Union[bool, str, int, float, datetime, None]
 
 
 # JSON structures (so much can be said here: https://github.com/python/typing/issues/182)
-JsonObject = Union[ValueType, Dict[str, Any], List[Any]]
+JSONValue = Union[bool, str, int, float, None]
+JsonObject = Union[JSONValue, Dict[str, Any], List[Any]]
 JsonArray = List[JsonObject]
 JsonDict = Dict[str, JsonObject]
 
@@ -27,15 +29,19 @@ JsonDict = Dict[str, JsonObject]
 def coerce(value: str) -> ValueType:
     """Automatically coerce string to typed value."""
     try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return coerce_json(value)
+
+
+def coerce_json(value: str) -> JSONValue:
+    """Automatically coerce string to JSON-serializable typed value."""
+    try:
         return int(value)
     except ValueError:
         pass
     try:
         return float(value)
-    except ValueError:
-        pass
-    try:
-        return datetime.fromisoformat(value)
     except ValueError:
         pass
     if value.lower() in ('null', 'none', ):
