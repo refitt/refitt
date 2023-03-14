@@ -76,24 +76,25 @@ class PullTypeIIPApp(Application):
         """Run application."""
         objects = self.load_objects(cache=self.allow_cache)
         objects = self.sort_by_count(objects)
+        objects = self.filter_old(objects)
         objects = self.filter_previous(objects)
         self.write_output(objects)
 
     def write_output(self: PullTypeIIPApp, objects: List[Object]) -> None:
         """Show identifier and redshift if available."""
         log.info(f'Including {len(objects[:self.limit])} objects')
-        for object in objects[:self.limit]:
-            redshift = object.data.get('tns', {}).get('redshift', None)
+        for obj in objects[:self.limit]:
+            redshift = obj.data.get('tns', {}).get('redshift', None)
             if redshift and redshift != 'None':
-                self.write(f'{object.aliases["ztf"]}  {object.data["tns"]["redshift"]:.3f}')
+                self.write(f'{obj.aliases["ztf"]}  {obj.data["tns"]["redshift"]:.3f}')
             else:
-                self.write(f'{object.aliases["ztf"]}  -')
+                self.write(f'{obj.aliases["ztf"]}  -')
 
     def filter_previous(self: PullTypeIIPApp, objects: List[Object]) -> List[Object]:
         """Filter out any objects represented in recent epochs."""
         return [
-            object for object in objects
-            if object.id not in self.previous_objects(num_epochs=self.filter_epoch)
+            obj for obj in objects
+            if obj.id not in self.previous_objects(num_epochs=self.filter_epoch)
         ]
 
     @staticmethod
@@ -103,9 +104,9 @@ class PullTypeIIPApp(Application):
             object_id
             for model_id, object_id in
             Session.query(Model.id, Observation.object_id)
-                .join(Observation, Model.observation_id == Observation.id)
-                .filter(Model.epoch_id >= Epoch.latest().id - num_epochs)
-                .filter(Model.type_id == ModelType.from_name('core_collapse_inference').id)
+            .join(Observation, Model.observation_id == Observation.id)
+            .filter(Model.epoch_id >= Epoch.latest().id - num_epochs)
+            .filter(Model.type_id == ModelType.from_name('core_collapse_inference').id)
         ])
 
     @staticmethod
@@ -118,13 +119,30 @@ class PullTypeIIPApp(Application):
             Object.from_id(object_id)
             for object_id, count in
             Session.query(Observation.object_id, func.count(Observation.object_id))
-                .join(Source, Observation.source_id == Source.id)
-                .filter(Observation.object_id.in_([object.id for object in objects]))
-                .filter(Source.type_id.notin_([SourceType.from_name('synthetic').id, ]))
-                .group_by(Observation.object_id)
-                .order_by(func.count(Observation.object_id))
-                .limit(limit)
+            .join(Source, Observation.source_id == Source.id)
+            .filter(Observation.object_id.in_([obj.id for obj in objects]))
+            .filter(Source.type_id.notin_([SourceType.from_name('synthetic').id, ]))
+            .group_by(Observation.object_id)
+            .order_by(func.count(Observation.object_id))
+            .limit(limit)
         ]
+
+    @staticmethod
+    def filter_old(objects: List[Object], age: timedelta = timedelta(days=90)) -> List[Object]:
+        """Query database for given objects, filter out anything older than 60 days."""
+        cutoff_datetime = datetime.now().astimezone() - age
+        objects_by_id = {obj.id: obj for obj in objects}
+        valid_obj_ids = [
+            obj_id
+            for obj_id, earliest_obs_time in
+            Session.query(Observation.object_id, func.min(Observation.time))
+            .filter(Observation.object_id.in_([obj.id for obj in objects]))
+            .group_by(Observation.object_id)
+            if earliest_obs_time > cutoff_datetime
+        ]
+        count_rejected = len(objects) - len(valid_obj_ids)
+        log.info(f'Filtered {count_rejected} objects due to age ({cutoff_datetime})')
+        return [obj for obj_id, obj in objects_by_id.items() if obj_id in valid_obj_ids]
 
     CACHE_PATH = os.path.join(default_path.lib, 'tns', 'objects_type_iip.json')
     EXPIRED_AFTER = timedelta(days=1)
@@ -144,7 +162,7 @@ class PullTypeIIPApp(Application):
         names = cls.filter_names_by_type(tns)
         log.info(f'Found {len(names)} type IIP objects')
         objects = [cls.get_object(tns, name) for name in names]
-        objects = [object for object in objects if object is not None]
+        objects = [obj for obj in objects if obj is not None]
         log.info(f'Identified {len(objects)} objects in database')
         if cache:
             cls.write_cache(objects)
@@ -155,7 +173,7 @@ class PullTypeIIPApp(Application):
         """Write existing list of object records to cache."""
         log.info(f'Writing {len(objects)} to cache ({cls.CACHE_PATH})')
         with open(cls.CACHE_PATH, mode='w') as stream:
-            json.dump([object.to_json() for object in objects], stream)
+            json.dump([obj.to_json() for obj in objects], stream)
 
     @classmethod
     def load_from_cache(cls: Type[PullTypeIIPApp]) -> List[Object]:
@@ -191,9 +209,9 @@ class PullTypeIIPApp(Application):
             if name:  # NOTE: possible '' blank result
                 log.debug(f'Checking object ({name})')
                 try:
-                    object = Object.from_name(name)
-                    log.debug(f'Identified object ({object.id}: {name})')
-                    return object
+                    obj = Object.from_name(name)
+                    log.debug(f'Identified object ({obj.id}: {name})')
+                    return obj
                 except Object.NotFound:
                     pass
         else:
