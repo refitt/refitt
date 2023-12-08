@@ -78,7 +78,7 @@ class AlertChart:
         self.title = f'Antares Alert Ingest History: {freq} Totals'
         self.figure = plot.figure(self.title, figsize=(10, 5))
         self.figure.set_facecolor('white')
-        self.ax = self.figure.add_axes([0.10, 0.15, 0.80, 0.75])
+        self.ax = self.figure.add_axes((0.10, 0.15, 0.80, 0.75))
 
     def draw(self) -> None:
         """Render chart."""
