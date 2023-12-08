@@ -4,16 +4,24 @@
 """Database recommendation model integration tests."""
 
 
+# type annotations
+from typing import Final
+
 # external libs
 from pytest import mark, raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database import config
+from refitt.core.config import config
 from refitt.database.model import (Epoch, Recommendation, RecommendationTag,
-                                   User, Facility, Object, Observation, NotFound)
+                                   User, Facility, Object, Observation)
+from refitt.database.core import NotFound
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
+
+
+# Shorthand for which database type we are testing against
+PROVIDER: Final[str] = config.database.default.provider
 
 
 class TestRecommendation:
@@ -49,7 +57,7 @@ class TestRecommendation:
             'id': 1,
             'epoch_id': 1,
             'tag_id': 1,
-            'time': '2020-10-24 20:02:00' + ('' if config.provider == 'sqlite' else '-04:00'),
+            'time': '2020-10-24 20:02:00' + ('' if PROVIDER == 'sqlite' else '-04:00'),
             'priority': 1,
             'object_id': 1,
             'facility_id': 1,
@@ -118,13 +126,13 @@ class TestRecommendation:
     def test_for_user(self) -> None:
         """Test query for all recommendations for a given user."""
         user_id = User.from_alias('tomb_raider').id
-        results = Recommendation.for_user(user_id)
+        results = Recommendation.from_user(user_id)
         assert len(results) == 0  # nothing for epoch 4
 
     def test_for_user_with_epoch_id(self) -> None:
         """Test query for all recommendations for a given user and group."""
         user_id = User.from_alias('tomb_raider').id
-        results = Recommendation.for_user(user_id, epoch_id=3)
+        results = Recommendation.from_user(user_id, epoch_id=3)
         assert len(results) == 4
         for record in results:
             assert record.user_id == user_id
@@ -133,7 +141,7 @@ class TestRecommendation:
     def test_for_user_with_epoch_id_2(self) -> None:
         """Test query for all recommendations for a given user and group."""
         user_id = User.from_alias('tomb_raider').id
-        results = Recommendation.for_user(user_id, epoch_id=2)
+        results = Recommendation.from_user(user_id, epoch_id=2)
         assert len(results) == 4
         for record in results:
             assert record.user_id == user_id
@@ -152,7 +160,7 @@ class TestRecommendation:
         response = Recommendation.next(user_id=user_id, epoch_id=3)
         assert len(response) == 0  # NOTE: all accepted already
 
-        rec_id = Recommendation.for_user(user_id, epoch_id=3)[0].id
+        rec_id = Recommendation.from_user(user_id, epoch_id=3)[0].id
         Recommendation.update(rec_id, accepted=False)
 
         response = Recommendation.next(user_id=user_id, epoch_id=3)
@@ -179,7 +187,7 @@ class TestRecommendation:
         assert len(records) == 4  # NOTE: all accepted already
         assert all(r.accepted for r in records)
 
-        rec_id = Recommendation.for_user(user_id, epoch_id=3)[0].id
+        rec_id = Recommendation.from_user(user_id, epoch_id=3)[0].id
         Recommendation.update(rec_id, accepted=False)
 
         records = Recommendation.history(user_id=user_id, epoch_id=3)

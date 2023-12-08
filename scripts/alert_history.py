@@ -27,7 +27,7 @@ from matplotlib.axes import Axes
 # internal libs
 from refitt.core.logging import Logger
 from refitt.database.model import Observation, Source
-from refitt.database.interface import Session
+from refitt.database.connection import default_connection as db
 
 
 # public interface
@@ -53,11 +53,11 @@ class LogData:
         log.info(f'Searching for alerts since {since}')
         return cls([
             ts for (ts, ) in (
-                Session.query(Observation.recorded)
-                    .filter(Observation.recorded >= since.astimezone(),
-                            Observation.source_id == antares.id)
-                    .order_by(Observation.recorded)
-                    .all()
+                db.read.query(Observation.recorded)
+                .filter(Observation.recorded >= since.astimezone(),
+                        Observation.source_id == antares.id)
+                .order_by(Observation.recorded)
+                .all()
             )
         ])
 

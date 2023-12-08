@@ -13,10 +13,13 @@ import json
 from datetime import datetime
 from abc import ABC, abstractmethod
 
+# external lib
+from sqlalchemy.orm import scoped_session
+
 # internal libs
 from refitt.core.logging import Logger
 from refitt.database.model import Epoch, ObjectType, Object, Source, ObservationType, Observation, Alert
-from refitt.database.interface import Session
+from refitt.database.connection import default_connection as db
 
 # public interface
 __all__ = ['AlertInterface', 'AlertError', ]
@@ -154,14 +157,14 @@ class AlertInterface(ABC):
 
     def to_database(self) -> Alert:
         """Create an Object, Observation, and Alert record and write to the database."""
-        session = Session()
+        session = db.write
         try:
             return self._to_database(session)
         except Exception:
             session.rollback()
             raise
 
-    def _to_database(self, session: Session) -> Alert:
+    def _to_database(self, session: scoped_session) -> Alert:
         """Implementation of `to_database`."""
         object_type_id = self._get_object_type_id(session)
         object_id = self._get_object_id(object_type_id, session)
@@ -171,7 +174,7 @@ class AlertInterface(ABC):
                                   'observation_id': observation_id, 'data': self.data})
         return self._record
 
-    def _create_observation(self, object_id: int, obs_type_id: int, session: Session) -> int:
+    def _create_observation(self, object_id: int, obs_type_id: int, session: scoped_session) -> int:
         """Add observation to database and return new observation id."""
         observation = Observation.add({'epoch_id': Epoch.latest().id,
                                        'object_id': object_id, 'type_id': obs_type_id,
@@ -180,7 +183,7 @@ class AlertInterface(ABC):
                                        'time': self.observation_time}, session)
         return observation.id
 
-    def _get_observation_type(self, session: Session) -> int:
+    def _get_observation_type(self, session: scoped_session) -> int:
         """"""
         try:
             obs_type = ObservationType.from_name(self.observation_type_name, session)
@@ -191,22 +194,22 @@ class AlertInterface(ABC):
             session.commit()
         return obs_type.id
 
-    def _get_object_id(self, object_type_id: int, session: Session) -> int:
+    def _get_object_id(self, object_type_id: int, session: scoped_session) -> int:
         """Check for existing object by aliases or create new object if necessary."""
         for provider, name in self.object_aliases.items():
             try:
-                object = Object.from_alias(session, **{provider: name})
+                obj = Object.from_alias(session, **{provider: name})
                 break
             except Object.NotFound:
                 pass
         else:
-            object = Object.add({'type_id': object_type_id,  # 'pred_type_id': None,
-                                 'aliases': self.object_aliases,
-                                 'ra': self.object_ra, 'dec': self.object_dec,
-                                 'redshift': self.object_redshift}, session)
-        return object.id
+            obj = Object.add({'type_id': object_type_id,  # 'pred_type_id': None,
+                              'aliases': self.object_aliases,
+                              'ra': self.object_ra, 'dec': self.object_dec,
+                              'redshift': self.object_redshift}, session)
+        return obj.id
 
-    def _get_object_type_id(self, session: Session) -> int:
+    def _get_object_type_id(self, session: scoped_session) -> int:
         """Check object type and persist to database if necessary."""
         if self.object_type_name is None:
             object_type_id = ObjectType.from_name('Unknown', session)
@@ -225,8 +228,8 @@ class AlertInterface(ABC):
     def backfill_database(self) -> List[Alert]:
         """Retroactively fill database with an alert's available prior history."""
         latest = self._record or self.to_database()
-        query = Session.query(Observation).filter(Observation.object_id == latest.observation.object.id,
-                                                  Observation.source_id == latest.observation.source.id)
+        query = db.write.query(Observation).filter(Observation.object_id == latest.observation.object.id,
+                                                   Observation.source_id == latest.observation.source.id)
         observation_times = [observation.time.astimezone() for observation in query.all()]
         alert_times = [alert.observation_time.astimezone() for alert in self.previous]
         missing_alerts = [alert for alert, time in zip(self.previous, alert_times) if time not in observation_times]

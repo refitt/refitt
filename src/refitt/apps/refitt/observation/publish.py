@@ -26,7 +26,8 @@ from refitt.core.logging import Logger
 from refitt.core.exceptions import handle_exception
 from refitt.web.api.endpoint.recommendation import FILE_SIZE_LIMIT
 from refitt.database.model import (Observation, ObservationType, Object, Epoch, Source, Recommendation,
-                                   File, FileType, NotFound)
+                                   File, FileType)
+from refitt.database.core import NotFound
 
 # public interface
 __all__ = ['ObservationPublishApp', ]
@@ -189,7 +190,7 @@ class ObservationPublishApp(Application):
         if file_type in ('.gz', '.xz', '.bz2'):  # Take one more if compression format
             file_type = os.path.splitext(file_basename[:-len(file_type)])[1].lower().strip() + file_type
         file_type = file_type.lstrip('.')
-        allowed_types = [ft.name.lower() for ft in FileType.query().all()]
+        allowed_types = [ft.name.lower() for ft in FileType.load_all()]
         if file_type not in allowed_types:
             raise RuntimeError(f'File type not allowed ({file_type})')
         if not self.mjd_value:

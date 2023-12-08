@@ -16,8 +16,7 @@ from pytest import fixture
 
 # internal libs
 from refitt import assets
-from refitt.database.model import __VT
-
+from refitt.database.core import __VT  # noqa: private
 
 Record = Dict[str, __VT]
 TestData = Dict[str, List[Record]]

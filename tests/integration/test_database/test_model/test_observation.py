@@ -4,6 +4,9 @@
 """Database observation model integration tests."""
 
 
+# type annotations
+from typing import Final
+
 # standard libs
 from datetime import datetime
 
@@ -12,10 +15,15 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database import config
-from refitt.database.model import Epoch, Observation, NotFound, Object, Source
+from refitt.core.config import config
+from refitt.database.model import Epoch, Observation, Object, Source
+from refitt.database.core import NotFound
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
+
+
+# Shorthand for which database type we are testing against
+PROVIDER: Final[str] = config.database.default.provider
 
 
 class TestObservation:
@@ -48,7 +56,7 @@ class TestObservation:
 
     def test_embedded(self) -> None:
         """Test embedded method to check JSON-serialization and auto-join."""
-        tzinfo = '' if config.provider == 'sqlite' else '-04:00'
+        tzinfo = '' if PROVIDER == 'sqlite' else '-04:00'
         assert Observation.from_id(1).to_json(join=True) == {
             'id': 1,
             'epoch_id': 1,
@@ -155,13 +163,13 @@ class TestObservation:
     def test_with_object(self) -> None:
         """Test query for observations for a given object."""
         for object_id, count in [(1, 9), (10, 3)]:
-            results = Observation.with_object(object_id)
+            results = Observation.from_object(object_id)
             assert all(isinstance(obs, Observation) for obs in results)
             assert len(results) == count
 
     def test_with_source(self) -> None:
         """Test query for observations for a given source."""
         for source_id in [3, 4, 5, 6]:
-            results = Observation.with_source(source_id)
+            results = Observation.from_source(source_id)
             assert all(isinstance(obs, Observation) for obs in results)
             assert len(results) == 6

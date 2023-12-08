@@ -9,7 +9,8 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database.model import Facility, NotFound, User, FacilityMap
+from refitt.database.model import Facility, User, FacilityMap
+from refitt.database.core import NotFound
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
@@ -97,23 +98,23 @@ class TestFacility:
 
     def test_users(self) -> None:
         """Access associated facility users."""
-        users = Facility.from_name('Croft_4m').users()
+        users = Facility.from_name('Croft_4m').get_users()
         assert all(isinstance(user, User) for user in users)
         assert len(users) == 1
 
     def test_add_user(self) -> None:
         """Test adding a user and then removing it."""
         facility = Facility.from_name('Croft_4m')
-        users = facility.users()
+        users = facility.get_users()
         assert len(users) == 1 and users[0].alias == 'tomb_raider'
         User.add({'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
                   'alias': '007', 'data': {'user_type': 'amateur', 'drink_of_choice': 'martini'}})
         new_user = User.from_alias('007')
         facility.add_user(new_user.id)
-        users = facility.users()
+        users = facility.get_users()
         assert len(users) == 2 and set(u.alias for u in users) == {'tomb_raider', '007'}
         User.delete(new_user.id)
-        users = facility.users()
+        users = facility.get_users()
         assert len(users) == 1 and users[0].alias == 'tomb_raider'
 
     def test_delete(self) -> None:

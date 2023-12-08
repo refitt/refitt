@@ -47,7 +47,7 @@ class TestGetObservations(Endpoint):
 
     def test_query_broker(self) -> None:
         source = Source.from_name('antares')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(self.route, client_id=self.get_client(self.admin).id,
                         source_id=source.id, limit=1, join=True) == (
             STATUS['OK'], {
@@ -57,7 +57,7 @@ class TestGetObservations(Endpoint):
 
     def test_query_source(self) -> None:
         source = Source.from_name('tomb_raider_croft_1m')
-        observations = Observation.with_source(source.id)
+        observations = Observation.from_source(source.id)
         assert self.get(self.route, client_id=self.get_client(self.admin).id, source_id=source.id) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -73,7 +73,7 @@ class TestGetObservations(Endpoint):
         )
 
     def test_query_object(self) -> None:
-        observations = Observation.with_object(1)
+        observations = Observation.from_object(1)
         assert self.get(self.route, client_id=self.get_client(self.admin).id, object_id=1) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -82,7 +82,7 @@ class TestGetObservations(Endpoint):
 
     def test_query_object_not_public(self) -> None:
         # source = Source.from_name('antares')
-        observations = Observation.with_object(1)  # NOTE: tomb_raider never recommended #1
+        observations = Observation.from_object(1)  # NOTE: tomb_raider never recommended #1
         assert self.get(self.route, client_id=self.get_client(self.user).id, object_id=1) == (
             STATUS['OK'], {
                 'Status': 'Success',  # source_id == 4 is a user, so we should see any of those
@@ -91,7 +91,7 @@ class TestGetObservations(Endpoint):
 
     def test_query_object_and_source(self) -> None:
         source = Source.from_name('antares')
-        observations = Observation.with_object(1)
+        observations = Observation.from_object(1)
         assert self.get(self.route, client_id=self.get_client(self.admin).id, source_id=source.id, object_id=1) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -119,7 +119,7 @@ class TestGetObservation(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}', client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
                 'Status': 'Error',
@@ -176,7 +176,7 @@ class TestGetObservationObject(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/object', client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
                 'Status': 'Error',
@@ -233,7 +233,7 @@ class TestGetObservationObjectType(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/object/type', client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
                 'Status': 'Error',
@@ -280,7 +280,7 @@ class TestGetObservationType(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/type', client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
                 'Status': 'Error',
@@ -327,7 +327,7 @@ class TestGetObservationSource(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/source', client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
                 'Status': 'Error',
@@ -384,7 +384,7 @@ class TestGetObservationSourceType(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/source/type', client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
                 'Status': 'Error',
@@ -431,7 +431,7 @@ class TestGetObservationSourceUser(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/source/user',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -451,7 +451,7 @@ class TestGetObservationSourceUser(Endpoint):
 
     def test_get_by_id(self) -> None:
         source = Source.from_name('tomb_raider_croft_1m')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/source/user',
                         client_id=self.get_client('tomb_raider').id) == (
             STATUS['OK'], {
@@ -480,7 +480,7 @@ class TestGetObservationSourceFacility(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/source/facility',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -500,7 +500,7 @@ class TestGetObservationSourceFacility(Endpoint):
 
     def test_get_by_id(self) -> None:
         source = Source.from_name('tomb_raider_croft_1m')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/source/facility',
                         client_id=self.get_client('tomb_raider').id) == (
             STATUS['OK'], {
@@ -529,7 +529,7 @@ class TestGetObservationAlert(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/alert',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -549,7 +549,7 @@ class TestGetObservationAlert(Endpoint):
 
     def test_alert_not_found(self) -> None:
         source = Source.from_name('refitt')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/alert',
                         client_id=self.get_client(self.admin).id) == (
             RESPONSE_MAP[NotFound], {
@@ -588,7 +588,7 @@ class TestGetObservationModel(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/model',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -608,7 +608,7 @@ class TestGetObservationModel(Endpoint):
 
     def test_model_not_found(self) -> None:
         source = Source.from_name('antares')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/model',
                         client_id=self.get_client(self.admin).id) == (
             STATUS['OK'], {
@@ -619,12 +619,12 @@ class TestGetObservationModel(Endpoint):
 
     def test_get_by_id(self) -> None:
         source = Source.from_name('refitt')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/model',
                         client_id=self.get_client(self.admin).id) == (
             STATUS['OK'], {
                 'Status': 'Success',
-                'Response': {'model': [record.to_json() for record in observation.models]},
+                'Response': {'model': [record.to_json() for record in observation.models()]},
             }
         )
 
@@ -648,7 +648,7 @@ class TestGetObservationFile(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/file',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -702,7 +702,7 @@ class TestGetObservationFileType(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         assert self.get(f'/observation/{observation.id}/file/type',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -795,7 +795,7 @@ class TestGetTypes(Endpoint):
 
     def test_get_all(self) -> None:
         client = self.get_client(self.user)
-        types = ObservationType.query().all()
+        types = ObservationType.load_all()
         assert self.get(self.route, client_id=client.id) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -930,7 +930,7 @@ class TestGetFileTypes(Endpoint):
 
     def test_get_all(self) -> None:
         client = self.get_client(self.user)
-        file_types = FileType.query().all()
+        file_types = FileType.load_all()
         assert self.get(self.route, client_id=client.id) == (
             STATUS['OK'], {
                 'Status': 'Success',
@@ -957,7 +957,7 @@ class TestGetFile(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')  # NOTE: not tomb_raider
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         file = File.from_observation(observation.id)
         assert self.get(f'/observation/file/{file.id}',
                         client_id=self.get_client('tomb_raider').id) == (
@@ -1005,7 +1005,7 @@ class TestGetFileTypeForFile(Endpoint):
 
     def test_permission_denied(self) -> None:
         source = Source.from_name('delta_one_bourne_12in')  # NOTE: not tomb_raider
-        observation = Observation.with_source(source.id)[0]
+        observation = Observation.from_source(source.id)[0]
         file = File.from_observation(observation.id)
         assert self.get(f'/observation/file/{file.id}/type',
                         client_id=self.get_client('tomb_raider').id) == (

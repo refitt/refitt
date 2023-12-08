@@ -15,7 +15,7 @@ from functools import partial
 from flask import request
 
 # internal libs
-from refitt.database.interface import Session
+from refitt.database.connection import default_connection as db
 from refitt.database.model import (Client, Source, Observation, ObservationType, Alert, Model,
                                    File, FileType, User, Facility)
 from refitt.web.api.app import application
@@ -73,7 +73,7 @@ def get_many(client: Client) -> dict:
     join = params.pop('join')
     if not params:
         raise PayloadTooLarge(f'Must specify at least one of {filters}')
-    query = Session.query(Observation).order_by(Observation.id)
+    query = db.read.query(Observation).order_by(Observation.id)
     if 'source_id' in params:
         source_id = params['source_id']
         query = query.filter(Observation.source_id == source_id)
@@ -552,7 +552,7 @@ info['Endpoints']['/observation/model/<id>']['GET'] = {
 def get_observation_models(client: Client, id: int) -> dict:
     """Query for models related to observation by `id`."""
     disallow_parameters(request)
-    return {'model': [record.to_json() for record in _get_observation(id, client).models]}
+    return {'model': [record.to_json() for record in _get_observation(id, client).models()]}
 
 
 info['Endpoints']['/observation/<id>/model']['GET'] = {
@@ -708,7 +708,7 @@ info['Endpoints']['/observation/type/<id>']['GET'] = {
 def get_observation_types(client: Client) -> dict:  # noqa: unused client
     """Query for list of all observation types."""
     disallow_parameters(request)
-    return {'observation_type': [record.to_json() for record in ObservationType.query().all()]}
+    return {'observation_type': [record.to_json() for record in ObservationType.load_all()]}
 
 
 info['Endpoints']['/observation/type']['GET'] = {
@@ -894,7 +894,7 @@ info['Endpoints']['/observation/file/type/<id>']['GET'] = {
 def get_file_types(client: Client) -> dict:  # noqa: unused client
     """Query for list of all file types."""
     disallow_parameters(request)
-    return {'file_type': [record.to_json() for record in FileType.query().all()]}
+    return {'file_type': [record.to_json() for record in FileType.load_all()]}
 
 
 info['Endpoints']['/observation/file/type']['GET'] = {

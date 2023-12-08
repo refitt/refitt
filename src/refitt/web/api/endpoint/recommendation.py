@@ -16,7 +16,7 @@ from flask import request
 
 # internal libs
 from refitt.database.model import (Client, Recommendation, File, FileType, Observation,
-                                   Source, ModelInterface, Epoch, Model)
+                                   Source, Entity, Epoch, Model)
 from refitt.web.api.app import application
 from refitt.web.api.auth import authenticated, authorization
 from refitt.web.api.tools import collect_parameters, disallow_parameters, require_file, require_data
@@ -78,7 +78,7 @@ def get(id: int, client: Client) -> Recommendation:
         raise PermissionDenied('Recommendation is not public')
 
 
-recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], ModelInterface]]] = {
+recommendation_slices: Dict[str, Tuple[str, Callable[[Recommendation], Entity]]] = {
     'epoch':                     ('epoch',                lambda r: r.epoch),
     'tag':                       ('recommendation_tag',   lambda r: r.tag),
     'user':                      ('user',                 lambda r: r.user),
@@ -611,7 +611,7 @@ info['Endpoints']['/recommendation/<id>/observed']['POST'] = {
 def get_recommendation_model_info(client: Client, id: int) -> dict:
     """Query for model info by recommendation ID."""
     disallow_parameters(request)
-    return {'model': [model.to_json() for model in get(id, client).model_info]}
+    return {'model': [model.to_json() for model in get(id, client).model_info()]}
 
 
 info['Endpoints']['/recommendation/<id>/model']['GET'] = {
@@ -649,7 +649,7 @@ info['Endpoints']['/recommendation/<id>/model']['GET'] = {
 def get_recommendation_model_by_type(client: Client, id: int, type_id: int) -> dict:
     """Query for model data by recommendation ID and model type ID."""
     disallow_parameters(request)
-    models = [model for model in get(id, client).model_info if model.type_id == type_id]
+    models = [model for model in get(id, client).model_info() if model.type_id == type_id]
     if not models:
         raise NotFound(f'No model with type_id={type_id} for recommendation with id={id}')
     return {'model': Model.from_id(models[0].id).to_json()}

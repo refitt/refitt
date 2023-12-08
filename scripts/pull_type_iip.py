@@ -26,7 +26,7 @@ from refitt.core.platform import default_path
 from refitt.core.logging import Logger
 from refitt.data.tns.catalog import TNSCatalog
 from refitt.database.model import Model, ModelType, Observation, Object, Source, Epoch, SourceType
-from refitt.database.interface import Session
+from refitt.database.connection import default_connection as db
 
 # public interface
 __all__ = []

@@ -13,22 +13,22 @@ from hypothesis import given, strategies as st
 from cmdkit.config import Namespace
 
 # internal libs
-from refitt.database.url import DatabaseURL
+from refitt.database.core import DatabaseConfiguration
 
 
 @pytest.mark.unit
-class TestDatabaseURL:
-    """Unit tests for DatabaseURL interface."""
+class TestDatabaseConfiguration:
+    """Unit tests for DatabaseConfiguration interface."""
 
     @staticmethod
     def build(**fields) -> str:
         """Construct instance and return encoding."""
-        return DatabaseURL(**fields).encode()
+        return DatabaseConfiguration(**fields).encode()
 
     @staticmethod
-    def build_from_namespace(**fields) -> str:
+    def build_from_config(**fields) -> str:
         """Construct instance and return encoding from Namespace."""
-        return DatabaseURL.from_namespace(Namespace(**fields)).encode()
+        return DatabaseConfiguration.from_namespace(Namespace(**fields)).encode()
 
     def test_missing_provider(self) -> None:
         """Test raises on 'provider' not given."""
@@ -144,13 +144,13 @@ class TestDatabaseURL:
 
     def test_repr(self) -> None:
         """Test basic case for repr."""
-        assert (repr(DatabaseURL(provider='postgres', database='foo'))
-                == '<DatabaseURL(provider=\'postgres\', database=\'foo\')>')
+        assert (repr(DatabaseConfiguration(provider='postgres', database='foo'))
+                == '<DatabaseConfiguration(provider=\'postgres\', database=\'foo\')>')
 
     def test_repr_with_password(self) -> None:
         """Test password is masked for repr."""
-        assert (repr(DatabaseURL(provider='postgres', database='foo', user='bobby', password='abc'))
-                == '<DatabaseURL(provider=\'postgres\', database=\'foo\', user=\'bobby\', password=\'****\')>')
+        assert (repr(DatabaseConfiguration(provider='postgres', database='foo', user='bobby', password='abc'))
+                == '<DatabaseConfiguration(provider=\'postgres\', database=\'foo\', user=\'bobby\', password=\'****\')>')
 
     def test_extra_fields(self) -> None:
         """Test url encoding of extra fields."""
@@ -163,16 +163,16 @@ class TestDatabaseURL:
 
     def test_from_namespace(self) -> None:
         """Test creation from a Namespace."""
-        assert 'postgres:///foo?encoding=utf-8' == self.build_from_namespace(
+        assert 'postgres:///foo?encoding=utf-8' == self.build_from_config(
             provider='postgres', database='foo', encoding='utf-8')
 
     def test_from_namespace_with_env(self) -> None:
         """Test field defined with _env special behavior."""
         os.environ['PASSWORD'] = 'my-password'
-        assert 'postgres://bobby:my-password@localhost/foo?encoding=utf-8' == self.build_from_namespace(
+        assert 'postgres://bobby:my-password@localhost/foo?encoding=utf-8' == self.build_from_config(
             provider='postgres', database='foo', user='bobby', password_env='PASSWORD', encoding='utf-8')
 
     def test_from_namespace_with_eval(self) -> None:
         """Test field defined with _eval special behavior."""
-        assert 'postgres://bobby:my-password@localhost/foo?encoding=utf-8' == self.build_from_namespace(
+        assert 'postgres://bobby:my-password@localhost/foo?encoding=utf-8' == self.build_from_config(
             provider='postgres', database='foo', user='bobby', password_eval='echo my-password', encoding='utf-8')

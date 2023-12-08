@@ -9,7 +9,8 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database.model import ObjectType, NotFound
+from refitt.database.model import ObjectType
+from refitt.database.core import NotFound
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 

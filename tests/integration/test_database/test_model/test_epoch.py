@@ -4,15 +4,23 @@
 """Database epoch model integration tests."""
 
 
+# typing annotations
+from typing import Final
+
 # external libs
 import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database import config
-from refitt.database.model import Epoch, NotFound
+from refitt.core.config import config
+from refitt.database.model import Epoch
+from refitt.database.core import NotFound
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
+
+
+# Shorthand for which database type we are testing against
+PROVIDER: Final[str] = config.database.default.provider
 
 
 class TestEpoch:
@@ -46,7 +54,7 @@ class TestEpoch:
         """Test embedded method to check JSON-serialization and full join."""
         assert Epoch.from_id(1).to_json(join=True) == {
             'id': 1,
-            'created': '2020-10-24 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
+            'created': '2020-10-24 20:01:00' + ('' if PROVIDER == 'sqlite' else '-04:00')
         }
 
     def test_from_id(self, testdata: TestData) -> None:
@@ -77,12 +85,12 @@ class TestEpoch:
         """Test query for latest epoch."""
         assert Epoch.latest().to_json(join=True) == {
             'id': 4,
-            'created': '2020-10-27 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
+            'created': '2020-10-27 20:01:00' + ('' if PROVIDER == 'sqlite' else '-04:00')
         }
 
     def test_select_with_limit(self) -> None:
         """Test the selection of epoch with a limit."""
-        tzinfo = '' if config.provider == 'sqlite' else '-04:00'
+        tzinfo = '' if PROVIDER == 'sqlite' else '-04:00'
         assert [group.to_json(join=True) for group in Epoch.select(limit=2)] == [
             {'id': 4, 'created': f'2020-10-27 20:01:00{tzinfo}'},
             {'id': 3, 'created': f'2020-10-26 20:01:00{tzinfo}'}
@@ -93,10 +101,10 @@ class TestEpoch:
         assert [group.to_json(join=True) for group in Epoch.select(limit=2, offset=2)] == [
             {
                 'id': 2,
-                'created': '2020-10-25 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
+                'created': '2020-10-25 20:01:00' + ('' if PROVIDER == 'sqlite' else '-04:00')
             },
             {
                 'id': 1,
-                'created': '2020-10-24 20:01:00' + ('' if config.provider == 'sqlite' else '-04:00')
+                'created': '2020-10-24 20:01:00' + ('' if PROVIDER == 'sqlite' else '-04:00')
             }
         ]

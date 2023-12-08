@@ -6,7 +6,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import List, Dict, Any, Type
+from typing import List, Dict, Any, Type, Final
 
 # standard libs
 import json
@@ -17,35 +17,45 @@ from sqlalchemy.engine import Engine
 # internal libs
 from refitt import assets
 from refitt.core.logging import Logger
-from refitt.database.interface import engine as __engine, Session, config
-from refitt.database.model import ModelInterface, tables
+from refitt.database.connection import ConnectionManager, default_connection as db
+from refitt.database.model import Entity, tables
 
 # public interface
-__all__ = ['create_all', 'drop_all', 'load_all', 'config', ]
+__all__ = ['get_engine', 'get_provider', 'create_all', 'drop_all', 'load_defaults', ]
 
 # module logger
 log = Logger.with_name(__name__)
 
 
-def create_all(base: Type[ModelInterface] = ModelInterface, engine: Engine = __engine) -> None:
+def get_engine(scope: str = 'write') -> Engine:
+    """Retrieve underlying engine for given session scope."""
+    return db.get_engine(db.name_from_scope(scope))
+
+
+def get_provider(scope: str = 'write') -> str:
+    """Get configured provider for given session scope."""
+    return db.get_config(db.name_from_scope(scope)).provider
+
+
+def create_all(scope: str = 'write') -> None:
     """Create all database objects."""
-    log.info('Creating all database objects')
-    base.metadata.create_all(engine)
+    log.info(f'Creating all database objects ({scope})')
+    Entity.metadata.create_all(get_engine(scope))
 
 
-def drop_all(base: Type[ModelInterface] = ModelInterface, engine: Engine = __engine) -> None:
+def drop_all(scope: str = 'write') -> None:
     """Drop all database objects."""
-    log.warning('Dropping all database objects')
-    base.metadata.drop_all(engine)
+    log.info(f'Dropping all database objects: {scope}')
+    Entity.metadata.drop_all(get_engine(scope))
 
 
-def __load_records(base: Type[ModelInterface], path: str) -> List[Dict[str, Any]]:
-    """Load all records from JSON file `path` into model of type `base`."""
-    return [base.from_json(record) for record in json.loads(assets.load_asset(path))]
+def load_records(interface: Type[Entity], path: str) -> List[Dict[str, Any]]:
+    """Load all records from JSON file `path` into model of type `interface`."""
+    return [interface.from_json(record) for record in json.loads(assets.load_asset(path))]
 
 
 # NOTE: order matters for foreign key references
-__REFS: Dict[str, List[str]] = {
+ENTITIES: Final[Dict[str, List[str]]] = {
     'core': ['user', 'object_type', 'model_type', 'level', 'topic', ],
     'test': ['facility', 'user', 'facility_map', 'client', 'session',
              'object_type', 'object', 'source_type', 'source',
@@ -54,11 +64,12 @@ __REFS: Dict[str, List[str]] = {
 }
 
 
-def load_all(role: str) -> None:
-    """Load stored record assets from `role` into database."""
-    log.info(f'Loading {role} data')
-    session = Session()
-    for name in __REFS[role]:
-        records = __load_records(tables[name], f'database/{role}/{name}.json')
+def load_defaults(scope: str, test: bool = False) -> None:
+    """Load stored default records into database."""
+    role = 'core' if test is False else 'test'
+    log.info(f'Loading default records ({role})')
+    session = db.get_session(db.name_from_scope(scope))
+    for name in ENTITIES[role]:
+        records = load_records(tables[name], f'database/{role}/{name}.json')
         session.add_all(records)
         session.commit()

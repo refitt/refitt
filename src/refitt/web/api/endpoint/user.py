@@ -11,7 +11,8 @@ from typing import Union
 from flask import request
 
 # internal libs
-from refitt.database.model import Client, User, IntegrityError, NotFound
+from refitt.database.model import Client, User, IntegrityError
+from refitt.database.core import NotFound
 from refitt.web.api.app import application
 from refitt.web.api.auth import authenticated, authorization
 from refitt.web.api.response import endpoint, ConstraintViolation, ParameterNotFound, ParameterInvalid
@@ -311,7 +312,7 @@ def get_all_user_facilities(admin: Client, user_id: int) -> dict:  # noqa: unuse
     return {
         'facility': [
             facility.to_json()
-            for facility in User.from_id(user_id).facilities()
+            for facility in User.from_id(user_id).get_facilities()
         ]
     }
 
@@ -350,7 +351,7 @@ info['Endpoints']['/user/<user_id>/facility']['GET'] = {
 def get_user_facility(admin: Client, user_id: int, facility_id: int) -> dict:  # noqa: unused client
     """Query for a facility related to the given user."""
     disallow_parameters(request)
-    facilities = [facility.to_json() for facility in User.from_id(user_id).facilities() if facility.id == facility_id]
+    facilities = [facility.to_json() for facility in User.from_id(user_id).get_facilities() if facility.id == facility_id]
     if not facilities:
         raise NotFound(f'Facility ({facility_id}) not associated with user ({user_id})')
     else:
@@ -431,7 +432,7 @@ info['Endpoints']['/user/<user_id>/facility/<facility_id>']['PUT'] = {
 def delete_user_facility_association(admin: Client, user_id: int, facility_id: int) -> dict:  # noqa: unused client
     """Dissociate the user with the given facility."""
     disallow_parameters(request)
-    User.from_id(user_id).delete_facility(facility_id)
+    User.from_id(user_id).remove_facility(facility_id)
     return {}
 
 

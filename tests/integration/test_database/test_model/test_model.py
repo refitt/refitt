@@ -9,7 +9,8 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database.model import Epoch, ModelType, Model, Observation, NotFound
+from refitt.database.model import Epoch, ModelType, Model, Observation
+from refitt.database.core import NotFound
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
@@ -88,14 +89,14 @@ class TestModel:
 
     def test_for_object(self) -> None:
         """Test query for all models for a given object."""
-        models = Model.for_object(8)
+        models = Model.from_object(8)
         assert len(models) == 3  # nothing for epoch 4
         assert [model.epoch_id for model in models] == [1, 2, 3]
 
     def test_for_object_with_epoch_id(self) -> None:
         """Test query for all recommendations for a given user and group."""
-        assert [] == Model.for_object(8, epoch_id=4)
-        assert [model.to_json() for model in Model.for_object(8, epoch_id=3)] == [
+        assert [] == Model.from_object(8, epoch_id=4)
+        assert [model.to_json() for model in Model.from_object(8, epoch_id=3)] == [
             {
                 'id': 24,
                 'epoch_id': 3,

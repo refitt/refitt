@@ -9,7 +9,8 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database.model import User, NotFound, Facility, FacilityMap
+from refitt.database.model import User, Facility, FacilityMap
+from refitt.database.core import NotFound
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
@@ -113,24 +114,24 @@ class TestUser:
 
     def test_facilities(self) -> None:
         """Access associated user facilities."""
-        facilities = User.from_alias('tomb_raider').facilities()
+        facilities = User.from_alias('tomb_raider').get_facilities()
         assert all(isinstance(facility, Facility) for facility in facilities)
         assert len(facilities) == 2
 
     def test_add_facility(self) -> None:
         """Test adding a facility and then removing it."""
         user = User.from_alias('tomb_raider')
-        facilities = user.facilities()
+        facilities = user.get_facilities()
         assert len(facilities) == 2 and set(f.name for f in facilities) == {'Croft_1m', 'Croft_4m'}
         Facility.add({'name': 'Croft_10m', 'latitude': -25.5, 'longitude': -69.25, 'elevation': 5050,
                       'limiting_magnitude': 20.5})
         new_facility = Facility.from_name('Croft_10m')
         user.add_facility(new_facility.id)
-        facilities = user.facilities()
+        facilities = user.get_facilities()
         assert len(facilities) == 3 and set(f.name for f in facilities) == {'Croft_1m', 'Croft_4m', 'Croft_10m'}
-        user.delete_facility(new_facility.id)
+        user.remove_facility(new_facility.id)
         Facility.delete(new_facility.id)
-        facilities = user.facilities()
+        facilities = user.get_facilities()
         assert len(facilities) == 2 and set(f.name for f in facilities) == {'Croft_1m', 'Croft_4m'}
 
     def test_delete(self) -> None:
@@ -158,7 +159,7 @@ class TestUser:
                       'limiting_magnitude': 17.5, 'data': {'telescope_design': 'reflector'}})
         facility = Facility.from_name('Bond_4m')
         user.add_facility(facility.id)
-        assert user.facilities()[0].to_dict() == facility.to_dict()
+        assert user.get_facilities()[0].to_dict() == facility.to_dict()
         assert User.count() == 5 and Facility.count() == 5 and FacilityMap.count() == 5
         User.delete(user.id)
         assert User.count() == 4 and Facility.count() == 5 and FacilityMap.count() == 4

@@ -4,6 +4,9 @@
 """Integration tests for recommendation endpoints."""
 
 
+# type annotations
+from typing import Final
+
 # standard libs
 from io import BytesIO
 from datetime import datetime
@@ -14,8 +17,8 @@ from contextlib import contextmanager
 from pytest import mark, raises
 
 # internal libs
-from refitt.database import config
-from refitt.database.model import Recommendation, Epoch, User, Facility, Observation, File
+from refitt.core.config import config
+from refitt.database.model import Recommendation, User, Facility, Observation, File
 from refitt.web.api.response import (STATUS, RESPONSE_MAP, NotFound, ParameterInvalid, ParameterNotFound,
                                      PermissionDenied, PayloadMalformed)
 from refitt.web.api.endpoint.recommendation import recommendation_slices
@@ -559,7 +562,7 @@ class TestGetRecommendationObservedFile(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.from_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.get(f'/recommendation/{rec.id}/observed/file',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -622,7 +625,7 @@ class TestPostRecommendationObservedFile(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.from_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.post(f'/recommendation/{rec.id}/observed/file',
                          client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -754,7 +757,7 @@ class TestGetRecommendationObservedFileType(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.from_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.get(f'/recommendation/{rec.id}/observed/file/type',
                         client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -796,6 +799,10 @@ class TestGetRecommendationObservedFileType(Endpoint):
         )
 
 
+# Shorthand for which database type we are testing against
+PROVIDER: Final[str] = config.database.default.provider
+
+
 @mark.integration
 class TestPostRecommendationObserved(Endpoint):
     """Tests for POST /recommendation/<id>/observed endpoint."""
@@ -819,7 +826,7 @@ class TestPostRecommendationObserved(Endpoint):
         )
 
     def test_permission_denied(self) -> None:
-        rec = Recommendation.for_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
+        rec = Recommendation.from_user(User.from_alias('delta_one').id, epoch_id=3)[-1]  # NOTE: not tomb_raider
         assert self.post(f'/recommendation/{rec.id}/observed/file',
                          client_id=self.get_client('tomb_raider').id) == (
             RESPONSE_MAP[PermissionDenied], {
@@ -921,11 +928,11 @@ class TestPostRecommendationObserved(Endpoint):
     def test_successful_update_observation(self) -> None:
         rec = Recommendation.from_id(self.recommendation_id)
         original = rec.observed.to_json()
-        timestamp = datetime.now() if config.provider == 'sqlite' else datetime.now().astimezone()
+        timestamp = datetime.now() if PROVIDER == 'sqlite' else datetime.now().astimezone()
         new_data = {'type_id': 1, 'value': 3.14, 'error': None, 'time': str(timestamp)}
         client = self.get_client(self.user)
         # update data
-        just_prior = str(datetime.now() if config.provider == 'sqlite' else datetime.now().astimezone())  # ISO format
+        just_prior = str(datetime.now() if PROVIDER == 'sqlite' else datetime.now().astimezone())  # ISO format
         status, payload = self.post(self.route, client_id=client.id, json=new_data)
         assert status == STATUS['OK']
         for field, value in new_data.items():
@@ -946,7 +953,7 @@ class TestPostRecommendationObserved(Endpoint):
         # temporarily remove existing file to simulate adding "new" observation
         rec = Recommendation.from_id(self.recommendation_id)
         original = rec.observed.to_json()
-        timestamp = datetime.now() if config.provider == 'sqlite' else datetime.now().astimezone()
+        timestamp = datetime.now() if PROVIDER == 'sqlite' else datetime.now().astimezone()
         new_data = {'type_id': 1, 'value': 3.14, 'error': None, 'time': str(timestamp)}
         file_id = File.from_observation(rec.observation_id).id
         client = self.get_client(self.user)
@@ -1003,7 +1010,7 @@ class TestGetRecommendationModelInfo(Endpoint):
         )
 
     def test_get_model_info(self) -> None:
-        models = Recommendation.from_id(22).model_info
+        models = Recommendation.from_id(22).model_info()
         assert len(models) == 1
         assert self.get(self.route, client_id=self.get_client(self.user).id) == (
             STATUS['OK'], {
@@ -1055,7 +1062,7 @@ class TestGetRecommendationModelData(Endpoint):
         )
 
     def test_get_model_data(self) -> None:
-        models = Recommendation.from_id(22).models
+        models = Recommendation.from_id(22).models()
         assert len(models) == 1
         assert self.get(self.route, client_id=self.get_client(self.user).id) == (
             STATUS['OK'], {

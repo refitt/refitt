@@ -14,11 +14,14 @@ import functools
 # external libs
 from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import scoped_session
 
 # internal libs
+from refitt.core.config import config
 from refitt.core.logging import Logger
-from refitt.database.model import ModelInterface
-from refitt.database.interface import engine, schema, Session
+from refitt.database.model import Entity
+from refitt.database.connection import default_connection as db
 
 # public interface
 __all__ = ['CheckDatabaseApp', ]
@@ -47,9 +50,9 @@ options:
 
 
 @functools.lru_cache(maxsize=None)
-def tables() -> Dict[str, ModelInterface]:
+def tables() -> Dict[str, Entity]:
     """Associate in-database table names with ORM tables."""
-    return {table.name: table for table in ModelInterface.metadata.sorted_tables}
+    return {table.name: table for table in Entity.metadata.sorted_tables}
 
 
 class CheckDatabaseApp(Application):
@@ -66,12 +69,19 @@ class CheckDatabaseApp(Application):
     show_count: bool = False
     interface.add_argument('-c', '--count', dest='show_count', action='store_true')
 
-    session: Session = None
+    scope: str = 'write'
+    interface.add_argument('-s', '--scope', default=scope, choices=['read', 'write'])
+
+    engine: Engine = None
+    session: scoped_session = None
+    schema: str = None
 
     def run(self) -> None:
         """Business logic of command."""
         self.check_names()
-        self.session = Session()
+        self.schema = config.database.default.get('schema')
+        self.session = db.get_session(db.name_from_scope(self.scope))
+        self.engine = db.get_engine(db.name_from_scope(self.scope))
         for name in self.names:
             self.check_table(name)
 
@@ -91,14 +101,14 @@ class CheckDatabaseApp(Application):
         if self.show_count:
             self.check_table_with_count(name)
         else:
-            if engine.has_table(name, schema=schema):
+            if self.engine.has_table(name, schema=self.schema):
                 print(f'{name}: exists')
             else:
                 print(f'{name}: missing')
 
     def check_table_with_count(self, name: str) -> None:
         """Check table exists with count of rows."""
-        if not engine.has_table(name, schema=schema):
+        if not self.engine.has_table(name, schema=self.schema):
             print(f'{name}: missing')
         else:
             count = self.session.query(tables()[name]).count()

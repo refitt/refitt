@@ -91,7 +91,7 @@ class TestGetModel(Endpoint):
         )
 
     def test_by_object(self) -> None:
-        models = [model.to_json() for model in Model.for_object(8)]
+        models = [model.to_json() for model in Model.from_object(8)]
         for model in models:
             model.pop('data')
         assert len(models) == 3
@@ -106,7 +106,7 @@ class TestGetModel(Endpoint):
                         object_id='8', include_data='true', limit='10') == (
             STATUS['OK'], {
                 'Status': 'Success',
-                'Response': {'model': [model.to_json() for model in Model.for_object(8)]}},
+                'Response': {'model': [model.to_json() for model in Model.from_object(8)]}},
         )
 
     def test_by_type_1(self) -> None:

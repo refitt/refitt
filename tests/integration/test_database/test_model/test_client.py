@@ -4,15 +4,23 @@
 """Database client model integration tests."""
 
 
+# type annotations
+from typing import Final
+
 # external libs
 from pytest import mark, raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database import config
-from refitt.database.model import Client, User, NotFound
+from refitt.core.config import config
+from refitt.database.core import NotFound
+from refitt.database.model import Client, User
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
+
+
+# Shorthand for which database type we are testing against
+PROVIDER: Final[str] = config.database.default.provider
 
 
 @mark.integration
@@ -53,7 +61,7 @@ class TestClient:
             'key': '78h6IuhW30Re7I-C',
             'secret': '7ccb08b171f4a28e6b5f2af5597153873d7cd90a972f2bee7b8ac82c43e0e4e9',
             'valid': True,
-            'created': '2020-10-23 17:45:01' + ('' if config.provider == 'sqlite' else '-04:00'),
+            'created': '2020-10-23 17:45:01' + ('' if PROVIDER == 'sqlite' else '-04:00'),
             'user': {
                 'id': 2,
                 'first_name': 'Jason',

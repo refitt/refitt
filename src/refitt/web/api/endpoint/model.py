@@ -80,7 +80,7 @@ def get_models(admin_client: Client) -> dict:  # noqa: unused client
     limit = params.pop('limit', None)
     query = Model.query()
     if object_id:
-        query = query.join(Observation).options(joinedload('observation'))
+        query = query.join(Observation)
         query = query.filter(Observation.object_id == object_id)
     if type_id:
         query = query.filter(Model.type_id == type_id)

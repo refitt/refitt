@@ -17,7 +17,7 @@ from flask import Response, request, send_file
 
 # internal libs
 from refitt.core.logging import Logger
-from refitt.database.model import NotFound as RecordNotFound
+from refitt.database.core import NotFound as RecordNotFound
 from refitt.web.token import TokenNotFound, TokenInvalid, TokenExpired
 from refitt.web.api.auth import AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
 

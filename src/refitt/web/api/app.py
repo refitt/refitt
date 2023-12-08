@@ -15,7 +15,7 @@ from flask import Flask, Response, request
 
 # internal libs
 from refitt.core.logging import Logger
-from refitt.database.interface import Session
+from refitt.database.connection import default_connection as db
 from refitt.web.api.response import STATUS
 
 # public interface
@@ -56,6 +56,10 @@ def before_request() -> None:
 @application.after_request
 def after_request(response: Response) -> Response:
     """Finalize any transaction/rollback and log end of request."""
-    Session.close()
+    # NOTE: Assume proper use of database scope in endpoint implementation
+    if request.method in ('GET', ):
+        db.read.close()
+    else:
+        db.write.close()
     log.debug(f'Request finished: {request.method} {request.path} {response.status}')
     return response

@@ -20,7 +20,7 @@ from cmdkit.cli import Interface
 # internal libs
 from refitt.core.logging import Logger
 from refitt.database.model import Model, Observation, Object, ObjectType
-from refitt.database.interface import Session
+from refitt.database.connection import default_connection as db
 
 # public interface
 __all__ = []
@@ -55,7 +55,7 @@ class UpdatePredTypeApp(Application):
         """Run application."""
 
         log.info('Searching for model outputs')
-        model_object_mapping = Session.query(Model.id, Observation.object_id).join(Observation).all()
+        model_object_mapping = db.read.query(Model.id, Observation.object_id).join(Observation).all()
         log.info(f'Found {len(model_object_mapping)} existing models')
 
         object_groups = {}

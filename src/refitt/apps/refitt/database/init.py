@@ -14,10 +14,9 @@ from sqlalchemy.exc import DatabaseError
 
 # internal libs
 from refitt.core.exceptions import handle_exception
-from refitt.core.config import config
 from refitt.core.logging import Logger
-from refitt.database import create_all, drop_all, load_all
-from refitt.database.interface import engine
+from refitt.database import create_all, drop_all, load_defaults
+from refitt.database.connection import default_connection as db
 
 # public interface
 __all__ = ['InitDatabaseApp', ]
@@ -58,6 +57,9 @@ class InitDatabaseApp(Application):
     load_interface.add_argument('--core', action='store_true', dest='load_core')
     load_interface.add_argument('--test', action='store_true', dest='load_test')
 
+    scope: str = 'write'
+    interface.add_argument('-s', '--scope', default=scope, choices=['read', 'write'])
+
     exceptions = {
         DatabaseError: partial(handle_exception, logger=log,
                                status=exit_status.runtime_error),
@@ -66,14 +68,16 @@ class InitDatabaseApp(Application):
 
     def run(self) -> None:
         """Business logic of command."""
-        if 'host' in config.database and config.database.host not in ('localhost', '127.0.0.1'):
-            response = input(f'Connected to remote database ({engine.url}), proceed ([Y]/n): ')
+        db_name = db.name_from_scope(self.scope)
+        db_cfg = db.get_config(db_name)
+        if 'host' in db_cfg and db_cfg.host not in ('localhost', '127.0.0.1'):
+            response = input(f'Connected to remote database ({db_cfg}), proceed ([Y]/n): ')
             if response.lower() not in ('y', 'yes'):
                 raise RuntimeError('Missing confirmation')
         if self.drop_tables:
-            drop_all()
-        create_all()
+            drop_all(scope=self.scope)
+        create_all(scope=self.scope)
         if self.load_core:
-            load_all('core')
+            load_defaults(scope=self.scope, test=False)
         if self.load_test:
-            load_all('test')
+            load_defaults(scope=self.scope, test=True)

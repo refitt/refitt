@@ -9,7 +9,9 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database.model import Epoch, File, FileType, Observation, NotFound
+from refitt.database.model import Epoch, File, FileType, Observation
+from refitt.database.core import NotFound
+from refitt.database.connection import default_connection as db
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
 
@@ -72,7 +74,12 @@ class TestFile:
     def test_id_already_exists(self) -> None:
         """Test exception on file `id` already exists."""
         with pytest.raises(IntegrityError):
-            File.add({'id': 1, 'epoch_id': 1, 'observation_id': 1, 'type_id': 1, 'data': b'...'})
+            File.add({'id': 1,
+                      'epoch_id': 1,
+                      'observation_id': 1,
+                      'type_id': 1,
+                      'name': 'foo.fits.gz',
+                      'data': b'...'})
 
     def test_from_observation(self, testdata: TestData) -> None:
         """Test loading file from `observation_id`."""

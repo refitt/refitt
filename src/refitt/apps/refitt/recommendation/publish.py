@@ -24,7 +24,8 @@ from refitt.core import typing
 from refitt.core.exceptions import handle_exception
 from refitt.core.logging import Logger
 from refitt.database.model import (Recommendation, Epoch, RecommendationTag, Observation,
-                                   User, Facility, Object, NotFound, )
+                                   User, Facility, Object, )
+from refitt.database.core import NotFound
 
 # public interface
 __all__ = ['RecommendationPublishApp', ]
@@ -275,7 +276,7 @@ class RecommendationPublishApp(Application):
         """Unique facility ID for recommendation."""
         if not self.facility:
             log.debug('Facility not given, looking up by user')
-            facilities = User.from_id(self.user_id).facilities()
+            facilities = User.from_id(self.user_id).get_facilities()
             if len(facilities) == 1:
                 return facilities[0].id
             if len(facilities) == 0:

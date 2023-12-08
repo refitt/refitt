@@ -29,7 +29,7 @@ from refitt.core.exceptions import write_traceback, display_warning
 # public interface
 __all__ = ['config', 'update', 'default', 'ConfigurationError', 'Namespace', 'blame',
            'load', 'reload', 'load_file', 'reload_file', 'load_env', 'reload_env',
-           'DEFAULT_LOGGING_STYLE', 'DEFAULT_DATABASE', 'LOGGING_STYLES', ]
+           'DEFAULT_LOGGING_STYLE', 'DEFAULT_DATABASE_NAME', 'DEFAULT_DATABASE_PATH', 'LOGGING_STYLES', ]
 
 # partial logging (not yet configured - initialized afterward)
 log = logging.getLogger(__name__)
@@ -55,16 +55,23 @@ LOGGING_STYLES = {
 }
 
 
-# Default SQLite database location if not configured
-DEFAULT_DATABASE = os.path.join(default_path.lib, 'main.db')
+# Default SQLite database name and location if not configured
+DEFAULT_DATABASE_NAME = 'main'
+DEFAULT_DATABASE_PATH = os.path.join(default_path.lib, f'{DEFAULT_DATABASE_NAME}.db')
 
 
 # Environment variables and configuration files are automatically merged with defaults
 default = Namespace({
 
+    # NOTE: If not configured the default is ~/.refitt/lib/main.db
     'database': {
-        # NOTE: If not configured the default is ~/.refitt/lib/main.db
-        'provider': 'sqlite',
+        'default': {
+            'provider': 'sqlite',
+        },
+        'scope': {
+            'read': 'default',
+            'write': 'default',
+        },
     },
 
     'logging': {
@@ -185,8 +192,8 @@ def build_preloads(base: Configuration) -> Namespace:
     ns = Namespace()
     ns.update({'logging': LOGGING_STYLES.get(get_logging_style(base))})
     if base.database == default.database:
-        display_warning(f'Using default database ({DEFAULT_DATABASE})')
-        ns.update({'database': {'file': DEFAULT_DATABASE}})
+        display_warning(f'Using default database ({DEFAULT_DATABASE_PATH})')
+        ns.update({'database': {'default': {'file': DEFAULT_DATABASE_PATH}}})
     return ns
 
 
@@ -260,9 +267,12 @@ def _inplace_update(original: dict, partial: dict) -> dict:
 
 
 # Inject configuration back into streamkit library
-db_conf = Namespace(config.database)
-db_conf['backend'] = db_conf.pop('provider')  # FIXME: StreamKit inconsistency
+# We need the 'write' scope for this
+sk_db_scope = config.database.scope.write
+sk_db_config = Namespace(config.database.get(sk_db_scope))
+sk_db_provider = sk_db_config.pop('provider', config.database.default.provider)
+sk_db_config['backend'] = sk_db_provider  # FIXME: StreamKit inconsistency
 _streamkit.config.extend(refitt=Namespace({
-   'database': db_conf,
+   'database': sk_db_config,
    'logging': config.logging
 }))

@@ -35,8 +35,8 @@ from pandas import DataFrame
 # internal libs
 from refitt.core.exceptions import handle_exception
 from refitt.core.logging import Logger
-from refitt.database.model import ModelInterface, tables
-from refitt.database.interface import Session
+from refitt.database.model import Entity, tables
+from refitt.database.connection import default_connection as db
 
 # public interface
 __all__ = ['QueryDatabaseApp', ]
@@ -109,6 +109,9 @@ class QueryDatabaseApp(Application):
     extract_values: bool = False
     interface.add_argument('-x', '--extract-values', action='store_true')
 
+    scope: str = 'write'
+    interface.add_argument('--scope', default=scope, choices=['read', 'write'])
+
     exceptions = {
         InvalidRequestError: partial(handle_exception, logger=log,
                                      status=exit_status.bad_argument),
@@ -171,24 +174,25 @@ class QueryDatabaseApp(Application):
         return getattr(selector, f'print_{self.output_format}')(*args, **kwargs)
 
 
-RT = TypeVar('RT', ModelInterface, Row)
-Result = Union[ModelInterface, Tuple[RT, ...]]
+RT = TypeVar('RT', Entity, Row)
+Result = Union[Entity, Tuple[RT, ...]]
 
 
 @dataclass
 class Selector(ABC):
     """Common interface for all selectors."""
 
+    scope: str
     entities: List[EntityRelation]
 
     @classmethod
-    def from_args(cls, args: List[str]) -> Selector:
+    def from_args(cls, scope: str, args: List[str]) -> Selector:
         """Build entities first from arguments."""
-        return cls([EntityRelation.from_arg(arg) for arg in args])
+        return cls(scope, [EntityRelation.from_arg(arg) for arg in args])
 
     @property
     @abstractmethod
-    def model(self) -> Type[ModelInterface]:
+    def model(self) -> Type[Entity]:
         """The primary model interface for the selector."""
 
     @abstractmethod
@@ -208,19 +212,19 @@ class Selector(ABC):
         """Print results in CSV format."""
 
     @classmethod
-    def factory(cls, args: List[str]) -> Selector:
+    def factory(cls, scope: str, args: List[str]) -> Selector:
         """Choose selector implementation based on pattern in entities."""
         if len(args) == 1:
             if '.' not in args[0]:
-                return SimpleTableSelector.from_args(args)
+                return SimpleTableSelector.from_args(scope, args)
             else:
                 entity = EntityRelation.from_arg(args[0])
                 if len(entity.path) > 1 or entity.path[0] in entity.model.relationships:
-                    return SingleCompoundSelector.from_args(args)
+                    return SingleCompoundSelector.from_args(scope, args)
                 else:
-                    return SimpleColumnSelector.from_args(args)
+                    return SimpleColumnSelector.from_args(scope, args)
         else:
-            return SimpleColumnSelector.from_args(args)
+            return SimpleColumnSelector.from_args(scope, args)
 
 
 @dataclass
@@ -228,12 +232,12 @@ class SimpleTableSelector(Selector):
     """A simple table selector."""
 
     @property
-    def model(self) -> Type[ModelInterface]:
+    def model(self) -> Type[Entity]:
         return self.entities[0].model
 
     def query(self) -> Query:
         """Query a single table."""
-        return Session.query(self.model)
+        return db.get_session(db.name_from_scope(self.scope)).query(self.model)
 
     def print_table(self, results: List[Result], extract_values: bool = False) -> None:
         """Print in table format from simple instances of ModelInterface."""
@@ -268,18 +272,18 @@ class SimpleColumnSelector(Selector):
     """A simple column based selector."""
 
     @classmethod
-    def from_args(cls, args: List[str]) -> Selector:
+    def from_args(cls, scope: str, args: List[str]) -> Selector:
         """Auto-expand singular table names into all column names."""
-        base = super().from_args(args)
-        return cls([sub for entity in base.entities for sub in entity.expand()])
+        base = super().from_args(scope, args)
+        return cls(scope, [sub for entity in base.entities for sub in entity.expand()])
 
     @property
-    def model(self) -> Type[ModelInterface]:
+    def model(self) -> Type[Entity]:
         return self.entities[0].model
 
     def query(self) -> Query:
         """Join additional tables if present."""
-        query = Session.query(*[entity.select() for entity in self.entities])
+        query = db.get_session(db.name_from_scope(self.scope)).query(*[entity.select() for entity in self.entities])
         relationships = {model: name for name, model in self.model.relationships.items()}
         secondary_models = []
         for entity in self.entities[1:]:
@@ -333,7 +337,7 @@ class SingleCompoundSelector(Selector):
     """A selector for traversing relations across tables."""
 
     @property
-    def model(self) -> Type[ModelInterface]:
+    def model(self) -> Type[Entity]:
         return self.entities[0].model
 
     def query(self) -> Query:
@@ -348,7 +352,7 @@ class SingleCompoundSelector(Selector):
             if hasattr(parent, 'relationships'):
                 relationships.append(getattr(parent, attr))
                 parent = parent.relationships.get(attr)
-        query = Session.query(self.entities[0].model)
+        query = db.get_session(db.name_from_scope(self.scope)).query(self.entities[0].model)
         if relationships:
             full_join = joinedload(relationships[0])
             for relationship in relationships[1:]:
@@ -362,7 +366,7 @@ class SingleCompoundSelector(Selector):
         for relation in entity.path:
             results = [getattr(record, relation) for record in results]
         table = Table(title=None)
-        if isinstance(results[0], ModelInterface):
+        if isinstance(results[0], Entity):
             table.add_column('id', justify='right', style='cyan')
             for name in list(results[0].columns.keys())[1:]:
                 table.add_column(name, justify='left')
@@ -384,7 +388,7 @@ class SingleCompoundSelector(Selector):
         entity = self.entities[0]
         for relation in entity.path:
             results = [getattr(record, relation) for record in results]
-        if isinstance(results[0], ModelInterface):
+        if isinstance(results[0], Entity):
             data = [record.to_json(join=False) for record in results]
         else:
             data = [value for row in results for value in row]
@@ -400,7 +404,7 @@ class SingleCompoundSelector(Selector):
         entity = self.entities[0]
         for relation in entity.path:
             results = [getattr(record, relation) for record in results]
-        if isinstance(results[0], ModelInterface):
+        if isinstance(results[0], Entity):
             data = [record.to_json(join=False) for record in results]
             dataframe = DataFrame(data, columns=list(results[0].columns.keys()))
             print(dataframe.to_csv(index=False))
@@ -410,6 +414,8 @@ class SingleCompoundSelector(Selector):
 
 
 __VT = TypeVar('__VT', str, int, float, type(None), datetime)
+
+
 def _typed(value: str) -> __VT:
     """Automatically coerce string to typed value."""
     try:
@@ -438,7 +444,7 @@ def _pre_serialize(value: Any) -> Union[Any, str]:
     return value if not isinstance(value, datetime) else str(value)
 
 
-def check_relation(model: Type[ModelInterface], *path: str) -> Union[Type[ModelInterface], Column]:
+def check_relation(model: Type[Entity], *path: str) -> Union[Type[Entity], Column]:
     """Validate we can actually select on the given relation `path`."""
     try:
         if not path:
@@ -470,7 +476,7 @@ class EntityRelation:
             raise ArgumentError(f'Entity `{name}` does not name existing table')
 
     @property
-    def model(self) -> Type[ModelInterface]:
+    def model(self) -> Type[Entity]:
         """The model interface for the named table."""
         return tables.get(self.name)
 
@@ -513,7 +519,7 @@ class FieldSelector:
     }
 
     @property
-    def model(self) -> Type[ModelInterface]:
+    def model(self) -> Type[Entity]:
         return tables.get(self.parent)
 
     def compile(self) -> BinaryExpression:

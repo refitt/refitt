@@ -4,6 +4,9 @@
 """Database session model integration tests."""
 
 
+# type annotations
+from typing import Final
+
 # standard libs
 from datetime import datetime
 
@@ -12,11 +15,16 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
-from refitt.database import config
-from refitt.database.model import Session, Client, NotFound, User
+from refitt.core.config import config
+from refitt.database.model import Session, Client, User
+from refitt.database.core import NotFound
 from refitt.web.token import JWT
 from tests.integration.test_database.test_model.conftest import TestData
 from tests.integration.test_database.test_model import json_roundtrip
+
+
+# Shorthand for which database type we are testing against
+PROVIDER: Final[str] = config.database.default.provider
 
 
 class TestSession:
@@ -52,16 +60,16 @@ class TestSession:
         assert Session.from_id(2).to_json(join=True) == {
             'id': 2,
             'client_id': 2,
-            'expires': '2020-10-23 18:00:01' + ('' if config.provider == 'sqlite' else '-04:00'),
+            'expires': '2020-10-23 18:00:01' + ('' if PROVIDER == 'sqlite' else '-04:00'),
             'token': 'c44d20d18e734aea40b30682a57162b53c18f676c1b752696dad5dc6586187fe',
-            'created': '2020-10-23 17:45:01' + ('' if config.provider == 'sqlite' else '-04:00'),
+            'created': '2020-10-23 17:45:01' + ('' if PROVIDER == 'sqlite' else '-04:00'),
             'client': {'id': 2,
                        'user_id': 2,
                        'level': 10,
                        'key': '78h6IuhW30Re7I-C',
                        'secret': '7ccb08b171f4a28e6b5f2af5597153873d7cd90a972f2bee7b8ac82c43e0e4e9',
                        'valid': True,
-                       'created': '2020-10-23 17:45:01' + ('' if config.provider == 'sqlite' else '-04:00'),
+                       'created': '2020-10-23 17:45:01' + ('' if PROVIDER == 'sqlite' else '-04:00'),
                        'user': {'id': 2,
                                 'first_name': 'Jason',
                                 'last_name': 'Bourne',
@@ -141,7 +149,7 @@ class TestSession:
         """Generate a new session token and then manually reset it back."""
         session = Session.from_client(2)
         before = session.created
-        if config.provider == 'sqlite':
+        if PROVIDER == 'sqlite':
             assert datetime.now() > before
         else:
             assert datetime.now().astimezone() > before
