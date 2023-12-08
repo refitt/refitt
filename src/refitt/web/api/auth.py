@@ -6,7 +6,7 @@
 
 # type annotations
 from __future__ import annotations
-from typing import Callable
+from typing import Callable, Optional
 
 # standard libs
 import functools
@@ -95,7 +95,7 @@ def authenticated(route: Callable[..., dict]) -> Callable[..., dict]:
     return get_client
 
 
-def authorization(level: int = None) -> Callable:
+def authorization(level: Optional[int] = None) -> Callable:
     """Validate client access and privilege level."""
 
     def valid(route: Callable[..., dict]) -> Callable[..., dict]:
