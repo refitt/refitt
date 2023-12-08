@@ -45,6 +45,8 @@ arguments:
 NAME                   Object name.
 
 options:
+-d, --data             Show full data for object.
+-l, --history          Show object history data.
     --json             Format output as JSON.
 -h, --help             Show this message and exit.\
 """
