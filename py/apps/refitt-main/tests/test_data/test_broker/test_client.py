@@ -10,7 +10,7 @@ from typing import Iterator
 
 # internal libs
 from refitt.data.broker.client import ClientInterface
-from tests.unit.test_data.test_broker.test_alert import MockAlert
+from tests.test_data.test_broker.test_alert import MockAlert
 
 
 class MockClient(ClientInterface):

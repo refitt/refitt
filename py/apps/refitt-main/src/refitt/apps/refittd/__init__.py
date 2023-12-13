@@ -20,7 +20,7 @@ from cmdkit.app import Application
 from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
-from refitt import __version__, __developer__, __contact__, __website__, __copyright__
+from refitt.core import __version__, __developer__, __contact__, __website__, __copyright__
 from refitt.core.platform import default_path
 from refitt.core.exceptions import write_traceback
 from refitt.core.config import reload as reload_config, LOGGING_STYLES, ConfigurationError, Namespace

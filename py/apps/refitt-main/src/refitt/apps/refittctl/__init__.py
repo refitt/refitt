@@ -17,7 +17,7 @@ from cmdkit.app import Application, exit_status
 from cmdkit.cli import Interface
 
 # internal lib
-from refitt import __version__, __developer__, __contact__, __website__, __copyright__
+from refitt.core import __version__, __developer__, __contact__, __website__, __copyright__
 from refitt.core import ansi
 from refitt.core.exceptions import handle_exception, write_traceback
 from refitt.core.logging import Logger
