@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "refitt-main"
+name = "refitt-admin"
 version = "0.26.1"
-description = "REFITT main package"
+description = "Admin tools and services"
 readme = "README.rst"
 homepage = "https://refitt.org"
 documentation = "https://refitt.readthedocs.io"
