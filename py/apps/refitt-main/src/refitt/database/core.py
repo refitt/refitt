@@ -143,7 +143,7 @@ class DatabaseConfiguration(Namespace):
                 return ''
 
     def __format_user_and_password(self: DatabaseConfiguration) -> str:
-        """Build formatted sub-string for user name and password."""
+        """Build formatted sub-string for username and password."""
         return '' if not self.user and not self.password else f'{self.user}:{self.password}@'
 
     def __str__(self: DatabaseConfiguration) -> str:
