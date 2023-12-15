@@ -99,7 +99,7 @@ class RefittDaemonApp(Application, Daemon):
 
     def run(self) -> None:
         """Start the refitt service daemon."""
-        log.info('Started master daemon')
+        log.info('Started')
         if self.daemon_mode:
             self.run_daemon()
         else:
