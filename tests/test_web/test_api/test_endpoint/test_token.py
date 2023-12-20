@@ -9,8 +9,8 @@ import re
 from functools import cached_property
 
 # internal libs
-from refitt.web.request import format_request
-from refitt.web.api.response import RESPONSE_MAP, PermissionDenied
+from refitt.core.web.request import format_request
+from refitt.core.web.response import RESPONSE_MAP, PermissionDenied
 from tests.integration.test_web.test_api import temp_secret, restore_session
 from tests.integration.test_web.test_api.test_endpoint import LoginEndpoint, Endpoint
 

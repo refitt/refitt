@@ -5,8 +5,8 @@
 
 
 # internal libs
-from refitt.web.api.endpoint import INFO
-from refitt.web.api.response import STATUS
+from refitt.web.api import INFO
+from refitt.core.web.response import STATUS
 from tests.integration.test_web.test_api.test_endpoint import Endpoint
 from tests.integration.test_database.test_model import json_roundtrip
 

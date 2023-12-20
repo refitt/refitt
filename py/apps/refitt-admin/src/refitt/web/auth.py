@@ -18,35 +18,15 @@ from cryptography.hazmat.primitives.constant_time import bytes_eq
 
 # internal libs
 from refitt.core.logging import Logger
+from refitt.core.web.token import Secret, JWT, TokenNotFound, TokenExpired
+from refitt.core.web.response import AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
 from refitt.database.model import Client
-from refitt.web.token import Secret, JWT, AuthError, TokenNotFound, TokenExpired
 
 # public interface
-__all__ = ['ClientInvalid', 'ClientInsufficient', 'AuthenticationNotFound', 'AuthenticationInvalid',
-           'PermissionDenied', 'authenticated', 'authenticate', 'authorization']
+__all__ = ['authenticated', 'authenticate', 'authorization']
 
 # module logger
 log = Logger.with_name(__name__)
-
-
-class ClientInvalid(AuthError):
-    """The client credentials have been invalidated."""
-
-
-class ClientInsufficient(AuthError):
-    """The client authorization level is too low."""
-
-
-class AuthenticationNotFound(AuthError):
-    """Missing key:secret in authorization."""
-
-
-class AuthenticationInvalid(AuthError):
-    """Secret did not match expected value."""
-
-
-class PermissionDenied(AuthError):
-    """Action not permitted for current user/level."""
 
 
 def authenticate(route: Callable[[Client], dict]) -> Callable[[Client], dict]:

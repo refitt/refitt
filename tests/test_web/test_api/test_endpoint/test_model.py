@@ -9,7 +9,7 @@ from pytest import mark
 
 # internal libs
 from refitt.database.model import Recommendation, Model, User
-from refitt.web.api.response import STATUS, RESPONSE_MAP, NotFound, ParameterInvalid, PermissionDenied, PayloadTooLarge
+from refitt.core.web.response import STATUS, RESPONSE_MAP, NotFound, ParameterInvalid, PermissionDenied, PayloadTooLarge
 from tests.integration.test_web.test_api.test_endpoint import Endpoint
 
 

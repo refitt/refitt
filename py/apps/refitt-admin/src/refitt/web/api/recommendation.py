@@ -15,13 +15,14 @@ from datetime import datetime
 from flask import request
 
 # internal libs
+from refitt.core.web.response import (PermissionDenied, ParameterNotFound, ParameterInvalid,
+                                      PayloadMalformed, NotFound)
 from refitt.database.model import (Client, Recommendation, File, FileType, Observation,
                                    Source, Entity, Epoch, Model)
-from refitt.web.api.app import application
-from refitt.web.api.auth import authenticated, authorization
-from refitt.web.api.tools import collect_parameters, disallow_parameters, require_file, require_data
-from refitt.web.api.response import (endpoint, PermissionDenied, ParameterNotFound, ParameterInvalid,
-                                     PayloadMalformed, NotFound)
+from refitt.web.app import application
+from refitt.web.endpoint import endpoint
+from refitt.web.auth import authenticated, authorization
+from refitt.web.tools import collect_parameters, disallow_parameters, require_file, require_data
 
 # public interface
 __all__ = ['info', 'recommendation_slices', 'FILE_SIZE_LIMIT', ]

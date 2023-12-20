@@ -16,8 +16,8 @@ from flask import Request
 
 # internal libs
 from refitt.core import typing
-from refitt.web.api.response import (PayloadNotFound, PayloadMalformed, PayloadInvalid, PayloadTooLarge,
-                                     ParameterNotFound, ParameterInvalid)
+from refitt.core.web.response import (PayloadNotFound, PayloadMalformed, PayloadInvalid, PayloadTooLarge,
+                                      ParameterNotFound, ParameterInvalid)
 
 # public interface
 __all__ = ['require_data', 'require_file', 'collect_parameters', 'disallow_parameters', ]
@@ -76,8 +76,11 @@ def require_data(request: Request, data_format: str = 'json', required_fields: L
     return data
 
 
-def require_file(request: Request, allowed_extensions: List[str] = None,
-                 size_limit: int = None) -> Tuple[str, str, bytes]:
+def require_file(
+        request: Request,
+        allowed_extensions: List[str] = None,
+        size_limit: int = None
+) -> Tuple[str, str, bytes]:
     """Inspect `request` for files and return file type and contents."""
     if len(request.files) < 1:
         raise PayloadMalformed('No file attached to request')

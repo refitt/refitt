@@ -24,7 +24,7 @@ from astropy.io import fits
 # internal libs
 from refitt.core.logging import Logger
 from refitt.core.exceptions import handle_exception
-from refitt.web.api.endpoint.recommendation import FILE_SIZE_LIMIT
+from refitt.web.api.recommendation import FILE_SIZE_LIMIT
 from refitt.database.model import (Observation, ObservationType, Object, Epoch, Source, Recommendation,
                                    File, FileType)
 from refitt.database.core import NotFound

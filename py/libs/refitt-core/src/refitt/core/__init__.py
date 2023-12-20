@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-The Recommender Engine for Intelligent Transient Tracking.
+Core modules shared by all REFITT packages.
 
-This package provides access to the library of applications, tools, and
-services within the REFITT system.
+All REFITT packages get their metadata from here.
 """
 
 

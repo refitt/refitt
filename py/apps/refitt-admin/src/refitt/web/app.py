@@ -15,8 +15,8 @@ from flask import Flask, Response, request
 
 # internal libs
 from refitt.core.logging import Logger
+from refitt.core.web.response import STATUS
 from refitt.database.connection import default_connection as db
-from refitt.web.api.response import STATUS
 
 # public interface
 __all__ = ['application', ]

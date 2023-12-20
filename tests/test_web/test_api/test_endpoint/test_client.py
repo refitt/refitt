@@ -10,7 +10,7 @@ from abc import ABC
 from functools import cached_property
 
 # internal libs
-from refitt.web.api.response import STATUS, RESPONSE_MAP, PermissionDenied, RecordNotFound
+from refitt.core.web.response import STATUS, RESPONSE_MAP, PermissionDenied, RecordNotFound
 from tests.integration.test_web.test_api.test_endpoint import Endpoint
 from tests.integration.test_web.test_api import restore_client
 

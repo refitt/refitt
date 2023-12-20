@@ -9,10 +9,10 @@ from flask import request
 
 # internal libs
 from refitt.database.model import Client, Object, ObjectType
-from refitt.web.api.app import application
-from refitt.web.api.response import endpoint
-from refitt.web.api.auth import authenticated, authorization
-from refitt.web.api.tools import collect_parameters, disallow_parameters
+from refitt.web.app import application
+from refitt.web.endpoint import endpoint
+from refitt.web.auth import authenticated, authorization
+from refitt.web.tools import collect_parameters, disallow_parameters
 
 # public interface
 __all__ = []

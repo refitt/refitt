@@ -37,9 +37,9 @@ from sqlalchemy.types import (Integer as SQLInteger,
 # internal libs
 from refitt.core.config import config
 from refitt.core.logging import Logger
+from refitt.core.web.token import Key, Secret, Token, JWT
 from refitt.database.core import NotFound, NotDistinct, AlreadyExists, _load, _dump
 from refitt.database.connection import default_connection as db
-from refitt.web.token import Key, Secret, Token, JWT
 
 # public interface
 __all__ = ['IntegrityError',

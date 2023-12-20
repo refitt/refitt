@@ -6,7 +6,7 @@
 
 # internal libs
 from refitt.database.model import Object, ObjectType
-from refitt.web.api.response import STATUS, RESPONSE_MAP, NotFound, ParameterInvalid
+from refitt.core.web.response import STATUS, RESPONSE_MAP, NotFound, ParameterInvalid
 from tests.integration.test_web.test_api.test_endpoint import Endpoint
 
 

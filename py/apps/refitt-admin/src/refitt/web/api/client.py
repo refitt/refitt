@@ -6,9 +6,9 @@
 
 # internal libs
 from refitt.database.model import Client
-from refitt.web.api.app import application
-from refitt.web.api.response import endpoint
-from refitt.web.api.auth import authenticated, authorization
+from refitt.web.app import application
+from refitt.web.endpoint import endpoint
+from refitt.web.auth import authenticated, authorization
 
 # public interface
 __all__ = []

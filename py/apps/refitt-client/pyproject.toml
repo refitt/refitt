@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "refitt"
+name = "refitt-client"
 version = "0.26.1"
-description = "Recommender Engine for Intelligent Transient Tracking"
+description = "REFITT client command-line tool"
 readme = "README.rst"
 homepage = "https://refitt.org"
 documentation = "https://refitt.readthedocs.io"
@@ -26,32 +26,21 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
     "License :: OSI Approved :: Apache Software License",
 ]
+packages = [{include = "refitt", from = "src"}]
+
+[tool.poetry.scripts]
+refitt-client = "refitt.client:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 refitt-core = "^0.26.1"
-refitt-client = "^0.26.1"
-refitt-admin = "^0.26.1"
-matplotlib = "^3.7.1"
-seaborn = "^0.13.0"
-astroplan = "^0.9.1"
-timezonefinder = "^6.2.0"
-pytz = "^2023.3"
-bs4 = "^0.0.1"
-jinja2 = "^3.1.2"
-tables = "^3.8.0"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
-refitt-core = {path = "py/libs/refitt-core", develop=true}
-refitt-client = {path = "py/apps/refitt-client", develop=true}
-refitt-admin = {path = "py/apps/refitt-admin", develop=true}
+refitt-core = {path = "../../libs/refitt-core", develop = true}
 pytest = "^7.3.2"
-pytest-cov = "^4.1.0"
 hypothesis = "^6.78.2"
 ipython = "^8.14.0"
-sphinx = "^7.0.1"
-line-profiler = "^4.0.3"
-memory-profiler = "^0.61.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

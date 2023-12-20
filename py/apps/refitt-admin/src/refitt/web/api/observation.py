@@ -15,13 +15,14 @@ from functools import partial
 from flask import request
 
 # internal libs
+from refitt.core.web.response import PermissionDenied, PayloadTooLarge
 from refitt.database.connection import default_connection as db
 from refitt.database.model import (Client, Source, Observation, ObservationType, Alert, Model,
                                    File, FileType, User, Facility)
-from refitt.web.api.app import application
-from refitt.web.api.response import endpoint, PermissionDenied, PayloadTooLarge
-from refitt.web.api.auth import authenticated, authorization
-from refitt.web.api.tools import collect_parameters, disallow_parameters
+from refitt.web.app import application
+from refitt.web.endpoint import endpoint
+from refitt.web.auth import authenticated, authorization
+from refitt.web.tools import collect_parameters, disallow_parameters
 
 # public interface
 __all__ = []

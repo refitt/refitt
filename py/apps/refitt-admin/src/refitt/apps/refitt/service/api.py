@@ -19,7 +19,7 @@ from cmdkit.cli import Interface, ArgumentError
 
 # internal libs
 from refitt.core.logging import Logger
-from refitt.web.api import application as api
+from refitt.web.app import application as api
 
 # public interface
 __all__ = ['WebApp', ]
@@ -84,8 +84,10 @@ class WebApp(Application):
     def run(self) -> None:
         """Start REFITT Web-API server."""
 
-        if ((self.certfile is None and self.keyfile is not None) or
-           ( self.certfile is not None and self.keyfile is None)):
+        if (
+            (self.certfile is None and self.keyfile is not None) or
+            (self.certfile is not None and self.keyfile is None)
+        ):
             raise ArgumentError('--certfile and --keyfile must be specified together.')
 
         if self.dev_mode:
@@ -107,5 +109,5 @@ class WebApp(Application):
         path = os.path.join(os.path.dirname(sys.executable), 'gunicorn')
         cmd = [path, '--bind', f'0.0.0.0:{self.port}', '--workers', f'{self.workers}',
                '--timeout', f'{self.timeout}', '--log-level', 'warning']
-        cmd += cert_ops + ['refitt.web.api']
+        cmd += cert_ops + ['refitt.web.app']
         subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)

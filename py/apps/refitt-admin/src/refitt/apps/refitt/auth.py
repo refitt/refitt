@@ -23,9 +23,9 @@ from rich.syntax import Syntax
 from refitt.core.exceptions import handle_exception
 from refitt.core.config import update as update_config
 from refitt.core.logging import Logger
+from refitt.core.web.token import Cipher
 from refitt.database.model import User, Client, Session, DEFAULT_EXPIRE_TIME, DEFAULT_CLIENT_LEVEL
 from refitt.database.core import NotFound
-from refitt.web.token import Cipher
 
 # public interface
 __all__ = ['AuthApp', ]

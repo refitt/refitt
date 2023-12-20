@@ -14,7 +14,8 @@ from cmdkit.cli import Interface
 from cmdkit.config import ConfigurationError
 
 # internal libs
-from refitt.core import __version__, __developer__, __contact__, __website__, __copyright__, __description__, __ascii_art__
+from refitt.core import (__version__, __developer__, __contact__, __website__, __copyright__,
+                         __description__, __ascii_art__)
 from refitt.core.exceptions import handle_exception, write_traceback
 from refitt.core.logging import Logger
 
@@ -48,7 +49,7 @@ ApplicationGroup.exceptions = {
 
 
 # NOTE: delayed imports to allow Application class modifications
-from refitt.apps.refitt import (config, database, service, auth, login, whoami, api, notify,
+from refitt.apps.refitt import (config, database, service, auth, notify,
                                 recommendation, observation, forecast, object, epoch)  # noqa
 
 
@@ -70,13 +71,8 @@ HELP = f"""\
 {USAGE}
 
 commands:
-  user:
-      login                  {login.__doc__}
-      whoami                 {whoami.__doc__}
-      api                    {api.__doc__}
-      config                 {config.__doc__}
-
   admin:
+      config                 {config.__doc__}
       auth                   {auth.__doc__}
       database               {database.__doc__}
       object                 {object.__doc__}
@@ -109,9 +105,6 @@ class RefittApp(ApplicationGroup):
 
     command = None
     commands = {'auth': auth.AuthApp,
-                'login': login.LoginApp,
-                'whoami': whoami.WhoAmIApp,
-                'api': api.APIClientApp,
                 'config': config.ConfigApp,
                 'database': database.DatabaseApp,
                 'epoch': epoch.EpochApp,

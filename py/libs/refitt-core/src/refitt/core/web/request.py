@@ -26,8 +26,8 @@ import requests as __requests
 # internal libs
 from refitt.core.config import config, update as update_config
 from refitt.core.logging import Logger
-from refitt.web.token import Key, Secret, Token
-from refitt.web.api.response import STATUS
+from refitt.core.web.token import Key, Secret, Token
+from refitt.core.web.response import STATUS
 
 # public interface
 __all__ = ['APIError', 'KEY', 'SECRET', 'TOKEN', 'login', 'format_request', 'refresh_token',
@@ -204,7 +204,8 @@ def get_protocol_version(response: Response) -> str:
 
 @authenticated
 def request(action: str, endpoint: str,
-            raise_on_error: bool = True, extract_response: bool = True,
+            raise_on_error: bool = True,
+            extract_response: bool = True,
             **kwargs) -> dict:
     """
     Issue authenticated request to the REFITT API.
@@ -217,7 +218,7 @@ def request(action: str, endpoint: str,
         raise_on_error (bool):
             Raise APIError if status is not 200. (default: True)
         extract_response (bool):
-            If a JSON response is given and the 'Response' section is found
+            If a JSON response is given and the 'Response' section is found,
             and we have a 200 response, extract it directly as the return value.
         **kwargs:
             All keyword arguments are forwarded to the method (i.e., `action`).
@@ -231,9 +232,13 @@ def request(action: str, endpoint: str,
     url = __join_site(endpoint.lstrip('/'))
     method = getattr(__requests, action)
     response = method(url,
-                      data=kwargs.pop('data', None), json=kwargs.pop('json', None), files=kwargs.pop('files', None),
-                      headers={'Authorization': f'Bearer {TOKEN.value}'}, cert=kwargs.pop('cert', None),
-                      verify=kwargs.pop('verify', None), params=kwargs)
+                      data=kwargs.pop('data', None),
+                      json=kwargs.pop('json', None),
+                      files=kwargs.pop('files', None),
+                      headers={'Authorization': f'Bearer {TOKEN.value}'},
+                      cert=kwargs.pop('cert', None),
+                      verify=kwargs.pop('verify', None),
+                      params=kwargs)
     response_data = get_content(response.headers['Content-Type'], response)
     if response.status_code != STATUS['OK'] and raise_on_error:
         raise APIError(response)
@@ -258,7 +263,7 @@ delete = functools.partial(request, 'delete')
 
 @contextmanager
 def use_auth(key: str, secret: str) -> None:
-    """Temporarily set `request.KEY` and `request.SECRET` in context manager."""
+    """Temporarily set global `KEY` and `SECRET` in context manager."""
     global KEY, SECRET
     old_key, old_secret = KEY, SECRET
     try:
