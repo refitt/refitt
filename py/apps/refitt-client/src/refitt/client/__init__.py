@@ -226,6 +226,18 @@ class Describe(Application):
             else:
                 log.critical(f'Unknown route: {self.route}')
                 log.info(f'Use any of {", ".join(list(content.keys()))}')
+        # Strip down info for brevity
+        else:
+            content = {
+                name: {
+                    route_path: {
+                        method: route_info[method]['Description']
+                        for method in route_info
+                    }
+                    for route_path, route_info in section['Endpoints'].items()
+                }
+                for name, section in content.items()
+            }
         content = yaml.dump(content, indent=4)
         if sys.stdout.isatty():
             Console().print(Syntax(content, 'yaml',
