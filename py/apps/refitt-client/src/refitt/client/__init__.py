@@ -1,12 +1,12 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Make authenticated API requests."""
+"""Make authenticated REFITT API requests."""
 
 
 # type annotations
 from __future__ import annotations
-from typing import List, Dict, Callable, Optional, IO, Any, Union
+from typing import List, Dict, Callable, Optional, IO, Any, Union, Final
 
 # standard libs
 import os
@@ -41,62 +41,30 @@ log = Logger.with_name(__name__)
 
 PROGRAM = 'refitt-client'
 PADDING = ' ' * len(PROGRAM)
-USAGE = f"""\
-Usage: 
-  {PROGRAM} [-h] [-v]
-  {PROGRAM} login [--force]
-  {PROGRAM} whoami
-  {PROGRAM} describe [<route>]
-  {PROGRAM} {{get|put|post|delete}} <route> [<options>...] [[-d DATA | @FILE] | [-f FILE]]
-  {PADDING} [-r] [-x NODE] [--no-headers] [--download] [--admin [TOKEN]]
 
-  {__doc__}\
+LOGIN_PROGRAM: Final[str] = f'{PROGRAM} login'
+LOGIN_USAGE: Final[str] = f"""\
+Usage:
+  {LOGIN_PROGRAM} [-h] [--force]
+  Fetch and store client key and secret.\
 """
 
-HELP = f"""\
-{USAGE}
+LOGIN_HELP: Final[str] = f"""\
+{LOGIN_USAGE}
 
-  Use the login subcommand to acquire client key and secret.
-  These are stored in your local configuration and used to get refresh
-  tokens as necessary during subsequent requests.
-
-  For POST requests, include JSON payloads with -d/--data inline or with @ preceded by
-  a local file path. To upload a raw file as an attachment use -f/--file.
-
-  Downloaded files are not dumped with a live TTY but will be otherwise, use --download
-  to save to the local filesystem.
-
-  Headers are displayed along with syntax highlighting if a TTY is detected.
-  Extract a member element from JSON responses with -x/--extract (e.g., '-x .Response.object').
-  Strip quotations for extracted string literals with -r/--raw.
-
-  URL parameters can be encoded inline, e.g.,
-  > refitt-client get recommendation limit==1 join==true
-
-Arguments:
-  method                         HTTP method (e.g., GET/PUT/POST/DELETE).
-  route                          URL path (e.g., /object/1).
-  options...                     URL parameters (e.g., 'limit==1').
+  Login will not occur if credentials already exist in your
+  configuration file. Use -f/--force to ignore this criterion.
 
 Options:
-  -d, --data       DATA | @FILE  Raw inline content or file path.
-  -f, --file       FILE          Path to file for attachment. ('-' for stdin).
-  -x, --extract    NODE          JSON path for element (e.g., '.Response.user').
-  -r, --raw                      Strip quotes on single extracted string literal.
-      --no-headers               Do now show headers for TTY.
-      --download                 Save file attachment.
-      --admin      TOKEN         Use alternate token (or use `config.api.admin_token`).
-  -v, --version                  Show the version and exit.     
-  -h, --help                     Show this message and exit.\
+  -f, --force           Force creation of new secret.
+  -h, --help            Show this message and exit.\
 """
 
 
 class Login(Application):
-    """Acquire client key and secret."""
+    """Fetch and store client key and secret."""
 
-    interface = Interface(PROGRAM, USAGE, HELP)
-    interface.add_argument('-v', '--version', action='version', version=__version__)
-
+    interface = Interface(LOGIN_PROGRAM, LOGIN_USAGE, LOGIN_HELP)
     ALLOW_NOARGS = True
 
     force: bool = False
@@ -116,10 +84,25 @@ class Login(Application):
             log.info('Already logged in, use -f/--force to get new credentials')
 
 
-class WhoAmI(Application):
-    """Application class for /whoami api call."""
+WHOAMI_PROGRAM: Final[str] = f'{PROGRAM} whoami'
+WHOAMI_USAGE: Final[str] = f"""\
+Usage:
+  {WHOAMI_PROGRAM} [-h]
+  Verify credentials with server and return user profile.\
+"""
 
-    interface = Interface(PROGRAM, USAGE, HELP)
+WHOAMI_HELP: Final[str] = f"""\
+{WHOAMI_USAGE}
+
+Options:
+  -h, --help            Show this message and exit.\
+"""
+
+
+class WhoAmI(Application):
+    """Verify credentials with server and return user profile."""
+
+    interface = Interface(WHOAMI_PROGRAM, WHOAMI_USAGE, WHOAMI_HELP)
     interface.add_argument('-v', '--version', action='version', version=__version__)
     ALLOW_NOARGS = True
 
@@ -177,10 +160,31 @@ class WhoAmI(Application):
         request.PERSIST_TOKEN = True
 
 
-class Describe(Application):
-    """List API endpoint descriptions."""
+DESCRIBE_PROGRAM: Final[str] = f'{PROGRAM} describe'
+DESCRIBE_USAGE: Final[str] = f"""\
+Usage:
+  {DESCRIBE_PROGRAM} [-h] [ROUTE]
+  Fetch descriptions of API endpoints.\
+"""
 
-    interface = Interface(PROGRAM, USAGE, HELP)
+DESCRIBE_HELP: Final[str] = f"""\
+{DESCRIBE_USAGE}
+
+  If no ROUTE is given, return all routes.
+  Formatted as YAML, for JSON call `{PROGRAM} get info`.
+
+Arguments:
+  ROUTE                 Specific top-level route (optional)
+  
+Options:
+  -h, --help            Show this message and exit.\
+"""
+
+
+class Describe(Application):
+    """Fetch descriptions of API endpoints."""
+
+    interface = Interface(DESCRIBE_PROGRAM, DESCRIBE_USAGE, DESCRIBE_HELP)
     interface.add_argument('-v', '--version', action='version', version=__version__)
     ALLOW_NOARGS = True
 
@@ -247,13 +251,57 @@ class Describe(Application):
         request.PERSIST_TOKEN = True
 
 
+REQUEST_USAGE: Final[str] = f"""\
+Usage: 
+  {PROGRAM} {{get|put|post|delete}} <route> [<options>...] 
+  {PADDING} [[-d DATA | @FILE] | [-f FILE]]
+  {PADDING} [-r] [-x NODE] [--no-headers] [--download] [--admin [TOKEN]]
+
+  {__doc__}\
+"""
+
+REQUEST_HELP: Final[str] = f"""\
+{REQUEST_USAGE}
+
+  For POST requests, include JSON payloads with -d/--data inline or with @ 
+  preceded by a local file path. To upload a raw file as an attachment 
+  use -f/--file.
+
+  Downloaded files are not dumped with a live TTY but will be otherwise.
+  Use --download to save to the local filesystem.
+
+  Headers are displayed along with syntax highlighting if a TTY is detected.
+  Extract a member element from JSON responses with -x/--extract 
+  (e.g., '-x .Response.object').
+  
+  Strip quotations for extracted string literals with -r/--raw.
+
+  URL parameters can be encoded inline, e.g.,
+  > {PROGRAM} get recommendation limit==1 join==true
+
+Arguments:
+  method                         HTTP method (e.g., GET/PUT/POST/DELETE).
+  route                          URL path (e.g., /object/1).
+  options...                     URL parameters (e.g., 'limit==1').
+
+Options:
+  -d, --data       DATA | @FILE  Raw inline content or file path.
+  -f, --file       FILE          Path to file for attachment. ('-' for stdin).
+  -x, --extract    NODE          JSON path for element (e.g., '.Response.user').
+  -r, --raw                      Strip quotes on single extracted string literal.
+      --no-headers               Do now show headers for TTY.
+      --download                 Save file attachment.
+      --admin      TOKEN         Use alternate token (or use `config.api.admin_token`).
+"""
+
+
 class RequestApp(Application):
     """Make authenticated request."""
 
     # overriden by subclasses
     method: str
 
-    interface = Interface(PROGRAM, USAGE, HELP)
+    interface = Interface(PROGRAM, REQUEST_USAGE, REQUEST_HELP)
     interface.add_argument('-v', '--version', action='version', version=__version__)
 
     route: str = None
@@ -335,7 +383,7 @@ class RequestApp(Application):
 
     @property
     def endpoint(self) -> Callable[..., dict]:
-        """Bound method from `refitt.web.request` called with the `route`."""
+        """Bound method from `refitt.core.web.request` called with the `route`."""
         return functools.partial(self.request_method, self.route)
 
     @cached_property
@@ -468,25 +516,53 @@ class RequestApp(Application):
 
 
 class Get(RequestApp):
+    """GET request."""
     method: str = 'get'
 
 
 class Put(RequestApp):
+    """PUT request."""
     method: str = 'put'
 
 
 class Post(RequestApp):
+    """POST request."""
     method: str = 'post'
 
 
 class Delete(RequestApp):
+    """DELETE request."""
     method: str = 'delete'
+
+
+CLIENT_USAGE: Final[str] = f"""\
+Usage:
+  {PROGRAM} [-h] [-v] <command> [<args>...]
+  {__doc__}\
+"""
+
+CLIENT_HELP: Final[str] = f"""\
+{CLIENT_USAGE}
+
+Commands:
+  login                 {Login.__doc__}
+  whoami                {WhoAmI.__doc__}
+  describe              {Describe.__doc__}
+  get                   {Get.__doc__}
+  put                   {Put.__doc__}
+  post                  {Post.__doc__}
+  delete                {Delete.__doc__}
+
+Options:
+  -v, --version         Show the version and exit.     
+  -h, --help            Show this message and exit.\
+"""
 
 
 class ClientApp(ApplicationGroup):
     """Application group for refitt-client."""
 
-    interface = Interface(PROGRAM, USAGE, HELP)
+    interface = Interface(PROGRAM, CLIENT_USAGE, CLIENT_HELP)
     interface.add_argument('command')
     interface.add_argument('-v', '--version', action='version', version=__version__)
 
