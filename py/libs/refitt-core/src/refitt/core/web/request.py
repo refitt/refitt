@@ -103,6 +103,7 @@ def login(force: bool = False) -> Tuple[Key, Secret]:
     if KEY and SECRET and not force:
         return KEY, SECRET
 
+    log.info('Missing client key and secret')
     if not webbrowser.open(config.api.login):
         print(f'Navigate to {config.api.login} and paste your client key and secret here ...')
 
