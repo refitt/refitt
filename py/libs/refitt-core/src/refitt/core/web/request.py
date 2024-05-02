@@ -53,19 +53,18 @@ class APIError(Exception):
         return str(self)
 
 
-def __join_path(site: str, port: Optional[int], path: str) -> str:
-    return urljoin(site if not port else f'{site}:{port}', path)
+# Ensure URL starts with HTTP protocol
+http_pattern: re.Pattern = re.compile(r'^http(s)?://')
 
 
-__has_protocol: re.Pattern = re.compile(r'^http(s)?://')
-def __join_site(path: str) -> str:
+def ensure_url(path: str) -> str:
     site = config.api.site
-    site = f'http://{site}' if __has_protocol.match(site) is None else site
-    return __join_path(site, config.api.port, path)
+    site = f'http://{site}' if http_pattern.match(site) is None else site
+    return urljoin(site if not config.api.port else f'{site}:{config.api.port}', path)
 
 
-__CT = TypeVar('__CT', Key, Secret, Token)
-def __get(var: Type[__CT]) -> Optional[__CT]:
+T_Token = TypeVar('T_Token', Key, Secret, Token)
+def __get(var: Type[T_Token]) -> Optional[T_Token]:
     credential_name = var.__name__.lower()
     try:
         found = getattr(config.api, credential_name)
@@ -125,7 +124,7 @@ def refresh_token(force: bool = False, persist: bool = False) -> Token:
     if TOKEN and not force:
         return TOKEN
 
-    url = __join_site('token')
+    url = ensure_url('token')
     key, secret = login()
     response = __requests.get(url, auth=(key.value, secret.value))
     if response.status_code != STATUS['OK']:
@@ -162,7 +161,7 @@ def authenticated(func: Callable) -> Callable:
 
 def format_request(endpoint: str) -> str:
     """Build URL for request."""
-    return __join_site(endpoint.lstrip('/'))
+    return ensure_url(endpoint.lstrip('/'))
 
 
 # find information from headers
@@ -230,7 +229,7 @@ def request(action: str, endpoint: str,
             'headers' (dict), and 'content' (either bytes or dict).
             If `extract_response`, the 'Response' section will be directly returned.
     """
-    url = __join_site(endpoint.lstrip('/'))
+    url = ensure_url(endpoint.lstrip('/'))
     method = getattr(__requests, action)
     response = method(url,
                       data=kwargs.pop('data', None),
