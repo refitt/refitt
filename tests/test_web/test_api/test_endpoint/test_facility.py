@@ -5,13 +5,13 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 
 # internal libs
 from refitt.database.model import Facility
 from refitt.core.web.response import (STATUS, RESPONSE_MAP, NotFound, ConstraintViolation, PermissionDenied,
-                                 PayloadNotFound, PayloadMalformed, PayloadInvalid, ParameterInvalid)
-from tests.integration.test_web.test_api.test_endpoint import Endpoint
+                                      PayloadNotFound, PayloadMalformed, PayloadInvalid, ParameterInvalid)
+from tests.test_web.test_api.test_endpoint import Endpoint
 
 
 class TestAddFacility(Endpoint):
@@ -60,7 +60,7 @@ class TestAddFacility(Endpoint):
 
     def test_new(self) -> None:
         admin = self.get_client(self.admin)
-        with pytest.raises(Facility.NotFound):
+        with raises(Facility.NotFound):
             Facility.from_name('Croft_10m')
         data = {'name': 'Croft_10m', 'latitude': -24.5, 'longitude': -69.25,
                 'elevation': 5050, 'limiting_magnitude': 20.5}
@@ -72,7 +72,7 @@ class TestAddFacility(Endpoint):
             'Response': {'facility': {'id': int(facility_id)}}
         }
         Facility.delete(facility_id)
-        with pytest.raises(Facility.NotFound):
+        with raises(Facility.NotFound):
             Facility.from_name('Croft_10m')
 
     def test_update(self) -> None:
@@ -237,7 +237,7 @@ class TestDeleteFacility(Endpoint):
 
     def test_delete(self) -> None:
         client = self.get_client(self.admin)
-        with pytest.raises(Facility.NotFound):
+        with raises(Facility.NotFound):
             Facility.from_name('Croft_10m')
         data = {'name': 'Croft_10m', 'latitude': -24.5, 'longitude': -69.25,
                 'elevation': 5050, 'limiting_magnitude': 20.5}
@@ -251,7 +251,7 @@ class TestDeleteFacility(Endpoint):
         status, payload = self.delete(f'/facility/{facility_id}', client_id=client.id)
         assert status == STATUS['OK']
         assert payload == {'Status': 'Success', 'Response': {'facility': {'id': facility_id}}}
-        with pytest.raises(Facility.NotFound):
+        with raises(Facility.NotFound):
             Facility.from_name('Croft_10m')
 
     def test_not_found(self) -> None:

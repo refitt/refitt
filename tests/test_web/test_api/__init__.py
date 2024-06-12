@@ -8,7 +8,7 @@
 from contextlib import contextmanager
 
 # internal libs
-from refitt.web.token import Secret
+from refitt.core.web.token import Secret
 from refitt.database.model import Client, Session
 
 

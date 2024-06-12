@@ -9,10 +9,10 @@ import os
 from datetime import datetime
 
 # external libs
-import pytest
+from pytest import fixture
 
 
-@pytest.fixture(scope='package')
+@fixture(scope='package')
 def tmpdir() -> str:
     """Ensure a new temporary directory exists and return its path."""
     date = datetime.now().strftime('%Y%m%d-%H%M%S')

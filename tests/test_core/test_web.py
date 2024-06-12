@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for Refitt's web token mechanics."""
+"""Tests for web token interface."""
 
 
 # type annotations
@@ -14,12 +14,12 @@ import string
 from datetime import datetime, timedelta
 
 # external libs
-import pytest
+from pytest import mark, raises
 from hypothesis import given, strategies as st
 from cmdkit.config import Configuration, Namespace, ConfigurationError
 
 # internal libs
-from refitt.web.token import Cipher, CryptoDigits, RootKey, Key, Secret, Token, JWT
+from refitt.core.web.token import Cipher, CryptoDigits, RootKey, Key, Secret, Token, JWT
 
 
 FAKE_ROOTKEY = Cipher.new_rootkey()
@@ -35,29 +35,33 @@ class MockCipher(Cipher):
         return Cipher.load_rootkey(CONFIG)
 
 
-@pytest.mark.unit
 class TestCipher:
     """Unit tests for Cipher."""
 
+    @mark.unit
     def test_init(self) -> None:
         """Create a Cipher directly with an existing rootkey."""
         assert isinstance(Cipher(FAKE_ROOTKEY), Cipher)  # RootKey
         assert isinstance(Cipher(FAKE_ROOTKEY.encode()), Cipher)  # bytes
         assert isinstance(Cipher(FAKE_ROOTKEY.value), Cipher)  # str
 
+    @mark.unit
     def test_from_config(self) -> None:
         """Cipher can pull rootkey from configuration."""
         assert MockCipher.from_config()._key == FAKE_ROOTKEY
 
+    @mark.unit
     def test_from_config_missing(self) -> None:
         """Cipher expects 'api.rootkey' in configuration."""
-        with pytest.raises(ConfigurationError):
+        with raises(ConfigurationError):
             Cipher.load_rootkey(Configuration())
 
+    @mark.unit
     def test_new_rootkey(self) -> None:
         """Can create new rootkey."""
         assert isinstance(Cipher.new_rootkey(), RootKey)
 
+    @mark.unit
     @given(size=st.integers(min_value=1, max_value=1024))
     def test_encode_decode(self, size: int) -> None:
         """Test round-trip encode decode."""
@@ -83,6 +87,7 @@ class CryptoDigitsCommonTests:
     impl = CryptoDigits
     pattern = re.compile(r'^[a-zA-Z0-9-_=]+$')
 
+    @mark.unit
     def test_initialization(self) -> None:
         """Direct initialize with digits."""
         value = self.random_digits()
@@ -90,16 +95,19 @@ class CryptoDigitsCommonTests:
         assert isinstance(digits, self.impl)
         assert digits.value == value
 
+    @mark.unit
     def test_generate(self) -> None:
         """Should be able to generate new digits automatically."""
         digits = self.impl.generate()
         assert isinstance(digits, self.impl)
 
+    @mark.unit
     def test_has_length(self) -> None:
         """Digits should report their own length."""
         digits = self.impl(self.random_digits())
         assert len(digits) == self.size
 
+    @mark.unit
     def test_hashing(self) -> None:
         """Digits should be hashable (returning a hashed representation)."""
         digits = self.impl(self.random_digits())
@@ -109,11 +117,13 @@ class CryptoDigitsCommonTests:
 
     STR = re.compile(r'^[a-zA-Z0-9-_=]{1,3}\.\.\.[a-zA-Z0-9-_=]{1,3}$')
 
+    @mark.unit
     def test_string(self) -> None:
         """String representation only shows starting and ending digits."""
         digits = self.impl(self.random_digits())
         assert self.STR.match(str(digits))
 
+    @mark.unit
     def test_representation(self) -> None:
         """Representation includes hash/non-hash."""
         digits = self.impl(self.random_digits())
@@ -121,21 +131,25 @@ class CryptoDigitsCommonTests:
         assert repr(digits) == f'<{self.impl.__name__}(\'{digits}\')>'
         assert repr(digits_hashed) == f'<{self.impl.__name__}[hashed](\'{digits_hashed}\')>'
 
+    @mark.unit
     def test_equal(self) -> None:
         """Digits can check if they are the same to an other."""
         digits = self.impl(self.random_digits())
         assert digits == self.impl(digits.value)
 
+    @mark.unit
     def test_equal_against_hashing(self) -> None:
         """Hashed versions of digits are report as equal to un-hashed."""
         digits = self.impl(self.random_digits())
         assert digits.hashed() == self.impl(digits.value)
 
+    @mark.unit
     def test_encode(self) -> None:
         """Can encode digits as raw bytes."""
         digits = self.impl(self.random_digits())
         assert digits.encode() == digits.value.encode('utf-8')
 
+    @mark.unit
     def test_encrypt(self) -> None:
         """Can encrypt/decrypt with Cipher."""
         digits = self.impl(self.random_digits())
@@ -150,7 +164,6 @@ class CryptoDigitsCommonTests:
         return ''.join(random.choices(string.ascii_letters, k=size))
 
 
-@pytest.mark.unit
 class TestRootKey(CryptoDigitsCommonTests):
     """Unit tests for RootKey."""
 
@@ -158,7 +171,6 @@ class TestRootKey(CryptoDigitsCommonTests):
     impl = RootKey
 
 
-@pytest.mark.unit
 class TestKey(CryptoDigitsCommonTests):
     """Unit tests for Key."""
 
@@ -166,7 +178,6 @@ class TestKey(CryptoDigitsCommonTests):
     impl = Key
 
 
-@pytest.mark.unit
 class TestSecret(CryptoDigitsCommonTests):
     """Unit tests for Secret."""
 
@@ -174,24 +185,26 @@ class TestSecret(CryptoDigitsCommonTests):
     impl = Secret
 
 
-@pytest.mark.unit
 class TestToken(CryptoDigitsCommonTests):
     """Unit tests for Token."""
 
     size = Token._size  # NOTE: should be None
     impl = Token
 
+    @mark.unit
     @given(st.integers(min_value=1, max_value=1024))
     def test_initialization(self, size: int) -> None:
         digits = self.impl(''.join(random.choices(string.ascii_letters, k=size)))
         assert isinstance(digits, self.impl)
 
+    @mark.unit
     @given(st.integers(min_value=1, max_value=1024))
     def test_has_length(self, size: int) -> None:
         """Token should report its own length."""
         digits = self.impl(self.random_digits(size))
         assert len(digits) == size
 
+    @mark.unit
     @given(st.integers(min_value=1, max_value=1024))
     def test_generate(self, size: int) -> None:
         """Should be able to generate new digits automatically."""
@@ -200,10 +213,10 @@ class TestToken(CryptoDigitsCommonTests):
         assert len(digits) == size
 
 
-@pytest.mark.unit
 class TestJWT:
     """Tests for JSON-Web Token implementation."""
 
+    @mark.unit
     def test_attributes(self) -> None:
         """Test attribute access."""
         sub, exp = 1, datetime.utcnow()
@@ -212,12 +225,14 @@ class TestJWT:
         assert jwt.sub == sub
         assert jwt.exp == exp
 
+    @mark.unit
     def test_init_with_none(self) -> None:
         """Create JWT with `exp` as None."""
         jwt = JWT(sub=1, exp=None)
         assert isinstance(jwt, JWT)
         assert jwt.exp is None
 
+    @mark.unit
     def test_init_with_datetime(self) -> None:
         """Create JWT with `exp` as datetime."""
         now = datetime.utcnow()
@@ -226,6 +241,7 @@ class TestJWT:
         assert isinstance(jwt.exp, datetime)
         assert jwt.exp == now
 
+    @mark.unit
     def test_init_with_timedelta(self) -> None:
         """Create JWT with `exp` as timedelta."""
         delta = timedelta(minutes=15)
@@ -234,41 +250,48 @@ class TestJWT:
         assert isinstance(jwt.exp, datetime)
         assert jwt.exp < datetime.utcnow() + delta
 
+    @mark.unit
     def test_init_with_unix_timestamp(self) -> None:
         """Create JWT with `exp` as unix timestamp (float)."""
         timestamp = float(datetime.utcnow().timestamp())
         jwt = JWT(sub=1, exp=timestamp)
         assert isinstance(jwt, JWT)
 
+    @mark.unit
     def test_init_with_unix_timestamp_integer(self) -> None:
         """Create JWT with `exp` as unix timestamp (int -- nearest second)."""
         timestamp = int(datetime.utcnow().timestamp())
         jwt = JWT(sub=1, exp=timestamp)
         assert isinstance(jwt, JWT)
 
+    @mark.unit
     def test_repr(self) -> None:
         """Representation shows attributes."""
         exp = datetime.utcnow()
         assert repr(JWT(sub=1, exp=None)) == 'JWT(sub=1, exp=None)'
         assert repr(JWT(sub=1, exp=exp)) == f'JWT(sub=1, exp={repr(exp)})'
 
+    @mark.unit
     def test_to_from_dict(self) -> None:
         """JWT can be initialized from an existing dictionary and exported to one."""
         claims = {'sub': 1, 'exp': datetime.utcnow()}
         assert isinstance(JWT.from_dict(claims), JWT)
         assert JWT.from_dict(claims).to_dict() == claims
 
+    @mark.unit
     def test_encode(self) -> None:
         """JWT can be encoded as a raw JSON string."""
         assert JWT(sub=1, exp=1624167581).encode() == b'{"sub": 1, "exp": 1624167581}'
         assert JWT(sub=1, exp=None).encode() == b'{"sub": 1, "exp": -1}'
 
+    @mark.unit
     def test_encrypt(self) -> None:
         """JWT can be encrypted and decrypted with a Cipher."""
         jwt = JWT(sub=1, exp=1624167581)
         jwt_encrypted = jwt.encrypt(MockCipher.from_config())
         assert isinstance(jwt_encrypted, str)
 
+    @mark.unit
     def test_decrypt(self) -> None:
         """JWT can be decrypted from bytes with a Cipher."""
         jwt = JWT(sub=1, exp=1624167581)
@@ -277,4 +300,3 @@ class TestJWT:
         jwt_new = JWT.decrypt(jwt_encrypted, cipher)
         assert isinstance(jwt_new, JWT)
         assert jwt.to_dict() == jwt_new.to_dict()
-

@@ -6,8 +6,8 @@
 
 # internal libs
 from refitt.database.model import FacilityMap
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestFacilityMap:

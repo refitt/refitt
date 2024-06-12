@@ -11,16 +11,16 @@ from typing import Final
 from datetime import datetime
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.core.config import config
 from refitt.database.model import Session, Client, User
 from refitt.database.core import NotFound
-from refitt.web.token import JWT
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from refitt.core.web.token import JWT
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 # Shorthand for which database type we are testing against
@@ -89,12 +89,12 @@ class TestSession:
 
     def test_id_missing(self) -> None:
         """Test exception on missing session `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Session.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on session `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Session.add({'id': 1, 'client_id': 1, 'expires': datetime.now(), 'token': 'abc...'})
 
     def test_from_client(self) -> None:
@@ -104,12 +104,12 @@ class TestSession:
 
     def test_client_missing(self) -> None:
         """Test exception on missing session `client`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Session.from_client(-1)
 
     def test_client_already_exists(self) -> None:
         """Test exception on session `client` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Session.add({'client_id': 1, 'expires': datetime.now(), 'token': 'abc...'})
 
     def test_relationship_client(self) -> None:

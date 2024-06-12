@@ -5,14 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import ModelType
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestModelType:
@@ -58,12 +58,12 @@ class TestModelType:
 
     def test_id_missing(self) -> None:
         """Test exception on missing model_type `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             ModelType.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on model_type `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             ModelType.add({'id': 1, 'name': 'other_model_type_name',
                           'description': 'Another amazing model type.'})
 
@@ -74,11 +74,11 @@ class TestModelType:
 
     def test_name_missing(self) -> None:
         """Test exception on missing model_type `name`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             ModelType.from_name('other')
 
     def test_name_already_exists(self) -> None:
         """Test exception on model_type `name` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             ModelType.add({'name': 'conv_auto_encoder',
                            'description': 'A different sort of forecast'})

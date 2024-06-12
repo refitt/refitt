@@ -16,8 +16,8 @@ from refitt.core.config import config
 from refitt.database.model import (Epoch, Recommendation, RecommendationTag,
                                    User, Facility, Object, Observation)
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 # Shorthand for which database type we are testing against

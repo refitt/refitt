@@ -5,14 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import Facility, User, FacilityMap
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestFacility:
@@ -50,12 +50,12 @@ class TestFacility:
 
     def test_from_id_missing(self) -> None:
         """Test exception on missing facility `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Facility.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on facility `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Facility.add({'id': 1, 'name': 'Wayne_4m', 'latitude': -24.5, 'longitude': -69.25, 'elevation': 5050,
                           'limiting_magnitude': 17.5, 'data': {'telescope_design': 'reflector'}})
 
@@ -66,12 +66,12 @@ class TestFacility:
 
     def test_from_name_missing(self) -> None:
         """Test exception on missing facility `name`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Facility.from_name('Wayne_18in')
 
     def test_name_already_exists(self) -> None:
         """Test exception on facility `name` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Facility.add({'name': 'Croft_4m', 'latitude': -24.5, 'longitude': -69.25, 'elevation': 5050,
                           'limiting_magnitude': 17.5, 'data': {'telescope_design': 'reflector'}})
 
@@ -129,7 +129,7 @@ class TestFacility:
 
     def test_delete_missing(self) -> None:
         """Test exception on attempt to delete non-existent facility."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Facility.delete(-1)
 
     def test_delete_facility_map_cascade(self) -> None:

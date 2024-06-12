@@ -5,14 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import SourceType
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestSourceType:
@@ -58,12 +58,12 @@ class TestSourceType:
 
     def test_id_missing(self) -> None:
         """Test exception on missing source_type `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             SourceType.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on source_type `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             SourceType.add({'id': 2, 'name': 'other catalog',
                             'description': 'Real observations from external catalogs.'})
 
@@ -74,11 +74,11 @@ class TestSourceType:
 
     def test_name_missing(self) -> None:
         """Test exception on missing source_type `name`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             SourceType.from_name('Missing SourceType Name')
 
     def test_name_already_exists(self) -> None:
         """Test exception on source_type `name` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             SourceType.add({'name': 'catalog',
                             'description': 'Real observations from external catalogs.'})

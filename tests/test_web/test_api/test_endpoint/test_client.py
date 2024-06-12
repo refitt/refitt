@@ -11,8 +11,8 @@ from functools import cached_property
 
 # internal libs
 from refitt.core.web.response import STATUS, RESPONSE_MAP, PermissionDenied, RecordNotFound
-from tests.integration.test_web.test_api.test_endpoint import Endpoint
-from tests.integration.test_web.test_api import restore_client
+from tests.test_web.test_api.test_endpoint import Endpoint
+from tests.test_web.test_api import restore_client
 
 
 KEY_PATTERN: re.Pattern = re.compile(r'^[a-zA-Z0-9_=-]{16}$')
@@ -87,5 +87,3 @@ class TestClientSecret(ClientEndpoint):
                 'Message': 'No user with id=10'
             }
         )
-
-

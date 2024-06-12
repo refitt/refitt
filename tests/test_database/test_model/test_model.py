@@ -5,14 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import Epoch, ModelType, Model, Observation
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestModel:
@@ -64,12 +64,12 @@ class TestModel:
 
     def test_id_missing(self) -> None:
         """Test exception on missing model `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Model.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on model `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Model.add({'id': 1, 'epoch_id': 1, 'type_id': 1, 'observation_id': 1, 'data': {}})
 
     def test_relationship_epoch(self, testdata: TestData) -> None:

@@ -1,14 +1,14 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Unit tests for database url model."""
+"""Tests for database configuration interface."""
 
 
 # standard libs
 import os
 
 # external libs
-import pytest
+from pytest import mark
 from hypothesis import given, strategies as st
 from cmdkit.config import Namespace
 
@@ -16,7 +16,6 @@ from cmdkit.config import Namespace
 from refitt.database.core import DatabaseConfiguration
 
 
-@pytest.mark.unit
 class TestDatabaseConfiguration:
     """Unit tests for DatabaseConfiguration interface."""
 
@@ -30,6 +29,7 @@ class TestDatabaseConfiguration:
         """Construct instance and return encoding from Namespace."""
         return DatabaseConfiguration.from_namespace(Namespace(**fields)).encode()
 
+    @mark.unit
     def test_missing_provider(self) -> None:
         """Test raises on 'provider' not given."""
         try:
@@ -40,22 +40,26 @@ class TestDatabaseConfiguration:
         else:
             raise AssertionError('Should raise AttributeError')
 
+    @mark.unit
     @given(provider=st.sampled_from(['postgres', 'timescale']),
            database=st.sampled_from(['one', 'two', 'three']))
     def test_basic(self, provider: str, database: str) -> None:
         """Test simple direct initialization."""
         assert f'{provider}:///{database}' == self.build(provider=provider, database=database)
 
+    @mark.unit
     def test_file_for_sqlite(self) -> None:
         """Use 'file' for SQLite."""
         filepath = 'some/file/path.db'
         assert f'sqlite:///{filepath}' == self.build(provider='sqlite', file=filepath)
 
+    @mark.unit
     def test_database_for_sqlite(self) -> None:
         """Use 'database' for SQLite."""
         database = 'some/file/path.db'
         assert f'sqlite:///{database}' == self.build(provider='sqlite', database=database)
 
+    @mark.unit
     def test_missing_file_and_database_for_sqlite(self) -> None:
         """Either 'file' or 'database' must be provided for SQLite."""
         try:
@@ -66,6 +70,7 @@ class TestDatabaseConfiguration:
         else:
             raise AssertionError('Should raise AttributeError')
 
+    @mark.unit
     def test_both_file_and_database_for_sqlite(self) -> None:
         """Test raises on both 'file' and 'database' specified."""
         try:
@@ -76,6 +81,7 @@ class TestDatabaseConfiguration:
         else:
             raise AssertionError('Should raise AttributeError')
 
+    @mark.unit
     @given(field=st.sampled_from(['user', 'password', 'host', 'port']))
     def test_given_invalid_field_for_sqlite(self, field: str) -> None:
         """Test raises on extra field (e.g., 'host') for SQLite."""
@@ -87,21 +93,25 @@ class TestDatabaseConfiguration:
         else:
             raise AssertionError('Should raise AttributeError')
 
+    @mark.unit
     def test_given_host(self) -> None:
         """Test with only a hostname."""
         assert 'postgresql://localhost/database' == self.build(
             provider='postgresql', database='database', host='localhost')
 
+    @mark.unit
     def test_given_host_and_port(self) -> None:
         """Test with a hostname and port number."""
         assert 'postgresql://localhost:1234/database' == self.build(
             provider='postgresql', database='database', host='localhost', port=1234)
 
+    @mark.unit
     def test_given_host_and_port_and_user_and_password(self) -> None:
         """Test with a hostname, port number, username, and password."""
         assert 'postgresql://bobby:abc@localhost:1234/database' == self.build(
             provider='postgresql', database='database', host='localhost', port=1234, user='bobby', password='abc')
 
+    @mark.unit
     def test_missing_password(self) -> None:
         """Test raises on missing password for given username."""
         try:
@@ -112,6 +122,7 @@ class TestDatabaseConfiguration:
         else:
             raise AssertionError('Should raise AttributeError')
 
+    @mark.unit
     def test_missing_username(self) -> None:
         """Test raises on missing username for given password."""
         try:
@@ -122,6 +133,7 @@ class TestDatabaseConfiguration:
         else:
             raise AssertionError('Should raise AttributeError')
 
+    @mark.unit
     def test_given_file_for_non_sqlite(self) -> None:
         """Test raises on 'file' given for non-SQLite database."""
         try:
@@ -132,6 +144,7 @@ class TestDatabaseConfiguration:
         else:
             raise AssertionError('Should raise AttributeError')
 
+    @mark.unit
     def test_missing_database_for_non_sqlite(self) -> None:
         """Test raises on 'database' not given for non-SQLite database."""
         try:
@@ -142,36 +155,43 @@ class TestDatabaseConfiguration:
         else:
             raise AssertionError('Should raise AttributeError')
 
+    @mark.unit
     def test_repr(self) -> None:
         """Test basic case for repr."""
         assert (repr(DatabaseConfiguration(provider='postgres', database='foo'))
                 == '<DatabaseConfiguration(provider=\'postgres\', database=\'foo\')>')
 
+    @mark.unit
     def test_repr_with_password(self) -> None:
         """Test password is masked for repr."""
         assert (repr(DatabaseConfiguration(provider='postgres', database='foo', user='bobby', password='abc'))
                 == '<DatabaseConfiguration(provider=\'postgres\', database=\'foo\', user=\'bobby\', password=\'****\')>')
 
+    @mark.unit
     def test_extra_fields(self) -> None:
         """Test url encoding of extra fields."""
         assert 'postgres:///foo?encoding=utf-8' == self.build(provider='postgres', database='foo', encoding='utf-8')
 
+    @mark.unit
     def test_multiple_extra_fields(self) -> None:
         """Test url encoding of more than one extra fields."""
         assert 'postgres:///foo?encoding=utf-8&other=2' == self.build(
             provider='postgres', database='foo', encoding='utf-8', other=2)
 
+    @mark.unit
     def test_from_namespace(self) -> None:
         """Test creation from a Namespace."""
         assert 'postgres:///foo?encoding=utf-8' == self.build_from_config(
             provider='postgres', database='foo', encoding='utf-8')
 
+    @mark.unit
     def test_from_namespace_with_env(self) -> None:
         """Test field defined with _env special behavior."""
         os.environ['PASSWORD'] = 'my-password'
         assert 'postgres://bobby:my-password@localhost/foo?encoding=utf-8' == self.build_from_config(
             provider='postgres', database='foo', user='bobby', password_env='PASSWORD', encoding='utf-8')
 
+    @mark.unit
     def test_from_namespace_with_eval(self) -> None:
         """Test field defined with _eval special behavior."""
         assert 'postgres://bobby:my-password@localhost/foo?encoding=utf-8' == self.build_from_config(

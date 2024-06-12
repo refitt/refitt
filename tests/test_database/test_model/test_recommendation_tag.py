@@ -5,13 +5,13 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import RecommendationTag
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestRecommendationTag:
@@ -82,17 +82,17 @@ class TestRecommendationTag:
 
     def test_id_missing(self) -> None:
         """Test exception on missing recommendation_tag `id`."""
-        with pytest.raises(RecommendationTag.NotFound):
+        with raises(RecommendationTag.NotFound):
             RecommendationTag.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on recommendation_tag `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             RecommendationTag.add({'id': 1, 'object_id': -1, 'name': 'foo_bar_baz'})
 
     def test_object_id_already_exists(self) -> None:
         """Test exception on recommendation_tag `object_id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             RecommendationTag.add({'id': -1, 'object_id': 1, 'name': 'foo_bar_baz'})
 
     def test_from_name(self, testdata: TestData) -> None:
@@ -102,7 +102,7 @@ class TestRecommendationTag:
 
     def test_name_already_exists(self) -> None:
         """Test exception on recommendation_tag `name` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             RecommendationTag.add({'id': -1, 'object_id': 10, 'name': 'determined_thirsty_cray'})
 
     def test_relationship_object(self, testdata: TestData) -> None:

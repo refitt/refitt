@@ -4,14 +4,14 @@
 """Database object model integration tests."""
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import Object
 from refitt.database.core import NotFound, AlreadyExists
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestObject:
@@ -68,12 +68,12 @@ class TestObject:
 
     def test_id_missing(self) -> None:
         """Test exception on missing object `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Object.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on object `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Object.add({'id': 1, 'type_id': 5,
                         'aliases': {'bayer': 'α Ori', 'flamsteed': '58 Ori', 'HR': 'HR 2061', 'BD': 'BD + 7°1055',
                                     'HD': 'HD 39801', 'FK5': 'FK5 224', 'HIP': 'HIP 27989', 'SAO': 'SAO 113271',
@@ -88,11 +88,11 @@ class TestObject:
 
     def test_alias_missing(self) -> None:
         """Test exception on object `alias` not found."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Object.from_alias(foo='bar')
 
     def test_alias_exists(self) -> None:
-        with pytest.raises(AlreadyExists):
+        with raises(AlreadyExists):
             Object.add_alias(2, ztf=Object.from_id(1).aliases['ztf'])
 
     def test_relationship_object_type(self, testdata: TestData) -> None:

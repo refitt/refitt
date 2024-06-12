@@ -5,15 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import Epoch, File, FileType, Observation
 from refitt.database.core import NotFound
-from refitt.database.connection import default_connection as db
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestFile:
@@ -68,12 +67,12 @@ class TestFile:
 
     def test_id_missing(self) -> None:
         """Test exception on missing file `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             File.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on file `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             File.add({'id': 1,
                       'epoch_id': 1,
                       'observation_id': 1,
@@ -88,12 +87,12 @@ class TestFile:
 
     def test_observation_missing(self) -> None:
         """Test exception on missing file `observation_id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             File.from_observation(-1)
 
     def test_observation_already_exists(self) -> None:
         """Test exception on file `observation` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             File.add({'observation_id': File.from_id(1).observation_id, 'type_id': 1, 'data': b'...'})
 
     def test_relationship_epoch(self, testdata: TestData) -> None:

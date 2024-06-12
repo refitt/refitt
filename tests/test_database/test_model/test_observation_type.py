@@ -5,14 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import ObservationType
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestObservationType:
@@ -59,12 +59,12 @@ class TestObservationType:
 
     def test_id_missing(self) -> None:
         """Test exception on missing observation_type `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             ObservationType.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on observation_type `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             ObservationType.add({'id': 1, 'name': 'New Type', 'units': 'Kilo-Frobnicate',
                                  'description': 'A new filter type.'})
 
@@ -75,11 +75,11 @@ class TestObservationType:
 
     def test_name_missing(self) -> None:
         """Test exception on missing observation_type `name`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             ObservationType.from_name('Missing ObservationType Name')
 
     def test_name_already_exists(self) -> None:
         """Test exception on observation_type `name` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             ObservationType.add({'name': 'clear', 'units': 'mag',
                                  'description': 'Un-filtered apparent magnitude.'})

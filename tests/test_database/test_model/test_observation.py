@@ -11,15 +11,15 @@ from typing import Final
 from datetime import datetime
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.core.config import config
 from refitt.database.model import Epoch, Observation, Object, Source
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 # Shorthand for which database type we are testing against
@@ -121,12 +121,12 @@ class TestObservation:
 
     def test_id_missing(self) -> None:
         """Test exception on missing observation `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Observation.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on observation `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Observation.add({'id': 1, 'epoch_id': 1, 'time': datetime.now(), 'object_id': 1, 'type_id': 1,
                              'source_id': 1, 'value': 3.14, 'error': None})
 

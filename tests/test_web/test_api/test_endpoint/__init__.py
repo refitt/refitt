@@ -15,11 +15,10 @@ from functools import cached_property
 
 # internal libs
 from refitt.core.web.request import format_request
-from refitt.core.web.token import JWT, Secret
-from refitt.core.web.response import RESPONSE_MAP, TokenNotFound, TokenInvalid, TokenExpired
-from refitt.web.auth import AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
+from refitt.core.web.response import RESPONSE_MAP, AuthenticationNotFound, AuthenticationInvalid, PermissionDenied
+from refitt.core.web.token import JWT, Secret, TokenNotFound, TokenInvalid, TokenExpired
 from refitt.database.model import User, Client
-from tests.integration.test_web.test_api import temp_secret, temp_revoke_access
+from tests.test_web.test_api import temp_secret, temp_revoke_access
 
 # external libs
 import requests

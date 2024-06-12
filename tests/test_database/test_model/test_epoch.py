@@ -8,15 +8,15 @@
 from typing import Final
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.core.config import config
 from refitt.database.model import Epoch
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 # Shorthand for which database type we are testing against
@@ -65,12 +65,12 @@ class TestEpoch:
 
     def test_id_missing(self) -> None:
         """Test exception on missing epoch `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Epoch.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on epoch `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Epoch.add({'id': 1})
 
     def test_new(self) -> None:

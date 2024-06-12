@@ -5,14 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import User, Facility, FacilityMap
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestUser:
@@ -50,12 +50,12 @@ class TestUser:
 
     def test_from_id_missing(self) -> None:
         """Test exception on missing user `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             User.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on user `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             User.add({'id': 1, 'first_name': 'Bruce', 'last_name': 'Wayne', 'email': 'bruce@waynecorp.com',
                       'alias': 'batman', 'data': {'user_type': 'amateur'}})
 
@@ -66,12 +66,12 @@ class TestUser:
 
     def test_from_email_missing(self) -> None:
         """Test exception on missing user `email`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             User.from_email('batman@justiceleague.org')
 
     def test_email_already_exists(self) -> None:
         """Test exception on user `email` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             User.add({'first_name': 'Bruce', 'last_name': 'Wayne', 'email': 'bourne@cia.gov',
                       'alias': 'batman', 'data': {'user_type': 'amateur'}})
 
@@ -82,12 +82,12 @@ class TestUser:
 
     def test_from_alias_missing(self) -> None:
         """Test exception on missing user `alias`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             User.from_alias('batman')
 
     def test_alias_already_exists(self) -> None:
         """Test exception on user `alias` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             User.add({'first_name': 'Bryce', 'last_name': 'Wayne', 'email': 'bruce@waynecorp.com',
                       'alias': 'tomb_raider', 'data': {'user_type': 'amateur'}})
 
@@ -146,7 +146,7 @@ class TestUser:
 
     def test_delete_missing(self) -> None:
         """Test exception on attempt to delete non-existent user."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             User.delete(-1)
 
     def test_delete_facility_map_cascade(self) -> None:

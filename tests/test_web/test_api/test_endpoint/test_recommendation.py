@@ -20,9 +20,9 @@ from pytest import mark, raises
 from refitt.core.config import config
 from refitt.database.model import Recommendation, User, Facility, Observation, File
 from refitt.core.web.response import (STATUS, RESPONSE_MAP, NotFound, ParameterInvalid, ParameterNotFound,
-                                 PermissionDenied, PayloadMalformed)
+                                      PermissionDenied, PayloadMalformed)
 from refitt.web.api.recommendation import recommendation_slices
-from tests.integration.test_web.test_api.test_endpoint import Endpoint
+from tests.test_web.test_api.test_endpoint import Endpoint
 
 
 @contextmanager

@@ -15,8 +15,8 @@ from sqlalchemy.exc import IntegrityError
 from refitt.core.config import config
 from refitt.database.core import NotFound
 from refitt.database.model import Client, User
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 # Shorthand for which database type we are testing against

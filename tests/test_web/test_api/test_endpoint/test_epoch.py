@@ -7,8 +7,8 @@
 # internal libs
 from refitt.database.model import Epoch
 from refitt.core.web.response import (STATUS, RESPONSE_MAP, NotFound, ParameterInvalid, ParameterNotFound,
-                                 PayloadTooLarge)
-from tests.integration.test_web.test_api.test_endpoint import Endpoint
+                                      PayloadTooLarge)
+from tests.test_web.test_api.test_endpoint import Endpoint
 
 
 class TestGetEpochMany(Endpoint):

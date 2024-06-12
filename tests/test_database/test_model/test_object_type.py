@@ -5,14 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import ObjectType
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestObjectType:
@@ -58,12 +58,12 @@ class TestObjectType:
 
     def test_id_missing(self) -> None:
         """Test exception on missing object_type `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             ObjectType.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on object_type `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             ObjectType.add({'id': 1, 'name': 'Ludicrous Nova', 'description': 'The biggest ever'})
 
     def test_from_name(self, testdata: TestData) -> None:
@@ -73,10 +73,10 @@ class TestObjectType:
 
     def test_name_missing(self) -> None:
         """Test exception on missing object_type `name`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             ObjectType.from_name('Ludicrous SN')
 
     def test_name_already_exists(self) -> None:
         """Test exception on object_type `name` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             ObjectType.add({'name': 'SN Ia', 'description': 'WD detonation, Type Ia Supernova'})

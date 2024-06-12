@@ -5,14 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import FileType
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestFileType:
@@ -58,12 +58,12 @@ class TestFileType:
 
     def test_id_missing(self) -> None:
         """Test exception on missing file_type `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             FileType.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on file_type `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             FileType.add({'id': 1, 'name': 'jpeg',
                           'description': 'A bad format for scientific images.'})
 
@@ -74,11 +74,11 @@ class TestFileType:
 
     def test_name_missing(self) -> None:
         """Test exception on missing file_type `name`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             FileType.from_name('png')
 
     def test_name_already_exists(self) -> None:
         """Test exception on file_type `name` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             FileType.add({'name': 'fits.gz',
                           'description': 'Gzip compressed FITS file.'})

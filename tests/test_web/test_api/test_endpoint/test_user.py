@@ -5,13 +5,13 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 
 # internal libs
 from refitt.database.model import User
 from refitt.core.web.response import (STATUS, RESPONSE_MAP, NotFound, ConstraintViolation, PermissionDenied,
-                                 PayloadNotFound, PayloadMalformed, PayloadInvalid, ParameterInvalid)
-from tests.integration.test_web.test_api.test_endpoint import Endpoint
+                                      PayloadNotFound, PayloadMalformed, PayloadInvalid, ParameterInvalid)
+from tests.test_web.test_api.test_endpoint import Endpoint
 
 
 class TestSearchUser(Endpoint):
@@ -159,7 +159,7 @@ class TestAddUser(Endpoint):
 
     def test_new(self) -> None:
         admin = self.get_client(self.admin)
-        with pytest.raises(User.NotFound):
+        with raises(User.NotFound):
             User.from_alias('007')
         status, payload = self.post(self.route, client_id=admin.id, json={
             'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
@@ -171,7 +171,7 @@ class TestAddUser(Endpoint):
             'Response': {'user': {'id': int(user_id)}}
         }
         User.delete(user_id)
-        with pytest.raises(User.NotFound):
+        with raises(User.NotFound):
             User.from_alias('007')
 
     def test_update(self) -> None:
@@ -332,7 +332,7 @@ class TestDeleteUser(Endpoint):
 
     def test_delete(self) -> None:
         client = self.get_client(self.admin)
-        with pytest.raises(User.NotFound):
+        with raises(User.NotFound):
             User.from_alias('007')
         status, payload = self.post('/user', client_id=client.id, json={
             'first_name': 'James', 'last_name': 'Bond', 'email': 'bond@secret.gov.uk',
@@ -346,7 +346,7 @@ class TestDeleteUser(Endpoint):
         status, payload = self.delete(f'/user/{user_id}', client_id=client.id)
         assert status == STATUS['OK']
         assert payload == {'Status': 'Success', 'Response': {'user': {'id': user_id}}}
-        with pytest.raises(User.NotFound):
+        with raises(User.NotFound):
             User.from_alias('007')
 
     def test_not_found(self) -> None:

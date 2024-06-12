@@ -5,14 +5,14 @@
 
 
 # external libs
-import pytest
+from pytest import raises
 from sqlalchemy.exc import IntegrityError
 
 # internal libs
 from refitt.database.model import Source
 from refitt.database.core import NotFound
-from tests.integration.test_database.test_model.conftest import TestData
-from tests.integration.test_database.test_model import json_roundtrip
+from tests.test_database.test_model.conftest import TestData
+from tests.test_database.test_model import json_roundtrip
 
 
 class TestSource:
@@ -67,12 +67,12 @@ class TestSource:
 
     def test_id_missing(self) -> None:
         """Test exception on missing source `id`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Source.from_id(-1)
 
     def test_id_already_exists(self) -> None:
         """Test exception on source `id` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Source.add({'id': 1, 'type_id': 1, 'facility_id': None, 'user_id': None,
                         'name': 'other', 'description': '...', 'data': {}})
 
@@ -83,12 +83,12 @@ class TestSource:
 
     def test_name_missing(self) -> None:
         """Test exception on missing source `name`."""
-        with pytest.raises(NotFound):
+        with raises(NotFound):
             Source.from_name('Missing Source Name')
 
     def test_name_already_exists(self) -> None:
         """Test exception on source `name` already exists."""
-        with pytest.raises(IntegrityError):
+        with raises(IntegrityError):
             Source.add({'type_id': 1, 'facility_id': None, 'user_id': 1, 'name': 'refitt',
                         'description': '...', 'data': {}})
 
