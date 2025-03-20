@@ -127,7 +127,7 @@ class QueryDatabaseApp(Application):
     def run(self) -> None:
         """Business logic of command."""
         self.check_arguments()
-        selector = Selector.factory(self.targets)
+        selector = Selector.factory(self.scope, self.targets)
         query = self.build_query(selector, filters=self.build_filters(selector))
         if self.dry_run:
             print(query)
