@@ -8,10 +8,10 @@
 from __future__ import annotations
 
 # external libs
-from pytest import mark, raises, CaptureFixture
+from pytest import mark, CaptureFixture
 
 # internal libs
-from refitt.apps.refitt.forecast.publish import ForecastPublishApp
+from refitt.admin.forecast.publish import ForecastPublishApp
 
 
 class TestForecastPublishApp:

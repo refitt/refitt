@@ -17,7 +17,7 @@ import logging
 # external libs
 from cmdkit.app import exit_status
 from cmdkit.config import ConfigurationError
-from streamkit.contrib.logging import StreamKitHandler
+# from streamkit.contrib.logging import StreamKitHandler
 
 # internal libs
 from refitt.core.ansi import Ansi
@@ -165,14 +165,14 @@ refittd_logger.addHandler(handler)
 refittctl_logger.addHandler(handler)
 
 
-stream_handler = None
-try:
-    if config.logging.stream.enabled:
-        stream_handler = StreamKitHandler(batchsize=config.logging.stream.batchsize,
-                                          timeout=config.logging.stream.timeout)
-        refitt_logger.addHandler(stream_handler)
-        refittd_logger.addHandler(stream_handler)
-        refittctl_logger.addHandler(stream_handler)
-except Exception as error:
-    write_traceback(error, module=__name__)
-    sys.exit(exit_status.bad_config)
+# stream_handler = None
+# try:
+    # if config.logging.stream.enabled:
+        # stream_handler = StreamKitHandler(batchsize=config.logging.stream.batchsize,
+                                          # timeout=config.logging.stream.timeout)
+        # refitt_logger.addHandler(stream_handler)
+        # refittd_logger.addHandler(stream_handler)
+        # refittctl_logger.addHandler(stream_handler)
+# except Exception as error:
+    # write_traceback(error, module=__name__)
+    # sys.exit(exit_status.bad_config)

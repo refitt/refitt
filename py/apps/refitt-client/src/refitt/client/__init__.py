@@ -29,8 +29,8 @@ from refitt.core import typing, ansi, __version__
 from refitt.core.exceptions import handle_exception
 from refitt.core.logging import Logger
 from refitt.core.config import config
-from refitt.core.web import request
-from refitt.core.web.response import STATUS_CODE
+from refitt.api import request
+from refitt.api.response import STATUS_CODE
 
 # public interface
 __all__ = ['RequestApp', ]
@@ -163,7 +163,7 @@ class WhoAmI(Application):
 DESCRIBE_PROGRAM: Final[str] = f'{PROGRAM} describe'
 DESCRIBE_USAGE: Final[str] = f"""\
 Usage:
-  {DESCRIBE_PROGRAM} [-h] [ROUTE]
+  {DESCRIBE_PROGRAM} [-h] [<route>]
   Fetch descriptions of API endpoints.\
 """
 
@@ -175,7 +175,7 @@ DESCRIBE_HELP: Final[str] = f"""\
 
 Arguments:
   ROUTE                 Specific top-level route (optional)
-  
+
 Options:
   -h, --help            Show this message and exit.\
 """
@@ -264,9 +264,8 @@ class Describe(Application):
 
 
 REQUEST_USAGE: Final[str] = f"""\
-Usage: 
-  {PROGRAM} {{get|put|post|delete}} <route> [<options>...] 
-  {PADDING} [[-d DATA | @FILE] | [-f FILE]]
+Usage:
+  {PROGRAM} {{get|put|post|delete}} <route> [<options>...] [-d DATA | @FILE] | [-f FILE] 
   {PADDING} [-r] [-x NODE] [--no-headers] [--download] [--admin [TOKEN]]
 
   {__doc__}\
@@ -275,24 +274,23 @@ Usage:
 REQUEST_HELP: Final[str] = f"""\
 {REQUEST_USAGE}
 
-  For POST requests, include JSON payloads with -d/--data inline or with @ 
-  preceded by a local file path. To upload a raw file as an attachment 
+  For POST requests, include JSON payloads with -d/--data inline or with @
+  preceded by a local file path. To upload a raw file as an attachment
   use -f/--file.
 
   Downloaded files are not dumped with a live TTY but will be otherwise.
   Use --download to save to the local filesystem.
 
   Headers are displayed along with syntax highlighting if a TTY is detected.
-  Extract a member element from JSON responses with -x/--extract 
+  Extract a member element from JSON responses with -x/--extract
   (e.g., '-x .Response.object').
-  
+
   Strip quotations for extracted string literals with -r/--raw.
 
   URL parameters can be encoded inline, e.g.,
   > {PROGRAM} get recommendation limit==1 join==true
 
 Arguments:
-  method                         HTTP method (e.g., GET/PUT/POST/DELETE).
   route                          URL path (e.g., /object/1).
   options...                     URL parameters (e.g., 'limit==1').
 
@@ -310,8 +308,7 @@ Options:
 class RequestApp(Application):
     """Make authenticated request."""
 
-    # overriden by subclasses
-    method: str
+    method: str  # Overridden by subclasses
 
     interface = Interface(PROGRAM, REQUEST_USAGE, REQUEST_HELP)
     interface.add_argument('-v', '--version', action='version', version=__version__)
@@ -395,7 +392,7 @@ class RequestApp(Application):
 
     @property
     def endpoint(self) -> Callable[..., dict]:
-        """Bound method from `refitt.core.web.request` called with the `route`."""
+        """Bound method from `refitt.api.request` called with the `route`."""
         return functools.partial(self.request_method, self.route)
 
     @cached_property
@@ -549,7 +546,15 @@ class Delete(RequestApp):
 
 CLIENT_USAGE: Final[str] = f"""\
 Usage:
-  {PROGRAM} [-h] [-v] <command> [<args>...]
+  {PROGRAM} [-hv]
+  {PROGRAM} login [-h] [--force]
+  {PROGRAM} whoami [-h]
+  {PROGRAM} describe [-h] <route>
+  {PROGRAM} get <route> [<options>...]
+  {PROGRAM} put <route> [<options>...]
+  {PROGRAM} post <route> [<options>...]
+  {PROGRAM} delete <route> [<options>...]
+  
   {__doc__}\
 """
 
@@ -559,14 +564,14 @@ CLIENT_HELP: Final[str] = f"""\
 Commands:
   login                 {Login.__doc__}
   whoami                {WhoAmI.__doc__}
-  describe              {Describe.__doc__}
+  desc[ribe]            {Describe.__doc__}
   get                   {Get.__doc__}
   put                   {Put.__doc__}
   post                  {Post.__doc__}
-  delete                {Delete.__doc__}
+  del[ete]              {Delete.__doc__}
 
 Options:
-  -v, --version         Show the version and exit.     
+  -v, --version         Show the version and exit.
   -h, --help            Show this message and exit.\
 """
 
@@ -582,10 +587,12 @@ class ClientApp(ApplicationGroup):
     commands = {'login': Login,
                 'whoami': WhoAmI,
                 'describe': Describe,
+                'desc': Describe,
                 'get': Get,
                 'put': Put,
                 'post': Post,
                 'delete': Delete,
+                'del': Delete,
                 }
 
 

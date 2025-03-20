@@ -33,15 +33,16 @@ Application.log_exception = log.critical
 
 PROGRAM = 'update-pred-type'
 USAGE = f"""\
-usage: {PROGRAM} [-h] ...
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] ...
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-options:
--h, --help              Show this message and exit.\
+Options:
+  -h, --help              Show this message and exit.\
 """
 
 

@@ -20,7 +20,7 @@ from datetime import datetime
 import tomlkit
 from cmdkit.app import exit_status
 from cmdkit.config import Namespace, Environ, Configuration, ConfigurationError
-from streamkit.core import config as _streamkit
+# from streamkit.core import config as _streamkit
 
 # internal libs
 from refitt.core.platform import path, default_path, check_private, set_private
@@ -268,11 +268,11 @@ def _inplace_update(original: dict, partial: dict) -> dict:
 
 # Inject configuration back into streamkit library
 # We need the 'write' scope for this
-sk_db_scope = config.database.scope.write
-sk_db_config = Namespace(config.database.get(sk_db_scope))
-sk_db_provider = sk_db_config.pop('provider', config.database.default.provider)
-sk_db_config['backend'] = sk_db_provider  # FIXME: StreamKit inconsistency
-_streamkit.config.extend(refitt=Namespace({
-   'database': sk_db_config,
-   'logging': config.logging
-}))
+# sk_db_scope = config.database.scope.write
+# sk_db_config = Namespace(config.database.get(sk_db_scope))
+# sk_db_provider = sk_db_config.pop('provider', config.database.default.provider)
+# sk_db_config['backend'] = sk_db_provider  # FIXME: StreamKit inconsistency
+# _streamkit.config.extend(refitt=Namespace({
+   # 'database': sk_db_config,
+   # 'logging': config.logging
+# }))

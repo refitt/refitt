@@ -117,20 +117,21 @@ class AlertChart:
 
 PROGRAM = 'alert-history'
 USAGE = f"""\
-usage: {PROGRAM} [-h] [-i] [-o PATH] [-s DATE] [-f FREQ] [--print]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] [-i] [-o PATH] [-s DATE] [-f FREQ] [--print]
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-options:
--f, --frequency   FREQ  Resampling frequency (default: 5min).
--s, --since       DATE  Date in ISO format (default: 2022-01-01).
--i, --interactive       Display live figure.
--o, --output      PATH  Path to save figure as file.
-    --print             Print output to console.
--h, --help              Show this message and exit.\
+Options:
+  -f, --frequency   FREQ  Resampling frequency (default: 5min).
+  -s, --since       DATE  Date in ISO format (default: 2022-01-01).
+  -i, --interactive       Display live figure.
+  -o, --output      PATH  Path to save figure as file.
+      --print             Print output to console.
+  -h, --help              Show this message and exit.\
 """
 
 

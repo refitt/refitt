@@ -1,4 +1,4 @@
-[tool.poetry]
+[project]
 name = "refitt"
 version = "0.26.1"
 description = "Recommender Engine for Intelligent Transient Tracking"
@@ -7,55 +7,96 @@ homepage = "https://refitt.org"
 documentation = "https://refitt.readthedocs.io"
 repository = "https://github.com/refitt/refitt"
 authors = [
-    "Dan Milisavljevic <dmilisav@purdue.edu>",
-    "Niharika Sravan <nsravan@purdue.edu>",
-    "Geoffrey Lentner <glentner@purdue.edu>",
-    "Mark Linvill <mlinvill@purdue.edu>",
-    "Bhagya Subrayan <bsubraya@purdue.edu>",
-    "Katie Weil <keweil@purdue.edu>",
-    "Josh Church <church10@purdue.edu>",
-    "John Banovetz <jbanovet@purdue.edu>",
+    { name = "Dan Milisavljevic", email = "dmilisav@purdue.edu" },
+    { name = "Niharika Sravan", email = "nsravan@purdue.edu" },
+    { name = "Geoffrey Lentner", email = "glentner@purdue.edu" },
+    { name = "Mark Linvill", email = "mlinvill@purdue.edu" },
+    { name = "Bhagya Subrayan", email = "bsubraya@purdue.edu" },
+    { name = "Katie Weil", email = "keweil@purdue.edu" },
+    { name = "Josh Church", email = "church10@purdue.edu" },
+    { name = "John Banovetz", email = "jbanovet@purdue.edu" },
+    { name = "Danielle Dickinson", email = "dickinsd@purdue.edu" }
 ]
 maintainers = [
-    "Geoffrey Lentner <glentner@purdue.edu>"
+    { name = "Geoffrey Lentner", email = "glentner@purdue.edu" },
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Astronomy",
     "License :: OSI Approved :: Apache Software License",
 ]
+requires-python = ">=3.12"
+dependencies = [
+    "refitt-core",
+    "refitt-data",
+    "refitt-api",
+    "refitt-assets",
+    "refitt-client",
+    "refitt-server",
+    "refitt-broker",
+    "refitt-tns",
+    "refitt-admin",
+]
+#matplotlib = "^3.7.1"
+#seaborn = "^0.13.0"
+#astroplan = "^0.10.0"
+#timezonefinder = "^6.2.0"
+#pytz = "^2024.1"
+#bs4 = "^0.0.2"
+#jinja2 = "^3.1.2"
+#tables = "^3.8.0"
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.11"
-refitt-core = "^0.26.1"
-refitt-client = "^0.26.1"
-refitt-admin = "^0.26.1"
-matplotlib = "^3.7.1"
-seaborn = "^0.13.0"
-astroplan = "^0.9.1"
-timezonefinder = "^6.2.0"
-pytz = "^2023.3"
-bs4 = "^0.0.1"
-jinja2 = "^3.1.2"
-tables = "^3.8.0"
+[dependency-groups]
+dev = [
+    "pytest>=8.1.1",
+    "hypothesis>=6.100.0",
+    "ipython>=8.14.0",
+    "pytest-cov>=4.1.0",
+    "line-profiler>=4.0.3",
+    "memory-profiler>=0.61.0",
+]
+docs = [
+    "sphinx>=7.2.6",
+    "sphinx-sitemap>=2.5.1",
+    "sphinx-autobuild>=2024.2.4",
+    "sphinx-copybutton>=0.5.2",
+    "sphinxext-opengraph>=0.9.1",
+    "sphinxcontrib-details-directive>=0.1.0",
+    "sphinx-toolbox>=3.5.0",
+    "sphinx-inline-tabs>=2023.4.21",
+    "enum-tools[sphinx]>=0.12.0",
+    "furo>=2024.1.29",
+    "setuptools>=75.8.2",
+]
 
-[tool.poetry.group.dev.dependencies]
-refitt-core = {path = "py/libs/refitt-core", develop=true}
-refitt-client = {path = "py/apps/refitt-client", develop=true}
-refitt-admin = {path = "py/apps/refitt-admin", develop=true}
-pytest = "^7.3.2"
-pytest-cov = "^4.1.0"
-hypothesis = "^6.78.2"
-ipython = "^8.14.0"
-sphinx = "^7.0.1"
-line-profiler = "^4.0.3"
-memory-profiler = "^0.61.0"
+[tool.uv.workspace]
+members = [
+    "py/libs/*",
+    "py/apps/*",
+]
+
+[tool.uv.sources]
+refitt-core = { workspace = true }
+refitt-data = { workspace = true }
+refitt-api = { workspace = true }
+refitt-assets = { workspace = true }
+refitt-client = { workspace = true }
+refitt-server = { workspace = true }
+refitt-broker = { workspace = true }
+refitt-tns = { workspace = true }
+refitt-admin = { workspace = true }
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/refitt"]
+
+[tool.uv]
+default-groups = ["dev", "docs"]
 
 [tool.pytest.ini_options]
 addopts = ["--strict-markers", ]

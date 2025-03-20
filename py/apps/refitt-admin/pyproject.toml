@@ -1,4 +1,4 @@
-[tool.poetry]
+[project]
 name = "refitt-admin"
 version = "0.26.1"
 description = "Admin tools and services"
@@ -7,64 +7,58 @@ homepage = "https://refitt.org"
 documentation = "https://refitt.readthedocs.io"
 repository = "https://github.com/refitt/refitt"
 authors = [
-    "Dan Milisavljevic <dmilisav@purdue.edu>",
-    "Niharika Sravan <nsravan@purdue.edu>",
-    "Geoffrey Lentner <glentner@purdue.edu>",
-    "Mark Linvill <mlinvill@purdue.edu>",
-    "Bhagya Subrayan <bsubraya@purdue.edu>",
-    "Katie Weil <keweil@purdue.edu>",
-    "Josh Church <church10@purdue.edu>",
-    "John Banovetz <jbanovet@purdue.edu>",
+    { name = "Dan Milisavljevic", email = "dmilisav@purdue.edu" },
+    { name = "Niharika Sravan", email = "nsravan@purdue.edu" },
+    { name = "Geoffrey Lentner", email = "glentner@purdue.edu" },
+    { name = "Mark Linvill", email = "mlinvill@purdue.edu" },
+    { name = "Bhagya Subrayan", email = "bsubraya@purdue.edu" },
+    { name = "Katie Weil", email = "keweil@purdue.edu" },
+    { name = "Josh Church", email = "church10@purdue.edu" },
+    { name = "John Banovetz", email = "jbanovet@purdue.edu" },
+    { name = "Danielle Dickinson", email = "dickinsd@purdue.edu" }
 ]
 maintainers = [
-    "Geoffrey Lentner <glentner@purdue.edu>"
+    { name = "Geoffrey Lentner", email = "glentner@purdue.edu" },
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Astronomy",
     "License :: OSI Approved :: Apache Software License",
 ]
-packages = [{include = "refitt", from = "src"}]
+requires-python = ">=3.12"
+dependencies = [
+    "refitt-core",
+    "refitt-data",
+    "refitt-api",
+    "refitt-assets",
+    "cmdkit[toml]>=2.7.7",
+    "numpy>=1.24.3",
+    "scipy>=1.10.1",
+    "pandas>=2.0.2",
+#h5py = "^3.8.0"
+#pyarrow = "^14.0.1"
+#tensorflow = {version = "^2.13.0,<2.14.0", platform = "linux"}
+#tensorflow-macos = {version = "^2.13.0,<2.14.0", platform = "darwin"}
+#tensorflow-io-gcs-filesystem = "^0.34.0"
+#sqlalchemy = "^2.0.32"
+#psycopg2 = {version = "^2.9.6", platform = "linux"}
+#psycopg2-binary = {version = "^2.9.6", platform = "darwin"}
+#cryptography = "^41.0.1"
+#names-generator = "^0.2.0"
+#astropy = "^6.0.0"
+]
 
-[tool.poetry.scripts]
-refitt = "refitt.apps.refitt:main"
-refittd = "refitt.apps.refittd:main"
-refittctl = "refitt.apps.refittctl:main"
-
-[tool.poetry.dependencies]
-python = ">=3.10,<3.11"
-refitt-core = "^0.26.1"
-numpy = "^1.24.3"
-scipy = "^1.10.1"
-pandas = "^2.0.2"
-h5py = "^3.8.0"
-pyarrow = "^14.0.1"
-tensorflow = {version = "^2.13.0,<2.14.0", platform = "linux"}
-tensorflow-macos = {version = "^2.13.0,<2.14.0", platform = "darwin"}
-tensorflow-io-gcs-filesystem = "^0.34.0"
-sqlalchemy = "^2.0.16"
-psycopg2 = {version = "^2.9.6", platform = "linux"}
-psycopg2-binary = {version = "^2.9.6", platform = "darwin"}
-flask = "^3.0.0"
-gunicorn = "^21.2.0"
-requests = "^2.31.0"
-cryptography = "^41.0.1"
-names-generator = "^0.1.0"
-astropy = "^6.0.0"
-antares-client = "^1.2.0"
-slackclient = "^2.9.4"
-
-[tool.poetry.group.dev.dependencies]
-refitt-core = {path = "../../libs/refitt-core", develop = true}
-pytest = "^7.3.2"
-hypothesis = "^6.78.2"
-ipython = "^8.14.0"
+[project.scripts]
+refitt = "refitt.admin:main"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/refitt"]
 
 [tool.pytest.ini_options]
 addopts = ["--strict-markers", ]

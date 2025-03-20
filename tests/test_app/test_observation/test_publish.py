@@ -19,7 +19,7 @@ from astropy.io import fits
 from pytest import mark, CaptureFixture, LogCaptureFixture
 
 # internal libs
-from refitt.apps.refitt.observation.publish import ObservationPublishApp
+from refitt.admin import ObservationPublishApp
 from refitt.database.model import Observation, Source, Object, File, Epoch
 
 

@@ -39,18 +39,19 @@ Application.log_exception = log.critical
 
 PROGRAM = 'pull_type_iip'
 USAGE = f"""\
-usage: {PROGRAM} [-h] [-f] [--limit NUM] [--filter-epoch NUM]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] [-f] [--limit NUM] [--filter-epoch NUM]
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-options:
--f, --ignore-cache         Force re-processing of TNS catalog.
--l, --limit          NUM   Limit number of returned objects (default: 50).
--e, --filter-epoch   NUM   Number of previous epochs to filter out.
--h, --help                 Show this message and exit.\
+Options:
+  -f, --ignore-cache         Force re-processing of TNS catalog.
+  -l, --limit          NUM   Limit number of returned objects (default: 50).
+  -e, --filter-epoch   NUM   Number of previous epochs to filter out.
+  -h, --help                 Show this message and exit.\
 """
 
 
@@ -103,7 +104,7 @@ class PullTypeIIPApp(Application):
         return set([
             object_id
             for model_id, object_id in
-            Session.query(Model.id, Observation.object_id)
+            db.read.query(Model.id, Observation.object_id)
             .join(Observation, Model.observation_id == Observation.id)
             .filter(Model.epoch_id >= Epoch.latest().id - num_epochs)
             .filter(Model.type_id == ModelType.from_name('core_collapse_inference').id)
@@ -118,7 +119,7 @@ class PullTypeIIPApp(Application):
         return [
             Object.from_id(object_id)
             for object_id, count in
-            Session.query(Observation.object_id, func.count(Observation.object_id))
+            db.read.query(Observation.object_id, func.count(Observation.object_id))
             .join(Source, Observation.source_id == Source.id)
             .filter(Observation.object_id.in_([obj.id for obj in objects]))
             .filter(Source.type_id.notin_([SourceType.from_name('synthetic').id, ]))
@@ -135,7 +136,7 @@ class PullTypeIIPApp(Application):
         valid_obj_ids = [
             obj_id
             for obj_id, earliest_obs_time in
-            Session.query(Observation.object_id, func.min(Observation.time))
+            db.read.query(Observation.object_id, func.min(Observation.time))
             .filter(Observation.object_id.in_([obj.id for obj in objects]))
             .group_by(Observation.object_id)
             if earliest_obs_time > cutoff_datetime
