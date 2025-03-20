@@ -67,19 +67,21 @@ Admin:
   auth                   {auth.__doc__}
   database               {database.__doc__}
   epoch                  {epoch.__doc__}
-  object                 {object.__doc__}
+  obj[ect]               {object.__doc__}
 
 Publishing:
   notify                 {notify.__doc__}
   forecast               {forecast.__doc__}
-  observation            {observation.__doc__}
-  recommendation         {recommendation.__doc__}
-  pipeline               ...
+  obs[ervation]          {observation.__doc__}
+  recommend[ation]       {recommendation.__doc__}
+
+Pipeline:
+  cluster                ...
 
 Options:
-      --ascii-art              Show ascii art and exit.
-  -v, --version                Show the version and exit.
-  -h, --help                   Show this message and exit.\
+      --ascii-art        Show ascii art and exit.
+  -v, --version          Show the version and exit.
+  -h, --help             Show this message and exit.\
 """
 
 
@@ -95,12 +97,16 @@ class RefittApp(ApplicationGroup):
     commands = {'auth': auth.AuthApp,
                 'config': config.ConfigApp,
                 'database': database.DatabaseApp,
+                'db': database.DatabaseApp,
                 'epoch': epoch.EpochApp,
                 'notify': notify.NotifyApp,
                 'object': object.QueryObjectApp,
+                'obj': object.QueryObjectApp,
                 'forecast': forecast.ForecastApp,
                 'observation': observation.ObservationApp,
+                'obs': observation.ObservationApp,
                 'recommendation': recommendation.RecommendationApp,
+                'recommend': recommendation.RecommendationApp,
                 }
 
 

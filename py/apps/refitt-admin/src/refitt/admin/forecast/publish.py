@@ -36,22 +36,24 @@ log = Logger.with_name('refitt')
 
 PROGRAM = 'refitt forecast publish'
 USAGE = f"""\
-usage: {PROGRAM} FILE [FILE...] [--observation-id ID | --primary FILE] [--print]
-{__doc__}\
+Usage: 
+  {PROGRAM} FILE [FILE...] [--observation-id ID | --primary FILE] [--print]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-arguments:
-FILE                         Path to JSON file(s).
+Arguments:
+  FILE                          Path to JSON file(s).
 
-options:
--e, --epoch-id       ID      Epoch ID (default: <latest>).
--p, --primary        FILE    Path to JSON file for primary model.
--i, --observation-id ID      ID of existing observation.
-    --print                  Print ID of published model(s). 
--h, --help                   Show this message and exit.\
+Options:
+  -e, --epoch-id        ID      Epoch ID (default: <latest>).
+  -p, --primary         FILE    Path to JSON file for primary model.
+  -i, --observation-id  ID      ID of existing observation.
+      --print                   Print ID of published model(s). 
+  -h, --help                    Show this message and exit.\
 """
 
 

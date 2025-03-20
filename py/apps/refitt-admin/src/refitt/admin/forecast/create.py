@@ -31,20 +31,22 @@ log = Logger.with_name('refitt')
 
 PROGRAM = 'refitt forecast create'
 USAGE = f"""\
-usage: {PROGRAM} OBJECT [--publish [--print]]
-{__doc__}\
+Usage: 
+  {PROGRAM} OBJECT [--publish [--print]]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-arguments:
-OBJECT                ID or alias for object.
+Arguments:
+  OBJECT                ID or alias for object.
 
-options:
-    --publish         Publish created model(s).
-    --print           Print ID of published model. 
--h, --help            Show this message and exit.\
+Options:
+      --publish         Publish created model(s).
+      --print           Print ID of published model. 
+  -h, --help            Show this message and exit.\
 """
 
 

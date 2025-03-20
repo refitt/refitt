@@ -17,22 +17,21 @@ __all__ = ['ForecastApp', ]
 
 PROGRAM = 'refitt forecast'
 USAGE = f"""\
-usage: {PROGRAM} [-h] <command> [<args>...]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] <command> [<args>...]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-commands:
-create                   {create.__doc__}
-publish                  {publish.__doc__}
+Commands:
+  create            {create.__doc__}
+  publish           {publish.__doc__}
 
-options:
--h, --help               Show this message and exit.
-
-Use the -h/--help flag with the above groups/commands to
-learn more about their usage.\
+Options:
+  -h, --help        Show this message and exit.\
 """
 
 

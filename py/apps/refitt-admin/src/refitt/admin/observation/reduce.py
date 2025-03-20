@@ -24,15 +24,17 @@ log = Logger.with_name('refitt')
 
 PROGRAM = 'refitt observation reduce'
 USAGE = f"""\
-usage: {PROGRAM} [-h] FILE
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] FILE
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-options:
--h, --help                Show this message and exit.\
+Options:
+  -h, --help            Show this message and exit.\
 """
 
 

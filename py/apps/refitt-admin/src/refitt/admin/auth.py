@@ -37,33 +37,36 @@ log = Logger.with_name('refitt')
 PROGRAM = 'refitt auth'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} [-h] <user> --gen-key [--level NUM] [--update-config]
-       {PROGRAM} [-h] <user> --gen-secret [--update-config]
-       {PROGRAM} [-h] <user> --gen-token [--expires SECONDS] [--update-config]
-       {PROGRAM} [-h] <user> --revoke
-       {PROGRAM} [-h] --gen-rootkey
+Usage: 
+  {PROGRAM} [-h]
+  {PROGRAM} <user> --gen-key [--level NUM] [--update-config]
+  {PROGRAM} <user> --gen-secret [--update-config]
+  {PROGRAM} <user> --gen-token [--expires SECONDS] [--update-config]
+  {PROGRAM} <user> --revoke
+  {PROGRAM} --gen-rootkey
+
 {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-arguments:
-user                         ID or alias of user.
-action                       See `actions`.
+Arguments:
+  user                         User id or alias.
+  action                       See actions.
 
-actions:
-    --gen-key                Generate all new credentials.
-    --gen-secret             Generate new client secret.
-    --gen-token              Generate new session token.
-    --gen-rootkey            Generate new rootkey.
-    --revoke                 Revoke credentials.
+Actions:
+      --gen-key                Generate all new credentials.
+      --gen-secret             Generate new client secret.
+      --gen-token              Generate new session token.
+      --gen-rootkey            Generate new rootkey.
+      --revoke                 Revoke credentials.
 
-options:
--e, --expires        SEC     Seconds until token expires (default: {DEFAULT_EXPIRE_TIME}).
--l, --level          NUM     Apply specific authorization level (default: {DEFAULT_CLIENT_LEVEL}).
-    --update-config          Update user configuration with new credentials.
--h, --help                   Show this message and exit.\
+Options:
+  -e, --expires        SEC     Seconds until token expires (default: {DEFAULT_EXPIRE_TIME}).
+  -l, --level          NUM     Apply specific authorization level (default: {DEFAULT_CLIENT_LEVEL}).
+      --update-config          Update user configuration with new credentials.
+  -h, --help                   Show this message and exit.\
 """
 
 

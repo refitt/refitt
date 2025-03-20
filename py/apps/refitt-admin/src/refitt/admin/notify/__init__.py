@@ -18,22 +18,21 @@ __all__ = ['NotifyApp', ]
 
 PROGRAM = f'refitt notify'
 USAGE = f"""\
-usage: {PROGRAM} [-h] <command> [<args>...]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] <command> [<args>...]
+  
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-commands:
-mail                     {mail.__doc__}
-slack                    {slack.__doc__}
+Commands:
+  mail               {mail.__doc__}
+  slack              {slack.__doc__}
 
-options:
--h, --help               Show this message and exit.
-
-Use the -h/--help flag with the above groups/commands to
-learn more about their usage.\
+Options:
+  -h, --help         Show this message and exit.\
 """
 
 

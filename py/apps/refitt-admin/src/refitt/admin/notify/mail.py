@@ -33,37 +33,39 @@ log = Logger.with_name('refitt')
 PROGRAM = f'refitt notify mail'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} [-h] ADDR [ADDR ...] [-m MESSAGE | -m @FILE [--text | --html]] [-s SUBJECT]
-       {PADDING} [--cc ADDR [ADDR ...]] [--bcc ADDR [ADDR ...]] [--attach FILE [FILE ...]]
-       {PADDING} [--template NAME [--opts ARG [ARG ...]]]
-       {PADDING} [--dry-run] [--list-templates]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] ADDR [ADDR ...] [-m MESSAGE | -m @FILE [--text | --html]] [-s SUBJECT]
+  {PADDING} [--cc ADDR [ADDR ...]] [--bcc ADDR [ADDR ...]] [--attach FILE [FILE ...]]
+  {PADDING} [--template NAME [--opts ARG [ARG ...]]]
+  {PADDING} [--dry-run] [--list-templates]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-If no template is provided, send an email with a custom message.
-Use --text/--html to specify the format of the message.
+  If no template is provided, send an email with a custom message.
+  Use --text/--html to specify the format of the message.
 
-arguments:
-ADDR                         Address of recipients.
+Arguments:
+  ADDR                         Address of recipients.
 
-options:
--s, --subject   TEXT         Subject of mail.
-    --cc        ADDR...      Address(es) of recipients (CC).
-    --bcc       ADDR...      Address(es) of recipients (BCC).
--m, --message   SOURCE       The message or path (e.g., @file.txt, @- for <stdin>).
-    --text                   Send mail as plain text (default).
-    --html                   Send mail as html.
--a, --attach    FILE...      Path(s) to file(s) to attach.
--t, --template  NAME         Name of template.
-    --opts      ARG...       Positional arguments for template.
-    --dry-run                Show the raw MIME text and exit.
--h, --help                   Show this message and exit.
+Options:
+  -s, --subject   TEXT         Subject of mail.
+      --cc        ADDR...      Address(es) of recipients (CC).
+      --bcc       ADDR...      Address(es) of recipients (BCC).
+  -m, --message   SOURCE       The message or path (e.g., @file.txt, @- for <stdin>).
+      --text                   Send mail as plain text (default).
+      --html                   Send mail as html.
+  -a, --attach    FILE...      Path(s) to file(s) to attach.
+  -t, --template  NAME         Name of template.
+      --opts      ARG...       Positional arguments for template.
+      --dry-run                Show the raw MIME text and exit.
+  -h, --help                   Show this message and exit.
 
-extras:
-    --list-templates         Show available templates and exit.\
+Extras:
+      --list-templates         Show available templates and exit.\
 """
 
 

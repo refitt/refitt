@@ -39,29 +39,31 @@ log = Logger.with_name('refitt')
 PROGRAM = 'refitt observation publish'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} [-h] SOURCE OBJECT BAND MAG ERR [MJD] [-r ID] [-f FILE] 
-       {PADDING} [--epoch ID] [--print] [--force]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] SOURCE OBJECT BAND MAG ERR [MJD] [-r ID] [-f FILE] 
+  {PADDING} [--epoch ID] [--print] [--force]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-arguments:
-SOURCE                      Name or ID of source (user and facility info).
-OBJECT                      Name, tag, or ID of object (e.g., ZTFabs2022af).
-BAND                        Name of filter band (e.g., r-ztf).
-MAG                         Final magnitude value (e.g., 20.14).
-ERR                         Error in magnitude value (e.g., 0.12).
-MJD                         MJD of observation (pulled from file if available).
+Arguments:
+  SOURCE                      Name or ID of source (user and facility info).
+  OBJECT                      Name, tag, or ID of object (e.g., ZTFabs2022af).
+  BAND                        Name of filter band (e.g., r-ztf).
+  MAG                         Final magnitude value (e.g., 20.14).
+  ERR                         Error in magnitude value (e.g., 0.12).
+  MJD                         MJD of observation (pulled from file if available).
 
-options:
--r, --recommendation  ID    ID of corresponding recommendation.
--f, --file            FILE  Path to reduced file (e.g., FITS).
-    --epoch           ID    Epoch for observation (default <latest>).
-    --print                 Write ID of created observation record to <stdout>.
-    --force                 Force overwrite of observation
--h, --help                  Show this message and exit.\
+Options:
+  -r, --recommendation  ID    ID of corresponding recommendation.
+  -f, --file            FILE  Path to reduced file (e.g., FITS).
+      --epoch           ID    Epoch for observation (default <latest>).
+      --print                 Write ID of created observation record to <stdout>.
+      --force                 Force overwrite of observation
+  -h, --help                  Show this message and exit.\
 """
 
 

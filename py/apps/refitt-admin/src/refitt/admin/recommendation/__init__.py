@@ -17,21 +17,20 @@ __all__ = ['RecommendationApp']
 
 PROGRAM = 'refitt recommendation'
 USAGE = f"""\
-usage: {PROGRAM} [-h] <command> [<args>...]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] <command> [<args>...]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-commands:
-publish                  {publish.__doc__}
+Commands:
+  publish             {publish.__doc__}
 
 options:
--h, --help               Show this message and exit.
-
-Use the -h/--help flag with the above groups/commands to
-learn more about their usage.\
+  -h, --help          Show this message and exit.\
 """
 
 

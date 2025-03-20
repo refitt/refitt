@@ -76,6 +76,7 @@ members = [
     "py/libs/*",
     "py/apps/*",
 ]
+exclude = ['py/apps/refitt-phot']
 
 [tool.uv.sources]
 refitt-core = { workspace = true }

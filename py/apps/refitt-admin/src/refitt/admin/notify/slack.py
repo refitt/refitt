@@ -24,21 +24,23 @@ log = Logger.with_name('refitt')
 
 PROGRAM = f'refitt notify slack'
 USAGE = f"""\
-usage: {PROGRAM} [-h] CHANNEL [MESSAGE] [--from BOT] [--attach FILE]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] CHANNEL [MESSAGE] [--from BOT] [--attach FILE]
+  
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-arguments:
-CHANNEL                  Name of the channel.
-MESSAGE                  A message or @FILE.
+Arguments:
+  CHANNEL                  Name of the channel.
+  MESSAGE                  A message or @FILE.
 
-options:
--f, --from      NAME     Name of bot account to use.
--a, --attach    FILE     Path to file for attachment.
--h, --help               Show this message and exit.\
+Options:
+  -f, --from      NAME     Name of bot account to use.
+  -a, --attach    FILE     Path to file for attachment.
+  -h, --help               Show this message and exit.\
 """
 
 

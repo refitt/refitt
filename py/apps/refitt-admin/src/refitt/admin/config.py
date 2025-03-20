@@ -39,19 +39,21 @@ log = logging.getLogger(__name__)
 
 EDIT_PROGRAM = 'refitt config edit'
 EDIT_USAGE = f"""\
-usage: {EDIT_PROGRAM} [-h] [--system | --user]
-Edit configuration with default editor.\
+Usage: 
+  {EDIT_PROGRAM} [-h] [--system | --user]
+
+  Edit configuration with default editor.\
 """
 
 EDIT_HELP = f"""\
 {EDIT_USAGE}
 
-The EDITOR/VISUAL environment variable must be set.
+  The EDITOR/VISUAL environment variable must be set.
 
-options:
-    --system         Edit system configuration.
-    --user           Edit user configuration (default).
--h, --help           Show this message and exit.\
+Options:
+      --system         Edit system configuration.
+      --user           Edit user configuration (default).
+  -h, --help           Show this message and exit.\
 """
 
 
@@ -80,25 +82,27 @@ class ConfigEditApp(Application):
 
 GET_PROGRAM = 'refitt config get'
 GET_USAGE = f"""\
-usage: {GET_PROGRAM} [-h] [-x] SECTION[...].VAR [--system | --user]
-Get configuration option.\
+Usage: 
+  {GET_PROGRAM} [-h] [-x] SECTION[...].VAR [--system | --user]
+  
+  Get configuration option.\
 """
 
 GET_HELP = f"""\
 {GET_USAGE}
 
-If --user/--system not specified, the output is the merged configuration
-from all sources. Use `refitt config which` to see where a specific
-option originates from.
+  If --user/--system not specified, the output is the merged configuration
+  from all sources. Use `refitt config which` to see where a specific
+  option originates from.
 
-arguments:
-SECTION[...].VAR          Path to variable.
+Arguments:
+  SECTION[...].VAR          Path to variable.
 
-options:
-    --system              Load from system configuration.
-    --user                Load from user configuration.
--x, --expand              Expand variable.
--h, --help                Show this message and exit.\
+Options:
+      --system              Load from system configuration.
+      --user                Load from user configuration.
+  -x, --expand              Expand variable.
+  -h, --help                Show this message and exit.\
 """
 
 
@@ -218,21 +222,23 @@ class ConfigGetApp(Application):
 
 SET_PROGRAM = 'refitt config set'
 SET_USAGE = f"""\
-usage: {SET_PROGRAM} [-h] SECTION[...].VAR VALUE [--system | --user]
-Set configuration option.\
+Usage: 
+  {SET_PROGRAM} [-h] SECTION[...].VAR VALUE [--system | --user]
+
+  Set configuration option.\
 """
 
 SET_HELP = f"""\
 {SET_USAGE}
 
-arguments:
-SECTION[...].VAR        Path to variable.
-VALUE                   Value to be set.
+Arguments:
+  SECTION[...].VAR        Path to variable.
+  VALUE                   Value to be set.
 
-options:
-    --system            Apply to system configuration.
-    --user              Apply to user configuration (default).
--h, --help              Show this message and exit.\
+Options:
+      --system            Apply to system configuration.
+      --user              Apply to user configuration (default).
+  -h, --help              Show this message and exit.\
 """
 
 
@@ -273,18 +279,20 @@ class ConfigSetApp(Application):
 
 WHICH_PROGRAM = 'refitt config which'
 WHICH_USAGE = f"""\
-usage: {WHICH_PROGRAM} [-h] SECTION[...].VAR
-Show origin of configuration option.\
+Usage: 
+  {WHICH_PROGRAM} [-h] SECTION[...].VAR
+
+  Show origin of configuration option.\
 """
 
 WHICH_HELP = f"""\
 {WHICH_USAGE}
 
-arguments:
-SECTION[...].VAR        Path to variable.
+Arguments:
+  SECTION[...].VAR        Path to variable.
 
-options:
--h, --help              Show this message and exit.\
+Options:
+  -h, --help              Show this message and exit.\
 """
 
 
@@ -315,23 +323,25 @@ USER_CONFIG_PATH = '~/.refitt/config.toml'
 
 PROGRAM = 'refitt config'
 USAGE = f"""\
-usage: {PROGRAM} [-h] <command> [<args>...]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] <command> [<args>...]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-commands:
-get                      {ConfigGetApp.__doc__}
-set                      {ConfigSetApp.__doc__}
-edit                     {ConfigEditApp.__doc__}
-which                    {ConfigWhichApp.__doc__}
+Commands:
+  get                      {ConfigGetApp.__doc__}
+  set                      {ConfigSetApp.__doc__}
+  edit                     {ConfigEditApp.__doc__}
+  which                    {ConfigWhichApp.__doc__}
 
-options:
--h, --help               Show this message and exit.
+Options:
+  -h, --help               Show this message and exit.
 
-files:
+Files:
   (system)  {SYSTEM_CONFIG_PATH}
     (user)  {USER_CONFIG_PATH}
 """

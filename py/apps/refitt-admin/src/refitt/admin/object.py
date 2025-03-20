@@ -34,21 +34,23 @@ log = Logger.with_name('refitt')
 
 PROGRAM = 'refitt object'
 USAGE = f"""\
-usage: {PROGRAM} [-h] NAME [--json]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] NAME [--json]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-arguments:
-NAME                   Object name.
+Arguments:
+  NAME                   Refitt, Antares, ZTF, IAU, etc.
 
-options:
--d, --data             Show full data for object.
--l, --history          Show object history data.
-    --json             Format output as JSON.
--h, --help             Show this message and exit.\
+Options:
+  -d, --data             Show full data for object.
+  -l, --history          Show object history data.
+      --json             Format output as JSON.
+  -h, --help             Show this message and exit.\
 """
 
 

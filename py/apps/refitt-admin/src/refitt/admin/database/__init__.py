@@ -18,23 +18,22 @@ __all__ = ['DatabaseApp', ]
 
 PROGRAM = 'refitt database'
 USAGE = f"""\
-usage: {PROGRAM} [-h] <command> [<args>...]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] <command> [<args>...]
+  
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-commands:
-init                     {init.__doc__}
-check                    {check.__doc__}
-query                    {query.__doc__}
+Commands:
+  init              {init.__doc__}
+  check             {check.__doc__}
+  query             {query.__doc__}
 
-options:
--h, --help               Show this message and exit.
-
-Use the -h/--help flag with the above groups/commands to
-learn more about their usage.\
+Options:
+  -h, --help        Show this message and exit.\
 """
 
 

@@ -37,28 +37,30 @@ log = Logger.with_name('refitt')
 PROGRAM = 'refitt recommendation publish'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} --user ID --priority NUM (--object ID | --prediction ID) [--epoch ID] [--facility ID] [--print]
-       {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]] [--epoch ID] [--print]
-{__doc__}\
+Usage: 
+  {PROGRAM} --user ID --priority NUM (--object ID | --prediction ID) [--epoch ID] [--facility ID] [--print]
+  {PROGRAM} [--from-file [PATH] [--csv | --json | --hdf5]] [--epoch ID] [--print]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-options:
-    --user          ID    User ID for recommendation.
-    --epoch         ID    Epoch ID for recommendation(s) (default <latest>).
-    --facility      ID    Facility ID for recommendation.
-    --object        ID    Object ID for recommendation.
-    --prediction    ID    Observation ID for prediction.
-    --priority      NUM   Priority value for recommendation.
-    --print               Write ID of generated resources to <stdout>.
-    --extra-fields        NAME[=TYPE] [NAME[=TYPE] ...] (extra fields to pull into 'data').
-    --from-file     PATH  File path for bulk recommendations.
-    --csv                 Specify file format as CSV.
-    --json                Specify file format as JSON.
-    --hdf5                Specify file format as HDF5.
--h, --help                Show this message and exit.
+Options:
+      --user          ID    User ID for recommendation.
+      --epoch         ID    Epoch ID for recommendation(s) (default <latest>).
+      --facility      ID    Facility ID for recommendation.
+      --object        ID    Object ID for recommendation.
+      --prediction    ID    Observation ID for prediction.
+      --priority      NUM   Priority value for recommendation.
+      --print               Write ID of generated resources to <stdout>.
+      --extra-fields        NAME[=TYPE] [NAME[=TYPE] ...] (extra fields to pull into 'data').
+      --from-file     PATH  File path for bulk recommendations.
+      --csv                 Specify file format as CSV.
+      --json                Specify file format as JSON.
+      --hdf5                Specify file format as HDF5.
+  -h, --help                Show this message and exit.
 
 Create a single recommendation by specifying a --user and all the necessary
 values inline with the named options. The --user and --facility options may

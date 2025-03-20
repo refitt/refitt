@@ -27,18 +27,20 @@ log = Logger.with_name('refitt')
 
 PROGRAM = 'refitt database init'
 USAGE = f"""\
-usage: {PROGRAM} [-h] [--drop] [--core | --test]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] [--drop] [--core | --test]
+  
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-options:
-    --drop             Drop existing tables.
-    --core             Load core data.
-    --test             Load test data.
--h, --help             Show this message and exit.\
+Options:
+      --drop             Drop existing tables.
+      --core             Load core data.
+      --test             Load test data.
+  -h, --help             Show this message and exit.\
 """
 
 

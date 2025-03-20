@@ -17,22 +17,21 @@ __all__ = ['ObservationApp']
 
 PROGRAM = 'refitt observation'
 USAGE = f"""\
-usage: {PROGRAM} [-h] <command> [<args>...]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] <command> [<args>...]
+  
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-commands:
-reduce                   {reduce.__doc__}
-publish                  {publish.__doc__}
+Commands:
+  reduce             {reduce.__doc__}
+  publish            {publish.__doc__}
 
-options:
--h, --help               Show this message and exit.
-
-Use the -h/--help flag with the above groups/commands to
-learn more about their usage.\
+Options:
+  -h, --help         Show this message and exit.\
 """
 
 

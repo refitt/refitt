@@ -48,29 +48,31 @@ log = Logger.with_name('refitt')
 PROGRAM = 'refitt database query'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
-usage: {PROGRAM} [-h] ENTITY[.RELATION | ENTITY...] [-w COND [COND...]] 
-       {PADDING} [--order-by ENTITY [--desc]] [-x | --json | --csv]
-       {PADDING} [--count | --limit NUM] [--dry-run]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] ENTITY[.RELATION | ENTITY...] [-w COND [COND...]] 
+  {PADDING} [--order-by ENTITY [--desc]] [-x | --json | --csv]
+  {PADDING} [--count | --limit NUM] [--dry-run]
+  
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-arguments:
-ENTITY[.RELATION ...]        Table name with relationship path.
+Arguments:
+  ENTITY[.RELATION ...]        Table name with relationship path.
 
-options:
--w, --where           COND   Expressions to filter on (e.g., `user_id==2`).
--s, --order-by       ENTITY  Sort results by specified column.
-    --desc                   Sort in descending order.
--c, --count                  Print row count.
--l, --limit          NUM     Limit number of returned rows.
--x, --extract-values         Print values only (no formatting).
-    --json                   Format output as JSON.
-    --csv                    Format output as CSV.
-    --dry-run                Show SQL query, do not execute.
--h, --help                   Show this message and exit.\
+Options:
+  -w, --where           COND    Expressions to filter on (e.g., `user_id==2`).
+  -s, --order-by        ENTITY  Sort results by specified column.
+      --desc                    Sort in descending order.
+  -c, --count                   Print row count.
+  -l, --limit           NUM     Limit number of returned rows.
+  -x, --extract-values          Print values only (no formatting).
+      --json                    Format output as JSON.
+      --csv                     Format output as CSV.
+      --dry-run                 Show SQL query, do not execute.
+  -h, --help                    Show this message and exit.\
 """
 
 

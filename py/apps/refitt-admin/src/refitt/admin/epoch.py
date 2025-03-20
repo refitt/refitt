@@ -30,22 +30,24 @@ PROGRAM = 'refitt epoch'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} [-h] (new [--print] | latest [--json | --id])
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] (new [--print] | latest [--json | --id])
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-action:
-latest           Request most recent epoch.
-new              Create new epoch (cannot be undone).
+Action:
+  latest           Request most recent epoch.
+  new              Create new epoch (cannot be undone).
     
-options:
-    --print      Write new epoch ID to stdout.
-    --json       Write output in JSON format.
-    --id         Only write ID as output.
--h, --help       Show this message and exit.\
+Options:
+      --print      Write new epoch ID to stdout.
+      --json       Write output in JSON format.
+      --id         Only write ID as output.
+  -h, --help       Show this message and exit.\
 """
 
 

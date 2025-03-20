@@ -32,20 +32,22 @@ log = Logger.with_name('refitt')
 
 PROGRAM = 'refitt database check'
 USAGE = f"""\
-usage: {PROGRAM} [-h] [TBL [TBL ...] | --all] [--count]
-{__doc__}\
+Usage: 
+  {PROGRAM} [-h] [TBL [TBL ...] | --all] [--count]
+
+  {__doc__}\
 """
 
 HELP = f"""\
 {USAGE}
 
-arguments:
-TBL...                 Names of tables to check.
+Arguments:
+  TBL...                 Names of tables to check.
 
-options:
--a, --all              Check all tables.
--c, --count            Display row count with table check.
--h, --help             Show this message and exit.\
+Options:
+  -a, --all              Check all tables.
+  -c, --count            Display row count with table check.
+  -h, --help             Show this message and exit.\
 """
 
 
