@@ -17,7 +17,7 @@ import functools
 import subprocess
 
 # external libs
-import tomli as toml
+import tomli_w
 from cmdkit.app import Application, ApplicationGroup, exit_status
 from cmdkit.cli import Interface, ArgumentError
 from cmdkit.config import ConfigurationError
@@ -205,9 +205,9 @@ class ConfigGetApp(Application):
     def format_section(self, value: dict) -> str:
         """Format an entire section for output."""
         if self.varpath == '.':
-            value = toml.dumps(value)
+            value = tomli_w.dumps(value)
         else:
-            value = toml.dumps({self.varpath: value})
+            value = tomli_w.dumps({self.varpath: value})
         # NOTE: Fix weird formatting of section headings.
         #       The `toml.dumps` output has unnecessary quoting.
         lines = []
