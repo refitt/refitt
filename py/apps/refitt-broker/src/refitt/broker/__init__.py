@@ -133,8 +133,9 @@ PROGRAM = f'refitt-broker'
 PADDING = ' ' * len(PROGRAM)
 
 USAGE = f"""\
-usage: {PROGRAM} <broker> <topic> [--filter NAME] [--backfill] ...
-       {PADDING} [--local-only [--output-directory DIR] | --database-only]
+Usage:
+  {PROGRAM} <broker> <topic> [--filter NAME]
+  {PADDING} [--local-only [-o DIR] | --database-only [--backfill]]
 
 {__doc__}\
 """
@@ -142,19 +143,19 @@ usage: {PROGRAM} <broker> <topic> [--filter NAME] [--backfill] ...
 HELP = f"""\
 {USAGE}
 
-arguments:
-<broker>                       Name of broker (e.g., "antares").
-<topic>                        Name of topic (e.g., "extragalactic").
+Arguments:
+  <broker>                       Name of broker (e.g., "antares").
+  <topic>                        Name of topic (e.g., "extragalactic").
 
-options:
---key                   STR    API key for broker.
---secret                STR    API secret for broker.
--o, --output-directory  DIR    Path to directory for alert files (default $CWD).
-    --local-only               Do not write alerts to the database.
-    --database-only            Do not write alerts to local files.
-    --backfill                 Enable backfill for alert stream.
--f, --filter            NAME   Name of filter to reject alerts.
--h, --help                     Show this message and exit.\
+Options:
+  --key                   STR    API key for broker.
+  --secret                STR    API secret for broker.
+  -o, --output-directory  DIR    Path to directory for alert files (default $CWD).
+      --local-only               Do not write alerts to the database.
+      --database-only            Do not write alerts to local files.
+      --backfill                 Enable backfill for alert stream.
+  -f, --filter            NAME   Name of filter to reject alerts.
+  -h, --help                     Show this message and exit.\
 """
 
 
