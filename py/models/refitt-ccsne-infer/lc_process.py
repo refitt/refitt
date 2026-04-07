@@ -244,8 +244,9 @@ class ZTF(object):
                 "mloss_rate":  outputArray[2],
                 "beta":  outputArray[3],
                 "56Ni" :  outputArray[4],
-                "texp" :  outputArray[5],
-                "A_v" :  outputArray[6],
+                "csm_radius": outputArray[5],
+                "texp" :  outputArray[6],
+                "A_v" :  outputArray[7],
                 "logZ" : [logZdynesty,logZerrdynesty,logZerrdynesty],
                 "Phase" : ut_mjd - mjd_app[i][0]}}
                 #print(output_dict)
