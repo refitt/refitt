@@ -63,18 +63,16 @@ def cross_match_with_tns(tns_data: pd.DataFrame, event_meta_data: pd.DataFrame) 
     redshift = list()
     for i in event_meta_data['ZTF_ID']:
         
-        one_event_meta_data = event_meta_data[event_meta_data['ZTF_ID']==i]    
+        one_event_meta_data = event_meta_data[event_meta_data['ZTF_ID']==i]
+
         event_ra, event_dec = one_event_meta_data['ra'].values, one_event_meta_data['dec'].values
-        
+
         tns_ra, tns_dec = tns_data['ra'].values, tns_data['declination'].values
-        
-        
-        
+
         tns_coords = SkyCoord(tns_ra*u.deg, tns_dec*u.deg)
         event_coords = SkyCoord(event_ra*u.deg, event_dec*u.deg)
         distance= tns_coords.separation(event_coords).arcsecond
-        
-        
+
         inde = np.argmin(distance)
         if distance[inde] <= 1:
             classification.append(tns_data['type'].values[np.argmin(distance)])

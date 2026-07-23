@@ -5,6 +5,8 @@ Created on Mon Jun 19 01:22:49 2023
 @author: blgnm
 """
 
+import os
+import sys
 from refitt.query.antares import query_antares_light_curves
 from refitt.query.galaxy.cross_match_galaxy import cross_match_galaxies
 from refitt.host_galaxy_association import host_galaxy_association
@@ -38,19 +40,33 @@ def supernova_meta_data_to_dict(ztf_id: list[str], ra: list[float], dec: list[fl
             'rKronMagErr': galaxy_data.rKronMagErr.values, 'iKronMagErr': galaxy_data.iKronMagErr.values, 
             'yKronMagErr': galaxy_data.yKronMagErr.values, 'zKronMagErr': galaxy_data.zKronMagErr.values}
 
+
+TNS_PATH = os.path.expanduser('~/refitt/lib/tns/tns_public_objects.csv')
+PARSNIP_PATH = os.path.expanduser('~/refitt/lib/gtf/bts_ps1_bg.pt')
+CLASSIFIER_PATH = os.path.expanduser('~/refitt/lib/gtf/classifier')
+
 def main(ztf_id: str, model_output_path: str, obs_output_path: str, meta_output_path: str, plot_output_dir: str, 
-         host_image_directory: str='../../host'):
+         host_image_directory: str='../../host', tns_path: str = TNS_PATH,
+         parsnip_path: str = PARSNIP_PATH,
+         classifier_path: str = CLASSIFIER_PATH,):
     
     lcs, ra, dec = query_antares_light_curves(ztf_id)
-    
-    host_locations = host_galaxy_association(ra, dec, ztf_id, host_image_directory).sort_values(by='ZTF_ID')
+
+    try:
+        host_locations = host_galaxy_association(ra, dec, ztf_id, host_image_directory).sort_values(by='ZTF_ID')
+    except OSError as e:
+        if 'Empty or corrupt FITS file' in str(e):
+            print(f"NO_PANSTARRS_DATA: Unable to process {ztf_id} - no Pan-STARRS coverage available for this target", file=sys.stderr)
+            sys.exit(0)
+        else:
+            raise
     
     galaxy_data = cross_match_galaxies(host_locations.host_ra, host_locations.host_dec)
     
     #Only use if you don't have catalog file or if you need to update it.
     #query_entire_tns_catalog(file_name='tns_data.zip')
     
-    tns_catalog = pd.read_csv('tns_data.zip', skiprows=1)
+    tns_catalog = pd.read_csv(tns_path)
     
     tns = cross_match_with_tns(tns_catalog, pd.DataFrame({'ZTF_ID': ztf_id, 'ra': ra, 'dec': dec})).sort_values(by='ZTF_ID')
     
@@ -59,15 +75,19 @@ def main(ztf_id: str, model_output_path: str, obs_output_path: str, meta_output_
     light_curve = LightCurve(lcs.mjd.values, lcs.magnitude.values, lcs.error.values, 
                     lcs.band.values, lcs.object_id.values)
     
-    model = ParsnipModel(model_path='./bts_ps1_bg.pt', classifier_path='./classifier')
+    model = ParsnipModel(model_path=parsnip_path, classifier_path=classifier_path)
     
     predictions, parsnip_lc, classifications = evaluate_model(model, meta_data, light_curve)
     
     meta_data = pd.concat([meta_data.to_pandas(), classifications.sort_values(by='object_id').drop(columns=['object_id']),
                           predictions.sort_values(by='object_id').drop(columns=['object_id', 'type'])], axis=1)
     
-    compare_multiple_lc(lcs, parsnip_lc, classification = meta_data[['object_id', 'SNIa', 'SNII', 'SNIIn', 'SNIbc', 'SLSN']],
-                        tns_classification=tns, reduced_chi_squared=meta_data[['object_id', 'model_chisq', 'model_dof']], redshifts=meta_data[['object_id','hostgal_photoz', 'hostgal_photoz_err', 'hostgal_specz', 'supernova_redshift']],
+    compare_multiple_lc(lcs,
+                        parsnip_lc,
+                        classification = meta_data[['object_id', 'SNIa', 'SNII', 'SNIIn', 'SNIbc', 'SLSN']],
+                        tns_classification=tns,
+                        reduced_chi_squared=meta_data[['object_id', 'model_chisq', 'model_dof']],
+                        redshifts=meta_data[['object_id','hostgal_photoz', 'hostgal_photoz_err', 'hostgal_specz', 'supernova_redshift']],
                         file_name_dir=plot_output_dir)
     
     parsnip_lc.to_csv(model_output_path)
@@ -83,9 +103,11 @@ if __name__ == '__main__':
     parser.add_argument('--model_output_path', type=str, default='./model_lc.csv', help="Parsnip model light curves output path.")
     parser.add_argument('--obs_output_path', type=str, default='./obs_lc.csv', help="Observed light curves output path.")
     parser.add_argument('--meta_output_path', type=str, default='./lc_meta.csv', help="Meta data output path.")
-    parser.add_argument('--plot_output_dir', type=str, default='./plot/', help="Directory to save plots in.")
+    parser.add_argument('--plot_output_dir', type=str, default='./', help="Directory to save plots in.")
     parser.add_argument('--host_image_directory', type=str, default='../../host', help="Directory to save host images in.")
-    
+    parser.add_argument('--tns_path', type=str, default=TNS_PATH)
+    parser.add_argument('--parsnip_path', type=str, default=PARSNIP_PATH)
+    parser.add_argument('--classifier_path', type=str, default=CLASSIFIER_PATH)
     
     args = parser.parse_args()
     
@@ -102,5 +124,14 @@ if __name__ == '__main__':
         ztf_id = args.ztf_id.split(',')
     
     
-    main(ztf_id, args.model_output_path, args.obs_output_path, args.meta_output_path, args.plot_output_dir, args.host_image_directory)
+    main(ztf_id,
+         args.model_output_path,
+         args.obs_output_path,
+         args.meta_output_path,
+         args.plot_output_dir,
+         args.host_image_directory,
+         args.tns_path,
+         args.parsnip_path,
+         args.classifier_path
+    )
     
