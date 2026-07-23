@@ -1,6 +1,6 @@
 [project]
 name = "refitt"
-version = "0.26.1"
+version = "0.27.0"
 description = "Recommender Engine for Intelligent Transient Tracking"
 readme = "README.rst"
 homepage = "https://refitt.org"
@@ -15,7 +15,8 @@ authors = [
     { name = "Katie Weil", email = "keweil@purdue.edu" },
     { name = "Josh Church", email = "church10@purdue.edu" },
     { name = "John Banovetz", email = "jbanovet@purdue.edu" },
-    { name = "Danielle Dickinson", email = "dickinsd@purdue.edu" }
+    { name = "Danielle Dickinson", email = "dickinsd@purdue.edu" },
+    { name = "Braden Garretson", email = "bgarrets@purdue.edu" }
 ]
 maintainers = [
     { name = "Geoffrey Lentner", email = "glentner@purdue.edu" },
