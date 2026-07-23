@@ -209,7 +209,7 @@ class TNSRecord(NamedTuple):
     creationdate: datetime
     lastmodified: datetime
     Discovery_ADS_bibcode: str | None = None
-    Class_ADS_bibcode: str | None = None
+    Class_ADS_bibcodes: str | None = None
 
     def to_json(self) -> Dict[str, TNSValue]:
         """Format as dictionary with JSON-serializable types."""
@@ -235,4 +235,4 @@ class TNSRecord(NamedTuple):
                 'creationdate': str(self.creationdate),
                 'lastmodified': str(self.lastmodified),
                 'Discovery_ADS_bibcode': self.Discovery_ADS_bibcode,
-                'Class_ADS_bibcode': self.Class_ADS_bibcode}
+                'Class_ADS_bibcodes': self.Class_ADS_bibcodes}
