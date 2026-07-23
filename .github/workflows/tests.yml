@@ -1,67 +1,175 @@
-name: Run tests
+name: Tests
+
 on:
   push:
     branches: [ master, develop ]
   pull_request:
     branches: [ develop ]
+
+# Restrict the default GITHUB_TOKEN: nothing here needs more than repository read.
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a PR) to save CI minutes.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  # ---------------------------------------------------------------------------------------
+  # Full test suite against a real Postgres, across the supported Python matrix.
+  # NOTE: the application test suite is mid-repair (root tests/ still import the pre-split
+  # module tree), so this job may be RED until the "Repair REFITT test suite" sibling
+  # feature lands. It runs honestly — no continue-on-error to fake green.
+  # ---------------------------------------------------------------------------------------
+  tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false          # run the whole matrix so every Python version's result is visible
+      matrix:
+        python-version: [ '3.12', '3.13' ]
+
     services:
       postgres:
-        image: postgres:latest
+        image: postgres:16       # pinned (was postgres:latest — non-reproducible)
         env:
           POSTGRES_DB: refitt
           POSTGRES_USER: refitt
           POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
+        ports: [ '5432:5432' ]
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      TZ: America/Indianapolis
+      # REFITT config expands REFITT_* into a nested namespace; the DB scope defaults to
+      # 'default', so the database connection config lives under database.default.* .
+      REFITT_LOGGING_LEVEL: DEBUG
+      REFITT_DATABASE_SCOPE_READ: default
+      REFITT_DATABASE_SCOPE_WRITE: default
+      REFITT_DATABASE_DEFAULT_PROVIDER: postgresql
+      REFITT_DATABASE_DEFAULT_DATABASE: refitt
+      REFITT_DATABASE_DEFAULT_HOST: localhost
+      REFITT_DATABASE_DEFAULT_USER: refitt
+      REFITT_DATABASE_DEFAULT_PASSWORD: postgres
+      REFITT_API_SITE: http://localhost
+      REFITT_API_PORT: '5050'
+
     steps:
-      - uses: szenius/set-timezone@v1.0
+      - uses: actions/checkout@v7.0.0
         with:
-          timezoneLinux: "America/Indianapolis"
+          persist-credentials: false
 
-      - uses: actions/checkout@v3
-      - name: Install Poetry
+      # Native build/runtime libs: libpq for psycopg2, librdkafka for confluent-kafka
+      # (antares-client <- refitt-broker). Without these `uv sync` fails to build those sdists.
+      - name: Install native system libraries
         run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "${HOME}/.poetry/bin" >> $GITHUB_PATH
+          sudo apt-get -yqq update
+          sudo apt-get -yqq install libpq-dev librdkafka-dev
 
-      - uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.3.0
         with:
-          python-version: '3.10'
-          cache: poetry
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-      - name: Configure poetry
+      # NOTE: non-frozen until the workspace lockfile is regenerated on a librdkafka-enabled
+      # env (see the release-prep follow-up). Switch to `uv sync --frozen` afterwards.
+      - name: Sync workspace
+        run: uv sync --all-packages
+
+      - name: Initialize + seed the test database
+        run: uv run refitt database init --test
+
+      - name: Generate an ephemeral API root key
         run: |
-          poetry config repositories.testpypi https://test.pypi.org/legacy/
-          poetry config pypi-token.testpypi ${{ secrets.PYPI_TOKEN }}
+          # A valid Fernet rootkey is required for the API/token layer.
+          echo "REFITT_API_ROOTKEY=$(uv run python -c 'from refitt.api.token import Cipher; print(Cipher.new_rootkey().value)')" >> "$GITHUB_ENV"
 
-      - name: Install virtual environment
-        run: poetry install
+      - name: Launch refitt-server (dev)
+        run: |
+          uv run refitt-server start --dev --port 5050 &
+          # Wait until the API accepts connections. Every route requires auth, so a 4xx still
+          # means "up" — probe for any HTTP response (no -f, which would treat 403 as failure).
+          for _ in $(seq 1 20); do
+            curl -s -o /dev/null "http://localhost:5050/info" && break
+            sleep 1
+          done
 
       - name: Run tests
-        env:
-          REFITT_LOGGING_LEVEL: DEBUG
-          REFITT_DATABASE_PROVIDER: postgresql
-          REFITT_DATABASE_DATABASE: refitt
-          REFITT_DATABASE_HOST: localhost
-          REFITT_DATABASE_USER: refitt
-          REFITT_DATABASE_PASSWORD: postgres
-          REFITT_API_SITE: localhost
-          REFITT_API_PORT: 5050
-          REFITT_API_ROOTKEY: ${{ secrets.API_ROOTKEY_FAKE }}
-        run: |
-          poetry run refitt database init --test
-          poetry run refitt service api start --workers 1 --port 5050 &
-          sleep 5
-          poetry run pytest -v
+        run: uv run pytest -v
 
-      - name: Publish package to test repository
-        run: poetry publish --build -r testpypi
+  # ---------------------------------------------------------------------------------------
+  # Enforce invariant §2 (the client boundary) in CI: refitt-client must install wheel-only
+  # and must NOT drag in refitt-data or any data-science dependency.
+  # ---------------------------------------------------------------------------------------
+  client-boundary:
+    name: Client install boundary (wheels-only, no data-science deps)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.3.0
+        with:
+          python-version: "3.13"
+
+      # Build every distribution's wheel with real PyPI metadata (strip [tool.uv.sources]),
+      # so refitt-client's sibling libs resolve from the local dist rather than a path.
+      - name: Build all wheels
+        run: uv build --all-packages --wheel --no-sources --out-dir dist
+
+      - name: Install refitt-client wheel-only
+        run: |
+          uv venv
+          uv pip install --only-binary=:all: --find-links dist refitt-client
+
+      - name: Assert the client pulled no data-science deps
+        run: |
+          installed="$(uv pip list --format=freeze | cut -d= -f1 | tr 'A-Z' 'a-z')"
+          bad=""
+          for pkg in refitt-data numpy pandas scipy sqlalchemy astropy; do
+            if printf '%s\n' "$installed" | grep -qx "$pkg"; then bad="$bad $pkg"; fi
+          done
+          if [ -n "$bad" ]; then
+            echo "::error::refitt-client boundary violated (invariant §2): pulled in$bad"
+            exit 1
+          fi
+          echo "OK: refitt-client installed wheel-only with no data-science dependencies"
+
+  # ---------------------------------------------------------------------------------------
+  # Packaging-metadata guard: catches the "400: description failed to render" class before a
+  # release. Python-independent, so no matrix.
+  # ---------------------------------------------------------------------------------------
+  metadata:
+    name: Package metadata & README render
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.3.0
+        with:
+          python-version: "3.13"
+
+      - name: Build sdist + wheel for all packages
+        run: uv build --all-packages --no-sources
+
+      - name: Validate pyproject metadata (root + members)
+        run: |
+          uvx --from 'validate-pyproject[all]' validate-pyproject \
+            pyproject.toml py/libs/*/pyproject.toml py/apps/*/pyproject.toml
+
+      - name: Verify READMEs render on PyPI
+        run: uvx twine check --strict dist/*

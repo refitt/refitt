@@ -1,0 +1,35 @@
+# Keep the `COPY . .` build context tight: only what `uv sync` needs (pyproject.toml, uv.lock,
+# py/, src/, README.rst, LICENSE) should reach the daemon. Trimming the rest speeds builds,
+# stabilizes the uv-sync layer cache, and — for local `docker build`, where gitignored files are
+# on disk — keeps .env/.security out of any image layer.
+
+# Virtualenvs & version control
+.venv
+.git
+.github
+
+# Agent/harness + local config / secrets (gitignored in CI, present for local builds)
+.agents
+.claude
+.cadence
+.env
+.security
+
+# Editor & tooling caches
+.idea
+.vscode
+.pytest_cache
+**/__pycache__
+
+# Build artifacts, rendered docs, and spec records — not needed to build or run the image
+dist
+build
+docs
+spec
+tests
+
+# Excluded workspace member (not part of the image)
+py/apps/refitt-phot
+
+# Markdown (READMEs used for packaging are .rst)
+*.md

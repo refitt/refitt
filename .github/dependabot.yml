@@ -1,0 +1,29 @@
+# Two ecosystems:
+#  1) github-actions — version updates (grouped into one PR): bumps the SHA-pinned actions in
+#     publish.yml / docker.yml (and their `# vX.Y.Z` comments) and the version-tagged actions in
+#     tests.yml.
+#  2) uv (Python) — SECURITY updates only, grouped into one PR. Version updates stay OFF:
+#     dependency floors are pinned deliberately for RHEL/EPEL/HPC parity, so we do not want
+#     automated floor bumps. Security fixes only touch uv.lock and are welcome — batched, not
+#     one-per-CVE.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Disable version updates entirely (floors pinned for RHEL/EPEL/HPC). Security updates ignore
+    # this limit and fire regardless; the group collapses them into ONE PR.
+    open-pull-requests-limit: 0
+    groups:
+      python-security:
+        applies-to: security-updates
+        patterns: ["*"]

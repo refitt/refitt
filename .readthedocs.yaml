@@ -1,0 +1,28 @@
+# Read the Docs configuration (v2) — builds the REFITT website docs with uv.
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html
+#
+# CAVEAT (native deps): REFITT is not wheels-only. On RTD there is no way to apt-install
+# librdkafka, so a full `uv sync --all-packages` would fail building confluent-kafka
+# (antares-client <- refitt-broker). We therefore install the docs group + the wheel-installable
+# distributions and EXCLUDE refitt-broker; autodoc of broker modules should use
+# `autodoc_mock_imports = ["confluent_kafka", "antares_client"]` in conf.py (follow-up if needed).
+
+version: 2
+
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+  jobs:
+    post_install:
+      - pip install uv
+      # --link-mode=copy: RTD's venv can be on a different filesystem than the uv cache.
+      - >-
+        UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH
+        uv sync --group docs --link-mode=copy
+        --package refitt-core --package refitt-assets --package refitt-api
+        --package refitt-data --package refitt-admin --package refitt-server
+        --package refitt-tns --package refitt-client
+
+sphinx:
+  configuration: docs/website/source/conf.py

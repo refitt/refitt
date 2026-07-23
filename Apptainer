@@ -1,0 +1,67 @@
+# REFITT Apptainer/Singularity definition — the HPC deployment artifact, kept in sync with
+# ./Dockerfile. Same uv recipe; REFITT is NOT wheels-only, so the native build deps and the
+# runtime shared libs (libpq, librdkafka) are installed in %post. Apptainer runs containers AS
+# THE INVOKING USER, so there is deliberately no non-root user setup (a `USER` step is a no-op
+# here); REFITT resolves config/lib/log under the invoking user's real ~/.refitt on the cluster.
+#
+# Build:  apptainer build refitt.sif Apptainer --build-arg VERSION=$(git describe --tags --always)
+
+Bootstrap: docker
+From: ghcr.io/astral-sh/uv:latest
+Stage: uv
+
+Bootstrap: docker
+From: python:3.13-slim
+Stage: final
+
+%arguments
+  # Defaults to a placeholder so the version is never hardcoded (single-sourced from pyproject).
+  VERSION=dev
+
+%labels
+  org.opencontainers.image.title REFITT
+  org.opencontainers.image.version {{ VERSION }}
+  org.opencontainers.image.description Recommender Engine for Intelligent Transient Tracking
+  org.opencontainers.image.source https://github.com/refitt/refitt
+  org.opencontainers.image.licenses Apache-2.0
+  org.opencontainers.image.authors glentner@purdue.edu
+
+%files
+  ./pyproject.toml /app/pyproject.toml
+  ./uv.lock        /app/uv.lock
+  ./README.rst     /app/README.rst
+  ./LICENSE        /app/LICENSE
+  ./py             /app/py
+  ./src            /app/src
+
+%files from uv
+  /uv  /usr/local/bin/uv
+  /uvx /usr/local/bin/uvx
+
+%post
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get -yqq update
+  # Build deps (headers + toolchain) for the native sdists, plus the runtime shared libs.
+  apt-get -yqq install --no-install-recommends \
+      build-essential libpq-dev librdkafka-dev libpq5 librdkafka1
+  rm -rf /var/lib/apt/lists/*
+
+  export UV_LINK_MODE=copy
+  export UV_COMPILE_BYTECODE=1
+  export UV_PROJECT_ENVIRONMENT=/opt/refitt
+  export UV_PYTHON_PREFERENCE=only-system
+
+  cd /app
+  # --no-editable copies member code into the venv so it does not depend on /app afterward.
+  # NOTE: switch to `uv sync --frozen` once the lockfile is regenerated (release-prep follow-up).
+  uv sync --all-packages --no-editable --python 3.13
+
+%environment
+  export PATH=/opt/refitt/bin:$PATH
+  export REFITT_LOGGING_LEVEL=INFO
+  export PYTHONUNBUFFERED=1
+
+%runscript
+  # Default entry is the admin CLI; any of the five console entry points is available via
+  # `apptainer exec refitt.sif refitt-server start` / refitt-broker / refitt-tns / refitt-client.
+  exec refitt "$@"
