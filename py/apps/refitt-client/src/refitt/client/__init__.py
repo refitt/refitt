@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2019-2022 REFITT Team
 # SPDX-License-Identifier: Apache-2.0
 
-"""Make authenticated REFITT API requests."""
+"""Make authenticated REFITT requests."""
 
 
 # type annotations
@@ -182,7 +182,7 @@ Options:
 
 
 class Describe(Application):
-    """Fetch descriptions of API endpoints."""
+    """Fetch descriptions of endpoints."""
 
     interface = Interface(DESCRIBE_PROGRAM, DESCRIBE_USAGE, DESCRIBE_HELP)
     interface.add_argument('-v', '--version', action='version', version=__version__)

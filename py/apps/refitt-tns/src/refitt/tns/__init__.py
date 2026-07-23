@@ -38,7 +38,7 @@ PROGRAM = 'refitt-tns'
 PADDING = ' ' * len(PROGRAM)
 USAGE = f"""\
 Usage:
-  {PROGRAM} [-h] [-n NAME | [--persist] -f PATH | --live] [-w NUM] [--no-catalog]
+  {PROGRAM} [-h] [-n NAME | [--persist] -f PATH] [-w NUM] [--no-catalog]
   {__doc__}\
 """
 
@@ -46,7 +46,6 @@ HELP = f"""\
 {USAGE}
 
 Options:
-      --live                  Subscribe to database object events.
   -n, --name         NAME     Single name.
   -f, --from         PATH     File listing object names.
   -p, --persist               Keep file open forever (e.g., <stdin>).
@@ -86,12 +85,10 @@ class TNSApp(Application):
 
     def run(self) -> None:
         """Run TNS query service."""
-        if not self.source_live and not self.source_path and not self.source_name:
-            raise ArgumentError(f'Must specify either --name=NAME, --from=PATH, or --live')
+        if not self.source_path and not self.source_name:
+            raise ArgumentError(f'Must specify either --name=NAME, --from=PATH')
         elif self.source_name:
             self.run_name()
-        # elif self.source_live:
-            # self.run_live()
         else:
             self.run_from(self.source_path)
 

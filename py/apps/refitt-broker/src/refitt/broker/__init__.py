@@ -137,7 +137,7 @@ Usage:
   {PROGRAM} <broker> <topic> [--filter NAME]
   {PADDING} [--local-only [-o DIR] | --database-only [--backfill]]
 
-{__doc__}\
+  {__doc__}\
 """
 
 HELP = f"""\
