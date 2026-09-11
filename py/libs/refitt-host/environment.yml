@@ -1,0 +1,17 @@
+name: refitt-host
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - pandas
+  - lsdb
+  - dask
+  - distributed
+  - pyarrow
+  - pydantic
+  - pytest
+  - pip
+  - pip:
+      - git+https://github.com/gmzsebastian/iinuclear.git@f170ee43f3102ccf017fc7ee3c73ffeb8975ae95
