@@ -1,0 +1,41 @@
+rubin_token.txt
+.env
+.venv/
+.venv-delve/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+*.egg-info/
+refitt-host-output/
+host_associations.csv
+
+# Local HATS collections and generated association products never belong in
+# package commits. Existing tracked examples remain tracked.
+data/
+results/
+
+# Local PS1-STRM cache (multi-GB, built by scripts/download_ps1_strm.py +
+# scripts/build_ps1_strm_hats.py) -- not a repo artifact.
+data/ps1_strm_fits/
+data/ps1_strm_hats/
+
+# Local PS1 morphology cache (scripts/download_ps1_stackobjectattributes.py +
+# scripts/build_ps1_local_hats.py) -- not a repo artifact.
+data/ps1_stackobjectattributes_fits/
+data/ps1_local_csv/
+data/ps1_local_hats/
+
+# Local HECATE/GLADE+/HyperLEDA caches -- not repo artifacts.
+data/hecate_hats/
+data/glade_hats/
+data/glade_hyperleda_csv/
+data/glade_hyperleda_hats/
+data/hecate/*.csv
+data/glade/*.txt
+data/glade_hyperleda/*.csv.gz
+
+# Local catalog input and working notes.
+tns_public_objects.csv
+plan.md

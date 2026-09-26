@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "refitt-host"
+version = "1.0.0"
+description = "Local PS1/REGLADE host association for REFITT targets"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "REFITT"}]
+dependencies = [
+  "numpy>=1.26",
+  "scipy>=1.11",
+  "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+hats = ["lsdb>=0.4", "dask[distributed]>=2024.1", "pandas>=2.0", "pyarrow>=15", "hats-import>=0.3"]
+nuclearity = ["iinuclear @ git+https://github.com/gmzsebastian/iinuclear.git@f170ee43f3102ccf017fc7ee3c73ffeb8975ae95"]
+test = ["pytest>=8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/refitt_host"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
