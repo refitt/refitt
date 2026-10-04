@@ -47,4 +47,6 @@ CLARIFICATION: …]` and **block** `rf-plan` — never guess.
 ## Related materials
 
 - Issue: <https://github.com/refitt/refitt/issues/NN>
+- Seed: <`issues/{slug}.md`, when this GOAL was promoted from a recorded deferral — the link stays
+  after `/rf-roadmap` retires the seed, so `git log --diff-filter=D` recovers it>
 - <docs, prior art, source paths, external references>
