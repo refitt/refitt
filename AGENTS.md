@@ -139,6 +139,57 @@ self-improvement findings recorded in each feature's `spec/<slug>/META.md`).
 - Reference material: `.agents/factory/{methodology,ears,review-rubric,invariants,portability}.md`
   and `.agents/factory/getting-started.html`.
 
+### Deferred work: `issues/` + `ROADMAP.md`
+
+Two more repo-level paths carry work that is **not yet in flight**:
+
+```
+issues/{slug}.md   # deferred code work, pre-shaped; /rf-feature promotes one into a GOAL
+ROADMAP.md         # the ordered index of future cycles — one entry per issue
+```
+
+**Where a deferral goes — five homes, one rule each.** A pass that decides *not* to fix something
+must still record it, and the destination is not a matter of taste:
+
+| File | Holds | Written by |
+|------|-------|------------|
+| `spec/{slug}/META.md` | **Harness/skill feedback only** — "was this the *factory's* fault". Never code follow-ups. | the lifecycle skills |
+| `issues/{slug}.md` | **Deferred code work**, pre-shaped from [`templates/ISSUE.md`](.agents/factory/templates/ISSUE.md) | whoever defers it |
+| `ROADMAP.md` | the **ordered index** — one entry per issue, `**Seed:**` pointing at the `issues/` file | whoever defers it |
+| `.security/issues/{slug}.md` + `.security/ROADMAP.md` | the same two things for **unremediated security findings** — gitignored, never published | whoever defers it |
+| `spec/{slug}/` | work **actually in flight** | the lifecycle skills |
+
+An `issues/{slug}.md` is a *candidate, not a contract*: `/rf-feature` promotes it into
+`spec/{slug}/GOAL.md`, and that promotion is where appetite, non-goals and the R-IDs get
+negotiated with a human. **Never copy one into a `GOAL.md` verbatim** — `rf-review` grades a GOAL,
+and a proposal nobody accepted is not a contract. The `status:` field is the guard: `unshaped`
+(raw deferral — evidence captured, nothing agreed), `shaped` (already negotiated with a human, but
+**not yet accepted into a cycle**), `adopted:{slug}` (promoted; `spec/{slug}/` owns it now, and the
+record stays *while the cycle is in flight* so the ROADMAP index does not dangle). Two further
+values close a deferral **without** shipping — `declined` and `accepted-behaviour` — and those are
+terminal records, indexed under `ROADMAP.md` § *Settled questions* rather than as cycles.
+
+**A deferral is retired, not kept forever.** When the cycle that adopted a seed lands on `develop`,
+`/rf-roadmap` deletes the seed and removes its `ROADMAP.md` entry: `spec/{slug}/` is the retained
+account and git history holds the file. Retire only on evidence the cycle *landed* — an
+`adopted:{slug}` marker proves a cycle started, never that it finished. The security lane inverts
+this: nothing under `.security/` is ever deleted, because it is gitignored and a deletion there
+leaves no history to recover from, so a remediated finding keeps its file, its closure is recorded
+in `.security/STATUS.md`, and its `.security/ROADMAP.md` entry moves out of the ordered queue.
+
+**The security lane is not optional.** This repository is public. A deferral that describes an
+*unremediated* weakness — a live exploitable mechanism, an attack path, a leaked credential, or
+enough evidence to reconstruct one — goes in `.security/`, which is gitignored along with `.local/`
+(maintainer-local notes). Publishing a standing roadmap of live vulnerabilities hands an attacker a
+work plan. The *fixes* land as ordinary public commits and PRs when they ship; only the inventory
+of what is still open stays private. Architectural facts this file already states (e.g. "no
+rate-limiting / CORS / CSRF today") are not secrets and may appear in public seeds. When in doubt
+which lane an item belongs to, use `.security/` and ask.
+
+This coexists with the **GitHub tracker**: a GH issue is the public-facing ticket,
+`issues/{slug}.md` is the pre-shaped spec behind it, and the two may link to each other. Neither
+replaces the other.
+
 **Environment note:** the factory (and REFITT generally) runs via `uv run`; a working workspace
 env is required (`uv sync`).
 

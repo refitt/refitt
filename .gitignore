@@ -112,3 +112,7 @@ venv.bak/
 
 # PyCharm
 .idea
+
+# Factory: private security lane and maintainer-local notes (never published; see AGENTS.md §5)
+.security/
+.local/
