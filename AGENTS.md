@@ -115,7 +115,7 @@ private config files must be `0600`. → invariants §4, §8.
 
 ## 5. The software factory
 
-Work flows through six skills; **all durable state lives in files + git** (re-read fresh each
+Work flows through five lifecycle skills; **all durable state lives in files + git** (re-read fresh each
 invocation), so builds resume and reviews run blind. Invoke as slash commands:
 
 ```
@@ -126,8 +126,10 @@ develop ─/rf-feature─▶ feature|fix/{slug}   GOAL.md              (shape: w
            └───/rf-publish─▶  squash PR → develop                (the one irreversible step)
 ```
 
-Plus **`/rf-harness`** — human-gated, the only skill that edits `.agents/` (applies the
-self-improvement findings recorded in each feature's `spec/<slug>/META.md`).
+Plus two operational siblings, neither a lifecycle step: **`/rf-harness`** — human-gated, the only
+skill that *improves* `.agents/` (applies the self-improvement findings recorded in each feature's
+`spec/<slug>/META.md`); and **`/rf-roadmap`** — retires the `issues/` seeds whose cycles have landed
+on `develop` and keeps `ROADMAP.md` true (see *Deferred work* below). Run it between releases.
 
 - Per-feature artifacts live under `spec/<slug>/` (`GOAL.md`, `PLAN.md`, `TECH.md`, `REVIEW.md`,
   `META.md`, `research/`) and are **retained on merge** as the point-in-time design record.

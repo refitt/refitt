@@ -289,7 +289,8 @@
     quickly, or the right thing in a way you cannot review. The discipline that channels it is
     <strong>method</strong> — and it turns out the good parts of agile practice (especially
     37signals' <em>Shape Up</em>) map cleanly onto agent work. REFITT packages that method as a
-    small, transparent toolkit in <code><a href="../">.agents/</a></code>: six skills and a set of
+    small, transparent toolkit in <code><a href="../">.agents/</a></code>: five lifecycle skills — plus
+    two operational siblings, <code>rf-harness</code> and <code>rf-roadmap</code> — and a set of
     reference documents that carry a change from a shaped goal, through a researched plan, through
     execution, through an adversarial review, to a pull request — with a durable, committed record at
     every step.</p>
@@ -354,7 +355,7 @@
       <li><a href="#harness">The harness: context + action</a></li>
       <li><a href="#methodology">Method: Shape Up meets agents</a></li>
       <li><a href="#factory">The <code>.agents/factory</code> lifecycle</a></li>
-      <li><a href="#skills">Hands-on: the six skills</a></li>
+      <li><a href="#skills">Hands-on: the skills</a></li>
       <li><a href="#reference">Reference: every material, linked</a></li>
     </ol>
   </div>
@@ -632,8 +633,8 @@ you   ❯ <span class="c"># you run it, it breaks,</span>
     <div class="step"><div class="n">act</div><div class="t">/rf-harness</div><div class="d">human-gated fix to .agents/</div></div>
   </div>
 
-  <p>A sixth skill, <code>/rf-harness</code>, stands <em>outside</em> the lifecycle and is the only one
-    that edits the factory itself. Pointed at a finished job's <code>META.md</code>, it shapes the fix
+  <p>Two skills stand <em>outside</em> the lifecycle; <code>/rf-harness</code> is the only one
+    that <em>improves</em> the factory itself. Pointed at a finished job's <code>META.md</code>, it shapes the fix
     with you, previews a diff per finding, and — <strong>only with human approval</strong> — applies each
     to <code>.agents/</code> as an atomic <code>[harness]</code> commit, recording every decision in a
     cross-job ledger, <code><a href="harness-log.md">harness-log.md</a></code>. It is bound by rules it
@@ -648,7 +649,7 @@ you   ❯ <span class="c"># you run it, it breaks,</span>
 <!-- =================== 5. SKILLS =================== -->
 <section id="skills">
   <p class="kicker">Practitioner guide · 5</p>
-  <h2>Hands-on: the six skills <a class="anchor" href="#skills">#</a></h2>
+  <h2>Hands-on: the skills <a class="anchor" href="#skills">#</a></h2>
   <p>Each is a slash command you invoke deliberately (none fire on their own —
     <code>disable-model-invocation</code> is set). They guard their own preconditions — a wrong branch
     or a dirty tree stops them cold — so the process is hard to run out of order.</p>
@@ -707,7 +708,7 @@ you   ❯ <span class="c"># you run it, it breaks,</span>
   </div>
 
   <div class="skill" style="border-left-color:var(--muted)">
-    <div class="cmd" style="color:var(--text-2)">/rf-harness <span style="color:var(--muted);font-weight:400">— the self-improvement skill (+1 · not part of the lifecycle)</span></div>
+    <div class="cmd" style="color:var(--text-2)">/rf-harness <span style="color:var(--muted);font-weight:400">— the self-improvement skill (operational · not part of the lifecycle)</span></div>
     <p>Stands apart from the five above: it changes the <strong>factory</strong>, not any feature. Pointed
       at a finished job's <code>META.md</code>, it shapes the fix with you, previews a diff per finding,
       and — <strong>only with your approval</strong> — applies each recorded process fix to
@@ -717,6 +718,22 @@ you   ❯ <span class="c"># you run it, it breaks,</span>
       it closes.</p>
     <div class="io"><b>reads</b> spec/&lt;slug&gt;/META.md + harness-log.md · <b>writes</b> .agents/ fixes, harness-log.md ·
       <b>skill</b> <a href="../skills/rf-harness/SKILL.md">rf-harness/SKILL.md</a></div>
+  </div>
+
+  <div class="skill" style="border-left-color:var(--muted)">
+    <div class="cmd" style="color:var(--text-2)">/rf-roadmap <span style="color:var(--muted);font-weight:400">— retire what shipped (operational · not part of the lifecycle)</span></div>
+    <p>The backlog's missing terminal step. Work a cycle decides <em>not</em> to do is recorded as a
+      pre-shaped <code>issues/{slug}.md</code> seed plus an ordered <code>ROADMAP.md</code> entry;
+      <code>/rf-feature</code> promotes one into a real goal and marks it <code>adopted</code>. Nothing
+      then retires it — so this skill does. It confirms the cycle actually reached <code>develop</code>
+      (an adoption marker proves a cycle <em>started</em>, never that it finished), deletes the seed and
+      its index entry after you approve a preview, and repairs what the removal broke: discharged
+      prerequisites, dangling cross-references, stale figures in surviving seeds. In the hidden
+      security lane it moves entries and never deletes — that lane is gitignored, so a deletion there
+      leaves no history. Deliberately <em>not</em> folded into <code>/rf-publish</code>, whose staleness
+      gate exists to notice exactly this kind of write outside <code>spec/</code>.</p>
+    <div class="io"><b>reads</b> issues/, ROADMAP.md, .security/, spec/*/GOAL.md · <b>writes</b> ROADMAP.md, seed deletions ·
+      <b>skill</b> <a href="../skills/rf-roadmap/SKILL.md">rf-roadmap/SKILL.md</a></div>
   </div>
 
   <h3>A day in the life <a class="anchor" href="#skills">#</a></h3>
@@ -830,7 +847,7 @@ you   ❯ <span class="c"># you run it, it breaks,</span>
   </table>
   </div>
 
-  <h3>The five lifecycle skills (+1 meta) <a class="anchor" href="#reference">#</a></h3>
+  <h3>The five lifecycle skills (+2 operational) <a class="anchor" href="#reference">#</a></h3>
   <div class="tablewrap">
   <table>
     <thead><tr><th>Skill</th><th>Role</th></tr></thead>
@@ -840,7 +857,8 @@ you   ❯ <span class="c"># you run it, it breaks,</span>
       <tr><td><code><a href="../skills/rf-build/SKILL.md">rf-build</a></code></td><td>Execute the roadmap, one verified phase at a time.</td></tr>
       <tr><td><code><a href="../skills/rf-review/SKILL.md">rf-review</a></code></td><td>Independent, blind, evidence-based QA.</td></tr>
       <tr><td><code><a href="../skills/rf-publish/SKILL.md">rf-publish</a></code></td><td>Squash-merge the pull request to develop.</td></tr>
-      <tr><td><code><a href="../skills/rf-harness/SKILL.md">rf-harness</a></code> <span style="color:var(--muted)">(+1 · meta)</span></td><td>Fold the self-improvement loop's findings back into the factory — human-gated, run by the lead developer as needed. <strong>Not</strong> a feature-lifecycle step.</td></tr>
+      <tr><td><code><a href="../skills/rf-harness/SKILL.md">rf-harness</a></code> <span style="color:var(--muted)">(operational · meta)</span></td><td>Fold the self-improvement loop's findings back into the factory — human-gated, run by the lead developer as needed. <strong>Not</strong> a feature-lifecycle step.</td></tr>
+      <tr><td><code><a href="../skills/rf-roadmap/SKILL.md">rf-roadmap</a></code> <span style="color:var(--muted)">(operational · backlog)</span></td><td>Retire the deferrals whose cycles have landed and keep <code>ROADMAP.md</code> true — delete the shipped seed and its index entry after a human-gated preview, then repair the drift the removal leaves. Run between releases. <strong>Not</strong> a feature-lifecycle step.</td></tr>
     </tbody>
   </table>
   </div>

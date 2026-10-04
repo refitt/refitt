@@ -101,6 +101,7 @@ appetite."
 .agents/
   skills/rf-{feature,plan,build,review,publish}/SKILL.md   # the five lifecycle skills
   skills/rf-harness/SKILL.md                               # meta/maintenance: apply the self-improvement loop
+  skills/rf-roadmap/SKILL.md                               # operational: retire landed seeds, keep ROADMAP.md true
   factory/
     methodology.md        # this file
     invariants.md         # curated AGENTS.md footgun checklist (plan gate + review rubric)
@@ -126,7 +127,8 @@ between the two is stated once in `AGENTS.md`. The `status:` field is what keeps
 *candidate*: `/rf-feature` promotes it into a real `GOAL.md`, and that promotion is where a human
 negotiates appetite, non-goals and the R-IDs `rf-review` will grade. Two statuses precede promotion
 — `unshaped` (a raw deferral) and `shaped` (already negotiated, but not yet accepted into a cycle) —
-and neither is a shortcut past the human gate.
+and neither is a shortcut past the human gate. When the cycle lands on `develop`, `/rf-roadmap`
+retires the seed and its index entry, so the backlog stops advertising work that already shipped.
 
 Security-sensitive deferrals take the **hidden lane**: `.security/issues/` + `.security/ROADMAP.md`,
 same convention, gitignored. A public roadmap of unremediated vulnerabilities is an attacker's work
