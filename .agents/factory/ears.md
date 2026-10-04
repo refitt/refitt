@@ -53,3 +53,6 @@ Keep the `<component>` a real REFITT part (the `refitt-server` `/token` route, t
 - Untestable adjectives ("fast", "robust", "user-friendly") — replace with an observable threshold.
 - Multiple requirements in one line — split so each has its own R-ID and pass/fail.
 - Specifying the *how* (implementation) in a criterion — that belongs in `PLAN.md`.
+- Encoding a **suspected cause/mechanism** in a *fix's* criterion (e.g. "the fix must not use the
+  broken code path") — the root cause is unverified until `/rf-plan`; state the observable broken→fixed
+  behavior instead.
