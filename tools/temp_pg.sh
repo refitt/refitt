@@ -38,7 +38,7 @@
 # status. Without a terminal the command runs in its own process group; INT and
 # TERM stop that group, and every exit path stops the server, removes the
 # container and its volumes, and removes the state directory. It refuses to
-# run as root, with /etc/refitt.toml present, or with no synced environment,
+# run as root, with /etc/refitt.toml present, or with no project environment,
 # and needs perl.
 set -eu
 

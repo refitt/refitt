@@ -213,13 +213,43 @@ of the app. Each:
 6. pins tool discovery back to the repo;
 7. writes its own output to stderr and passes the command's exit status through.
 
-Here that means a throwaway database seeded with `refitt database init --test`, forced through
-`REFITT_*` environment variables, and `UV_PROJECT` pointing back at the repo. `temp_db.sh` is the
-fast SQLite tier and does not exercise Postgres-only SQL (§C4). `temp_pg.sh` is the faithful tier:
-an ephemeral `postgres:16` container, or a scratch database with `REFITT_TEST_PG=1`, plus the dev
-server with `REFITT_TEMP_WITH_SERVER=1`. **Both fall short of items 3 and 2 today.** A developer's
-`~/.refitt` config leaks in, and `temp_db.sh` prompts on SQLite. The fix is
-`issues/verify-helpers-harden.md`, which must land before the test-suite cycle.
+Here that means each helper:
+
+- finds the repository from its own location and exports it to the command as `REPO_ROOT`, so a
+  command names repo paths through it
+  (`tools/temp_db.sh sh -c 'uv run pytest -m unit "$REPO_ROOT/tests/test_database"'`);
+- makes its state directory the command's working directory, `HOME` and `TMPDIR`, so REFITT's user
+  and local config files, `~/.refitt`, pytest's cache (through `PYTEST_ADDOPTS`) and bytecode
+  (through `PYTHONPYCACHEPREFIX`) all land there, while uv keeps the caller's cache;
+- drops inherited `REFITT_DATABASE_*`, `REFITT_API_ROOTKEY*` and libpq `PG*` variables, forces the
+  throwaway database through `REFITT_DATABASE_*`, and exports a `REFITT_API_ROOTKEY` generated for
+  the run;
+- runs `uv` with `UV_NO_SYNC` and `UV_PROJECT` pointing back at the repo, so `uv.lock` is never
+  rewritten and the environment must already be synced (the profile's `setup`);
+- seeds the database with `refitt database init --test` before the command; with no terminal on
+  stdin it runs the command in its own process group, so INT and TERM stop all of it (at a
+  terminal the command stays in the foreground, where Ctrl-C reaches it directly);
+- writes its own output to stderr, exits with the command's status, and on every exit path stops
+  what it started and removes the state directory; a second INT or TERM cannot cut that teardown
+  short;
+- refuses to start, before creating anything, as root or while `/etc/refitt.toml` exists (the two
+  ways REFITT state would still escape the state directory), with no project environment, or
+  without `perl`.
+
+`temp_db.sh` is the fast SQLite tier and does not exercise Postgres-only SQL (§C4). It answers the
+confirmation `refitt database init` asks on every SQLite database, a product defect recorded in
+`issues/init-sqlite-prompt.md`, and sends the prompt line to stderr. `temp_pg.sh` is the faithful
+tier. By default it starts an ephemeral `postgres:16` container, published only on `127.0.0.1` at
+a port Docker picks, and runs nothing until a connection from the host succeeds; inherited
+database settings never reach it. When no Docker daemon answers within 10 s it stops before
+starting anything and names the alternative, `REFITT_TEST_PG=1` with
+`REFITT_DATABASE_DEFAULT_{HOST,PORT,DATABASE,USER,PASSWORD}` naming a scratch database, whose
+tables it drops and recreates. Every Postgres session uses `America/Indiana/Indianapolis`, the
+zone the seed data assumes: `PGTZ` for libpq clients and the container's server default. With
+`REFITT_TEMP_WITH_SERVER=1` it also starts the dev server in its own process group on a free local
+port, exports `REFITT_API_SITE` and `REFITT_API_PORT`, and waits until it answers HTTP. Each
+bring-up wait is bounded (60 s for Postgres, 30 s for the server) and names what failed to come
+up. Teardown also stops the server and removes the container with its volumes.
 
 ### Where deferred work goes
 

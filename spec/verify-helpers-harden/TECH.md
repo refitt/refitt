@@ -3,10 +3,10 @@ slug: verify-helpers-harden
 title: Harden the throwaway-environment helpers
 kind: test
 appetite: small
-status: in_progress
+status: in_review
 branch: test/verify-helpers-harden
 base: develop
-current_phase: P3
+current_phase: done
 last_updated: '2026-11-10'
 phases:
 - id: P1
@@ -47,7 +47,7 @@ phases:
   verify: sh spec/verify-helpers-harden/verify/gate_temp_pg_local.sh
 - id: P3
   name: Throwaway environment rewritten; scope and ledger closed
-  status: pending
+  status: done
   satisfies:
   - R7
   - R12
@@ -203,15 +203,15 @@ here; everything else it lists is proven in container mode by the container driv
 with no caveat; the cycle's scope and deferrals are closed. R12 is met by committed documents
 outside `spec/` (the helper headers and `AGENTS.md`), so the blind reviewer can grade it.
 
-- [ ] Rewrite the prose after the seven-item contract in § Throwaway environment per PLAN §2 (the
+- [x] Rewrite the prose after the seven-item contract in § Throwaway environment per PLAN §2 (the
       contract list itself stays); drop "Both fall short of items 3 and 2 today" and its pointer to
       this cycle's seed.
-- [ ] Re-read both helper headers against the final behaviour; fix any drift.
-- [ ] Deferral ledger: walk P1 and P2's bodies and commit messages for every deferral (the phrases
+- [x] Re-read both helper headers against the final behaviour; fix any drift.
+- [x] Deferral ledger: walk P1 and P2's bodies and commit messages for every deferral (the phrases
       code-plan Step 6.7 lists); each needs its own seed under `issues/`, from the ISSUE template,
       and a `ROADMAP.md` entry. The one filed at planning is `issues/init-sqlite-prompt.md` (the
       SQLite `init` prompt).
-- [ ] Run `sh spec/verify-helpers-harden/verify/gate_docs.sh pre-push` last, after any fix.
+- [x] Run `sh spec/verify-helpers-harden/verify/gate_docs.sh pre-push` last, after any fix.
 - **Verify:** `sh spec/verify-helpers-harden/verify/gate_docs.sh` — mode `all` runs P1's and P2's
   gates first, then this phase's own checks (`phase` mode runs only the latter; `pre-push` only
   scope and the private-path scan). Exits 0 and ends `PASS gate_docs all`. Measured at planning on
