@@ -3,6 +3,8 @@
 - **slug:** ci-devops-modernization
 - **kind:** feature
 - **appetite:** big
+- **status:** declined (2026-11-09). Not taken on as a cycle: the work landed outside the factory
+  as `8422947`, and what remains is carried by `ROADMAP.md` Part I. Kept as the record.
 
 ## Problem
 

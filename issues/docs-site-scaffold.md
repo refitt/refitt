@@ -10,7 +10,7 @@ lane: public
 ## Problem
 
 Invariant §K6 requires a CLI or public-API behavior change to update the Sphinx docs
-(`docs/website`) in the same commit. `rf-review` runs a Sphinx build whenever `docs/website` is
+(`docs/website`) in the same commit. `code refitt review` runs a Sphinx build whenever `docs/website` is
 touched. But the site does not build and has nothing in it:
 
 - **`docs/website/source/`** holds only `index.rst`, with an empty toctree (`index.rst:9-12`), and a

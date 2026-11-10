@@ -55,8 +55,8 @@ tests cannot verify it today (224 of 255 model tests are untagged; see
 ## Outcome / vision
 
 The mapper is the only source of column and relationship metadata. Serialization, `update()`, and
-the query CLI keep their observable behavior. §C1 is retired from `invariants.md` through
-`/rf-harness`.
+the query CLI keep their observable behavior. §C1 is retired from
+`AGENTS.md` § Invariants (a `[harness]` change).
 
 ## Sketch of the acceptance criteria
 
@@ -72,7 +72,7 @@ the query CLI keep their observable behavior. §C1 is retired from `invariants.m
 
 ## Notes
 
-- `model.py` is on the high-blast-radius list (AGENTS.md §6), so `/rf-plan` runs the full research
+- `model.py` is on the high-blast-radius list (`AGENTS.md` § Invariants), so `code refitt plan` runs the full research
   fan-out regardless of appetite. Every CONFIRMED review finding needs human sign-off.
 - Drop the six vestigial StreamKit tables (Level, Topic, Host, Message, Subscriber, Access;
   `model.py:1521-1690`, unused outside `model.py`) in the migrations cycle, not here: removing

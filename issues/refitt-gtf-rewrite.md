@@ -66,7 +66,7 @@ client boundary (§2). The hazard is latent only while gtf keeps its own Python 
 
 It is gated on things outside this repository: Braden's PR, and a record of what production ran.
 The maintainer also wants contributor PRs checked out and conformed *before* merging, which needs a
-PR-intake harness flow; that is deferred in `.agents/factory/harness-log.md`.
+PR-intake harness flow; that is deferred in the operator's KB.
 
 ## Outcome / vision
 

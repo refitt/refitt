@@ -94,7 +94,7 @@ is exercised on every PR that can break it.
 - Regenerate the lock on Python 3.13 with the `.env` build paths sourced (librdkafka, libpq
   `pg_config`). Each re-lock rewrites roughly +2.7k/−0.7k lines.
 - Until this lands, a plain local `uv run` re-locks and dirties `uv.lock`. Use `UV_NO_SYNC=1`.
-- AGENTS.md's stated dependency order needs a `/rf-harness` correction to match the real edges.
+- AGENTS.md's stated dependency order needs a correction to match the real edges.
 - Related: [`test-suite-repair.md`](test-suite-repair.md),
   [`first-modern-release.md`](first-modern-release.md).
 - Found by: out-of-cycle roadmap evidence sweep, 2026-10-04.
