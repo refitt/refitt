@@ -6,7 +6,7 @@ appetite: small
 status: in_progress
 branch: test/verify-helpers-harden
 base: develop
-current_phase: P2
+current_phase: P3
 last_updated: '2026-11-10'
 phases:
 - id: P1
@@ -27,7 +27,7 @@ phases:
   verify: sh spec/verify-helpers-harden/verify/gate_temp_db.sh
 - id: P2
   name: temp_pg.sh hardened; verify and release gate root-anchored
-  status: pending
+  status: done
   satisfies:
   - R2
   - R3
@@ -177,7 +177,7 @@ and the release `gate` find their tests from the state directory. This phase's g
 here; everything else it lists is proven in container mode by the container drive, and in
 `REFITT_TEST_PG=1` mode partly here (stubbed) and fully by the drive.
 
-- [ ] Rewrite `tools/temp_pg.sh` on `temp_common.sh` per PLAN §2: the daemon check before anything
+- [x] Rewrite `tools/temp_pg.sh` on `temp_common.sh` per PLAN §2: the daemon check before anything
       is created, bounded at 10 s (message names `REFITT_TEST_PG=1`); capture of the five scratch variables in
       `REFITT_TEST_PG=1` mode; `PGTZ`; the labelled container on `127.0.0.1::5432` with
       `TZ=America/Indiana/Indianapolis`; the host-side psycopg2 readiness loop with a 60 s
@@ -185,9 +185,9 @@ here; everything else it lists is proven in container mode by the container driv
       rootkey; `init --drop --test` with stdout on stderr; the dev server in its own process group on
       a free port with `REFITT_API_SITE`/`REFITT_API_PORT` exported and a 30 s HTTP readiness
       deadline, probed with proxies disabled; `temp_run`.
-- [ ] Rewrite its header (R12's half for this helper), with the root-anchored usage line
+- [x] Rewrite its header (R12's half for this helper), with the root-anchored usage line
       `REFITT_TEMP_WITH_SERVER=1 tools/temp_pg.sh sh -c 'uv run pytest "$REPO_ROOT/tests/test_web"'`.
-- [ ] In the same commit, because the old lines stop finding tests once the command runs in the
+- [x] In the same commit, because the old lines stop finding tests once the command runs in the
       state directory: `AGENTS.md` § Factory → Profile `verify` becomes
       `REFITT_TEMP_WITH_SERVER=1 tools/temp_pg.sh sh -c 'uv run pytest -v "$REPO_ROOT"' && make client-boundary metadata`,
       and the release recipe's `gate` step becomes

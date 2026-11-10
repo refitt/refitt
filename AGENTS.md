@@ -130,7 +130,7 @@ env is required (`uv sync`).
 | landing | `squash-pr`: a PR into `develop`, squashed on merge. The maintainer merges |
 | ci | `gh pr checks` must be green before landing. `tests.yml` runs on every PR into `develop` (the test matrix, the client boundary, package metadata); `docker.yml` builds the image on a PR that touches it. Until ROADMAP Part I turns `develop` green, a cycle's PR names each check it expects red and why, and any other red is a stop |
 | setup | `uv sync --all-packages`: needs the native libraries `libpq` and `librdkafka` (see `Makefile`) |
-| verify | `REFITT_TEMP_WITH_SERVER=1 tools/temp_pg.sh uv run pytest -v && make client-boundary metadata`: the full gate, mirroring `tests.yml`. Assert the reported pass count, not the exit code. Phases narrow it (`tools/temp_db.sh` for a fast SQLite drive where §C4 allows); publish and release run all of it |
+| verify | `REFITT_TEMP_WITH_SERVER=1 tools/temp_pg.sh sh -c 'uv run pytest -v "$REPO_ROOT"' && make client-boundary metadata`: the full gate, mirroring `tests.yml`. Assert the reported pass count, not the exit code. Phases narrow it (`tools/temp_db.sh` for a fast SQLite drive where §C4 allows); publish and release run all of it |
 | throwaway environment | `tools/temp_db.sh <cmd…>` (fast SQLite tier) and `tools/temp_pg.sh <cmd…>` (faithful Postgres tier); contract below |
 | coupled core | `py/libs/refitt-data/src/refitt/database/{__init__,model,connection,core}.py` with `py/libs/refitt-assets/src/refitt/assets/database/`; `py/libs/refitt-core/src/refitt/core/{__init__,config,logging}.py`; `py/apps/refitt-server/src/refitt/server/{app,auth,endpoint}.py` with `route/__init__.py`; `py/libs/refitt-api/src/refitt/api/{token,response}.py` |
 | same-commit rules | see § Invariants → Conventions |
@@ -169,7 +169,7 @@ release:
     subject: "[release] Version {v}"
   gate:
     - uv sync --all-packages
-    - REFITT_TEMP_WITH_SERVER=1 tools/temp_pg.sh uv run pytest -v
+    - REFITT_TEMP_WITH_SERVER=1 tools/temp_pg.sh sh -c 'uv run pytest -v "$REPO_ROOT"'
     - make client-boundary
     - make metadata
   tag:

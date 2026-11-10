@@ -1,80 +1,144 @@
 #!/bin/sh
-# Run a command against a throwaway, hermetic PostgreSQL REFITT database — the
-# FAITHFUL TIER for server/API/integration verify drives. Exercises Postgres-only
-# SQL that temp_db.sh's SQLite cannot (invariant §C4).
+# Run a command against a throwaway PostgreSQL REFITT database: the faithful
+# tier for server, API and integration verify drives. It exercises the
+# Postgres-only SQL that temp_db.sh's SQLite cannot (invariant §C4).
 #
 #   Usage:  tools/temp_pg.sh <command> [args...]
-#           REFITT_TEMP_WITH_SERVER=1 tools/temp_pg.sh sh -c "uv run pytest tests/test_web"
+#           REFITT_TEMP_WITH_SERVER=1 tools/temp_pg.sh sh -c 'uv run pytest "$REPO_ROOT/tests/test_web"'
 #
-# BRING-UP: by default starts an ephemeral `postgres` docker container and tears it
-# down on exit. To reuse an existing Postgres instead, export REFITT_TEST_PG=1 with
-# REFITT_DATABASE_DEFAULT_{HOST,PORT,DATABASE,USER,PASSWORD} pointing at a SCRATCH
-# database (it is dropped and recreated).
+# Bring-up. By default it starts an ephemeral `postgres:16` container
+# (REFITT_TEST_PG_IMAGE overrides the image), published only on 127.0.0.1 at a
+# port Docker picks, and runs nothing until a connection from the host
+# succeeds. With no Docker daemon answering it stops before starting anything.
+# To use an existing scratch database instead, export REFITT_TEST_PG=1 with
+# REFITT_DATABASE_DEFAULT_{HOST,PORT,DATABASE,USER,PASSWORD}: its tables are
+# dropped and recreated with `refitt database init --drop --test`. In container
+# mode those variables are ignored, so a developer's own database is never
+# reached.
 #
-# CAVEAT (first cut; hardening is issues/verify-helpers-harden.md): the optional
-# API-server path (REFITT_TEMP_WITH_SERVER=1) and the docker lifecycle are minimal.
+# With REFITT_TEMP_WITH_SERVER=1 it also starts the dev API server on a free
+# local port, exports REFITT_API_SITE and REFITT_API_PORT for it, and runs the
+# command only once the server answers HTTP. Each bring-up wait is bounded
+# (60 s for Postgres, 30 s for the server) and names what did not come up.
+#
+# Every Postgres session uses America/Indiana/Indianapolis, the zone the seed
+# data assumes: PGTZ for libpq clients, and the container's server default.
+#
+# The command runs inside a fresh state directory, which is also its HOME and
+# TMPDIR, so the developer's ~/.refitt and any repo-root .refitt config are
+# never read or written; it finds the repository in $REPO_ROOT, so test paths
+# are written "$REPO_ROOT/...". Pytest's cache and Python bytecode go to the
+# state directory too. Inherited REFITT_DATABASE_* (but for the five above with
+# REFITT_TEST_PG=1), REFITT_API_ROOTKEY* and libpq PG* variables are dropped,
+# and the command gets a REFITT_API_ROOTKEY generated for this run, with or
+# without the server. uv runs with UV_NO_SYNC against the existing
+# environment, so it must already be synced, and uv.lock is never rewritten.
+#
+# The helper's own output goes to stderr, and it exits with the command's
+# status. Without a terminal the command runs in its own process group; INT and
+# TERM stop that group, and every exit path stops the server, removes the
+# container and its volumes, and removes the state directory. It refuses to
+# run as root, with /etc/refitt.toml present, or with no synced environment,
+# and needs perl.
 set -eu
 
-root="$(pwd)"
-export UV_PROJECT="$root"
+temp_name=temp_pg.sh
+temp_kind=pg
+. "$(dirname -- "$0")/temp_common.sh"
 
-PG_IMAGE="${REFITT_TEST_PG_IMAGE:-postgres:16}"
-PG_DB="${REFITT_DATABASE_DEFAULT_DATABASE:-refitt_test}"
-PG_USER="${REFITT_DATABASE_DEFAULT_USER:-refitt}"
-PG_PASSWORD="${REFITT_DATABASE_DEFAULT_PASSWORD:-refitt}"
-PG_HOST="${REFITT_DATABASE_DEFAULT_HOST:-127.0.0.1}"
-PG_PORT="${REFITT_DATABASE_DEFAULT_PORT:-5544}"
+pg_zone=America/Indiana/Indianapolis
+pg_wait=60
+server_wait=30
 
-container=""
-server_pid=""
-cleanup() {
-    status=$?
-    [ -n "$server_pid" ] && kill "$server_pid" 2>/dev/null || true
-    [ -n "$container" ] && docker rm -f "$container" >/dev/null 2>&1 || true
-    exit "$status"
-}
-trap cleanup EXIT INT TERM
+if [ "${REFITT_TEST_PG:-0}" = 1 ]; then
+    # Captured before temp_enter drops every inherited database variable.
+    pg_host=${REFITT_DATABASE_DEFAULT_HOST:-127.0.0.1}
+    pg_port=${REFITT_DATABASE_DEFAULT_PORT:-5432}
+    pg_db=${REFITT_DATABASE_DEFAULT_DATABASE:-refitt_test}
+    pg_user=${REFITT_DATABASE_DEFAULT_USER:-refitt}
+    pg_password=${REFITT_DATABASE_DEFAULT_PASSWORD:-refitt}
+else
+    # Bounded: a wedged daemon, or one still starting, must not hang the helper.
+    if ! command -v docker >/dev/null 2>&1 \
+            || ! HOME=$temp_real_home perl -e 'alarm 10; exec { $ARGV[0] } @ARGV' -- docker info >/dev/null 2>&1; then
+        temp_die "no Docker daemon answers; set REFITT_TEST_PG=1 with REFITT_DATABASE_DEFAULT_{HOST,PORT,DATABASE,USER,PASSWORD} to use a scratch Postgres instead"
+    fi
+    # Fixed throwaway credentials: nothing inherited reaches the container.
+    pg_host=127.0.0.1
+    pg_port=''
+    pg_db=refitt_test
+    pg_user=refitt
+    pg_password=refitt
+fi
 
-if [ "${REFITT_TEST_PG:-0}" != "1" ]; then
-    command -v docker >/dev/null 2>&1 || {
-        echo "temp_pg.sh: docker not found; set REFITT_TEST_PG=1 to reuse an external Postgres" >&2
-        exit 127
-    }
-    container="refitt-temp-pg-$$"
-    docker run -d --name "$container" \
-        -e POSTGRES_DB="$PG_DB" -e POSTGRES_USER="$PG_USER" -e POSTGRES_PASSWORD="$PG_PASSWORD" \
-        -p "$PG_PORT:5432" "$PG_IMAGE" >/dev/null
-    tries=0
-    until docker exec "$container" pg_isready -U "$PG_USER" -d "$PG_DB" >/dev/null 2>&1; do
-        tries=$((tries + 1))
-        [ "$tries" -gt 60 ] && { echo "temp_pg.sh: Postgres did not become ready in 60s" >&2; exit 1; }
+temp_preflight
+temp_enter
+export PGTZ=$pg_zone
+
+if [ "${REFITT_TEST_PG:-0}" != 1 ]; then
+    temp_container="refitt-temp-pg-${temp_state##*.}"
+    # TZ sets the server's default timezone at initdb, for sessions that skip PGTZ.
+    temp_docker run -d --name "$temp_container" --label "refitt.temp-pg.state=$temp_state" \
+        -e POSTGRES_DB="$pg_db" -e POSTGRES_USER="$pg_user" -e POSTGRES_PASSWORD="$pg_password" \
+        -e TZ="$pg_zone" -p 127.0.0.1::5432 "${REFITT_TEST_PG_IMAGE:-postgres:16}" >/dev/null \
+        || temp_die "could not start the Postgres container"
+    pg_port=$(temp_docker port "$temp_container" 5432/tcp | sed -n 's/^127\.0\.0\.1:\([0-9][0-9]*\)$/\1/p' | head -n 1)
+    [ -n "$pg_port" ] || temp_die "the Postgres container published no port on 127.0.0.1"
+    # Wait for a real connection from the host: the image's first server only
+    # listens on its socket, and Docker's proxy accepts TCP before Postgres does.
+    pg_deadline=$(( $(date +%s) + pg_wait ))
+    until PGHOST=$pg_host PGPORT=$pg_port PGDATABASE=$pg_db PGUSER=$pg_user PGPASSWORD=$pg_password PGCONNECT_TIMEOUT=2 \
+            uv run python -c 'import psycopg2; psycopg2.connect("").close()' </dev/null >/dev/null 2>&1; do
+        [ "$(temp_docker inspect -f '{{.State.Running}}' "$temp_container" 2>/dev/null)" = true ] \
+            || temp_die "the Postgres container exited before accepting a connection"
+        [ "$(date +%s)" -lt "$pg_deadline" ] \
+            || temp_die "Postgres did not accept a connection from the host within ${pg_wait}s"
         sleep 1
     done
 fi
 
-export REFITT_DATABASE_SCOPE_READ=default
-export REFITT_DATABASE_SCOPE_WRITE=default
 export REFITT_DATABASE_DEFAULT_PROVIDER=postgresql
-export REFITT_DATABASE_DEFAULT_DATABASE="$PG_DB"
-export REFITT_DATABASE_DEFAULT_USER="$PG_USER"
-export REFITT_DATABASE_DEFAULT_PASSWORD="$PG_PASSWORD"
-export REFITT_DATABASE_DEFAULT_HOST="$PG_HOST"
-export REFITT_DATABASE_DEFAULT_PORT="$PG_PORT"
-export REFITT_LOGGING_LEVEL="${REFITT_LOGGING_LEVEL:-warning}"
+export REFITT_DATABASE_DEFAULT_HOST="$pg_host"
+export REFITT_DATABASE_DEFAULT_PORT="$pg_port"
+export REFITT_DATABASE_DEFAULT_DATABASE="$pg_db"
+export REFITT_DATABASE_DEFAULT_USER="$pg_user"
+export REFITT_DATABASE_DEFAULT_PASSWORD="$pg_password"
 
-# Recreate + seed the schema.
-uv run refitt database init --drop --test
+temp_rootkey
 
-# Optionally launch the API server for endpoint drives.
-if [ "${REFITT_TEMP_WITH_SERVER:-0}" = "1" ]; then
-    export REFITT_API_ROOTKEY="${REFITT_API_ROOTKEY:-$(uv run python -c 'from refitt.api.token import Cipher; print(Cipher.new_rootkey().value)')}"
-    export REFITT_API_SITE="${REFITT_API_SITE:-http://localhost}"
-    export REFITT_API_PORT="${REFITT_API_PORT:-5050}"
-    uv run refitt-server start --dev --port "$REFITT_API_PORT" &
-    server_pid=$!
-    sleep 5
+if [ -n "$temp_container" ]; then
+    uv run refitt database init --drop --test </dev/null >&2 \
+        || temp_die "could not create and seed the throwaway database"
+else
+    # A scratch database on a remote host still asks before dropping it.
+    uv run refitt database init --drop --test >&2 \
+        || temp_die "could not create and seed the scratch database"
 fi
 
-status=0
-"$@" || status=$?
-exit "$status"
+if [ "${REFITT_TEMP_WITH_SERVER:-0}" = 1 ]; then
+    api_port=$(uv run python -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()' </dev/null) \
+        || temp_die "could not pick a port for the dev server"
+    export REFITT_API_SITE=http://localhost
+    export REFITT_API_PORT="$api_port"
+    # Its own process group: the werkzeug reloader forks a child that a
+    # single-pid kill would orphan.
+    perl -e "$temp_pgrp" -- uv run refitt-server start --dev --port "$api_port" </dev/null >&2 &
+    temp_server=$!
+    server_deadline=$(( $(date +%s) + server_wait ))
+    until uv run python -c '
+import sys, urllib.error, urllib.request
+# No proxy: an error page from a proxy would read as the server answering.
+opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+try:
+    opener.open(sys.argv[1], timeout=2)
+except urllib.error.HTTPError:
+    pass
+' "http://127.0.0.1:$api_port/" </dev/null >/dev/null 2>&1; do
+        [ "$(date +%s)" -lt "$server_deadline" ] \
+            || temp_die "the dev server did not answer HTTP within ${server_wait}s"
+        sleep 1
+    done
+fi
+
+temp_run "$@"
+exit "$temp_status"
