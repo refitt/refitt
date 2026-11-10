@@ -96,11 +96,12 @@ the `temp_pg.sh` container mode, and its `REFITT_TEST_PG=1` mode against a scrat
   and for `temp_pg.sh` so SHALL the container and the dev server it started.
 - **R6** — WHEN either helper runs `<cmd>`, the helper's own output SHALL go to stderr only, and
   its exit status SHALL equal `<cmd>`'s.
-- **R7** — Each helper SHALL run `<cmd>` so that a relative write cannot reach the worktree
-  (contract item 4), and the invocations the repo documents (the profile's `verify`, the release
-  `gate`, and each helper's usage lines) SHALL find their test paths.
-  [NEEDS CLARIFICATION: where `<cmd>` runs, and therefore which side changes — see Clarifications
-  Q1.]
+- **R7** — WHEN either helper runs `<cmd>`, `<cmd>`'s working directory SHALL be the helper's
+  state directory (contract item 4), and `<cmd>` SHALL find the repo root in an environment
+  variable the helper exports. The profile's `verify`, the release recipe's `gate` and each helper's
+  usage lines SHALL use root-anchored paths and find their tests. After any of those invocations,
+  the worktree SHALL hold no new untracked or modified file, including pytest's cache and any other
+  tool output.
 - **R8** — WHEN `tools/temp_pg.sh` starts a container, it SHALL publish Postgres only on
   `127.0.0.1`, on a port free at that moment, so two concurrent runs both succeed. It SHALL run
   `<cmd>` only after a connection from the host succeeds and, with `REFITT_TEMP_WITH_SERVER=1`,
@@ -125,7 +126,7 @@ the `temp_pg.sh` container mode, and its `REFITT_TEST_PG=1` mode against a scrat
 - **CI.** `.github/workflows/` is untouched, including the runner-only `TZ` in `tests.yml:48`.
 - **REFITT product code.** No change under `py/`. In particular, the always-on SQLite prompt in
   `refitt.admin`'s `database init` (`init.py:75-78`) is a product defect; R1 is met on the helper
-  side, and fixing `init` itself is a separate seed (see the report's question to the foreman).
+  side, and fixing `init` itself is a separate seed, which the plan step files under `issues/`.
 - **The stale lock.** Regenerating `uv.lock` and the workspace's undeclared dependencies belong to
   `issues/workspace-install-hygiene.md`. R11 requires only that a helper never rewrites the lock.
 - **The tier split.** Which drives belong on SQLite versus Postgres is
@@ -140,28 +141,24 @@ the `temp_pg.sh` container mode, and its `REFITT_TEST_PG=1` mode against a scrat
 
 ## Clarifications
 
-- **Q1 (open, blocks plan):** R7 — contract item 4 and the documented invocations contradict each
-  other today. Where should `<cmd>` run?
-  - **(a)** In the state directory, per item 4 as written. Each helper exports the repo root to
-    `<cmd>`, and the documented invocations change to root-anchored paths: the profile's `verify`
-    and the release `gate` in `AGENTS.md`, and the helpers' usage lines.
-  - **(b)** At the repo root, as `temp_pg.sh` does now. Item 4 in `AGENTS.md` is reworded to rely on
-    item 3's redirection. The cost: a `.refitt/config.toml` in the worktree is the local config
-    layer again, unless the plan blocks it some other way, and tools like pytest write their caches
-    into the worktree.
-  - **(c)** Something else.
-
-  [NEEDS CLARIFICATION: (a), (b) or (c)?]
-- **Q2 (open, blocks plan):** How is `temp_pg.sh` verified when the build host has no Docker? The
-  shaping host has neither Docker nor any Postgres binary, so R4, R5, R8 and R10 cannot run here in
-  container mode.
-  - **(a)** The build verifies `temp_db.sh` and `temp_pg.sh`'s no-daemon path (R9) locally, and
-    the operator runs the container-mode drive on a Docker-capable host before review.
-  - **(b)** As (a), but container mode is checked only by reading the script, and its first live
-    run is the test-suite cycle's verify.
-  - **(c)** Pull the Docker-free bring-up (Non-goals) into scope, at the cost of appetite.
-
-  [NEEDS CLARIFICATION: (a), (b) or (c)?]
+- **Q:** R7 — contract item 4 and the documented invocations contradict each other today. Where
+  should `<cmd>` run? — **A:** In the state directory, per item 4 as written. Each helper exports
+  the repo root to `<cmd>`. The profile's `verify`, the release recipe's `gate` and each helper's
+  usage lines change to root-anchored paths in this cycle. Pytest's cache and other tool output
+  must not land in the worktree. The plan picks the mechanism (resolved 2026-11-09).
+- **Q:** How is `temp_pg.sh` verified when the build host has no Docker? The shaping host has
+  neither Docker nor any Postgres binary, so R4, R5, R8 and R10 cannot run there in container
+  mode. — **A:** The build verifies `temp_db.sh` and `temp_pg.sh`'s no-daemon path (R9) locally.
+  Before review, the foreman has the container-mode drive run on a Docker-capable host. The plan
+  names that drive as one command. Falling back to checking container mode only by reading the
+  script needs the maintainer's word, recorded here as a later Clarification (resolved 2026-11-09).
+- **Q:** Twelve R-IDs exceed the size circuit-breaker. Split? — **A:** No; accepted as one
+  deliverable (resolved 2026-11-09).
+- **Q:** Does the SQLite `init` prompt get its own seed? — **A:** Yes. The plan step files it; it
+  stays a non-goal here (resolved 2026-11-09).
+- **Q:** Do the two scope non-goals stand: other inherited `REFITT_*` variables, and the
+  remote-database confirmation in `REFITT_TEST_PG=1` mode? — **A:** Yes, both as written (resolved
+  2026-11-09).
 
 ## Related materials
 
