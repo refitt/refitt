@@ -1,5 +1,5 @@
 ---
-status: unshaped
+status: adopted:verify-helpers-harden
 kind: test
 appetite: small
 lane: public
