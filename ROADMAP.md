@@ -8,18 +8,18 @@ the work still intended. It starts with the repairs that make the workspace hone
 on, then lists the cycles that rebuild each layer for the portal.
 
 This is a **forward-looking index, not an implementation plan.** Each entry states a problem and the
-intent behind solving it; the *how* belongs to `/rf-plan`. As-built architecture and the
+intent behind solving it; the *how* belongs to `code refitt plan`. As-built architecture and the
 load-bearing invariants live in [`AGENTS.md`](AGENTS.md), which stays ground truth.
 
 Each entry's **Seed** points at an [`issues/{slug}.md`](issues/) file carrying the evidence in
 enough detail that a future session does not have to re-derive it. Those are **candidates, not
-contracts**: `/rf-feature` promotes one into `spec/{slug}/GOAL.md`, and that promotion is where a
-human negotiates appetite, non-goals, and the R-IDs `rf-review` will grade. The `status:` field on
+contracts**: `code refitt feature` promotes one into `spec/{slug}/GOAL.md`, and that promotion is where a
+human negotiates appetite, non-goals, and the R-IDs `code refitt review` will grade. The `status:` field on
 each issue is the guard — `unshaped` (raw deferral), `shaped` (negotiated, not yet accepted into a
-cycle), `adopted:{slug}` (promoted, and retired from this index by `/rf-roadmap` once the cycle lands
+cycle), `adopted:{slug}` (promoted, and retired from this index by `code refitt roadmap` once the cycle lands
 on `develop`). Two further values close an item **without** shipping — `declined` and
-`accepted-behaviour` — and those are listed under *Settled questions* rather than as cycles. See
-*Deferred work* in [`AGENTS.md`](AGENTS.md) §5 for which lane an item belongs in.
+`accepted-behaviour` — and those are listed under *Settled questions* rather than as cycles. See *Where deferred work goes* in [`AGENTS.md`](AGENTS.md) § Factory for which lane an item
+belongs in.
 
 **Order is deliberate.** Part I comes first because CI is red on `develop` for reasons unrelated to
 any feature, and nothing after it can be verified until that is fixed. Several entries are hard
@@ -69,6 +69,17 @@ every sync go `--frozen`.
 prerequisite for the test-suite entry (CI dies before pytest) and for any release*
 **Seed:** [`issues/workspace-install-hygiene.md`](issues/workspace-install-hygiene.md)
 
+## The verify helpers are not hermetic
+
+`tools/temp_db.sh` and `tools/temp_pg.sh` are the throwaway environment every cycle verifies in. The
+SQLite tier cannot run unattended: `init` always prompts on SQLite, a user config conflicts with the
+forced settings, and the documented relative test paths cannot resolve. The Postgres tier needs HOME
+and config isolation, `PGTZ`, free ports, real readiness probes, and a daemon check. Until both meet
+the contract in `AGENTS.md` § Factory, the test-suite cycle has no verify to stand on.
+
+*Horizon: now · Depends on: — · Refs: prerequisite for the test-suite entry below*
+**Seed:** [`issues/verify-helpers-harden.md`](issues/verify-helpers-harden.md)
+
 ## The test suite cannot collect, so CI is red for the wrong reasons
 
 Sixteen test files still import the pre-split module tree (`refitt.core.web.*`, `refitt.web.api`,
@@ -79,8 +90,7 @@ were handled. The cycle should also re-home each test with the distribution it e
 53% of tests that carry no marker (so `-m unit` means something), and make the endpoint tests
 hermetic. This is the factory's first real dogfood cycle.
 
-*Horizon: now · Depends on: the install-hygiene entry for a green CI run, and a `/rf-harness` pass
-hardening `temp_db.sh` / `temp_pg.sh` (see *A note on factory work*) · Refs: prerequisite for every
+*Horizon: now · Depends on: the install-hygiene entry for a green CI run, and the verify-helpers entry above · Refs: prerequisite for every
 data-layer and API cycle*
 **Seed:** [`issues/test-suite-repair.md`](issues/test-suite-repair.md)
 
@@ -105,9 +115,8 @@ version drift spans 0.27.0 at the root, 0.26.1 in the members and `__version__`,
 there. The first release under the new pipeline settles the version, the PyPI credentials and
 projects, the `develop → master` promotion, and required status checks on `master`.
 
-*Horizon: near-term · Depends on: the three entries above (a green CI on a frozen lock) · Refs: the
-`/rf-release` skill is deliberately not ported yet; author it from this release's procedure (see
-*A note on factory work*)*
+*Horizon: near-term · Depends on: the three entries above (a green CI on a frozen lock) · Refs: the release recipe in `AGENTS.md` § Factory is drafted
+but has never run; this release validates and corrects it*
 **Seed:** [`issues/first-modern-release.md`](issues/first-modern-release.md)
 
 ---
@@ -144,8 +153,8 @@ alongside it.
 The portal needs a schema that can change. Today it cannot: there is no migration path (§C2), the
 column metadata exists twice (§C1), the seed's foreign keys are positional integers (§C3), and
 SQLite and Postgres disagree on foreign keys, JSON and timestamps (§C4). Each of these is a Tier 2
-"honor until redesigned" constraint. These cycles are that redesign, and `/rf-harness` retires each
-constraint once its cycle lands. Production's live schema is unknown from this repository and must
+"honor until redesigned" constraint. These cycles are that redesign, and each retires its
+constraint from `AGENTS.md` § Invariants (a `[harness]` change) once it lands. Production's live schema is unknown from this repository and must
 be inspected before migrations are adopted.
 
 ## `refitt database init --core` leaves a production database unable to ingest
@@ -198,7 +207,7 @@ other, and `to_json` emits them with `str()`, so API timestamp strings depend on
 "Postgres-only `->>`" claim that shapes the two-tier verify substrate is stale for SQLite 3.38+.
 
 *Horizon: mid-term · Depends on: the migrations entry (JSONB is a migration) · Refs: retires
-invariant §C4; corrects factory prose via `/rf-harness`*
+invariant §C4; corrects the § Factory prose in `AGENTS.md`*
 **Seed:** [`issues/db-dialect-parity.md`](issues/db-dialect-parity.md)
 
 ## The test seed cannot exercise the portal
@@ -224,7 +233,7 @@ The API was built for machine clients holding a key:secret pair. A browser porta
 human-friendly sessions, a stable serialized contract, CORS, pagination and a published schema, and
 an app that can be built per test. Several of these changes amend Tier 1 invariants: the app shape
 (§6), the auth posture and status mapping (§5), session scoping (§7), and import-time binding (§4).
-Each such cycle therefore carries a constitution change through `/rf-harness` alongside its code,
+Each such cycle therefore carries a constitution change to `AGENTS.md` alongside its code,
 and nearly every file it touches is on the high-blast-radius list.
 
 ## Small API defects that do not need the redesign
@@ -305,29 +314,30 @@ Recorded so they are not re-raised by the next review. These carry `status: decl
 `status: accepted-behaviour` and are **not** queue entries. Work that *shipped* leaves no entry
 here: the code refutes a re-filing on its own, and `spec/{slug}/` holds the account.
 
-None recorded yet.
+- **CI/DevOps modernization as a cycle** (`spec/ci-devops-modernization/`, `declined`,
+  2026-11-09). Its GOAL was shaped, but the work landed outside the factory as `8422947`, and the
+  rest is carried by the Part I entries. The GOAL stays as the record that the question was asked.
 
 # A note on factory work
 
-Changes to `.agents/` are not cycles and are not indexed here. `/rf-harness` applies them under a
-human gate and records each decision in
-[`.agents/factory/harness-log.md`](.agents/factory/harness-log.md). Several entries above depend on
-harness work that the ledger carries as *deferred*:
+The factory's method and skills live in the operator's knowledge base, not in this repository
+(`AGENTS.md` § Factory). Changes to § Factory and § Invariants are not cycles and are not indexed
+here: they land as `[harness]` commits under a human gate. Two open items moved out of the retired
+harness ledger at adoption (2026-11-09):
 
-- **Harden `temp_db.sh` / `temp_pg.sh`** before the test-suite cycle. The SQLite tier cannot run
-  unattended today: `init` always prompts on SQLite, a user config conflicts with the forced
-  settings, and the documented relative test paths cannot resolve. The Postgres tier needs HOME and
-  config isolation, `PGTZ`, free ports, real readiness probes, and a daemon check.
+- **Hardening `temp_db.sh` / `temp_pg.sh`** is now the verify-helpers entry in Part I.
 - **A PR-intake flow** (check out a contributor's PR, conform it, then merge) before Braden's
-  refitt-gtf PR.
-- **`/rf-release`**, authored from the first modern release's actual procedure.
-- **Constitution corrections** the evidence sweep found. The workspace map omits `refitt-host`. The
-  stated dependency order `core → assets → data → api` is inverted for data and api: `refitt-data`
-  imports `refitt-api`. The SQLite `->>` limitation is stale.
+  refitt-gtf PR, and **the release recipe**, corrected from the first modern release, are tracked
+  in the operator's KB.
+
+Still open: the **constitution corrections** the evidence sweep found, each applied with the cycle
+that settles its fact. The workspace map omits `refitt-host`. The stated dependency order
+`core → assets → data → api` is inverted for data and api: `refitt-data` imports `refitt-api`. The
+SQLite `->>` limitation is stale.
 
 # A note on security work
 
 Security hardening is tracked separately and is **not** listed here. Fixes land as ordinary public
 commits and PRs. But this repository is public, and a standing, ranked inventory of unremediated
-weaknesses is not something to publish. See *Deferred work* in [`AGENTS.md`](AGENTS.md) §5 for how
+weaknesses is not something to publish. See *Where deferred work goes* in [`AGENTS.md`](AGENTS.md) § Factory for how
 the two lanes divide.

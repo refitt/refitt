@@ -129,7 +129,7 @@ and to conform it here instead. Every issue above is **pre-existing** on `develo
     belong in this repo?
 - **Sequencing.** The rename changes import paths Braden's upcoming refitt-gtf PR may already use.
   Agree the new name with him before landing it, or land it after his PR.
-- AGENTS.md's workspace map and DAG text need a `/rf-harness` update in step with this cycle (the
+- AGENTS.md's workspace map and DAG text need an update in step with this cycle (the
   libs table, "nine distributions", the dependency order).
 - Related: [`workspace-install-hygiene.md`](workspace-install-hygiene.md) (lock regeneration),
   [`refitt-gtf-rewrite.md`](refitt-gtf-rewrite.md), [`docs-site-scaffold.md`](docs-site-scaffold.md).

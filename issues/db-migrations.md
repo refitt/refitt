@@ -51,7 +51,7 @@ needs the test suite working first, and a look at production. **Pre-existing.**
 Schema changes ship as reviewed, reversible migrations. Production is baselined against the ORM. Test
 databases are built through the same migration path production uses. `refitt database` gains
 upgrade, downgrade and status commands with documented behavior. §C2 is retired from
-`invariants.md` through `/rf-harness`.
+`AGENTS.md` § Invariants (a `[harness]` change).
 
 ## Sketch of the acceptance criteria
 

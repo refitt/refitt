@@ -61,7 +61,7 @@ regeneration and PyPI credentials as explicit follow-ups. All of the above is **
 One version across every distribution, `__version__`, and the docs. All eleven names exist on PyPI
 and publish together on a GitHub Release. `develop` promoted to `master`, so Dependabot and the
 modern workflows are live on the default branch. `master` requires the CI checks. The procedure is
-written down as `/rf-release`.
+written down as the release recipe in `AGENTS.md` § Factory.
 
 ## Sketch of the acceptance criteria
 
@@ -79,8 +79,8 @@ written down as `/rf-release`.
 - Decide in shaping: the version number (0.27.0 or a reset), whether siblings pin `==` each other,
   PyPI auth (account token vs Trusted Publishing), and whether to promote `develop → master` early
   (to activate Dependabot security updates) ahead of the release itself.
-- The `/rf-release` harness skill is deliberately not ported from HyperShell yet. Author it from this
-  release's actual procedure; it is a deferred item in `.agents/factory/harness-log.md`.
+- `AGENTS.md` § Factory carries a release recipe drafted at adoption (2026-11-09) from the
+  repository's history; it has never run. Correct it from this release's actual procedure.
 - Related: [`workspace-install-hygiene.md`](workspace-install-hygiene.md),
   [`test-suite-repair.md`](test-suite-repair.md), [`refitt-host-conform.md`](refitt-host-conform.md).
 - Found by: out-of-cycle roadmap evidence sweep, 2026-10-04.

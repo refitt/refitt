@@ -2,8 +2,8 @@
 # Run a command against a throwaway, hermetic SQLite REFITT database so factory
 # verify/review drives never touch the developer's real database, logs, or config.
 #
-#   Usage:  .agents/factory/bin/temp_db.sh <command> [args...]
-#           .agents/factory/bin/temp_db.sh sh -c "uv run pytest -m unit tests/test_database"
+#   Usage:  tools/temp_db.sh <command> [args...]
+#           tools/temp_db.sh sh -c "uv run pytest -m unit tests/test_database"
 #
 # FAST TIER (SQLite). The database is created and seeded with the test dataset
 # (`refitt database init --test`) before the command runs, then discarded.
@@ -12,7 +12,7 @@
 # and schema-qualified paths are NOT exercised here — use temp_pg.sh for
 # server/API/integration phases (invariant §C4).
 #
-# CAVEAT (first cut, to be hardened by the test-suite-rehab feature): env has the
+# CAVEAT (first cut; hardening is issues/verify-helpers-harden.md): env has the
 # highest config precedence, so provider/file/scope are forced below; but a user
 # config that adds host/user to `database.default` could still interfere. Run on a
 # machine without a conflicting ~/.refitt database config, or set REFITT_TEST_PG=1

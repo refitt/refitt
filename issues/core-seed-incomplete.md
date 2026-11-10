@@ -62,6 +62,6 @@ built on the same core reference data, not a parallel copy. The flags' help text
   only makes today's `--core` complete. Load order must respect FKs (`source` → `source_type`,
   `user`); `Entity.metadata.sorted_tables` already gives a topological order (used at
   `admin/database/check.py:57`).
-- The `ears.md` correction is a `/rf-harness` edit.
+- The `ears.md` this corrected was retired with `.agents/`; nothing in the repo still states it.
 - Related: [`seed-dataset-v2.md`](seed-dataset-v2.md).
 - Found by: out-of-cycle roadmap evidence sweep, 2026-10-04.

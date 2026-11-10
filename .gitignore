@@ -113,6 +113,11 @@ venv.bak/
 # PyCharm
 .idea
 
-# Factory: private security lane and maintainer-local notes (never published; see AGENTS.md §5)
+# Factory: private security lane and maintainer-local notes (never published; see AGENTS.md § Factory)
 .security/
 .local/
+
+# Factory: the operator's harness is never committed here (AGENTS.md § Factory); a local copy may exist
+.agents/
+.claude
+.worktrees/

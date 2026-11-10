@@ -76,7 +76,7 @@ rotate without logging everyone out.
   - Whether the inverted 401/403 mapping survives. Browser interceptors expect 401 for "re-auth".
   - The migration path for existing machine clients and the published SDK.
 - `api/token.py`, `server/auth.py` and the token/client routes are high-blast-radius. The §5/§7 text
-  changes through `/rf-harness`.
+  changes in `AGENTS.md` § Invariants alongside the code.
 - Related: [`api-app-factory.md`](api-app-factory.md),
   [`api-contract-portal.md`](api-contract-portal.md), [`seed-dataset-v2.md`](seed-dataset-v2.md)
   (personas).

@@ -3,15 +3,15 @@
 # FAITHFUL TIER for server/API/integration verify drives. Exercises Postgres-only
 # SQL that temp_db.sh's SQLite cannot (invariant §C4).
 #
-#   Usage:  .agents/factory/bin/temp_pg.sh <command> [args...]
-#           REFITT_TEMP_WITH_SERVER=1 .agents/factory/bin/temp_pg.sh sh -c "uv run pytest tests/test_web"
+#   Usage:  tools/temp_pg.sh <command> [args...]
+#           REFITT_TEMP_WITH_SERVER=1 tools/temp_pg.sh sh -c "uv run pytest tests/test_web"
 #
 # BRING-UP: by default starts an ephemeral `postgres` docker container and tears it
 # down on exit. To reuse an existing Postgres instead, export REFITT_TEST_PG=1 with
 # REFITT_DATABASE_DEFAULT_{HOST,PORT,DATABASE,USER,PASSWORD} pointing at a SCRATCH
 # database (it is dropped and recreated).
 #
-# CAVEAT (first cut, to be hardened by the test-suite-rehab feature): the optional
+# CAVEAT (first cut; hardening is issues/verify-helpers-harden.md): the optional
 # API-server path (REFITT_TEMP_WITH_SERVER=1) and the docker lifecycle are minimal.
 set -eu
 

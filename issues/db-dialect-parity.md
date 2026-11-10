@@ -50,7 +50,7 @@ Invariant §C4 is a Tier 2 current constraint. The JSONB conversion is a schema 
 Postgres uses `jsonb`, and JSON access is portable. SQLite enforces foreign keys. Timestamps are
 timezone-aware end to end and serialize identically on both dialects. The factory's verify guidance
 states the *real* remaining dialect gaps, so a phase picks its tier on facts. §C4 is retired or
-rewritten through `/rf-harness`.
+rewritten in `AGENTS.md` § Invariants (a `[harness]` change).
 
 ## Sketch of the acceptance criteria
 
@@ -66,8 +66,8 @@ rewritten through `/rf-harness`.
 
 ## Notes
 
-- The verify-substrate prose (`temp_db.sh` header, `methodology.md`, `ears.md`) is a `/rf-harness`
-  edit; land it with this cycle.
+- The verify-substrate prose (the `tools/temp_db.sh` header, `AGENTS.md` § Factory → Throwaway
+  environment) changes with this cycle.
 - The timestamp serialization format is also an API contract change. Coordinate with
   [`api-serialization-layer.md`](api-serialization-layer.md) so clients see one change, not two.
 - Related: [`seed-dataset-v2.md`](seed-dataset-v2.md).

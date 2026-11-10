@@ -40,7 +40,7 @@ lane: public
 
 Every part of this amends a Tier 1 invariant: §6 names the single global app with no Blueprints and
 the `refitt.server:app` WSGI target; §4 names import-time binding and fail-fast; §7 names the
-session scoping. It needs a constitution change through `/rf-harness` alongside the code, under a
+session scoping. It needs a constitution change to `AGENTS.md` alongside the code, under a
 human gate. **Pre-existing.**
 
 ## Outcome / vision

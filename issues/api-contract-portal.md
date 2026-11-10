@@ -34,7 +34,7 @@ A browser portal at refitt.org cannot be built against today's API:
   `/recommendation/<id>/<relation>` entries) are the only API description, and they sit behind auth
   (`route/__init__.py:36-52`). There is no OpenAPI, so no client can be generated.
 - **No versioning.** No `/v1` prefix and no version header.
-- **No CORS** (AGENTS.md §3). There are no `Access-Control-*` headers, so `refitt.org` →
+- **No CORS** (AGENTS.md § Architecture). There are no `Access-Control-*` headers, so `refitt.org` →
   `api.refitt.org` calls are blocked by the browser.
 - **The SDK cannot serve a browser.** `refitt.api.request` is Python-only, keeps credentials in
   module globals (`KEY`, `SECRET`, `TOKEN`; lines 80-82), is interactive, and matches

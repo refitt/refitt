@@ -101,26 +101,24 @@ developer's `HOME` and config, and timezone handling is explicit.
 - **R4** — WHEN the suite runs with a developer `~/.refitt/config.toml` present, results SHALL be
   identical to a run without one.
 - **R5** — WHEN CI runs on `develop`, the tests job SHALL pass on Python 3.12 and 3.13.
-- **R6** — Each test file SHALL live under the distribution whose code it exercises, except the
-  factory tests, which stay at the root.
+- **R6** — Each test file SHALL live under the distribution whose code it exercises.
 
 ## Notes
 
-- The verify scripts are under `.agents/` and can only change through `/rf-harness`.
+- The verify scripts are `tools/temp_db.sh` and `tools/temp_pg.sh`; hardening them is its own seed,
+  [`verify-helpers-harden.md`](verify-helpers-harden.md). Its evidence, as the sweep found it:
   - `temp_db.sh` cannot run unattended today. `init` always prompts on SQLite (`init.py:75-78`:
     `host` is always `None`), a user config conflicts with the forced settings
     (`core.py:100-101`), and the `cd "$site"` at line 38 breaks the documented relative paths.
   - `temp_pg.sh` needs `HOME` isolation, an always-exported ephemeral rootkey, `PGTZ`, free ports
     bound to `127.0.0.1`, host-side readiness probes, a `docker info` check, and `UV_NO_SYNC`/frozen.
-  - Run that harness pass first, or this cycle has no working verify substrate. The deferred
-    item is in `.agents/factory/harness-log.md`.
+  - Land that seed first, or this cycle has no working verify substrate.
 - Codemod and re-home map from the sweep:
   - `test_core/test_schema.py` → core
   - `test_core/test_web.py` → api
   - `test_database/**` → data
   - `test_web/**` → server (an empty `py/apps/refitt-server/tests/` exists untracked)
   - `test_app/**` and `test_forecast.py` → admin
-  - `test_factory_fsm.py` stays at the root
 - Related: [`workspace-install-hygiene.md`](workspace-install-hygiene.md) (CI dies before pytest
   until it lands), [`api-app-factory.md`](api-app-factory.md) (hermetic endpoint tests),
   [`seed-dataset-v2.md`](seed-dataset-v2.md).
