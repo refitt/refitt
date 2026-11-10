@@ -160,6 +160,16 @@ the `temp_pg.sh` container mode, and its `REFITT_TEST_PG=1` mode against a scrat
 - **Q:** Do the two scope non-goals stand: other inherited `REFITT_*` variables, and the
   remote-database confirmation in `REFITT_TEST_PG=1` mode? — **A:** Yes, both as written (resolved
   2026-11-09).
+- **Q:** R1 — `init` still prints its confirmation line on every SQLite database. Does "without
+  prompting" mean that no prompt line appears at all? — **A:** No. R1 means nobody is asked and
+  nothing waits on a terminal: the helper answers the prompt itself and sends the line to stderr.
+  The line goes away with `issues/init-sqlite-prompt.md` (resolved at PLAN/TECH sign-off,
+  2026-11-10).
+- **Q:** R7 — does "after any of those invocations" hold the whole `verify` and `gate` lines to
+  "no new file", including `make client-boundary metadata` and the release gate's `uv sync`? —
+  **A:** No. It covers the helper invocations those lines make. `make`'s outputs are build
+  directories git never reports (`dist/` is ignored, and uv's `.venv-client` ignores itself), and the stale lock that `uv sync` rewrites belongs to
+  `workspace-install-hygiene` (resolved at PLAN/TECH sign-off, 2026-11-10).
 
 ## Related materials
 
