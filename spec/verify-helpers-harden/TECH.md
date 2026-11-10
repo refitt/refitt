@@ -6,12 +6,12 @@ appetite: small
 status: in_progress
 branch: test/verify-helpers-harden
 base: develop
-current_phase: P1
+current_phase: P2
 last_updated: '2026-11-10'
 phases:
 - id: P1
   name: temp_db.sh and the shared plumbing meet the contract on SQLite
-  status: pending
+  status: done
   satisfies:
   - R1
   - R2
@@ -149,7 +149,7 @@ checklists below are the work. `code-build` executes the next actionable phase, 
 **Goal:** `tools/temp_db.sh` runs any command unattended against a fresh, isolated SQLite instance,
 through a new sourced `tools/temp_common.sh` that `temp_pg.sh` will reuse.
 
-- [ ] Write `tools/temp_common.sh` per PLAN §2: `REPO_ROOT` from the helper's location;
+- [x] Write `tools/temp_common.sh` per PLAN §2: `REPO_ROOT` from the helper's location;
       `temp_preflight` (root, `/etc/refitt.toml`, missing project environment, missing `perl`);
       `temp_enter` (pin `UV_CACHE_DIR`; `mktemp -d`; scrub `REFITT_DATABASE_*`,
       `REFITT_API_ROOTKEY*` and `PG*`; export `REPO_ROOT`, `HOME`, `TMPDIR`, `UV_PROJECT`, `UV_NO_SYNC`,
@@ -158,10 +158,10 @@ through a new sourced `tools/temp_common.sh` that `temp_pg.sh` will reuse.
       `temp_stop_group` with its 10 s KILL watchdog; the EXIT/INT/TERM traps, which ignore a
       second INT or TERM during teardown and make leftovers writable before `rm -rf`;
       `temp_docker`.
-- [ ] Rewrite `tools/temp_db.sh` on it: force SQLite at `$state/refitt.db`, rootkey, pipe `y` into
+- [x] Rewrite `tools/temp_db.sh` on it: force SQLite at `$state/refitt.db`, rootkey, pipe `y` into
       `refitt database init ${REFITT_TEMP_DB_INIT:---test}` with its stdout on stderr, run the
       command, exit with its status.
-- [ ] Rewrite the header: what it does as it now behaves, the root-anchored usage line
+- [x] Rewrite the header: what it does as it now behaves, the root-anchored usage line
       `tools/temp_db.sh sh -c 'uv run pytest -m unit "$REPO_ROOT/tests/test_database"'`, and the
       `init` answer with its record `issues/init-sqlite-prompt.md`. No caveat pointing at this
       cycle (R12's half for this helper).

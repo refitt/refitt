@@ -1,49 +1,54 @@
 #!/bin/sh
-# Run a command against a throwaway, hermetic SQLite REFITT database so factory
-# verify/review drives never touch the developer's real database, logs, or config.
+# Run a command against a throwaway SQLite REFITT database: the fast tier for
+# factory verify drives.
 #
 #   Usage:  tools/temp_db.sh <command> [args...]
-#           tools/temp_db.sh sh -c "uv run pytest -m unit tests/test_database"
+#           tools/temp_db.sh sh -c 'uv run pytest -m unit "$REPO_ROOT/tests/test_database"'
 #
-# FAST TIER (SQLite). The database is created and seeded with the test dataset
-# (`refitt database init --test`) before the command runs, then discarded.
+# The command runs inside a fresh state directory, which is also its HOME and
+# TMPDIR, so the developer's ~/.refitt and any repo-root .refitt config are
+# never read or written; it finds the repository in $REPO_ROOT, so test paths
+# are written "$REPO_ROOT/...". Pytest's cache and Python bytecode go to the
+# state directory too. Inherited REFITT_DATABASE_*, REFITT_API_ROOTKEY* and
+# libpq PG* variables are dropped, and the command gets a REFITT_API_ROOTKEY
+# generated for this run. uv runs with UV_NO_SYNC against the existing
+# environment, so it must already be synced, and uv.lock is never rewritten.
 #
-# NOTE: Postgres-only SQL (e.g. `Object.from_alias` uses the raw `->>` operator)
-# and schema-qualified paths are NOT exercised here — use temp_pg.sh for
-# server/API/integration phases (invariant §C4).
+# The database is created and seeded with `refitt database init --test`
+# (override the flags with REFITT_TEMP_DB_INIT, e.g. "--core") before the
+# command runs. `init` asks for confirmation on every SQLite database
+# (issues/init-sqlite-prompt.md); the helper answers it itself, so nothing
+# waits on a terminal, and the prompt line goes to stderr with the rest of
+# init's output.
 #
-# CAVEAT (first cut; hardening is issues/verify-helpers-harden.md): env has the
-# highest config precedence, so provider/file/scope are forced below; but a user
-# config that adds host/user to `database.default` could still interfere. Run on a
-# machine without a conflicting ~/.refitt database config, or set REFITT_TEST_PG=1
-# and use temp_pg.sh.
+# The helper's own output goes to stderr, and it exits with the command's
+# status. Without a terminal the command runs in its own process group; INT and
+# TERM stop that group, and every exit path removes the state directory.
+# It refuses to run as root, with /etc/refitt.toml present, or with no synced
+# environment, and needs perl.
+#
+# SQLite does not exercise Postgres-only SQL (invariant §C4): use temp_pg.sh
+# for server, API and integration drives.
 set -eu
 
-root="$(pwd)"
-site="$(mktemp -d "${TMPDIR:-/tmp}/refitt-temp-db.XXXXXX")"
-trap 'rm -rf "$site"' EXIT INT TERM
+temp_name=temp_db.sh
+temp_kind=db
+. "$(dirname -- "$0")/temp_common.sh"
 
-# Pin uv project discovery back to the repo (cwd becomes the throwaway site, which
-# has no pyproject.toml; uv would otherwise walk up from /tmp and find nothing).
-export UV_PROJECT="$root"
+temp_preflight
+temp_enter
 
-# Force a throwaway SQLite database via env (highest config precedence).
-export REFITT_DATABASE_SCOPE_READ=default
-export REFITT_DATABASE_SCOPE_WRITE=default
 export REFITT_DATABASE_DEFAULT_PROVIDER=sqlite
-export REFITT_DATABASE_DEFAULT_FILE="$site/refitt.db"
-export REFITT_LOGGING_LEVEL="${REFITT_LOGGING_LEVEL:-warning}"
+export REFITT_DATABASE_DEFAULT_FILE="$temp_state/refitt.db"
 
-# Contain any relative writes/logs inside the throwaway site.
-cd "$site"
+temp_rootkey
 
-# Create + seed the schema (test seed by default; override with REFITT_TEMP_DB_INIT,
-# e.g. "--core" or "--drop --test").
+# `init` prompts on every SQLite database; answer it so nothing waits on a terminal.
 # shellcheck disable=SC2086
-uv run refitt database init ${REFITT_TEMP_DB_INIT:---test}
+printf 'y\n' | uv run refitt database init ${REFITT_TEMP_DB_INIT:---test} >&2 \
+    || temp_die "could not create and seed the throwaway database"
+# The prompt line ends without a newline.
+printf '\n' >&2
 
-# Run the caller's command with the throwaway DB active; preserve its exit code so
-# the trap can still clean up (do not `exec`).
-status=0
-"$@" || status=$?
-exit "$status"
+temp_run "$@"
+exit "$temp_status"
