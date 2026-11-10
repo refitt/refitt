@@ -169,6 +169,18 @@ also mutually exclusive, which the factory's own `ears.md` example gets wrong.
 · Refs: the seed-dataset entry reworks the same loader later*
 **Seed:** [`issues/core-seed-incomplete.md`](issues/core-seed-incomplete.md)
 
+## `refitt database init` asks for confirmation on every SQLite database
+
+`init` guards a remote database with a prompt, but its test (`'host' in db_cfg`) is true for every
+database, because the configuration always carries a `host` key, `None` on SQLite. So `init` prompts
+on every SQLite file, and on Postgres over a Unix socket, and with no terminal it fails on
+`EOFError`. `tools/temp_db.sh` works around it by answering the prompt itself; the fix belongs in
+`refitt.admin`, after which the helper stops answering.
+
+*Horizon: near-term · Depends on: — (small; verifiable on `temp_db.sh` once the verify-helpers
+entry lands) · Refs: shares `init.py:75-78` with the `--core` entry above (its `[Y]/n` default)*
+**Seed:** [`issues/init-sqlite-prompt.md`](issues/init-sqlite-prompt.md)
+
 ## Every model declares its columns twice
 
 All 25 models re-declare a `columns` dict, and 12 also declare a `relationships` dict, that duplicate

@@ -126,7 +126,8 @@ the `temp_pg.sh` container mode, and its `REFITT_TEST_PG=1` mode against a scrat
 - **CI.** `.github/workflows/` is untouched, including the runner-only `TZ` in `tests.yml:48`.
 - **REFITT product code.** No change under `py/`. In particular, the always-on SQLite prompt in
   `refitt.admin`'s `database init` (`init.py:75-78`) is a product defect; R1 is met on the helper
-  side, and fixing `init` itself is a separate seed, which the plan step files under `issues/`.
+  side, and fixing `init` itself is a separate seed, which the plan step files under `issues/`:
+  [`issues/init-sqlite-prompt.md`](../../issues/init-sqlite-prompt.md).
 - **The stale lock.** Regenerating `uv.lock` and the workspace's undeclared dependencies belong to
   `issues/workspace-install-hygiene.md`. R11 requires only that a helper never rewrites the lock.
 - **The tier split.** Which drives belong on SQLite versus Postgres is
