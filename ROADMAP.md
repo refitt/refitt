@@ -27,7 +27,32 @@ prerequisites of later ones, not just more urgent, and each entry names its depe
 Horizons are indicative; the named dependencies are the hard constraints.
 
 Every seed was written from an out-of-cycle evidence sweep of `develop` at `8e85fc8` on 2026-10-04.
-They cite `file:line`, and those citations drift as code moves, so re-check them at promotion.
+They cite `file:line`, and those citations drift as code moves, so re-check them at promotion. The
+one exception is Part 0, whose seed comes from a later analysis of the legacy pipeline's own
+outputs.
+
+---
+
+# Part 0 — Keep the legacy pipeline producing targets
+
+Today's target list still comes from the legacy forecast pipeline, not from this workspace. That
+pipeline has produced an empty list since 2026-11-09. Salvaging it for the month until GTF replaces
+it comes ahead of everything else, because it is the only science output running now. Its code
+lives in [`refitt-forecast`](https://github.com/refitt/refitt-forecast), and the seed is filed here
+so the work stays in this roadmap.
+
+## The legacy pipeline stopped receiving new sources and drops half the ones it gets
+
+The ANTARES tag the pipeline queries (`refitt_newsources_snrcut`) has tagged no new locus since
+2026-10-29, so each run re-forecasts an aging sample until nothing passes the near-peak cut. Since
+late February, ZTF `i`-band points have crashed the forecast for about half of all targets, because
+the band map knows only g and R. A third, smaller defect sets the forecast clock 5 hours behind.
+Restoring the tag happens in ANTARES, not in code. The code fixes are small, and can be checked by
+replaying saved run directories.
+
+*Horizon: now · Depends on: the ANTARES tag being restored, for the list to refill · Refs: the GTF
+model in Part II replaces this pipeline; no work here outlives that*
+**Seed:** [`issues/legacy-pipeline-salvage.md`](issues/legacy-pipeline-salvage.md)
 
 ---
 
